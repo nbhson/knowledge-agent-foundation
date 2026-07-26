@@ -132,6 +132,9 @@ Evaluation = What You Measure → What You Improve → What You Ship
 
 ### 1.2 Evaluation Rubric
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
@@ -259,7 +262,12 @@ STANDARD_RUBRIC = [
 ]
 ```
 
+</details>
+
 ### 1.3 Weight Configuration — Tùy Theo Use Case
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # Different weight configurations for different scenarios
@@ -302,11 +310,16 @@ WEIGHT_CONFIGS = {
 }
 ```
 
+</details>
+
 ---
 
 ## 2. Quality Metrics
 
 ### 2.1 Code Quality Metrics
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import ast
@@ -434,7 +447,12 @@ class CodeQualityAnalyzer:
         return (documented / total * 100) if total else 100.0
 ```
 
+</details>
+
 ### 2.2 AI Agent Quality Metrics
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from dataclasses import dataclass
@@ -516,6 +534,8 @@ class AgentQualityMetrics:
         return total * 100  # Scale to 0-100
 ```
 
+</details>
+
 ### 2.3 Metrics Dashboard
 
 ```
@@ -552,6 +572,9 @@ class AgentQualityMetrics:
 ## 3. Performance Benchmarks
 
 ### 3.1 Benchmark Framework
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import time
@@ -689,7 +712,12 @@ class BenchmarkSuite:
         }
 ```
 
+</details>
+
 ### 3.2 Standard Benchmark Tasks
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 BENCHMARK_TASKS = {
@@ -770,6 +798,8 @@ BENCHMARK_TASKS = {
 }
 ```
 
+</details>
+
 ### 3.3 Benchmark Comparison Table
 
 ```
@@ -801,6 +831,9 @@ BENCHMARK_TASKS = {
 ## 4. Evaluation Framework
 
 ### 4.1 Auto-Evaluation Pipeline
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from typing import Callable, Dict, List
@@ -914,7 +947,12 @@ def check_complexity(code: str, context: Dict) -> float:
     return min(100, max(0, 100 - report.cyclomatic_complexity * 5))
 ```
 
+</details>
+
 ### 4.2 LLM-as-Judge Evaluation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class LLMJudge:
@@ -948,6 +986,8 @@ TASK: {task}
 
 CODE:
 ```
+
+</details>
 {code}
 ```
 
@@ -1021,6 +1061,9 @@ Output as JSON:
 ```
 
 ### 4.3 Regression Testing Framework
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class RegressionTestSuite:
@@ -1131,6 +1174,8 @@ class RegressionTestSuite:
         return (len(intersection) / len(expected_words)) * 100
 ```
 
+</details>
+
 ---
 
 ## 5. Continuous Improvement
@@ -1158,6 +1203,9 @@ class RegressionTestSuite:
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from typing import Dict, List, Tuple
@@ -1255,7 +1303,12 @@ class ImprovementTracker:
         return suggestions
 ```
 
+</details>
+
 ### 5.2 A/B Testing Framework
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class ABTestFramework:
@@ -1316,11 +1369,16 @@ class ABTestFramework:
         }
 ```
 
+</details>
+
 ---
 
 ## 6. Reporting & Dashboards
 
 ### 6.1 Evaluation Report Generator
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from datetime import datetime
@@ -1462,6 +1520,8 @@ class EvaluationReporter:
         return heatmap
 ```
 
+</details>
+
 ---
 
 ## 7. Case Studies
@@ -1520,6 +1580,9 @@ class EvaluationReporter:
 ```
 
 ### 7.3 Real-World Evaluation Pipeline — Production Case
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # Real-world example: How a team evaluates their AI coding agent
@@ -1605,6 +1668,8 @@ class ProductionEvaluator:
         # Would send to Slack, email, etc.
         print(message)
 ```
+
+</details>
 
 ---
 
@@ -2307,6 +2372,9 @@ interface HarnessQualityMetrics {
 
 ### 13.1 Evaluation Test Harness
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 import time
 import json
@@ -2539,6 +2607,8 @@ harness.register(EvalHarnessTest(
 # report = harness.run_all()
 # print(json.dumps(report, indent=2))
 ```
+
+</details>
 
 ---
 

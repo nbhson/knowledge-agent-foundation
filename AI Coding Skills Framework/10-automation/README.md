@@ -116,6 +116,9 @@ Automation = Repetition → Rule → Script → Self-Healing Pipeline
 
 ### 1.2 Automation Framework
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
@@ -268,6 +271,8 @@ class AutomationPipeline:
             artifacts=artifacts,
         )
 ```
+
+</details>
 
 ---
 
@@ -503,6 +508,9 @@ jobs:
 
 ### 2.3 Pipeline Configuration
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
@@ -577,11 +585,16 @@ class CIPipelineConfig:
         return "\n".join(lines)
 ```
 
+</details>
+
 ---
 
 ## 3. Code Generation Automation
 
 ### 3.1 Automated Code Generation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from typing import Dict, List, Optional
@@ -859,6 +872,8 @@ class Test{name}CRUD:
 '''
 ```
 
+</details>
+
 ---
 
 ## 4. Testing Automation
@@ -895,6 +910,9 @@ class Test{name}CRUD:
 ```
 
 ### 4.2 Automated Test Runner
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from dataclasses import dataclass, field
@@ -1014,6 +1032,8 @@ class AutomatedTestRunner:
         }
 ```
 
+</details>
+
 ---
 
 ## 5. Monitoring & Alerting
@@ -1054,6 +1074,9 @@ class AutomatedTestRunner:
 ```
 
 ### 5.2 Monitoring System
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from dataclasses import dataclass, field
@@ -1206,6 +1229,8 @@ class MonitoringSystem:
         return "\n".join(lines)
 ```
 
+</details>
+
 ---
 
 ## 6. Self-Healing Systems
@@ -1260,6 +1285,9 @@ class MonitoringSystem:
 ```
 
 ### 6.2 Self-Healing Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from dataclasses import dataclass, field
@@ -1389,11 +1417,16 @@ class SelfHealingSystem:
         return "\n".join(lines)
 ```
 
+</details>
+
 ---
 
 ## 7. Scheduled Tasks
 
 ### 7.1 Task Scheduler
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from dataclasses import dataclass, field
@@ -1517,11 +1550,16 @@ class TaskScheduler:
         return "\n".join(lines)
 ```
 
+</details>
+
 ---
 
 ## 8. Workflow Templates
 
 ### 8.1 Common Automation Workflows
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 WORKFLOW_TEMPLATES = {
@@ -1573,6 +1611,8 @@ WORKFLOW_TEMPLATES = {
     },
 }
 ```
+
+</details>
 
 ---
 
@@ -2179,6 +2219,9 @@ interface DeploymentRestriction {
 
 ### 14.1 Testing Automation Systems
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 import time
 import json
@@ -2421,6 +2464,8 @@ harness.register(AutomationTest(
 # report = harness.run_all()
 # print(json.dumps(report, indent=2))
 ```
+
+</details>
 
 ---
 

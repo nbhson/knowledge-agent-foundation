@@ -120,6 +120,9 @@ Mỗi agent = **chuyên gia 1 lĩnh vực**. Giống bệnh viện đa khoa — 
 
 ### 1.2 Detailed Agent Definitions
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Callable
@@ -278,6 +281,8 @@ AGENT_DEFINITIONS = {
 }
 ```
 
+</details>
+
 ---
 
 ## 2. Communication Patterns
@@ -357,6 +362,9 @@ AGENT_DEFINITIONS = {
 ```
 
 ### 2.2 Message Protocol
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from dataclasses import dataclass, field
@@ -475,6 +483,8 @@ class MessageRouter:
         }
 ```
 
+</details>
+
 ---
 
 ## 3. Orchestration Strategies
@@ -511,6 +521,9 @@ class MessageRouter:
 ```
 
 ### 3.2 Orchestrator Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from typing import Dict, List, Optional, Any
@@ -745,6 +758,8 @@ class AgentOrchestrator:
         return "\n".join(lines)
 ```
 
+</details>
+
 ---
 
 ## 4. Shared Memory
@@ -782,6 +797,9 @@ class AgentOrchestrator:
 ```
 
 ### 4.2 Shared Memory Manager
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from threading import Lock
@@ -894,6 +912,8 @@ class SharedMemoryManager:
         )
 ```
 
+</details>
+
 ---
 
 ## 5. Conflict Resolution
@@ -943,6 +963,9 @@ class SharedMemoryManager:
 ```
 
 ### 5.2 Conflict Resolution Manager
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from typing import Dict, List, Tuple
@@ -1049,6 +1072,8 @@ class ConflictResolutionManager:
         return "\n".join(lines)
 ```
 
+</details>
+
 ---
 
 ## 6. Agent Selection Guide
@@ -1106,6 +1131,9 @@ class ConflictResolutionManager:
 ## 7. Real-World Implementations
 
 ### 7.1 Code Review Pipeline
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class CodeReviewPipeline:
@@ -1189,7 +1217,12 @@ class CodeReviewPipeline:
         return self.orchestrator.execute_pipeline(tasks)
 ```
 
+</details>
+
 ### 7.2 Feature Development Team
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class FeatureDevTeam:
@@ -1260,7 +1293,12 @@ class FeatureDevTeam:
         return self.orchestrator.execute_pipeline(tasks)
 ```
 
+</details>
+
 ### 7.3 Debug Squad
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class DebugSquad:
@@ -1322,6 +1360,8 @@ class DebugSquad:
         return self.orchestrator.execute_pipeline(tasks)
 ```
 
+</details>
+
 ---
 
 ## 8. Debugging Multi-Agent Systems
@@ -1371,6 +1411,9 @@ class DebugSquad:
 ```
 
 ### 8.2 Debug Logger
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class MultiAgentDebugger:
@@ -1427,6 +1470,8 @@ class MultiAgentDebugger:
         
         return "\n".join(lines)
 ```
+
+</details>
 
 ---
 
@@ -1730,6 +1775,9 @@ Devin (Cognition AI) sử dụng multi-agent pattern với specialized modules:
 
 ### 12.3 OpenHands (OpenDevin) — Open-Source Multi-Agent
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 # OpenHands architecture pattern — simplified implementation
 # Based on open-source OpenHands (formerly OpenDevin) architecture
@@ -1883,11 +1931,16 @@ class OpenHandsStyleOrchestrator:
         return f"Unknown tool: {tool_name}"
 ```
 
+</details>
+
 ---
 
 ## 13. Advanced Multi-Agent Patterns
 
 ### 13.1 MapReduce Pattern for Code Generation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from typing import Dict, List, Callable
@@ -1993,7 +2046,12 @@ class MapReduceCodeGenerator:
         return "\n".join(imports)
 ```
 
+</details>
+
 ### 13.2 Debate Pattern — Multi-Agent Discussion
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class DebateProtocol:
@@ -2097,7 +2155,12 @@ class DebateProtocol:
         }
 ```
 
+</details>
+
 ### 13.3 Critique-Revision Pattern
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class CritiqueRevisionLoop:
@@ -2186,7 +2249,12 @@ class CritiqueRevisionLoop:
         }
 ```
 
+</details>
+
 ### 13.4 Ensemble Pattern — Multiple Agents, Best Output
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class EnsemblePattern:
@@ -2270,6 +2338,8 @@ class EnsemblePattern:
             return "High variance: Agents disagree significantly. Consider reviewing all outputs."
 ```
 
+</details>
+
 ---
 
 ## 14. Multi-Agent Testing Strategies
@@ -2308,6 +2378,9 @@ class EnsemblePattern:
 ```
 
 ### 14.2 Test Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class MultiAgentTestSuite:
@@ -2475,6 +2548,8 @@ class MultiAgentTestSuite:
         }
 ```
 
+</details>
+
 ---
 
 ## 15. Cost-Benefit Analysis
@@ -2509,6 +2584,9 @@ class MultiAgentTestSuite:
 ```
 
 ### 15.2 Token Cost Comparison
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from dataclasses import dataclass
@@ -2567,6 +2645,8 @@ for est in COST_ESTIMATES:
     print(f"  ROI:          {est.roi:+.0f}")
     print(f"  → {est.recommendation()}")
 ```
+
+</details>
 
 ---
 

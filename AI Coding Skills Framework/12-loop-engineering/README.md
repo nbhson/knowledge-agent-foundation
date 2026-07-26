@@ -218,6 +218,9 @@ Inner Loop là vòng lặp **nhanh nhất và cơ bản nhất** — xảy ra tr
 
 ### 2.1 Chain-of-Thought Loop (Think → Act → Reflect)
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
@@ -362,9 +365,14 @@ class InnerReasoningLoop:
         return min(base, 1.0)
 ```
 
+</details>
+
 ### 2.2 Self-Refine Pattern
 
 Self-Refine là pattern mà **LLM tự cải thiện output của chính mình** qua nhiều vòng lặp:
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class SelfRefineLoop:
@@ -445,7 +453,12 @@ class SelfRefineLoop:
         }
 ```
 
+</details>
+
 ### 2.3 Metacognitive Loop (Think About Thinking)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class MetacognitiveLoop:
@@ -498,6 +511,8 @@ class MetacognitiveLoop:
         return avg < 0.5  # Switch if average score is low
 ```
 
+</details>
+
 ---
 
 ## 3. Execution Loop — Retry & Error Recovery
@@ -505,6 +520,9 @@ class MetacognitiveLoop:
 Execution Loop xử lý các lỗi trong quá trình thực thi — đảm bảo agent không bỏ cuộc quá sớm nhưng cũng không retry vô hạn.
 
 ### 3.1 Adaptive Retry Engine
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import time
@@ -612,7 +630,12 @@ class AdaptiveRetryEngine:
         }
 ```
 
+</details>
+
 ### 3.2 Circuit Breaker Loop
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class CircuitState(Enum):
@@ -696,7 +719,12 @@ class CircuitBreakerOpenError(Exception):
     pass
 ```
 
+</details>
+
 ### 3.3 Timeout Loop
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class TimeoutLoop:
@@ -740,6 +768,8 @@ class TimeoutLoop:
         raise last_error
 ```
 
+</details>
+
 ---
 
 ## 4. Validation Loop — Test & Verify
@@ -747,6 +777,9 @@ class TimeoutLoop:
 Validation Loop đảm bảo output của agent **thực sự hoạt động** trước khi accepted.
 
 ### 4.1 Test-Driven Loop
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class TestDrivenLoop:
@@ -845,7 +878,12 @@ class TestDrivenLoop:
         }
 ```
 
+</details>
+
 ### 4.2 Lint → Fix Loop
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class LintFixLoop:
@@ -932,6 +970,8 @@ class LintFixLoop:
         }
 ```
 
+</details>
+
 ---
 
 ## 5. Feedback Loop — Learn from Results
@@ -939,6 +979,9 @@ class LintFixLoop:
 Feedback Loop là **xương sống** của Loop Engineering — kết nối kết quả hành động quá khứ với hành động tương lai.
 
 ### 5.1 Metrics Feedback Loop
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from dataclasses import dataclass, field
@@ -1052,7 +1095,12 @@ class MetricsFeedbackLoop:
         }
 ```
 
+</details>
+
 ### 5.2 Pattern Learning Loop
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class PatternLearningLoop:
@@ -1104,6 +1152,8 @@ class PatternLearningLoop:
         }
 ```
 
+</details>
+
 ---
 
 ## 6. Outer Loop — Continuous Improvement
@@ -1111,6 +1161,9 @@ class PatternLearningLoop:
 Outer Loop chạy trên **tần suất thấp** (ngày/tuần) và tập trung vào việc cải thiện **toàn bộ hệ thống**.
 
 ### 6.1 Prompt Evolution Loop
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class PromptEvolutionLoop:
@@ -1168,7 +1221,12 @@ class PromptEvolutionLoop:
         return new_id
 ```
 
+</details>
+
 ### 6.2 A/B Testing Loop
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import random
@@ -1248,7 +1306,12 @@ class ABTestingLoop:
         }
 ```
 
+</details>
+
 ### 6.3 Feedback-Driven Prompt Optimization
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class FeedbackDrivenPromptOptimizer:
@@ -1308,6 +1371,8 @@ class FeedbackDrivenPromptOptimizer:
         return areas
 ```
 
+</details>
+
 ---
 
 ## 7. Self-Improvement Patterns
@@ -1315,6 +1380,9 @@ class FeedbackDrivenPromptOptimizer:
 ### 7.1 Self-Consistency Checking
 
 Agent tạo **nhiều solutions** và so sánh để chọn solution tốt nhất:
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class SelfConsistencyLoop:
@@ -1373,7 +1441,12 @@ class SelfConsistencyLoop:
         }
 ```
 
+</details>
+
 ### 7.2 Reflection Loop (Sau khi hoàn thành task)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class ReflectionLoop:
@@ -1429,11 +1502,16 @@ class ReflectionLoop:
         }
 ```
 
+</details>
+
 ---
 
 ## 8. Loop Orchestration Engine
 
 Tổng hợp **tất cả loops** thành một hệ thống hoàn chỉnh:
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class LoopOrchestrationEngine:
@@ -1528,6 +1606,8 @@ class LoopOrchestrationEngine:
         }
 ```
 
+</details>
+
 ---
 
 ## 9. Case Studies
@@ -1535,6 +1615,9 @@ class LoopOrchestrationEngine:
 ### 9.1 Claude Code — Multi-Layer Loop System
 
 Claude Code sử dụng **4 lớp loop** xếp chồng lên nhau:
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class ClaudeCodeLoops:
@@ -1601,6 +1684,8 @@ class ClaudeCodeLoops:
         }
 ```
 
+</details>
+
 **Kết quả thực tế:**
 - Claude Code resolve **44% GitHub issues** trên SWE-bench
 - Self-refine loop cải thiện quality **+38%** sau mỗi round
@@ -1664,6 +1749,9 @@ Devin's Loop Stack:
 
 ### 10.2 Guardrails Cho Loops
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 class LoopGuardrails:
     """Bảo vệ loops khỏi các anti-patterns"""
@@ -1709,6 +1797,8 @@ class LoopTimeoutError(Exception):
 class MaxIterationsError(Exception):
     pass
 ```
+
+</details>
 
 ---
 

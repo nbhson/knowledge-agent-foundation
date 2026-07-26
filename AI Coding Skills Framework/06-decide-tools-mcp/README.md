@@ -112,6 +112,9 @@ Trong Harness Engineering, Tool Decision là **"bộ tay chân"** — nơi plann
 
 ### 1.1 Tool Registry
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 from typing import Any, Callable, Dict, List, Optional, Set
 from dataclasses import dataclass, field
@@ -352,7 +355,12 @@ class ToolRegistry:
         }
 ```
 
+</details>
+
 ### 1.2 Example Tools — Extended Set
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 def create_default_tools():
@@ -574,11 +582,16 @@ def create_default_tools():
     return registry
 ```
 
+</details>
+
 ---
 
 ## 2. Intent Classification
 
 ### 2.1 Multi-Strategy Intent Classifier
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class IntentClassifier:
@@ -785,6 +798,8 @@ Output JSON:
         return intents if intents else [self.classify(query)]
 ```
 
+</details>
+
 ---
 
 ## 3. MCP Protocol
@@ -841,6 +856,9 @@ Output JSON:
 ```
 
 ### 3.2 MCP Client Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import asyncio
@@ -1115,9 +1133,14 @@ class MultiServerMCPManager:
         return stats
 ```
 
+</details>
+
 ---
 
 ## 4. Tool Executor
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import time
@@ -1404,9 +1427,14 @@ class ToolExecutor:
         }
 ```
 
+</details>
+
 ---
 
 ## 5. Function Calling
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class FunctionCallingAgent:
@@ -1577,9 +1605,14 @@ class FunctionCallingAgent:
         return {"content": "No LLM configured"}
 ```
 
+</details>
+
 ---
 
 ## 6. Tool Decision Pipeline
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class ToolDecisionPipeline:
@@ -1710,9 +1743,14 @@ Output JSON (chỉ parameters, đúng types):"""
         return {}
 ```
 
+</details>
+
 ---
 
 ## 7. Tool Composition
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class ToolComposer:
@@ -1841,9 +1879,14 @@ class ToolComposer:
         return {"success": True, "results": results}
 ```
 
+</details>
+
 ---
 
 ## 8. Permission System
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class ToolPermissionChecker:
@@ -1911,9 +1954,14 @@ class ToolPermissionChecker:
             }
 ```
 
+</details>
+
 ---
 
 ## 9. Rate Limiting
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class RateLimiter:
@@ -1984,6 +2032,8 @@ class RateLimiter:
             }
         return usage
 ```
+
+</details>
 
 ---
 
@@ -2201,6 +2251,9 @@ const toolsForContext = {
 
 ## 14. Testing
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 import unittest
 
@@ -2330,11 +2383,16 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
+</details>
+
 ---
 
 ## 15. Advanced Patterns
 
 ### 15.1 Tool Learning
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class ToolLearner:
@@ -2397,6 +2455,8 @@ class ToolLearner:
         scored.sort(reverse=True)
         return [tool for _, tool in scored]
 ```
+
+</details>
 
 ---
 

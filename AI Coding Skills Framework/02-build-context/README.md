@@ -255,6 +255,9 @@ Context window là **bộ nhớ tạm thời** của LLM — tất cả token m�
 
 ### 1.2 Token Budget Allocation
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 class ContextBudget:
     """
@@ -374,6 +377,8 @@ print("\n--- For Complex RAG Query ---")
 budget.adjust_for_query_type("complex")
 budget.report()
 ```
+
+</details>
 
 ```
 OUTPUT:
@@ -503,6 +508,9 @@ Available:                            124,000 tokens
 ```
 
 ### 2.2 Context Building Patterns — Code Examples
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import json
@@ -693,6 +701,8 @@ if __name__ == "__main__":
     print(build_categorized_context(docs))
 ```
 
+</details>
+
 ---
 
 ## 3. Context Compression & Summarization
@@ -724,6 +734,9 @@ if __name__ == "__main__":
 ```
 
 ### 3.2 Compression Techniques
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import numpy as np
@@ -957,6 +970,8 @@ print(f"Compressed: {len(compressed)} chars")
 print(f"Ratio: {len(compressed)/sum(len(d) for d in documents):.1%}")
 ```
 
+</details>
+
 ### 3.3 Compression Comparison
 
 ```
@@ -1184,6 +1199,9 @@ class SmartContextManager {
 
 ### 4.2 Advanced Prompt Techniques
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 class PromptBuilder:
     """Advanced prompt building techniques for RAG"""
@@ -1337,6 +1355,8 @@ prompt = builder.build_with_guardrails(
 )
 ```
 
+</details>
+
 ---
 
 ## 5. Hierarchical Context
@@ -1386,6 +1406,9 @@ prompt = builder.build_with_guardrails(
 ```
 
 ### 5.2 Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class HierarchicalContext:
@@ -1517,6 +1540,8 @@ prompt = ctx.build_prompt("Thẻ BHYT có hạn không?", max_tokens=5000)
 ctx.report()
 ```
 
+</details>
+
 ---
 
 ## 6. Streaming Context
@@ -1555,6 +1580,9 @@ ctx.report()
 ```
 
 ### 6.2 Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import asyncio
@@ -1678,6 +1706,8 @@ class StreamingRAG:
                 if "response" in chunk:
                     yield chunk["response"]  # Yield each token
 ```
+
+</details>
 
 ---
 
@@ -2170,6 +2200,9 @@ class ProductionRAGContext {
 
 ### 8.1. Context Routing
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 """
 Context Routing: Tự động chọn chiến lược context phù hợp
@@ -2284,7 +2317,12 @@ class ContextRouter:
         }
 ```
 
+</details>
+
 ### 8.2. RAG Fusion Pattern
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -2374,7 +2412,12 @@ Return only the queries, one per line:"""
         return [r["doc"] for r in ranked]
 ```
 
+</details>
+
 ### 8.3. Context Caching Strategy
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -2461,7 +2504,12 @@ class ContextCache:
         }
 ```
 
+</details>
+
 ### 8.4. Multi-turn Context Management
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -2573,6 +2621,8 @@ class MultiTurnContextManager:
         return '. '.join(sentences) + '.'
 ```
 
+</details>
+
 ---
 
 ## 9. Best Practices & Anti-Patterns
@@ -2657,6 +2707,9 @@ class MultiTurnContextManager:
 ```
 
 ### 9.2. Common Anti-Patterns
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -2750,9 +2803,14 @@ if not contains_relevant_docs(context, query):
 response = llm.generate(context)  # ✅ Validated context
 ```
 
+</details>
+
 ---
 
 ## 10. Context Validation & Testing
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -2873,7 +2931,12 @@ class ContextValidator:
         return len(text) // 4  # Rough estimate
 ```
 
+</details>
+
 ### Integration Testing
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -2942,11 +3005,16 @@ class TestContextQuality:
         assert stats["hits"] > 0, "Cache not working"
 ```
 
+</details>
+
 ---
 
 ## 11. Performance Metrics & Optimization
 
 ### 11.1. Context Quality Metrics
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -3037,6 +3105,8 @@ metrics.record(
 print(metrics.report())
 ```
 
+</details>
+
 ### 11.2. Cost Optimization Strategies
 
 ```
@@ -3076,6 +3146,9 @@ print(metrics.report())
 ---
 
 ## 12. Complete Production Pipeline
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -3214,6 +3287,8 @@ class ProductionContextPipeline:
         }
 ```
 
+</details>
+
 ---
 
 ## 13. Labs Thực Hành
@@ -3224,6 +3299,9 @@ class ProductionContextPipeline:
 ### Lab 1: Context Budget Demo
 
 ### Lab 1: Context Budget Demo
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # python 02-build-context/lab_budget.py
@@ -3244,7 +3322,12 @@ for name, total in scenarios:
     budget.report()
 ```
 
+</details>
+
 ### Lab 2: RAG Fusion Demo
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # python 02-build-context/lab_rag_fusion.py
@@ -3283,7 +3366,12 @@ print(f"Overlap: {len(single_ids & fused_ids)} docs")
 print(f"New from Fusion: {len(fused_ids - single_ids)} docs")
 ```
 
+</details>
+
 ### Lab 3: Context Cache Performance
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # python 02-build-context/lab_cache.py
@@ -3320,7 +3408,12 @@ print(f"\n=== Cache Stats ===")
 print(cache.stats())
 ```
 
+</details>
+
 ### Lab 4: Context Validation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # python 02-build-context/lab_validation.py
@@ -3365,7 +3458,12 @@ for issue in result["issues"]:
     print(f"  ❌ {issue['type']}: {issue['message']}")
 ```
 
+</details>
+
 ### Lab 5: Context Routing
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # python 02-build-context/lab_routing.py
@@ -3391,6 +3489,8 @@ for q in test_queries:
     meta = context["routing_metadata"]
     print(f"{q:<40} {meta['query_type']:<16} {meta['strategy'].replace('build_', '').replace('_context', '')}")
 ```
+
+</details>
 
 ---
 
@@ -3466,6 +3566,9 @@ Key takeaways:
 *Tác giả: AI Knowledge Repository*  
 *Môi trường: Ollama (gemma3:12b, nomic-embed-text)*
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 # python 02-build-context/lab_compression.py
 
@@ -3505,6 +3608,8 @@ selective = compressor.selective_compress(long_text)
 print(f"Length: {len(selective)} chars")
 print(selective[:200])
 ```
+
+</details>
 
 ---
 

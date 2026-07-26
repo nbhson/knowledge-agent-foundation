@@ -241,6 +241,9 @@ Kết quả: Giảm **68% duplicate questions** giữa các sessions.
 
 ### 1.2 Write-back Implementation
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 import json
 from datetime import datetime
@@ -493,6 +496,8 @@ class MemoryWriter:
         }
 ```
 
+</details>
+
 ---
 
 ## 2. Memory Consolidation
@@ -521,6 +526,9 @@ class MemoryWriter:
 ```
 
 ### 2.2 Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class MemoryConsolidator:
@@ -689,6 +697,8 @@ class MemoryConsolidator:
         return len(words1 & words2) / len(words1 | words2)
 ```
 
+</details>
+
 ---
 
 ## 3. Report Generation
@@ -723,6 +733,9 @@ class MemoryConsolidator:
 ```
 
 ### 3.2 Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class ReportGenerator:
@@ -844,11 +857,16 @@ Output JSON:
         return {"answer": analysis, "confidence": 0.5}
 ```
 
+</details>
+
 ---
 
 ## 4. KB Maintenance
 
 ### 4.1 Knowledge Base Operations
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class KBMaintainer:
@@ -1006,6 +1024,8 @@ class KBMaintainer:
             return [0.0] * 768
 ```
 
+</details>
+
 ---
 
 ## 5. Event Sourcing Pattern
@@ -1041,6 +1061,9 @@ class KBMaintainer:
 ```
 
 ### 5.2 Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class EventSourcedMemory:
@@ -1133,6 +1156,8 @@ class EventSourcedMemory:
         
         return event
 ```
+
+</details>
 
 ---
 
@@ -1329,6 +1354,9 @@ ${this.pitfalls.map(p => `- ⚠️ ${p}`).join('\n')}
 ### 6.2. Mem0 — Production Memory Layer for AI Agents
 
 **Mem0** (formerly EmbedChain) là open-source memory layer cho AI agents:
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -1633,6 +1661,8 @@ Return as JSON array:
             )
 ```
 
+</details>
+
 **Key Insights**:
 1. ✅ **Auto-extract facts** — LLM extracts facts from conversations automatically
 2. ✅ **Temporal decay** — Older memories get lower relevance over time
@@ -1642,6 +1672,9 @@ Return as JSON array:
 ---
 
 ### 6.3. OpenMemory — MCP-Based Memory Server
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -1840,11 +1873,16 @@ class OpenMemoryServer:
         return groups
 ```
 
+</details>
+
 ---
 
 ## 7. Advanced Memory Patterns
 
 ### 7.1. Write-Behind Cache Pattern
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -1956,7 +1994,12 @@ class WriteBehindCache:
         }
 ```
 
+</details>
+
 ### 7.2. Memory Consolidation Pipeline
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -2173,7 +2216,12 @@ class MemoryConsolidationPipeline:
         return len(words1 & words2) / len(words1 | words2)
 ```
 
+</details>
+
 ### 7.3. Versioned Memory (Git-like Memory)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -2277,6 +2325,8 @@ class VersionedMemory:
         ]
 ```
 
+</details>
+
 ---
 
 ## 8. Best Practices & Anti-Patterns
@@ -2353,6 +2403,9 @@ class VersionedMemory:
 
 ## 9. Performance Metrics
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 class MemoryStoreMetrics:
     """Track memory store performance"""
@@ -2407,11 +2460,16 @@ class MemoryStoreMetrics:
 ╚══════════════════════════════════════════════╝"""
 ```
 
+</details>
+
 ---
 
 ## 10. Labs Thực Hành
 
 ### Lab 1: Write-back Memory
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # python 03-update-memory-store/lab_writeback.py
@@ -2442,7 +2500,12 @@ print(writer.get_stats())
 # {'episodic_count': 1, 'entity_count': 3, 'event_count': 4}
 ```
 
+</details>
+
 ### Lab 2: Consolidation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # python 03-update-memory-store/lab_consolidation.py
@@ -2464,7 +2527,12 @@ for c in conflicts:
     print(f"  {c['subject']} → {c['conflicting_values']}")
 ```
 
+</details>
+
 ### Lab 3: Versioned Memory
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # python 03-update-memory-store/lab_versioned.py
@@ -2489,7 +2557,12 @@ state = vm.rollback(0)
 print(f"Rolled back to: {state['rolled_back_to']}")
 ```
 
+</details>
+
 ### Lab 4: Metrics
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # python 03-update-memory-store/lab_metrics.py
@@ -2507,6 +2580,8 @@ metrics.record_consolidation(1200, deduped=15, conflicts_resolved=1)
 
 print(metrics.report())
 ```
+
+</details>
 
 ---
 

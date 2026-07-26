@@ -300,6 +300,9 @@ Nguyên nhân: Plan trước → biết cần tool nào → giảm false starts 
 
 ### 1.2 Implementation
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 from enum import Enum
 from typing import List, Dict, Any, Optional
@@ -548,6 +551,8 @@ Output JSON:
         return base_tokens
 ```
 
+</details>
+
 ### 1.3 So Sánh Các Pattern
 
 ```
@@ -568,6 +573,9 @@ Output JSON:
 ## 2. Planning Algorithms
 
 ### 2.1 LLM-Based Planning (Plan-and-Solve)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class PlanAndSolve:
@@ -707,7 +715,12 @@ Kế hoạch mới (mỗi bước trên 1 dòng):
         }
 ```
 
+</details>
+
 ### 2.2 Tree of Thoughts (ToT)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class TreeOfThoughts:
@@ -816,7 +829,12 @@ Tiêu chí:
         }
 ```
 
+</details>
+
 ### 2.3 ReWOO (Reasoning Without Observation)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class ReWOOPlanner:
@@ -883,6 +901,8 @@ Output JSON:
         return evidence
 ```
 
+</details>
+
 ---
 
 ## 3. Agent Workflows
@@ -933,6 +953,9 @@ Output JSON:
 ```
 
 ### 3.2 Agent Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class SimpleAgent:
@@ -1170,9 +1193,14 @@ Tổng hợp:"""
         return combined
 ```
 
+</details>
+
 ---
 
 ## 4. State Management
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class AgentState:
@@ -1253,9 +1281,14 @@ class AgentState:
         self.version = 0
 ```
 
+</details>
+
 ---
 
 ## 5. ReAct Pattern
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class ReActAgent:
@@ -1398,6 +1431,8 @@ Final Answer: [your answer]"""
             return self.llm(prompt)
         return "Thought: I don't know\nFinal Answer: N/A"
 ```
+
+</details>
 
 ---
 
@@ -1892,6 +1927,9 @@ class TokenBudgetManager {
 
 ## 10. Testing Planning Systems
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 import unittest
 
@@ -2015,11 +2053,16 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
+</details>
+
 ---
 
 ## 11. Advanced Patterns
 
 ### 11.1 Hierarchical Task Network (HTN)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class HTNPlanner:
@@ -2065,7 +2108,12 @@ class HTNPlanner:
         return results
 ```
 
+</details>
+
 ### 11.2 Self-Reflective Planning
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class SelfReflectivePlanner:
@@ -2134,11 +2182,16 @@ Plan: {plan}
         })
 ```
 
+</details>
+
 ---
 
 ## 12. Tools & Frameworks
 
 ### 12.1 LangGraph (Recommended for Planning)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from langgraph.graph import StateGraph, END
@@ -2168,7 +2221,12 @@ def create_planning_graph():
     return graph.compile()
 ```
 
+</details>
+
 ### 12.2 CrewAI (Multi-Agent Planning)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from crewai import Agent, Task, Crew
@@ -2213,7 +2271,12 @@ crew = Crew(
 )
 ```
 
+</details>
+
 ### 12.3 AutoGen (Microsoft)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from autogen import AssistantAgent, UserProxyAgent
@@ -2239,6 +2302,8 @@ user = UserProxyAgent(
     max_consecutive_auto_reply=10,
 )
 ```
+
+</details>
 
 ---
 

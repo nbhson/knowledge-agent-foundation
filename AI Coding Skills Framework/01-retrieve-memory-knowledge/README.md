@@ -303,6 +303,9 @@ Chunking là quá trình **chia nhỏ documents** thành các đoạn (chunks) t
 
 #### Strategy 1: Fixed-Size Chunking
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 def fixed_size_chunk(text, chunk_size=500, overlap=50):
     """
@@ -333,6 +336,8 @@ chunks = fixed_size_chunk(text, chunk_size=100, overlap=20)
 print(f"Số chunks: {len(chunks)}")
 ```
 
+</details>
+
 ```
 Ưu điểm:                    Nhược điểm:
 ✅ Đơn giản                 ❌ Cắt ngang câu
@@ -341,6 +346,9 @@ print(f"Số chunks: {len(chunks)}")
 ```
 
 #### Strategy 2: Recursive Character Splitting
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 def recursive_split(text, chunk_size=500, overlap=50,
@@ -399,6 +407,8 @@ for i, chunk in enumerate(chunks):
     print(f"Chunk {i+1}: {chunk[:60]}...")
 ```
 
+</details>
+
 ```
 Ưu điểm:                    Nhược điểm:
 ✅ Tôn trọng cấu trúc       ❌ Chunk size không đều
@@ -407,6 +417,9 @@ for i, chunk in enumerate(chunks):
 ```
 
 #### Strategy 3: Semantic Chunking
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import numpy as np
@@ -454,6 +467,8 @@ def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 ```
 
+</details>
+
 ```
 Ưu điểm:                    Nhược điểm:
 ✅ Chunks ngữ nghĩa nhất    ❌ Chậm (cần embed mỗi câu)
@@ -462,6 +477,9 @@ def cosine_similarity(a, b):
 ```
 
 #### Strategy 4: Document-Aware Chunking
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # Tôn trọng cấu trúc document (Markdown, HTML, Code)
@@ -516,6 +534,8 @@ def markdown_chunk(text, max_chunk_size=1000):
     return chunks
 ```
 
+</details>
+
 #### So Sánh Chi Tiết
 
 ```
@@ -532,6 +552,9 @@ def markdown_chunk(text, max_chunk_size=1000):
 ```
 
 ### 1.5 Similarity Metrics — Chi Tiết
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import numpy as np
@@ -607,6 +630,8 @@ def manhattan_distance(a, b):
 # Dùng cho sparse vectors (BM25, TF-IDF)
 # Không dùng cho dense vectors
 ```
+
+</details>
 
 ```
 So sánh:
@@ -764,6 +789,9 @@ So sánh:
 
 #### Bước 1: Document Processing (Offline)
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 """
 Bước 1: Xử lý tài liệu — Tạo knowledge base
@@ -841,7 +869,12 @@ processor = DocumentProcessor(chunk_size=500, chunk_overlap=50)
 chunks = processor.process_directory("./documents")
 ```
 
+</details>
+
 #### Bước 2: Embedding (Offline)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -902,7 +935,12 @@ chunks = ["BHYT là gì?", "Quy định BHYT 2024", ...]
 embeddings = embedder.embed_batch(chunks)
 ```
 
+</details>
+
 #### Bước 3: Storage (Offline)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -996,7 +1034,12 @@ class ChromaVectorStore:
         return results
 ```
 
+</details>
+
 #### Bước 4: Query Processing (Online)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -1068,7 +1111,12 @@ Loại (simple/complex/aggregation):"""
         return response if response in ["simple", "complex", "aggregation"] else "simple"
 ```
 
+</details>
+
 #### Bước 5: Retrieval (Online)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -1160,7 +1208,12 @@ class Retriever:
         return selected
 ```
 
+</details>
+
 #### Bước 6: Generation (Online)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 """
@@ -1237,6 +1290,8 @@ class RAGPipeline:
         
         return result
 ```
+
+</details>
 
 ### 2.3 Các Loại RAG
 
@@ -1481,6 +1536,9 @@ Ví dụ:
 
 ### 3.3 Knowledge Graph Operations
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 class KnowledgeGraph:
     """Simple in-memory knowledge graph"""
@@ -1634,7 +1692,12 @@ Tóm tắt:"""
         return llm_func(prompt)
 ```
 
+</details>
+
 ### 3.4 Graph RAG Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class GraphRAG:
@@ -1710,6 +1773,8 @@ Entities (one per line):"""
         return entities
 ```
 
+</details>
+
 ---
 
 ## 4. Hybrid Search
@@ -1740,6 +1805,9 @@ Entities (one per line):"""
 ```
 
 ### 4.2 BM25 Algorithm
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import math
@@ -1824,7 +1892,12 @@ class BM25:
         return [(self.documents[i], score) for i, score in scores[:top_k]]
 ```
 
+</details>
+
 ### 4.3 Reciprocal Rank Fusion (RRF)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 def reciprocal_rank_fusion(rankings, k=60):
@@ -1869,7 +1942,12 @@ merged = reciprocal_rank_fusion(
 # Total:    0.04866
 ```
 
+</details>
+
 ### 4.4 Hybrid Search Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class HybridSearch:
@@ -1957,6 +2035,8 @@ class HybridSearch:
         return sorted_results[:top_k]
 ```
 
+</details>
+
 ---
 
 ## 5. Re-ranking
@@ -1985,6 +2065,9 @@ class HybridSearch:
 ```
 
 ### 5.2 Cross-Encoder Implementation
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from sentence_transformers import CrossEncoder
@@ -2050,6 +2133,8 @@ class Reranker:
         results.sort(key=lambda x: x["rerank_score"], reverse=True)
         return results[:top_k]
 ```
+
+</details>
 
 ### 5.3 Re-ranking Models Comparison
 
@@ -2131,6 +2216,9 @@ Lưu ý: Quality scores là approximate, thay đổi tùy evaluation benchmark
 
 #### Buffer Memory
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 from collections import deque
 
@@ -2160,7 +2248,12 @@ class BufferMemory:
         return total
 ```
 
+</details>
+
 #### Window Memory
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class WindowMemory:
@@ -2183,7 +2276,12 @@ class WindowMemory:
         return list(self.messages)
 ```
 
+</details>
+
 #### Summary Memory
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class SummaryMemory:
@@ -2234,7 +2332,12 @@ class SummaryMemory:
             )
 ```
 
+</details>
+
 #### Entity Memory
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class EntityMemory:
@@ -2295,7 +2398,12 @@ Format as JSON:
         return "\n".join(lines)
 ```
 
+</details>
+
 #### Semantic Memory (Vector-based)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class SemanticMemory:
@@ -2395,6 +2503,8 @@ class SemanticMemory:
         return groups
 ```
 
+</details>
+
 ### 6.3 MemGPT-Style Memory Architecture
 
 ```
@@ -2440,6 +2550,9 @@ class SemanticMemory:
 ```
 
 ### 6.4 Complete Memory Manager
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class MemoryManager:
@@ -2591,6 +2704,8 @@ Tóm tắt:"""
         }
 ```
 
+</details>
+
 ---
 
 ## 7. Labs Thực Hành
@@ -2614,6 +2729,9 @@ curl -s http://localhost:11434/api/embed -d '{
 ```
 
 ### Lab 2: BM25 + Vector Hybrid Search
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # Complete hybrid search demo
@@ -2736,12 +2854,19 @@ for i, doc in enumerate(hybrid[:3]):
     print(f"  #{i+1} | {doc[:60]}...")
 ```
 
+</details>
+
 ### Lab 3: Full RAG Pipeline
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # Run: python 01-retrieve-memory-knowledge/rag_lab.py
 # (See rag_lab.py file in this directory)
 ```
+
+</details>
 
 ---
 

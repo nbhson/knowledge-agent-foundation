@@ -116,6 +116,9 @@ Mỗi bước phải có **state management**, **error recovery**, và **observa
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
@@ -223,7 +226,12 @@ class SequentialWorkflow:
         }
 ```
 
+</details>
+
 ### 1.2 Parallel Workflow (Song Song)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import asyncio
@@ -312,7 +320,12 @@ class ParallelWorkflow:
         return current_input
 ```
 
+</details>
+
 ### 1.3 DAG Workflow (Directed Acyclic Graph)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class DAGWorkflow:
@@ -467,7 +480,12 @@ class DAGWorkflow:
         }
 ```
 
+</details>
+
 ### 1.4 Event-Driven Workflow
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import queue
@@ -580,11 +598,16 @@ class EventDrivenWorkflow:
         }
 ```
 
+</details>
+
 ---
 
 ## 2. Pipeline Design
 
 ### 2.1 Data Pipeline với Branching
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 @dataclass
@@ -799,11 +822,16 @@ class PipelineMetrics:
         }
 ```
 
+</details>
+
 ---
 
 ## 3. State Machine
 
 ### 3.1 Hierarchical State Machine
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from enum import Enum
@@ -965,11 +993,16 @@ class HierarchicalStateMachine:
         }
 ```
 
+</details>
+
 ---
 
 ## 4. Error Recovery
 
 ### 4.1 Retry Strategies
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import time
@@ -1048,7 +1081,12 @@ def async_retry(
     return decorator
 ```
 
+</details>
+
 ### 4.2 Circuit Breaker Pattern
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class CircuitState(Enum):
@@ -1147,7 +1185,12 @@ class CircuitOpenError(Exception):
     pass
 ```
 
+</details>
+
 ### 4.3 Saga Pattern
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 @dataclass
@@ -1235,11 +1278,16 @@ class SagaOrchestrator:
         }
 ```
 
+</details>
+
 ---
 
 ## 5. Observability
 
 ### 5.1 Distributed Tracing
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import time
@@ -1369,7 +1417,12 @@ class Tracer:
         }
 ```
 
+</details>
+
 ### 5.2 Structured Logging + Metrics
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class WorkflowLogger:
@@ -1458,9 +1511,14 @@ class MetricsCollector:
         return summary
 ```
 
+</details>
+
 ---
 
 ## 6. Workflow Orchestration Engine
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class WorkflowOrchestrator:
@@ -1612,9 +1670,14 @@ class WorkflowOrchestrator:
         }
 ```
 
+</details>
+
 ---
 
 ## 7. Workflow Testing
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import unittest
@@ -1774,6 +1837,8 @@ class TestTracer(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 ```
+
+</details>
 
 ---
 
@@ -1952,6 +2017,9 @@ jobs:
 
 ### 9.2. Apache Airflow — Data Pipeline Orchestration
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 # Airflow pattern: DAG with task dependencies
 from airflow import DAG
@@ -1965,6 +2033,8 @@ with DAG('data_pipeline', schedule_interval='@daily') as dag:
     
     extract >> transform >> load >> validate
 ```
+
+</details>
 
 **Lesson**: Airflow proved that DAG-based workflows with clear task dependencies are the gold standard for data pipelines.
 

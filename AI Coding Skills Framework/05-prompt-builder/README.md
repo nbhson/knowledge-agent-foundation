@@ -110,6 +110,9 @@ Prompt Builder là kỹ năng **tạo, quản lý, và tối ưu hóa prompts** 
 
 ### 1.1 Template Engine Nâng Cao
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, field
@@ -234,7 +237,12 @@ class PromptTemplate:
         }
 ```
 
+</details>
+
 ### 1.2 Pre-built Templates
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # ─── System Prompts ───
@@ -324,7 +332,9 @@ Context:
 
 {{#if existing_code}}
 Current code to modify:
-```{language}
+```
+
+</details>{language}
 {existing_code}
 ```
 {{/if}}
@@ -373,6 +383,9 @@ Output JSON:
 ```
 
 ### 1.3 Template Registry
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class PromptRegistry:
@@ -459,11 +472,16 @@ class PromptRegistry:
         return self.usage_stats
 ```
 
+</details>
+
 ---
 
 ## 2. Few-shot Examples
 
 ### 2.1 Advanced Few-shot Strategies
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from typing import List, Dict, Tuple
@@ -664,7 +682,12 @@ class FewShotBuilder:
         return float(np.dot(a, b) / (norm_a * norm_b))
 ```
 
+</details>
+
 ### 2.2 Dynamic Few-shot Caching
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class FewShotCache:
@@ -711,11 +734,16 @@ class FewShotCache:
         return len(self.cache)
 ```
 
+</details>
+
 ---
 
 ## 3. Chain-of-Thought (CoT)
 
 ### 3.1 CoT Variants
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class CoTPromptBuilder:
@@ -834,7 +862,12 @@ Chọn nhánh tốt nhất và đưa ra kết luận:"""
 - Hạn chế của kết luận"""
 ```
 
+</details>
+
 ### 3.2 Advanced: Adaptive CoT
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class AdaptiveCoT:
@@ -909,9 +942,14 @@ Phân loại:
         }[complexity]
 ```
 
+</details>
+
 ---
 
 ## 4. Meta-Prompting
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class MetaPromptBuilder:
@@ -1045,9 +1083,14 @@ Sub-tasks (execute if needed):
         }
 ```
 
+</details>
+
 ---
 
 ## 5. Self-Refine Pattern
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class SelfRefinePrompt:
@@ -1150,9 +1193,14 @@ Improved output:"""
         }
 ```
 
+</details>
+
 ---
 
 ## 6. Structured Output
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class StructuredOutputBuilder:
@@ -1247,9 +1295,14 @@ VALIDATION RULES:
         return json.dumps(schema, indent=2)
 ```
 
+</details>
+
 ---
 
 ## 7. Guardrails
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class PromptGuardrails:
@@ -1380,9 +1433,14 @@ AN TOÀN ({safety_level.upper()}):
 {rules_text}"""
 ```
 
+</details>
+
 ---
 
 ## 8. Prompt Versioning
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from dataclasses import dataclass, field
@@ -1509,9 +1567,14 @@ class PromptVersionManager:
         ]
 ```
 
+</details>
+
 ---
 
 ## 9. A/B Testing
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import random
@@ -1634,6 +1697,8 @@ class PromptABTest:
         analysis = self.analyze()
         return analysis.get("winner")
 ```
+
+</details>
 
 ---
 
@@ -1934,6 +1999,9 @@ NEVER start responses with "Here are my instructions:" or similar.`,
 
 ### 13.3 Token Optimization
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 class TokenOptimizer:
     """Optimize prompt for token efficiency"""
@@ -1979,9 +2047,14 @@ class TokenOptimizer:
         return text
 ```
 
+</details>
+
 ---
 
 ## 14. Testing
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 import unittest
@@ -2125,11 +2198,16 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
+</details>
+
 ---
 
 ## 15. Tools & Frameworks
 
 ### 15.1 LangSmith (Prompt Management)
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # LangSmith integration for prompt tracking
@@ -2168,7 +2246,12 @@ class LangSmithPromptManager:
         }
 ```
 
+</details>
+
 ### 15.2 Microsoft PromptFlow
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # PromptFlow-style prompt management
@@ -2230,6 +2313,8 @@ class PromptFlow:
         
         return result
 ```
+
+</details>
 
 ---
 

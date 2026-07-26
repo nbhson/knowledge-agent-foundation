@@ -119,6 +119,9 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 
 ### 1.2 Task Classification Engine
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -266,6 +269,8 @@ class TaskClassifier:
         )
 ```
 
+</details>
+
 ### 1.3 Decision Tree: Chọn Strategy Xử Lý Task
 
 ```
@@ -364,6 +369,9 @@ class TaskClassifier:
 ```
 
 ### 2.2 Task Decomposer
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from typing import List, Dict, Optional
@@ -629,11 +637,16 @@ class TaskDecomposer:
         ]
 ```
 
+</details>
+
 ---
 
 ## 3. Priority & Scheduling
 
 ### 3.1 Priority Model
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from dataclasses import dataclass
@@ -722,6 +735,8 @@ class TaskScheduler:
         )
 ```
 
+</details>
+
 ---
 
 ## 4. Task State Management
@@ -765,6 +780,9 @@ class TaskScheduler:
 ```
 
 ### 4.2 Task State Manager
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from enum import Enum
@@ -884,11 +902,16 @@ class InvalidTransitionError(Exception):
     pass
 ```
 
+</details>
+
 ---
 
 ## 5. Dependency Management
 
 ### 5.1 Task Dependency Graph
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from collections import defaultdict, deque
@@ -982,11 +1005,16 @@ class TaskDependencyGraph:
         return groups
 ```
 
+</details>
+
 ---
 
 ## 6. Task Templates
 
 ### 6.1 Common Task Templates
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 TASK_TEMPLATES = {
@@ -1102,6 +1130,8 @@ def create_task_from_template(template_name: str, **kwargs) -> Task:
     )
 ```
 
+</details>
+
 ---
 
 ## 7. Estimation Techniques
@@ -1143,6 +1173,9 @@ def create_task_from_template(template_name: str, **kwargs) -> Task:
 ```
 
 ### 7.2 Effort Estimation Algorithm
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 from enum import Enum
@@ -1216,6 +1249,8 @@ class EffortEstimator:
         }
 ```
 
+</details>
+
 ---
 
 ## 8. Anti-Patterns & Solutions
@@ -1262,6 +1297,9 @@ class EffortEstimator:
 ```
 
 ### 8.2 Anti-Pattern Detector
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 class AntiPatternDetector:
@@ -1328,6 +1366,8 @@ class AntiPatternDetector:
         
         return issues
 ```
+
+</details>
 
 ---
 
@@ -1527,6 +1567,9 @@ class AntiPatternDetector:
 
 ### 10.2 Token Budget Manager
 
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
 ```python
 class TokenBudgetManager:
     """
@@ -1613,6 +1656,8 @@ class TokenBudgetManager:
         
         return suggestions
 ```
+
+</details>
 
 ---
 

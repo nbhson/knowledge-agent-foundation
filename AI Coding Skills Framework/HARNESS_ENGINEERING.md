@@ -40,8 +40,10 @@
     - [5.6. Permissions (Quyền Hạn) - "Xương"](#56-permissions-quyền-hạn---xương)
     - [5.7. Orchestration (Điều Phối) - "Hệ Thần Kinh"](#57-orchestration-điều-phối---hệ-thần-kinh)
     - [Tích Hợp Tất Cả](#tích-hợp-tất-cả)
-  - [6. Case Studies Thực Tế](#6-case-studies-thực-tế)
-    - [6.1. SWE-agent (Princeton NLP)](#61-swe-agent-princeton-nlp)
+    - [Tích Hợp Component Với Modules Trong Repo](#tích-hợp-component-với-modules-trong-repo)
+      - [Bảng Mapping Chi Tiết](#bảng-mapping-chi-tiết)
+  - [🔭 Toàn Cảnh: Harness Engineering — AI Coding Skills Framework](#-toàn-cảnh-harness-engineering--ai-coding-skills-framework)
+    - [Kiến Trúc Tổng Thể: 7 Components → 12 Modules](#kiến-trúc-tổng-thể-7-components--12-modules)
     - [6.2. Anthropic Multi-Agent Architecture](#62-anthropic-multi-agent-architecture)
     - [6.3. Claude Code Leak - Hệ Thống Harness Siêu Đẳng](#63-claude-code-leak---hệ-thống-harness-siêu-đẳng)
       - [A. Quản lý Context 5 Cấp Độ](#a-quản-lý-context-5-cấp-độ)
@@ -1099,6 +1101,185 @@ Mỗi thành phần của Harness tương ứng trực tiếp với các modules
 | **Orchestration** | "Hệ thần kinh" | `07-workflow`, `09-multi-agent`, `04-plan-decompose-task`, `08-task` | Điều phối tất cả thành phần hoạt động hài hòa |
 
 > **Insight**: Prompt Engineering (`05-prompt-builder`) không phải là một component riêng biệt của Harness — nó là **kỹ thuật nền tảng** được tích hợp xuyên suốt nhiều components: System Prompt trong Orchestration, Few-shot trong Context Management, Structured Output trong Guardrails.
+
+---
+
+## 🔭 Toàn Cảnh: Harness Engineering — AI Coding Skills Framework
+
+### Kiến Trúc Tổng Thể: 7 Components → 12 Modules
+
+Sơ đồ dưới đây cho thấy **toàn bộ hệ thống Harness Engineering** và cách nó ánh xạ tới **12 modules** trong AI Coding Skills Framework:
+
+```
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║              AI CODING SKILLS FRAMEWORK — TOÀN CẢNH HARNESS ENGINEERING              ║
+║                  Architecture Overview: 7 Components → 12 Modules                    ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+
+                         TIẾN HÓA: 3 KỶ NGUYÊN AI ENGINEERING
+
+ ┌──────────────────────────┐   ┌──────────────────────────┐   ┌──────────────────────┐
+ │  PROMPT ENGINEERING      │   │  CONTEXT ENGINEERING     │   │  HARNESS ENGINEERING  │
+ │  (2022-2024)             │──►│  (2025)                  │──►│  (2026+)              │
+ │  "Cách hỏi cho đúng"     │   │  "Đưa thông tin gì"     │   │  "Thiết kế cả hệ thống"│
+ │  Mức kiểm soát: ★☆☆      │   │  Mức kiểm soát: ★★☆     │   │  Mức kiểm soát: ★★★   │
+ └──────────────────────────┘   └──────────────────────────┘   └──────────┬───────────┘
+                                                                           │
+              ┌────────────────────────────────────────────────────────────┘
+              ▼
+
+ ┌─────────────────────────────────────────────────────────────────────────────────────┐
+ │                              HARNESS — TOÀN BỘ HỆ THỐNG                              │
+ │                                                                                      │
+ │                         ┌──────────────────────────────────┐                        │
+ │                         │     🧠 ORCHESTRATION              │                        │
+ │                         │     (Hệ thần kinh — Điều phối)    │                        │
+ │                         │                                    │                        │
+ │                         │  ┌────────┐ ┌────────┐ ┌────────┐ │                        │
+ │                         │  │04-plan │ │07-work │ │08-task │ │                        │
+ │                         │  │decom-  │ │ -flow  │ │ (task  │ │                        │
+ │                         │  │pose    │ │(work-  │ │ mgmt)  │ │                        │
+ │                         │  │(kế     │ │ flow)  │ │        │ │                        │
+ │                         │  │hoạch)  │ │        │ │        │ │                        │
+ │                         │  └────────┘ └────────┘ └────────┘ │                        │
+ │                         │  ┌─────────────────────────────┐  │                        │
+ │                         │  │ 09-multi-agent (phối hợp)   │  │                        │
+ │                         │  └─────────────────────────────┘  │                        │
+ │                         └────────────┬─────────────────────┘                        │
+ │                                      │                                               │
+ │                                      ▼                                               │
+ │                         ┌──────────────────────────────────┐                        │
+ │                         │     📚 MEMORY (BỘ NÃO)            │                        │
+ │                         │     ─── RAG PIPELINE ───          │                        │
+ │                         │                                    │                        │
+ │                         │  ┌──────────────────────────────┐ │                        │
+ │                         │  │ ① RETRIEVE (01-retrieve)     │ │                        │
+ │                         │  │  ┌────────┐ ┌────────┐      │ │                        │
+ │                         │  │  │Semantic│ │Keyword │      │ │                        │
+ │                         │  │  │Search  │ │BM25    │      │ │                        │
+ │                         │  │  │(vector)│ │        │      │ │                        │
+ │                         │  │  └────────┘ └────────┘      │ │                        │
+ │                         │  │  ┌────────┐ ┌────────┐      │ │                        │
+ │                         │  │  │K-Graph │ │Hybrid  │      │ │                        │
+ │                         │  │  │Retrieve│ │(RRF)   │      │ │                        │
+ │                         │  │  └────────┘ └────────┘      │ │                        │
+ │                         │  └──────────────────────────────┘ │                        │
+ │                         │  ┌──────────────────────────────┐ │                        │
+ │                         │  │ ② RE-RANK + BUILD CONTEXT    │ │                        │
+ │                         │  │  ├── Cross-Encoder scoring   │ │                        │
+ │                         │  │  └── 02-build-context        │ │                        │
+ │                         │  └──────────────────────────────┘ │                        │
+ │                         │  ┌──────────────────────────────┐ │                        │
+ │                         │  │ ③ UPDATE (03-update-memory)  │ │                        │
+ │                         │  └──────────────────────────────┘ │                        │
+ │                         └────────────┬─────────────────────┘                        │
+ │                                      │                                               │
+ │                                      ▼                                               │
+ │                         ┌──────────────────────────────────┐                        │
+ │                         │     🔄 CONTEXT MANAGEMENT         │                        │
+ │                         │     (Hệ tuần hoàn — 5 cấp độ)    │                        │
+ │                         │                                    │                        │
+ │                         │  ┌──────┐ ┌──────┐ ┌──────┐      │                        │
+ │                         │  │Level1│ │Level2│ │Level3│      │                        │
+ │                         │  │System│ │Task  │ │Domain│      │                        │
+ │                         │  └──────┘ └──────┘ └──────┘      │                        │
+ │                         │  ┌──────┐ ┌──────┐               │                        │
+ │                         │  │Level4│ │Level5│               │                        │
+ │                         │  │Chat  │ │Immed │               │                        │
+ │                         │  └──────┘ └──────┘               │                        │
+ │                         │  Module: 02-build-context         │                        │
+ │                         │  Module: 05-prompt-builder       │                        │
+ │                         └────────────┬─────────────────────┘                        │
+ │                                      │                                               │
+ │            ┌─────────────────────────┼─────────────────────────┐                    │
+ │            │                         │                         │                    │
+ │            ▼                         ▼                         ▼                    │
+ │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐                 │
+ │  │ 🛠️ TOOLS         │  │ 🛡️ GUARDRAILS   │  │ 🔁 FEEDBACK     │                 │
+ │  │ (Tay chân)       │  │ (Hệ miễn dịch)   │  │ LOOPS (Cảm giác) │                 │
+ │  │                   │  │                   │  │                   │                 │
+ │  │ 06-decide-tools   │  │ Input validation │  │ 07-workflow      │                 │
+ │  │ MCP integration   │  │ Output validation│  │ (retry patterns) │                 │
+ │  │ Tool validation   │  │ Security checks  │  │ 11-evaluation     │                 │
+ │  │                   │  │ Prompt injection │  │ (metrics)         │                 │
+ │  │                   │  │ detection        │  │ 12-loop-eng       │                 │
+ │  └──────────────────┘  └──────────────────┘  └──────────────────┘                 │
+ │            │                         │                         │                    │
+ │            └─────────────────────────┼─────────────────────────┘                    │
+ │                                      │                                               │
+ │                                      ▼                                               │
+ │                         ┌──────────────────────────────────┐                        │
+ │                         │     🔒 PERMISSIONS (Xương)        │                        │
+ │                         │                                    │                        │
+ │                         │  ┌──────────────┐ ┌────────────┐ │                        │
+ │                         │  │ File Access  │ │ Network    │ │                        │
+ │                         │  │ Control      │ │ Restrictions│ │                        │
+ │                         │  │ (10-auto)    │ │ (06-tools) │ │                        │
+ │                         │  └──────────────┘ └────────────┘ │                        │
+ │                         │  ┌──────────────────────────────┐ │                        │
+ │                         │  │ Execution Permissions        │ │                        │
+ │                         │  └──────────────────────────────┘ │                        │
+ │                         └──────────────────────────────────┘                        │
+ │                                      │                                               │
+ │                                      ▼                                               │
+ │                         ┌──────────────────────────────────┐                        │
+ │                         │     🤖 LLM + RESPONSE            │                        │
+ │                         │     (Mô hình AI + Phản hồi)      │                        │
+ │                         │     ← Đầu ra cuối cùng           │                        │
+ │                         └──────────────────────────────────┘                        │
+ └─────────────────────────────────────────────────────────────────────────────────────┘
+
+                        ════════════════════════════════════
+                         MODULES CỐT LÕI TRONG FRAMEWORK
+
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │                                                                                 │
+ │  01  ── retrieve-memory-knowledge    (Retrieve & Memory — RAG Pipeline)        │
+ │  02  ── build-context                 (Context Management — 5 levels)          │
+ │  03  ── update-memory-store           (Memory Update — lưu kiến thức mới)      │
+ │  04  ── plan-decompose-task           (Planning — chia nhỏ task)               │
+ │  05  ── prompt-builder                (Prompt + Guardrails)                    │
+ │  06  ── decide-tools-mcp              (Tools + Permissions + MCP)              │
+ │  07  ── workflow                      (Workflow + Feedback Loops)              │
+ │  08  ── task                          (Task Management)                         │
+ │  09  ── multi-agent                   (Agent Orchestration)                     │
+ │  10  ── automation                    (Automation + Access Control)             │
+ │  11  ── evaluation                    (Evaluation + Metrics + Guardrails)       │
+ │  12  ── loop-engineering              (Continuous Improvement Loop)             │
+ │                                                                                 │
+ └─────────────────────────────────────────────────────────────────────────────────┘
+
+ ══════════════════════════════════════════════════════════════════════════════════
+
+ PHÂN TÍCH MỐI QUAN HỆ:
+ - Harness ≈ TOÀN BỘ khung bên ngoài (bao gồm 7 components)
+ - RAG Pipeline (01) ≈ 1 phần của MEMORY component — Thành phần "Bộ não"
+ - 12 modules ≈ 12 kỹ năng cụ thể, mỗi module phục vụ 1+ components của Harness
+ - Prompt Engineering (05) ≈ Kỹ thuật nền tảng, nằm xuyên suốt nhiều components
+
+ TỶ LỆ BAO PHỦ CỦA TỪNG MODULE TRONG HARNESS:
+ ┌─────────────────────────────────────────────────────────────────────────┐
+ │  01-retrieve-memory     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  85%   │
+ │  02-build-context       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  70%   │
+ │  03-update-memory       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░  50%   │
+ │  04-plan-decompose      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░  55%   │
+ │  05-prompt-builder      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░  60%   │
+ │  06-decide-tools        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  75%   │
+ │  07-workflow            ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░  80%   │
+ │  08-task                ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░  45%   │
+ │  09-multi-agent         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  65%   │
+ │  10-automation          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░  40%   │
+ │  11-evaluation          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  70%   │
+ │  12-loop-engineering    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  60%   │
+ └─────────────────────────────────────────────────────────────────────────┘
+
+**Tóm lại:**
+| Khía cạnh | RAG Pipeline (01) | Harness Engineering (Toàn bộ) |
+|-----------|-------------------|-------------------------------|
+| **Phạm vi** | 1 kỹ thuật: retrieve + augment | 7 components, 12 modules |
+| **Vai trò** | Cung cấp kiến thức cho LLM | Kiểm soát mọi thứ AI có thể làm |
+| **Tỷ lệ bao phủ** | ~85% của Memory component | 100% toàn bộ hệ thống |
+| **Quan hệ** | Là 1 phần của Memory | Là tổng thể bao hàm RAG |
 
 ---
 

@@ -705,6 +705,226 @@ if __name__ == "__main__":
 
 ---
 
+### 2.3 4 Chain Types của LangChain (Stuff / Map-Reduce / Refine / Context Compression)
+
+Đây là **4 cách build context chuẩn** trong LangChain, bạn sẽ gặp khi dùng `RetrievalQA.from_chain_type()`:
+
+```
+                    ┌─────────────────────────────────────┐
+                    │       4 CHAIN TYPES                 │
+                    │                                     │
+                    │   STUFF       ──── pass-through    │
+                    │   MAP-REDUCE  ──── compressed      │
+                    │   REFINE      ──── iterative        │
+                    │   COMPRESSION ──── selective        │
+                    └─────────────────────────────────────┘
+```
+
+<details>
+<summary><b>1. STUFF — Nhồi tất cả chunks vào prompt (Click để xem)</b></summary>
+
+```
+Input chunks: [chunk_1, chunk_2, chunk_3, chunk_4]
+                    │
+                    ▼
+     ┌──────────────────────────────┐
+     │  PROMPT:                     │
+     │                              │
+     │  Context:                    │
+     │  - chunk_1 (300 tokens)     │
+     │  - chunk_2 (250 tokens)     │
+     │  - chunk_3 (400 tokens)     │
+     │  - chunk_4 (350 tokens)     │
+     │                              │
+     │  Question: ...               │
+     └──────────────────────────────┘
+                    │
+                    ▼
+     LLM nhận ALL chunks cùng lúc
+```
+
+```python
+from langchain.chains import RetrievalQA
+
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    retriever=vector_store.as_retriever(),
+    chain_type="stuff"  # ← nhồi tất cả vào 1 prompt
+)
+```
+
+| ✅ Ưu điểm | ❌ Nhược điểm |
+|-----------|-------------|
+| Đơn giản, dễ debug | Token limit: context dễ bị overflow |
+| Giữ nguyên thông tin gốc | Chậm khi quá nhiều chunks |
+| Một lần gọi LLM duy nhất | "Lost in the middle" — thông tin giữa dễ bị bỏ qua |
+
+**Khi nào dùng:** Context ngắn (< 4K tokens), cần độ chính xác cao, không muốn mất thông tin.
+
+</details>
+
+<details>
+<summary><b>2. MAP-REDUCE — Tóm tắt từng chunk rồi gộp (Click để xem)</b></summary>
+
+```
+Input chunks: [chunk_1, chunk_2, chunk_3, chunk_4]
+                    │
+                    ▼
+     ┌───────── MAP PHASE ─────────┐
+     │  chunk_1 ──► LLM ──► summary_1  │
+     │  chunk_2 ──► LLM ──► summary_2  │
+     │  chunk_3 ──► LLM ──► summary_3  │
+     │  chunk_4 ──► LLM ──► summary_4  │
+     └────────────────────────────────┘
+                    │
+                    ▼
+     ┌──────── REDUCE PHASE ────────┐
+     │  summary_1 + summary_2 +       │
+     │  summary_3 + summary_4 ──► LLM │
+     │                      ──► final │
+     └────────────────────────────────┘
+                    │
+                    ▼
+        LLM chỉ nhìn thấy summaries
+```
+
+```python
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    retriever=vector_store.as_retriever(),
+    chain_type="map_reduce"  # ← map từng chunk rồi reduce
+)
+```
+
+| ✅ Ưu điểm | ❌ Nhược điểm |
+|-----------|-------------|
+| Không giới hạn số lượng chunks | Có thể mất chi tiết quan trọng |
+| Token-efficient | Tốn nhiều LLM calls (map mỗi chunk 1 call) |
+| Xử lý được context khổng lồ | Thông tin bị paraphrase có thể sai lệch |
+
+**Khi nào dùng:** Hàng chục documents, context rất dài (> 10K tokens), chỉ cần ý chính.
+
+</details>
+
+<details>
+<summary><b>3. REFINE — Cập nhật câu trả lời qua từng chunk (Click để xem)</b></summary>
+
+```
+Input chunks: [chunk_1, chunk_2, chunk_3, chunk_4]
+                    │
+                    ▼
+     ┌──────────────────────────────────┐
+     │  Step 1: chunk_1 + question      │
+     │    ──► LLM ──► answer_1 (draft) │
+     └──────────────────────────────────┘
+                    │
+                    ▼
+     ┌──────────────────────────────────┐
+     │  Step 2: chunk_2 + answer_1      │
+     │    ──► LLM ──► answer_2 (refine)│
+     └──────────────────────────────────┘
+                    │
+                    ▼
+     ┌──────────────────────────────────┐
+     │  Step 3: chunk_3 + answer_2      │
+     │    ──► LLM ──► answer_3 (refine)│
+     └──────────────────────────────────┘
+                    │
+                    ▼
+              ... đến chunk cuối
+```
+
+```python
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    retriever=vector_store.as_retriever(),
+    chain_type="refine"  # ← cập nhật dần dần
+)
+```
+
+| ✅ Ưu điểm | ❌ Nhược điểm |
+|-----------|-------------|
+| Kết hợp thông tin từ nhiều nguồn | Tốn nhiều LLM calls (N chunks = N calls) |
+| Iterative refinement: càng xử lý càng chính xác | Phụ thuộc vào thứ tự chunks |
+| Không bị "lost in the middle" | Dễ bị "over-refine" — thay đổi ý đúng thành sai |
+| Dễ dàng track từng bước | Chậm nhất trong 4 chain types |
+
+**Khi nào dùng:** Cần phân tích sâu từng document một, câu hỏi phức tạp cần nhiều góc nhìn.
+
+</details>
+
+<details>
+<summary><b>4. CONTEXT COMPRESSION — Nén context trước khi nhồi (Click để xem)</b></summary>
+
+Đây là chain type riêng, không dùng `chain_type` param mà dùng `BaseDocumentCompressor`:
+
+```
+Input chunks: [chunk_1, chunk_2, chunk_3, chunk_4]
+                    │
+                    ▼
+     ┌── CONTEXT COMPRESSOR ─────────┐
+     │  chunk_1 ──► "BHYT 80-100%"    │
+     │  chunk_2 ──► "tim mạch ✔"      │
+     │  chunk_3 ──► ✘ (không liên quan)│
+     │  chunk_4 ──► "5 năm gần nhất"  │
+     └────────────────────────────────┘
+                    │
+                    ▼
+     ┌──────────────────────────────┐
+     │  Chỉ giữ chunks liên quan,   │
+     │  loại bỏ nhiễu               │
+     └──────────────────────────────┘
+                    │
+                    ▼
+        ──► Sau đó vẫn STUFF vào prompt
+```
+
+```python
+from langchain.retrievers.document_compressors import LLMChainExtractor
+from langchain.retrievers import ContextualCompressionRetriever
+
+# Compressor trích xuất câu liên quan từ mỗi chunk
+compressor = LLMChainExtractor.from_llm(llm)
+
+# Bọc retriever với compressor
+compression_retriever = ContextualCompressionRetriever(
+    base_compressor=compressor,
+    base_retriever=vector_store.as_retriever()
+)
+
+# Kết hợp với STUFF chain
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    retriever=compression_retriever,
+    chain_type="stuff"
+)
+```
+
+| ✅ Ưu điểm | ❌ Nhược điểm |
+|-----------|-------------|
+| Giảm token đáng kể | LLM compressor tốn thêm call |
+| Chỉ giữ thông tin liên quan tới câu hỏi | Có thể vứt nhầm thông tin quan trọng |
+| Giảm noise, tăng accuracy | Phức tạp hơn để setup |
+
+**Khi nào dùng:** Context dài, nhiều chunks không liên quan, muốn tiết kiệm tokens và focus vào thông tin cần thiết.
+
+</details>
+
+---
+
+#### Tổng Kết: Chọn Chain Type Nào?
+
+| Chain Type | Số LLM Calls | Token Usage | Độ Chính Xác | Dùng Khi |
+|-----------|:-----------:|:----------:|:-----------:|---------|
+| **Stuff** | 1 | Cao nhất | Cao | Context ngắn (< 4K tokens) |
+| **Map-Reduce** | N + 1 | Thấp | Trung bình | Context rất dài (> 10K chữ) |
+| **Refine** | N | Cao | Cao nhất | Cần phân tích tuần tự |
+| **Compression** | depends | Linh hoạt | Cao | Nhiều chunks nhiễu |
+
+> **Ghi chú:** "Chain Types" là tên gọi của LangChain. Trong thực tế, 4 pattern này xuất hiện trong mọi RAG framework (LlamaIndex gọi là `ResponseMode`, hay trong code tự viết bạn implement manual).
+
+---
+
 ## 3. Context Compression & Summarization
 
 ### 3.1 Tại Sao Cần Compression?

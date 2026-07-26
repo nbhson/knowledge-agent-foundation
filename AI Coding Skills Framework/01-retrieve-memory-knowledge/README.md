@@ -26,28 +26,53 @@ Trong AI, việc **truy xuất bộ nhớ và kiến thức** là quá trình l�
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                  RETRIEVE MEMORY & KNOWLEDGE                     │
+│               RETRIEVE MEMORY & KNOWLEDGE — RAG PIPELINE         │
 │                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │                                                            │  │
-│  │  User Query                                                │  │
-│  │     │                                                      │  │
-│  │     ▼                                                      │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       │  │
-│  │  │  Semantic   │  │  Knowledge  │  │  Web/DB     │       │  │
-│  │  │  Search     │  │  Graph      │  │  Search     │       │  │
-│  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘       │  │
-│  │         └────────────────┼────────────────┘               │  │
-│  │                          ▼                                 │  │
-│  │                   ┌─────────────┐                          │  │
-│  │                   │  Re-ranking  │                         │  │
-│  │                   └──────┬──────┘                          │  │
-│  │                          ▼                                 │  │
-│  │                   ┌─────────────┐                          │  │
-│  │                   │  Memory     │                          │  │
-│  │                   │  Systems    │                          │  │
-│  │                   └─────────────┘                          │  │
-│  └────────────────────────────────────────────────────────────┘  │
+│   User Query                                                    │
+│       │                                                          │
+│       ▼                                                          │
+│   ┌────────────────────────────────────────────────────────┐    │
+│   │  ① RETRIEVE                                             │   │
+│   │  │                                                      │   │
+│   │  ├── HYBRID SEARCH ──────────────────────┐             │   │
+│   │  │   ├── Semantic Search (vector DB)     │ tìm theo    │   │
+│   │  │   │                                   │ ý nghĩa    │   │
+│   │  │   └── Keyword Search (BM25)           │ tìm chính  │   │
+│   │  │                                       │ xác từ khóa│   │
+│   │  │   → RRF Fusion gộp kết quả            │             │   │
+│   │  └───────────────────────────────────────┘             │   │
+│   │                                                         │   │
+│   │  ├── Knowledge Graph Retrieval ── duyệt entities + rel │   │
+│   │  └── Web/DB Search             ── tìm từ external      │   │
+│   └──────────────────────┬─────────────────────────────────┘   │
+│                          │ top-50 docs (thô)                   │
+│                          ▼                                      │
+│   ┌────────────────────────────────────────────────────────┐    │
+│   │  ② RE-RANKING (Cross-Encoder)                          │   │
+│   │  │                                                      │   │
+│   │  │  (query, doc_1) → score 0.92    ✓ giữ             │   │
+│   │  │  (query, doc_2) → score 0.87    ✓ giữ             │   │
+│   │  │  (query, doc_3) → score 0.45    ✗ loại            │   │
+│   │  │                                                      │   │
+│   │  │  Mục tiêu: Tăng precision — chỉ giữ top-K docs     │   │
+│   │  │  chính xác nhất, loại bỏ docs ít liên quan         │   │
+│   │  └─────────────────────────────────────────────────────┘   │
+│   └──────────────────────┬─────────────────────────────────┘   │
+│                          │ top-5 docs (đã sắp xếp chính xác)  │
+│                          ▼                                      │
+│   ┌────────────────────────────────────────────────────────┐    │
+│   │  ③ BUILD CONTEXT                                       │   │
+│   │  ├── Ghép top-K chunks vào prompt                     │   │
+│   │  ├── Thêm system instructions                         │   │
+│   │  └── Compress nếu cần                                │   │
+│   └──────────────────────┬─────────────────────────────────┘   │
+│                          │                                      │
+│                          ▼                                      │
+│   ┌──────────────┐    ┌──────────┐    ┌──────────┐            │
+│   │   LLM (đã    │───►│ Response │───►│   Trả    │            │
+│   │   augmented  │    │  chính   │    │   lời    │            │
+│   │   context)   │    │  xác     │    │   user   │            │
+│   └──────────────┘    └──────────┘    └──────────┘            │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
@@ -252,6 +277,310 @@ Triết lý của Memory Retrieval xoay quanh 3 nguyên tắc:
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+#### Pipeline Xử Lý Documents
+
+Thứ tự chính xác là:
+
+```
+📄 Documents (PDF, HTML, Markdown...)
+        │
+        ▼
+① CLEANING — Làm sạch text (bỏ HTML tags, lỗi encoding...)
+        │
+        ▼
+② CHUNKING — Chia nhỏ documents thành các đoạn
+        │
+        ▼
+③ EMBEDDING — Dùng Embedding Model (nomic-embed-text) chuyển mỗi chunk thành vector
+        │
+        ▼
+④ SAVE TO VECTOR DB — Lưu vector + text + metadata vào database
+```
+
+**Giải thích từng bước:**
+
+| # | Bước | Input | Output | Ví dụ |
+|---|------|-------|--------|-------|
+| 1 | Chunking | Document lớn (10 trang) | Nhiều chunks nhỏ | 1 PDF → 50 chunks |
+| 2 | Embedding | Chunk text | Vector (dãy số) | "BHYT là gì?" → [0.25, -0.42, 0.65, ...] |
+| 3 | Save to DB | Vector + Text + Metadata | Entry trong Vector DB | Lưu vào ChromaDB/Qdrant |
+
+<br>
+
+#### Khi User Search
+
+Khi user search thì chạy ngược lại:
+
+```
+🔍 User Query: "phòng ngừa bệnh tim"
+        │
+        ▼
+① EMBEDDING Query — Chuyển query thành vector
+        │
+        ▼
+② SEARCH Vector DB — Tìm vector gần nhất
+        │
+        ▼
+③ RETURN Results — Trả về text chunks liên quan nhất
+```
+
+<br>
+
+#### Vậy Can Thiệp Vào Đâu?
+
+Câu hỏi của bạn: **"Làm sao can thiệp vào giữa prompt và LLM?"**
+
+Đây chính là core của RAG. Luồng thực tế là:
+
+```
+① User gõ: "BHYT có chi trả bệnh tim không?"
+        │
+        ▼
+② Bạn viết code INTERCEPT prompt này
+        │
+        ├── Gửi prompt đi SEARCH Vector DB (biến nó thành câu query)
+        │      └── Vector DB trả về: [chunk_liên_quan_1, chunk_liên_quan_2, ...]
+        │
+        ▼
+③ Bạn GHÉP retrieved chunks vào prompt gốc:
+        │
+        │   Prompt cuối tới LLM:
+        │   ┌─────────────────────────────────────────────┐
+        │   │ System: Dùng thông tin sau để trả lời:      │
+        │   │                                             │
+        │   │ [Context từ Vector DB]                      │
+        │   │ • BHYT chi trả 80-100% chi phí tùy tuyến   │
+        │   │ • Bệnh tim mạch thuộc danh mục BHYT        │
+        │   │                                             │
+        │   │ User: BHYT có chi trả bệnh tim không?      │
+        │   └─────────────────────────────────────────────┘
+        │
+        ▼
+④ LLM nhận prompt ĐÃ CÓ context → trả lời chính xác
+```
+
+<details>
+<summary><b>Coding mẫu — 10 dòng là xong (Click để xem)</b></summary>
+
+```python
+import requests
+
+OLLAMA_URL = "http://localhost:11434"
+
+# 1. User gõ prompt
+user_prompt = "BHYT có chi trả bệnh tim không?"
+
+# 2. INTERCEPT: embed prompt → search vector DB
+def search_relevant_chunks(query):
+    # Embed query
+    resp = requests.post(f"{OLLAMA_URL}/api/embed", json={
+        "model": "nomic-embed-text",
+        "input": query
+    })
+    query_vector = resp.json()["embeddings"][0]
+    
+    # Search ChromaDB/FAISS (giả lập kết quả)
+    results = [
+        "BHYT chi trả từ 80% đến 100% chi phí tùy tuyến.",
+        "Bệnh tim mạch thuộc danh mục bảo hiểm y tế chi trả.",
+    ]
+    return results
+
+# 3. GHÉP context vào prompt
+context = search_relevant_chunks(user_prompt)
+final_prompt = f"""Dùng thông tin sau để trả lời câu hỏi:
+
+{chr(10).join(f'• {c}' for c in context)}
+
+Câu hỏi: {user_prompt}"""
+
+# 4. Gửi prompt ĐÃ AUGMENT tới LLM
+response = requests.post(f"{OLLAMA_URL}/api/generate", json={
+    "model": "gemma3:12b",
+    "prompt": final_prompt,
+    "stream": False
+})
+
+print(response.json()["response"])
+```
+</details>
+
+Chốt lại: **Bạn không sửa LLM, bạn sửa PROMPT trước khi gửi.**
+
+<br>
+
+#### Làm Sao Để Đoạn Code Đó Tự Động Chạy?
+
+Câu hỏi thực tế: **"Tôi có code rồi, nhưng làm sao để nó chạy giữa prompt và LLM?"**
+
+Có 4 cách, tùy vào thiết lập của bạn:
+
+---
+
+**Cách 1 — Wrapper API (Đơn giản nhất, dùng cho mọi app)**
+
+Bạn viết một server nhỏ làm **proxy**, app chat gọi vào proxy này, proxy tự động retrieve context rồi mới gọi LLM.
+
+```
+App Chat (bất kỳ) ──► PROXY BẠN VIẾT ──► Ollama API
+                          │
+                          ├── Nhận prompt từ app
+                          ├── Search Vector DB
+                          ├── Ghép context vào prompt
+                          └── Gửi prompt đã augment tới Ollama
+```
+
+<details>
+<summary><b>Code mẫu — proxy server bằng Flask (Click để xem)</b></summary>
+
+```python
+from flask import Flask, request, jsonify
+import requests
+
+app = Flask(__name__)
+OLLAMA_URL = "http://localhost:11434"
+
+def search_relevant(query):
+    """Search Vector DB - thay bằng code thật của bạn"""
+    resp = requests.post(f"{OLLAMA_URL}/api/embed", json={
+        "model": "nomic-embed-text", "input": query
+    })
+    # Giả lập kết quả - thay bằng ChromaDB/Qdrant thật
+    return [
+        "BHYT chi trả từ 80% đến 100% chi phí tùy tuyến.",
+        "Bệnh tim mạch thuộc danh mục bảo hiểm y tế chi trả.",
+    ]
+
+@app.route("/api/chat", methods=["POST"])
+def chat():
+    data = request.json
+    user_prompt = data.get("prompt", "")
+    
+    # INTERCEPT: retrieve context
+    context = search_relevant(user_prompt)
+    
+    # GHÉP context vào prompt
+    augmented_prompt = f"""Dùng thông tin sau để trả lời:
+
+{chr(10).join(f'• {c}' for c in context)}
+
+Câu hỏi: {user_prompt}"""
+    
+    # Gửi tới LLM
+    resp = requests.post(f"{OLLAMA_URL}/api/generate", json={
+        "model": data.get("model", "gemma3:12b"),
+        "prompt": augmented_prompt,
+        "stream": data.get("stream", False)
+    })
+    
+    return jsonify(resp.json())
+
+if __name__ == "__main__":
+    app.run(port=5000)
+```
+
+**Cách dùng:** Trong app chat, thay vì gọi `localhost:11434`, bạn gọi `localhost:5000/api/chat`. Tự động có RAG.
+</details>
+
+---
+
+**Cách 2 — Function Wrapper (Dùng trong code Python của bạn)**
+
+<details>
+<summary><b>Code mẫu — Function Wrapper (Click để xem)</b></summary>
+
+Nếu bạn tự viết app Python, chỉ cần wrap hàm gọi LLM:
+
+```python
+# BÌNH THƯỜNG:
+def ask_llm(prompt):
+    return requests.post("http://localhost:11434/api/generate", json={
+        "model": "gemma3:12b", "prompt": prompt
+    }).json()["response"]
+
+# CÓ RETRIEVE:
+def ask_llm_with_rag(prompt):
+    # Bước 1: retrieve context
+    context = search_relevant_chunks(prompt)  # hàm bạn đã viết
+    
+    # Bước 2: ghép context vào prompt
+    augmented = f"Context:\n{chr(10).join(context)}\n\nQuestion: {prompt}"
+    
+    # Bước 3: gọi LLM với prompt đã augment
+    return requests.post("http://localhost:11434/api/generate", json={
+        "model": "gemma3:12b", "prompt": augmented
+    }).json()["response"]
+
+# Dùng y hệt:
+print(ask_llm_with_rag("BHYT có chi trả bệnh tim không?"))
+```
+</details>
+
+---
+
+**Cách 3 — Open WebUI (Không cần code)**
+
+Nếu bạn dùng [Open WebUI](https://openwebui.com/), nó đã có sẵn cơ chế:
+
+```
+Settings → Documents → Upload file → 
+Khi chat: @mention file đó → tự động RAG
+```
+
+Hoặc dùng tính năng **Pipeline** của Open WebUI để viết filter middleware.
+
+---
+
+**Cách 4 — LangChain / LlamaIndex (Framework chuyên nghiệp)**
+
+<details>
+<summary><b>Code mẫu — LangChain (Click để xem)</b></summary>
+
+```python
+from langchain_community.llms import Ollama
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain.chains import RetrievalQA
+
+# Load vector DB đã có sẵn
+vector_store = Chroma(
+    embedding_function=OllamaEmbeddings(model="nomic-embed-text"),
+    persist_directory="./chroma_db"
+)
+
+# Tạo chain: tự động retrieve + augment + generate
+qa_chain = RetrievalQA.from_chain_type(
+    llm=Ollama(model="gemma3:12b"),
+    retriever=vector_store.as_retriever(),
+    chain_type="stuff"  # stuff = nhồi context vào prompt
+)
+
+# Dùng: tự động chạy retrieve → augment → LLM
+result = qa_chain.invoke("BHYT có chi trả bệnh tim không?")
+print(result)
+```
+</details>
+
+---
+
+**Tóm lại: Bạn chỉ cần chọn 1 trong 4 cách:**
+
+| Cách | Khi nào dùng | Độ khó |
+|------|-------------|--------|
+| **Proxy server** | App chat bất kỳ (web, mobile, desktop) | ⭐⭐ |
+| **Function wrapper** | Code Python tự viết | ⭐ |
+| **Open WebUI** | Đã xài Open WebUI | ⭐ (không code) |
+| **LangChain/LlamaIndex** | Production, cần nhiều tính năng | ⭐⭐⭐ |
+
+<br>
+
+> **📌 Key Concepts:**
+> - **Semantic Search** hiểu ý nghĩa, không chỉ khớp từ khóa
+> - **Vector Embedding** biến text thành dãy số (vector) để máy tính so sánh
+> - **Similarity** đo khoảng cách giữa các vector trong không gian nhiều chiều
+> - **Chunking** chia nhỏ documents trước khi embed
+> - **Vector Database** lưu trữ và tìm kiếm vector nhanh chóng
 
 ### 1.2 Vector Embedding — Cách Thức Hoạt Động
 
@@ -756,34 +1085,10 @@ So sánh:
 
 **RAG** = Retrieve + Generate. Thay vì chỉ dựa vào knowledge có sẵn trong model, RAG **truy xuất thông tin từ nguồn bên ngoài** rồi đưa vào context của LLM để generate câu trả lời chính xác hơn.
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                     RAG WORKFLOW                                  │
-│                                                                  │
-│   WITHOUT RAG:                                                   │
-│   ┌──────┐    ┌──────────────┐    ┌──────────────┐             │
-│   │ User │───►│     LLM      │───►│   Response   │             │
-│   │Query │    │ (limited by  │    │ (may be      │             │
-│   └──────┘    │  training    │    │  inaccurate) │             │
-│               │  data only)  │    └──────────────┘             │
-│               └──────────────┘                                  │
-│                                                                  │
-│   WITH RAG:                                                      │
-│   ┌──────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    │
-│   │ User │───►│ Retriever │───►│  Context  │───►│   LLM    │───►│Response│
-│   │Query │    │ (search   │    │  Builder  │    │ (augmented│    │(accurate│
-│   └──────┘    │  docs)    │    └──────────┘    │  prompt)  │    │  + cited)│
-│               └──────────┘                     └──────────┘    └──────────┘
-│                    │                                                │
-│                    ▼                                                │
-│            ┌──────────────┐                                       │
-│            │  Knowledge   │                                       │
-│            │  Base        │                                       │
-│            │  (Vector DB) │                                       │
-│            └──────────────┘                                       │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-```
+> **📌 RAG Pipeline chi tiết (xem diagram ở [đầu tài liệu](#-i-retrieve-memory--knowledge)):**
+> 1. **① RETRIEVE** — Hybrid Search (Semantic + BM25) + KG Retrieval + Web/DB Search → top-50 docs
+> 2. **② RE-RANKING** — Cross-Encoder chấm điểm từng (query, doc) → giữ top-5 docs chính xác nhất
+> 3. **③ BUILD CONTEXT** — Ghép top-K chunks vào prompt + system instructions
 
 ### 2.2 RAG Pipeline Chi Tiết — 6 Bước
 

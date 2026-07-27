@@ -1440,6 +1440,9 @@ Final Answer: [your answer]"""
 
 ### 6.1 TypeScript Interface (Harness Architecture)
 
+<details>
+<summary><b>6.1 TypeScript Interface (Harness Architecture) (Click to expand/collapse)</b></summary>
+
 ```typescript
 // Planning System Interface — Tích hợp hoàn chỉnh với Harness
 interface PlanningSystem {
@@ -1562,6 +1565,8 @@ class HarnessPlanner implements PlanningSystem {
 }
 ```
 
+</details>
+
 ---
 
 ## 7. Case Studies Thực Tế
@@ -1576,6 +1581,10 @@ class HarnessPlanner implements PlanningSystem {
 - Không biết khi nào dừng lại
 
 **Giải pháp**:
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
 ```typescript
 // Harness planning cho SWE-agent
 const swePlanner = {
@@ -1601,6 +1610,8 @@ const swePlanner = {
 };
 ```
 
+</details>
+
 **Kết quả**:
 - Success rate: 12.5% → 20.5% (+64%)
 - Token usage giảm 30%
@@ -1615,6 +1626,10 @@ const swePlanner = {
 **Bối cảnh**: Claude Code cần tạo ứng dụng phức tạp (games, DAW).
 
 **Giải pháp — 3-Agent Planning System**:
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
 ```typescript
 // Planner → Generator → Evaluator
 class AnthropicPlannerAgent {
@@ -1662,6 +1677,8 @@ class AnthropicPlannerAgent {
 }
 ```
 
+</details>
+
 **Kết quả**:
 - Tạo được games, DAW hoàn chỉnh
 - Success rate cao hơn 80% so với single-agent
@@ -1674,6 +1691,9 @@ class AnthropicPlannerAgent {
 ### 7.3. Claude Code — Hierarchical Planning System
 
 **Bối cảnh**: Claude Code leak reveals advanced planning architecture.
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 // Hierarchical Planning — 3 cấp độ
@@ -1710,7 +1730,13 @@ class ClaudePlanningSystem {
 }
 ```
 
+</details>
+
 **Key Feature — Dynamic Re-planning**:
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
 ```typescript
 // Claude Code tự động re-plan khi gặp vấn đề
 class DynamicReplanner {
@@ -1737,9 +1763,14 @@ class DynamicReplanner {
 }
 ```
 
+</details>
+
 ---
 
 ### 7.4. Cursor IDE — Context-Aware Planning
+
+<details>
+<summary><b>7.4. Cursor IDE — Context-Aware Planning (Click to expand/collapse)</b></summary>
 
 ```typescript
 class CursorPlanner {
@@ -1773,6 +1804,8 @@ class CursorPlanner {
   }
 }
 ```
+
+</details>
 
 **Bài học từ Case Studies**:
 
@@ -1872,6 +1905,9 @@ class CursorPlanner {
 
 ### 9.3 Token Budget Management
 
+<details>
+<summary><b>9.3 Token Budget Management (Click to expand/collapse)</b></summary>
+
 ```typescript
 class TokenBudgetManager {
   private totalBudget: number;
@@ -1922,6 +1958,8 @@ class TokenBudgetManager {
   }
 }
 ```
+
+</details>
 
 ---
 

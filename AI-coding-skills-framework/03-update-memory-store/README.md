@@ -1171,6 +1171,9 @@ Các case studies sau đây cho thấy cách các hệ thống production quản
 
 **Bối cảnh**: Claude Code (Anthropic) cần nhớ context qua nhiều sessions, biết project structure, và cập nhật knowledge khi user học được điều mới.
 
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
 ```typescript
 /**
  * Claude Code Memory Architecture
@@ -1342,6 +1345,8 @@ ${this.pitfalls.map(p => `- ⚠️ ${p}`).join('\n')}
   }
 }
 ```
+
+</details>
 
 **Key Insights**:
 1. ✅ **3-tier memory** — Session (ephemeral) → Project (persistent in CLAUDE.md) → Global (cross-project)

@@ -323,6 +323,9 @@ class AutomationPipeline:
 
 ### 2.2 GitHub Actions Templates
 
+<details>
+<summary><b>2.2 GitHub Actions Templates (Click to expand/collapse)</b></summary>
+
 ```yaml
 # .github/workflows/ci.yml - Complete CI Pipeline
 name: CI Pipeline
@@ -505,6 +508,8 @@ jobs:
             -H 'Content-Type: application/json' \
             -d '{"text":"✅ Deployed ${{ github.sha }} to production"}'
 ```
+
+</details>
 
 ### 2.3 Pipeline Configuration
 
@@ -1927,6 +1932,9 @@ WORKFLOW_TEMPLATES = {
 
 ### 12.1 Core Automation Types
 
+<details>
+<summary><b>12.1 Core Automation Types (Click to expand/collapse)</b></summary>
+
 ```typescript
 // ═══════════════════════════════════════════════════════════════
 // AUTOMATION TYPES — Production-grade interfaces cho automation systems
@@ -2124,6 +2132,8 @@ interface DeploymentRestriction {
   maxDeployFrequency?: number;  // per hour
 }
 ```
+
+</details>
 
 ---
 

@@ -26,6 +26,10 @@
 ## 🛠️ Cách Sử Dụng
 
 ### Bước 1: Cài đặt môi trường
+
+<details>
+<summary><b>Bước 1: Cài đặt môi trường (Click to expand/collapse)</b></summary>
+
 ```bash
 # Cài Ollama (chạy LLM & Embedding local)
 curl -fsSL https://ollama.com/install.sh | sh
@@ -34,6 +38,8 @@ curl -fsSL https://ollama.com/install.sh | sh
 ollama pull gemma3:12b        # LLM chính
 ollama pull nomic-embed-text  # Embedding model
 ```
+
+</details>
 
 ### Bước 2: Học theo lộ trình
 Bắt đầu từ **Phase 1** (Core Skills) và tiến dần đến **Phase 6** (Evaluation). Mỗi module có README.md chi tiết với code examples.
@@ -958,6 +964,9 @@ Tuần 21-26: #16 Autonomous AI Development Platform
 
 ### Ví dụ 1: Xây dựng RAG Pipeline đơn giản
 
+<details>
+<summary><b>Ví dụ 1: Xây dựng RAG Pipeline đơn giản (Click to expand/collapse)</b></summary>
+
 ```python
 # Bước 1: Chunk documents
 from pathlib import Path
@@ -1019,6 +1028,8 @@ Trả lời:"""
     })
     return response.json()["response"]
 ```
+
+</details>
 
 ### Ví dụ 2: Multi-Agent Workflow
 

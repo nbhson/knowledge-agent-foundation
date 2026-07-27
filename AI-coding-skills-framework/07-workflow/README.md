@@ -1846,6 +1846,9 @@ if __name__ == "__main__":
 
 ### 8.1 TypeScript Interfaces
 
+<details>
+<summary><b>8.1 TypeScript Interfaces (Click to expand/collapse)</b></summary>
+
 ```typescript
 // Workflow Engine — Full Harness Integration
 interface WorkflowEngine {
@@ -1975,11 +1978,16 @@ class HarnessWorkflowEngine implements WorkflowEngine {
 }
 ```
 
+</details>
+
 ---
 
 ## 9. Case Studies
 
 ### 9.1. GitHub Actions — Event-Driven CI/CD
+
+<details>
+<summary><b>9.1. GitHub Actions — Event-Driven CI/CD (Click to expand/collapse)</b></summary>
 
 ```yaml
 # Workflow pattern: Event-driven with parallel jobs
@@ -2012,6 +2020,8 @@ jobs:
     steps:
       - run: npm run deploy
 ```
+
+</details>
 
 **Lesson**: GitHub Actions uses DAG-based workflow execution with event triggers and dependency resolution.
 

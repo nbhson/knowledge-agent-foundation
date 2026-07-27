@@ -1714,6 +1714,9 @@ class ProductionEvaluator:
 
 ### 8.2 PromptFoo Configuration Example
 
+<details>
+<summary><b>8.2 PromptFoo Configuration Example (Click to expand/collapse)</b></summary>
+
 ```yaml
 # promptfooconfig.yaml
 # Configuration cho PromptFoo evaluation
@@ -1773,6 +1776,8 @@ metrics:
   efficiency:
     weight: 0.2
 ```
+
+</details>
 
 ---
 
@@ -2033,6 +2038,9 @@ metrics:
 
 ### 11.1 Core Evaluation Types
 
+<details>
+<summary><b>11.1 Core Evaluation Types (Click to expand/collapse)</b></summary>
+
 ```typescript
 // ═══════════════════════════════════════════════════════════════
 // EVALUATION TYPES — Production-grade interfaces cho evaluation systems
@@ -2277,6 +2285,8 @@ interface HarnessQualityMetrics {
   coverageScore: number;  // 0-1
 }
 ```
+
+</details>
 
 ---
 

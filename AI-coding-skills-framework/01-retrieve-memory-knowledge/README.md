@@ -492,6 +492,9 @@ if __name__ == "__main__":
 
 Nếu bạn tự viết app Python, chỉ cần wrap hàm gọi LLM:
 
+<details>
+<summary><b>Python Code (Click to expand/collapse)</b></summary>
+
 ```python
 # BÌNH THƯỜNG:
 def ask_llm(prompt):
@@ -515,6 +518,8 @@ def ask_llm_with_rag(prompt):
 # Dùng y hệt:
 print(ask_llm_with_rag("BHYT có chi trả bệnh tim không?"))
 ```
+
+</details>
 </details>
 
 ---
@@ -3017,6 +3022,9 @@ Tóm tắt:"""
 
 ### Lab 1: Semantic Search với nomic-embed-text
 
+<details>
+<summary><b>Lab 1: Semantic Search với nomic-embed-text (Click to expand/collapse)</b></summary>
+
 ```bash
 # Test embedding
 curl -s http://localhost:11434/api/embed -d '{
@@ -3032,6 +3040,8 @@ curl -s http://localhost:11434/api/embed -d '{
 }' | jq '.embeddings[0] | length'
 # Output: 768
 ```
+
+</details>
 
 ### Lab 2: BM25 + Vector Hybrid Search
 

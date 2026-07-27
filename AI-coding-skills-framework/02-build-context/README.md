@@ -743,6 +743,9 @@ Input chunks: [chunk_1, chunk_2, chunk_3, chunk_4]
      LLM nhận ALL chunks cùng lúc
 ```
 
+<details>
+<summary><b>Python Code (Click to expand/collapse)</b></summary>
+
 ```python
 from langchain.chains import RetrievalQA
 
@@ -752,6 +755,8 @@ qa_chain = RetrievalQA.from_chain_type(
     chain_type="stuff"  # ← nhồi tất cả vào 1 prompt
 )
 ```
+
+</details>
 
 | ✅ Ưu điểm | ❌ Nhược điểm |
 |-----------|-------------|
@@ -788,6 +793,9 @@ Input chunks: [chunk_1, chunk_2, chunk_3, chunk_4]
         LLM chỉ nhìn thấy summaries
 ```
 
+<details>
+<summary><b>Python Code (Click to expand/collapse)</b></summary>
+
 ```python
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
@@ -795,6 +803,8 @@ qa_chain = RetrievalQA.from_chain_type(
     chain_type="map_reduce"  # ← map từng chunk rồi reduce
 )
 ```
+
+</details>
 
 | ✅ Ưu điểm | ❌ Nhược điểm |
 |-----------|-------------|
@@ -834,6 +844,9 @@ Input chunks: [chunk_1, chunk_2, chunk_3, chunk_4]
               ... đến chunk cuối
 ```
 
+<details>
+<summary><b>Python Code (Click to expand/collapse)</b></summary>
+
 ```python
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
@@ -841,6 +854,8 @@ qa_chain = RetrievalQA.from_chain_type(
     chain_type="refine"  # ← cập nhật dần dần
 )
 ```
+
+</details>
 
 | ✅ Ưu điểm | ❌ Nhược điểm |
 |-----------|-------------|
@@ -879,6 +894,9 @@ Input chunks: [chunk_1, chunk_2, chunk_3, chunk_4]
         ──► Sau đó vẫn STUFF vào prompt
 ```
 
+<details>
+<summary><b>Python Code (Click to expand/collapse)</b></summary>
+
 ```python
 from langchain.retrievers.document_compressors import LLMChainExtractor
 from langchain.retrievers import ContextualCompressionRetriever
@@ -899,6 +917,8 @@ qa_chain = RetrievalQA.from_chain_type(
     chain_type="stuff"
 )
 ```
+
+</details>
 
 | ✅ Ưu điểm | ❌ Nhược điểm |
 |-----------|-------------|
@@ -1212,6 +1232,9 @@ print(f"Ratio: {len(compressed)/sum(len(d) for d in documents):.1%}")
 
 Dựa trên source code bị leak của Claude Code, đây là cách quản lý context 5 cấp độ với compression tự động trong thực tế:
 
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
 ```typescript
 class SmartContextManager {
   // 5 Cấp Độ Context (theo Anthropic)
@@ -1305,6 +1328,8 @@ class SmartContextManager {
   }
 }
 ```
+
+</details>
 
 **Best Practices:**
 - ✅ Layer context by priority: system > task > domain > history > immediate
@@ -1945,6 +1970,9 @@ Các case studies sau đây cho thấy cách các công ty hàng đầu xây d�
 
 **Kiến trúc Context 5 Cấp Độ**:
 
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
 ```typescript
 /**
  * Claude Code Context Architecture
@@ -2168,6 +2196,8 @@ class ClaudeCodeContextManager {
 }
 ```
 
+</details>
+
 **Key Insights từ Claude Code**:
 1. ✅ **5 Levels with different eviction priorities** — Level 0 (system) NEVER gets evicted
 2. ✅ **Auto-compression** — Conversation history compresses itself at 20 messages
@@ -2180,6 +2210,9 @@ class ClaudeCodeContextManager {
 ### 7.2. Cursor IDE — Context-Aware Coding
 
 **Cursor IDE** sử dụng context management cực kỳ thông minh để tạo ra coding experience tốt nhất:
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 /**
@@ -2287,6 +2320,8 @@ class CursorContextStrategy {
 }
 ```
 
+</details>
+
 **Cursor Context Insights**:
 1. ✅ **File windowing** — Only loads 100 lines around cursor, not entire file
 2. ✅ **Import graph traversal** — Finds related files through import chain
@@ -2297,6 +2332,9 @@ class CursorContextStrategy {
 ---
 
 ### 7.3. Production RAG Pipeline — Context Engineering At Scale
+
+<details>
+<summary><b>7.3. Production RAG Pipeline — Context Engineering At Scale (Click to expand/collapse)</b></summary>
 
 ```typescript
 /**
@@ -2407,6 +2445,8 @@ class ProductionRAGContext {
   }
 }
 ```
+
+</details>
 
 **Production Pipeline Insights**:
 1. ✅ **Multi-stage pipeline** — Query expand → Multi-retrieval → Fusion → Assembly → Compress

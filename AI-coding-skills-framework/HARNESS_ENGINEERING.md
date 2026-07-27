@@ -134,6 +134,10 @@ Kiểm tra kỹ trước khi trả về. Nếu có lỗi, hãy sửa..."
 ```
 
 **✅ Cách tiếp cận mới (Harness Engineering):**
+
+<details>
+<summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
+
 ```javascript
 // Tích hợp linter vào harness
 harness.addTool({
@@ -149,6 +153,8 @@ harness.addTool({
   }
 });
 ```
+
+</details>
 
 Trong ví dụ trên, thay vì "nhờ" AI cẩn thận, bạn xây dựng một hệ thống **không cho phép** AI trả về code có lỗi.
 
@@ -205,6 +211,10 @@ User: "Here are some examples: ..."
 - Tích hợp knowledge bases
 
 **Ví dụ:**
+
+<details>
+<summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
+
 ```javascript
 // Retrieve relevant context
 const relevantDocs = await vectorDB.search(query);
@@ -213,6 +223,8 @@ const context = relevantDocs.map(doc => doc.content).join('\n');
 // Add to prompt
 const prompt = `Context: ${context}\n\nQuestion: ${query}`;
 ```
+
+</details>
 
 **Ưu điểm:**
 - Cải thiện độ chính xác
@@ -239,6 +251,10 @@ const prompt = `Context: ${context}\n\nQuestion: ${query}`;
 - Tự động xử lý lỗi và tối ưu hóa
 
 **Ví dụ:**
+
+<details>
+<summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
+
 ```javascript
 const harness = new AIHarness({
   model: "claude-3-opus",
@@ -259,6 +275,8 @@ const harness = new AIHarness({
   }
 });
 ```
+
+</details>
 
 **Ưu điểm:**
 - Kiểm soát hoàn toàn hành vi AI
@@ -370,6 +388,9 @@ Cùng một mô hình Claude 3.5 Sonnet:
 
 **Vấn đề với approach cũ:**
 
+<details>
+<summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
+
 ```javascript
 // ❌ Không thể kiểm soát
 const response = await ai.chat("Fix this bug...");
@@ -378,7 +399,12 @@ const response = await ai.chat("Fix this bug...");
 // Bạn khó debug khi có lỗi
 ```
 
+</details>
+
 **Với Harness Engineering:**
+
+<details>
+<summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
 
 ```javascript
 // ✅ Kiểm soát hoàn toàn
@@ -402,6 +428,8 @@ const harness = new AIHarness({
 // Bạn có logs chi tiết để debug
 ```
 
+</details>
+
 ---
 
 ### 4.4. Scalability và Maintainability
@@ -419,6 +447,10 @@ Bạn có 10 AI agents trong hệ thống. Bạn phát hiện một lỗi bảo 
 ```
 
 **✅ Có Harness:**
+
+<details>
+<summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
+
 ```javascript
 // Fix tại 1 nơi trong harness
 harness.addSecurityRule({
@@ -430,6 +462,8 @@ harness.addSecurityRule({
 // Test 1 lần
 // Deploy trong vài phút
 ```
+
+</details>
 
 ---
 
@@ -543,6 +577,10 @@ Một harness hoàn chỉnh bao gồm 7 thành phần chính. Hãy tưởng tư�
 **Mục đích**: Định nghĩa những gì AI có thể **làm**
 
 **Ví dụ:**
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
 ```typescript
 interface Tool {
   name: string;
@@ -583,6 +621,8 @@ const fileEditorTool: Tool = {
 };
 ```
 
+</details>
+
 **Best Practices:**
 - ✅ Giới hạn scope của mỗi tool (single responsibility)
 - ✅ Validation đầu vào và đầu ra
@@ -597,6 +637,9 @@ const fileEditorTool: Tool = {
 **Mục đích**: Quản lý thông tin AI cần **nhớ**
 
 **3 Loại Memory:**
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 interface MemorySystem {
@@ -623,7 +666,13 @@ interface MemorySystem {
 }
 ```
 
+</details>
+
 **Ví dụ Implementation:**
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
 ```typescript
 class HarnessMemory implements MemorySystem {
   shortTerm = {
@@ -664,6 +713,8 @@ class HarnessMemory implements MemorySystem {
 }
 ```
 
+</details>
+
 **Best Practices:**
 - ✅ Context compression khi cần
 - ✅ Prioritize relevant memories
@@ -677,6 +728,9 @@ class HarnessMemory implements MemorySystem {
 **Mục đích**: Đảm bảo AI luôn có đúng thông tin tại đúng thời điểm
 
 **5 Cấp Độ Context (theo Anthropic):**
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 interface ContextManager {
@@ -719,7 +773,12 @@ interface ContextManager {
 }
 ```
 
+</details>
+
 **Context Optimization Strategies:**
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 class SmartContextManager {
@@ -761,6 +820,8 @@ class SmartContextManager {
 }
 ```
 
+</details>
+
 ---
 
 ### 5.4. Guardrails (Rào Cản) - "Hệ Miễn Dịch"
@@ -768,6 +829,9 @@ class SmartContextManager {
 **Mục đích**: Ngăn chặn hành vi không mong muốn
 
 **Các Loại Guardrails:**
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 interface GuardrailSystem {
@@ -802,7 +866,12 @@ interface GuardrailSystem {
 }
 ```
 
+</details>
+
 **Ví dụ Implementation:**
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 class GuardrailLayer {
@@ -847,11 +916,16 @@ class GuardrailLayer {
 }
 ```
 
+</details>
+
 ---
 
 ### 5.5. Feedback Loops (Vòng Lặp Phản Hồi) - "Cảm Giác"
 
 **Mục đích**: Tự động học và cải thiện từ kết quả
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 interface FeedbackSystem {
@@ -877,7 +951,12 @@ interface FeedbackSystem {
 }
 ```
 
+</details>
+
 **Example:**
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 class FeedbackLoop {
@@ -911,11 +990,16 @@ class FeedbackLoop {
 }
 ```
 
+</details>
+
 ---
 
 ### 5.6. Permissions (Quyền Hạn) - "Xương"
 
 **Mục đích**: Định nghĩa AI được phép làm gì, ở đâu, khi nào
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 interface PermissionSystem {
@@ -947,11 +1031,16 @@ interface FilePermissions {
 }
 ```
 
+</details>
+
 ---
 
 ### 5.7. Orchestration (Điều Phối) - "Hệ Thần Kinh"
 
 **Mục đích**: Điều phối tất cả các thành phần hoạt động hài hòa
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 class HarnessOrchestrator {
@@ -989,9 +1078,14 @@ class HarnessOrchestrator {
 }
 ```
 
+</details>
+
 ---
 
 ### Tích Hợp Tất Cả
+
+<details>
+<summary><b>Tích Hợp Tất Cả (Click to expand/collapse)</b></summary>
 
 ```typescript
 // Complete Harness Example
@@ -1036,6 +1130,8 @@ const harness = new AIHarness({
   }
 });
 ```
+
+</details>
 
 ---
 
@@ -1301,6 +1397,9 @@ Các case studies sau đây cho thấy cách các tổ chức hàng đầu áp d
 
 **Giải pháp Harness Engineering**:
 
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
 ```typescript
 // 1. GIỚI HẠN OUTPUT CỦA TOOLS
 const searchTool = {
@@ -1367,6 +1466,8 @@ const memoryManager = {
 };
 ```
 
+</details>
+
 **Kết quả**:
 - Success rate tăng từ **12.5% → 20.5%** (+64%)
 - Thời gian giải quyết issue giảm 40%
@@ -1387,6 +1488,9 @@ const memoryManager = {
 - Hoặc tiếp tục quá lâu (không biết khi nào dừng)
 
 **Giải pháp: Multi-Agent Orchestration**
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 // Kiến trúc 3 Agent
@@ -1444,7 +1548,12 @@ class MultiAgentHarness {
 }
 ```
 
+</details>
+
 **Đặc điểm của từng Agent**:
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 // PLANNER AGENT
@@ -1492,6 +1601,8 @@ class EvaluatorAgent {
 }
 ```
 
+</details>
+
 **Kết quả**:
 - Có thể tạo các ứng dụng phức tạp: 2D games, DAW (Digital Audio Workstation)
 - Success rate cao hơn 80% so với single-agent
@@ -1509,6 +1620,9 @@ class EvaluatorAgent {
 **Phát hiện chính**:
 
 #### A. Quản lý Context 5 Cấp Độ
+
+<details>
+<summary><b>A. Quản lý Context 5 Cấp Độ (Click to expand/collapse)</b></summary>
 
 ```typescript
 class ClaudeContextManager {
@@ -1555,7 +1669,12 @@ class ClaudeContextManager {
 }
 ```
 
+</details>
+
 #### B. Bộ Nhớ 3 Tầng với Auto-Optimization
+
+<details>
+<summary><b>B. Bộ Nhớ 3 Tầng với Auto-Optimization (Click to expand/collapse)</b></summary>
 
 ```typescript
 class ClaudeMemorySystem {
@@ -1603,7 +1722,12 @@ class ClaudeMemorySystem {
 }
 ```
 
+</details>
+
 #### C. Phân Quyền Tool Chặt Chẽ
+
+<details>
+<summary><b>C. Phân Quyền Tool Chặt Chẽ (Click to expand/collapse)</b></summary>
 
 ```typescript
 class ClaudeToolPermissions {
@@ -1658,7 +1782,12 @@ class ClaudeToolPermissions {
 }
 ```
 
+</details>
+
 #### D. Tone Detection với Regex (!)
+
+<details>
+<summary><b>D. Tone Detection với Regex (!) (Click to expand/collapse)</b></summary>
 
 ```typescript
 class ClaudeToneDetector {
@@ -1696,6 +1825,8 @@ class ClaudeToneDetector {
 }
 ```
 
+</details>
+
 **Kết quả**:
 - Claude Code trở thành một trong những AI coding assistant tốt nhất
 - User satisfaction rate > 90%
@@ -1709,6 +1840,9 @@ class ClaudeToneDetector {
 ### 6.4. Cursor IDE - Harness Tối Ưu Cho Coding
 
 **Đặc điểm nổi bật**:
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
 class CursorHarness {
@@ -1788,6 +1922,8 @@ class CursorHarness {
   }
 }
 ```
+
+</details>
 
 **Kết quả**:
 - Trở thành coding assistant được yêu thích nhất
@@ -1881,6 +2017,9 @@ class CursorHarness {
 
 ### 7.3. The Harness Design Pattern
 
+<details>
+<summary><b>7.3. The Harness Design Pattern (Click to expand/collapse)</b></summary>
+
 ```typescript
 // Template for designing any harness
 class HarnessDesignPattern {
@@ -1927,6 +2066,8 @@ class HarnessDesignPattern {
   }
 }
 ```
+
+</details>
 
 ---
 
@@ -1991,6 +2132,9 @@ class HarnessDesignPattern {
 
 ### 8.5. Testing Harness
 
+<details>
+<summary><b>8.5. Testing Harness (Click to expand/collapse)</b></summary>
+
 ```typescript
 // Test suite for harness
 describe('Harness Tests', () => {
@@ -2023,6 +2167,8 @@ describe('Harness Tests', () => {
 });
 ```
 
+</details>
+
 ---
 
 ## 9. Công Cụ và Framework
@@ -2030,6 +2176,10 @@ describe('Harness Tests', () => {
 ### 9.1. Frameworks Phổ Biến
 
 **LangChain / LangGraph**
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
 ```typescript
 import { ChatOpenAI } from "@langchain/openai";
 import { DynamicStructuredTool } from "@langchain/core/tools";
@@ -2046,7 +2196,13 @@ const harness = {
 };
 ```
 
+</details>
+
 **AutoGen (Microsoft)**
+
+<details>
+<summary><b>Python Code (Click to expand/collapse)</b></summary>
+
 ```python
 from autogen import AssistantAgent, UserProxyAgent
 
@@ -2064,7 +2220,13 @@ harness = UserProxyAgent(
 )
 ```
 
+</details>
+
 **CrewAI**
+
+<details>
+<summary><b>Python Code (Click to expand/collapse)</b></summary>
+
 ```python
 from crewai import Agent, Task, Crew
 
@@ -2078,6 +2240,8 @@ harness = Crew(
     tasks=[plan_task, execute_task, review_task]
 )
 ```
+
+</details>
 
 ---
 
@@ -2108,6 +2272,9 @@ harness = Crew(
 ---
 
 ### 9.3. Starter Template
+
+<details>
+<summary><b>9.3. Starter Template (Click to expand/collapse)</b></summary>
 
 ```typescript
 // Complete starter template
@@ -2165,6 +2332,8 @@ const harness = new ProductionHarness({
 
 const result = await harness.execute("Build me a todo app");
 ```
+
+</details>
 
 ---
 

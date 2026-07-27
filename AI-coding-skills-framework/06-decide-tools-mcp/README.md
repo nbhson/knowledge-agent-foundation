@@ -2041,6 +2041,9 @@ class RateLimiter:
 
 ### 10.1 TypeScript Interfaces
 
+<details>
+<summary><b>10.1 TypeScript Interfaces (Click to expand/collapse)</b></summary>
+
 ```typescript
 // Tool Decision System — Full Harness Integration
 interface ToolDecisionSystem {
@@ -2147,6 +2150,8 @@ class HarnessToolDecisionSystem implements ToolDecisionSystem {
 }
 ```
 
+</details>
+
 ---
 
 ## 11. Case Studies
@@ -2179,6 +2184,9 @@ Layer 4 (admin): push_code, deploy
 
 **Tool strategy**: Select tools based on editor context.
 
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
 ```typescript
 // Cursor dynamically selects tools based on:
 // 1. Current file type
@@ -2192,6 +2200,8 @@ const toolsForContext = {
   markdown: ["spell_check", "format"],
 };
 ```
+
+</details>
 
 ---
 

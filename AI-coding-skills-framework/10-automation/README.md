@@ -1,5 +1,58 @@
 # ⚙️ X. Automation
 
+> ## 📑 Mục Lục
+>
+> - [Tổng Quan](#tổng-quan)
+> - [Nội Dung](#nội-dung)
+> - [1. Automation Patterns](#1-automation-patterns)
+>   - [1.1 Pattern Taxonomy](#11-pattern-taxonomy)
+>   - [1.2 Automation Framework](#12-automation-framework)
+> - [2. CI/CD Pipelines](#2-cicd-pipelines)
+>   - [2.1 CI/CD Pipeline Architecture](#21-cicd-pipeline-architecture)
+>   - [2.2 GitHub Actions Templates](#22-github-actions-templates)
+>   - [2.3 Pipeline Configuration](#23-pipeline-configuration)
+> - [3. Code Generation Automation](#3-code-generation-automation)
+>   - [3.1 Automated Code Generation](#31-automated-code-generation)
+> - [4. Testing Automation](#4-testing-automation)
+>   - [4.1 Test Automation Strategy](#41-test-automation-strategy)
+>   - [4.2 Automated Test Runner](#42-automated-test-runner)
+> - [5. Monitoring & Alerting](#5-monitoring-alerting)
+>   - [5.1 Monitoring Architecture](#51-monitoring-architecture)
+>   - [5.2 Monitoring System](#52-monitoring-system)
+> - [6. Self-Healing Systems](#6-self-healing-systems)
+>   - [6.1 Self-Healing Patterns](#61-self-healing-patterns)
+>   - [6.2 Self-Healing Implementation](#62-self-healing-implementation)
+> - [7. Scheduled Tasks](#7-scheduled-tasks)
+>   - [7.1 Task Scheduler](#71-task-scheduler)
+> - [8. Workflow Templates](#8-workflow-templates)
+>   - [8.1 Common Automation Workflows](#81-common-automation-workflows)
+> - [9. Anti-Patterns & Solutions](#9-anti-patterns-solutions)
+>   - [9.1 Common Anti-Patterns](#91-common-anti-patterns)
+> - [10. Production Automation](#10-production-automation)
+>   - [10.1 Production Checklist](#101-production-checklist)
+> - [Best Practices](#best-practices)
+> - [11. Case Studies Thực Tế](#11-case-studies-thực-tế)
+>   - [11.1 SWE-agent: Automated Software Engineering](#111-swe-agent-automated-software-engineering)
+>   - [11.2 Anthropic's Claude Code Automation](#112-anthropics-claude-code-automation)
+>   - [11.3 Cursor IDE: AI-Native Development](#113-cursor-ide-ai-native-development)
+>   - [11.4 GitHub Copilot: Enterprise Automation](#114-github-copilot-enterprise-automation)
+>   - [11.5 Vercel v0: Full-Stack Automation](#115-vercel-v0-full-stack-automation)
+> - [12. TypeScript Interfaces cho Automation](#12-typescript-interfaces-cho-automation)
+>   - [12.1 Core Automation Types](#121-core-automation-types)
+> - [13. Design Principles cho Automation](#13-design-principles-cho-automation)
+>   - [13.1 SOLID cho Automation Systems](#131-solid-cho-automation-systems)
+>   - [13.2 Automation Design Principles](#132-automation-design-principles)
+> - [14. Testing Automation Harness](#14-testing-automation-harness)
+>   - [14.1 Testing Automation Systems](#141-testing-automation-systems)
+> - [15. Anti-Patterns & Solutions Chi Tiết](#15-anti-patterns-solutions-chi-tiết)
+>   - [15.1 Common Anti-Patterns](#151-common-anti-patterns)
+>   - [15.2 DO vs DON'T Summary](#152-do-vs-dont-summary)
+> - [16. Future Trends trong Automation](#16-future-trends-trong-automation)
+>   - [16.1 AI-Powered Automation (2024-2026)](#161-ai-powered-automation-2024-2026)
+> - [Tài Liệu Tham Khảo](#tài-liệu-tham-khảo)
+>
+---
+
 ### Câu Chuyện Mở Đầu
 
 Bạn có bao giờ **lặp lại cùng 1 thao tác** trên 10 lần trong ngày? Gõ `git pull`, chạy test, build, deploy, rồi kiểm tra log? Lần đầu bạn làm cẩn thận. Lần thứ 10 bạn bắt đầu skip bước. Đến lần thứ 50, bạn **quên mất bước quan trọng** — và production bị crash.

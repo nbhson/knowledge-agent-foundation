@@ -1,7 +1,53 @@
 # 📋 IV. Plan & Decompose Task
 
-> **"Mỗi khi agent mắc lỗi phân task, bạn không sửa prompt – bạn xây dựng hệ thống planning ngăn chặn lỗi đó tái diễn"**
-> — Mitchell Hashimoto (Applied to Task Planning)
+> ## 📑 Mục Lục
+>
+> - [Tổng Quan](#tổng-quan)
+> - [Tại Sao Planning & Decomposition Quan Trọng?](#tại-sao-planning-decomposition-quan-trọng)
+> - [Nội Dung](#nội-dung)
+> - [1. Task Decomposition Patterns](#1-task-decomposition-patterns)
+>   - [1.1 Các Mô Hình Phân Chia](#11-các-mô-hình-phân-chia)
+>   - [1.2 Implementation](#12-implementation)
+>   - [1.3 So Sánh Các Pattern](#13-so-sánh-các-pattern)
+> - [2. Planning Algorithms](#2-planning-algorithms)
+>   - [2.1 LLM-Based Planning (Plan-and-Solve)](#21-llm-based-planning-plan-and-solve)
+>   - [2.2 Tree of Thoughts (ToT)](#22-tree-of-thoughts-tot)
+>   - [2.3 ReWOO (Reasoning Without Observation)](#23-rewoo-reasoning-without-observation)
+> - [3. Agent Workflows](#3-agent-workflows)
+>   - [3.1 Các Kiểu Agent](#31-các-kiểu-agent)
+>   - [3.2 Agent Implementation](#32-agent-implementation)
+> - [4. State Management](#4-state-management)
+> - [5. ReAct Pattern](#5-react-pattern)
+> - [6. Harness-Integrated Planning](#6-harness-integrated-planning)
+>   - [6.1 TypeScript Interface (Harness Architecture)](#61-typescript-interface-harness-architecture)
+> - [7. Case Studies Thực Tế](#7-case-studies-thực-tế)
+>   - [7.1. SWE-agent (Princeton NLP) — Planning-First Approach](#71-swe-agent-princeton-nlp-planning-first-approach)
+>   - [7.2. Anthropic Multi-Agent Architecture](#72-anthropic-multi-agent-architecture)
+>   - [7.3. Claude Code — Hierarchical Planning System](#73-claude-code-hierarchical-planning-system)
+>   - [7.4. Cursor IDE — Context-Aware Planning](#74-cursor-ide-context-aware-planning)
+> - [8. Design Principles](#8-design-principles)
+>   - [8.1 SOLID Cho Planning System](#81-solid-cho-planning-system)
+>   - [8.2 The 10 Commandments of Task Planning](#82-the-10-commandments-of-task-planning)
+> - [9. Best Practices](#9-best-practices)
+>   - [9.1 DO ✅](#91-do)
+>   - [9.2 DON'T ❌](#92-dont)
+>   - [9.3 Token Budget Management](#93-token-budget-management)
+> - [10. Testing Planning Systems](#10-testing-planning-systems)
+> - [11. Advanced Patterns](#11-advanced-patterns)
+>   - [11.1 Hierarchical Task Network (HTN)](#111-hierarchical-task-network-htn)
+>   - [11.2 Self-Reflective Planning](#112-self-reflective-planning)
+> - [12. Tools & Frameworks](#12-tools-frameworks)
+>   - [12.1 LangGraph (Recommended for Planning)](#121-langgraph-recommended-for-planning)
+>   - [12.2 CrewAI (Multi-Agent Planning)](#122-crewai-multi-agent-planning)
+>   - [12.3 AutoGen (Microsoft)](#123-autogen-microsoft)
+> - [13. Tương Lai](#13-tương-lai)
+>   - [13.1 Xu Hướng 2026-2028](#131-xu-hướng-2026-2028)
+>   - [13.2 Lời Khuyên](#132-lời-khuyên)
+> - [Tài Liệu Tham Khảo](#tài-liệu-tham-khảo)
+>   - [Papers & Research](#papers-research)
+>   - [Frameworks](#frameworks)
+>
+---
 
 ### Câu Chuyện Mở Đầu
 

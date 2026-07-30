@@ -1,6 +1,46 @@
 # ⚙️ VII. Workflow
 
-> **"Workflow tốt không phải là workflow phức tạp — mà là workflow mỗi bước đều rõ ràng, có thể test, và recover được"**
+> ## 📑 Mục Lục
+>
+> - [Tổng Quan](#tổng-quan)
+> - [Nội Dung](#nội-dung)
+> - [1. Workflow Patterns](#1-workflow-patterns)
+>   - [1.1 Sequential Workflow (Tuần Tự)](#11-sequential-workflow-tuần-tự)
+>   - [1.2 Parallel Workflow (Song Song)](#12-parallel-workflow-song-song)
+>   - [1.3 DAG Workflow (Directed Acyclic Graph)](#13-dag-workflow-directed-acyclic-graph)
+>   - [1.4 Event-Driven Workflow](#14-event-driven-workflow)
+> - [2. Pipeline Design](#2-pipeline-design)
+>   - [2.1 Data Pipeline với Branching](#21-data-pipeline-với-branching)
+> - [3. State Machine](#3-state-machine)
+>   - [3.1 Hierarchical State Machine](#31-hierarchical-state-machine)
+> - [4. Error Recovery](#4-error-recovery)
+>   - [4.1 Retry Strategies](#41-retry-strategies)
+>   - [4.2 Circuit Breaker Pattern](#42-circuit-breaker-pattern)
+>   - [4.3 Saga Pattern](#43-saga-pattern)
+> - [5. Observability](#5-observability)
+>   - [5.1 Distributed Tracing](#51-distributed-tracing)
+>   - [5.2 Structured Logging + Metrics](#52-structured-logging-metrics)
+> - [6. Workflow Orchestration Engine](#6-workflow-orchestration-engine)
+> - [7. Workflow Testing](#7-workflow-testing)
+> - [8. Harness Integration](#8-harness-integration)
+>   - [8.1 TypeScript Interfaces](#81-typescript-interfaces)
+> - [9. Case Studies](#9-case-studies)
+>   - [9.1. GitHub Actions — Event-Driven CI/CD](#91-github-actions-event-driven-cicd)
+>   - [9.2. Apache Airflow — Data Pipeline Orchestration](#92-apache-airflow-data-pipeline-orchestration)
+>   - [9.3. Temporal — Durable Workflow Execution](#93-temporal-durable-workflow-execution)
+> - [10. Design Principles](#10-design-principles)
+>   - [10.1 SOLID Cho Workflows](#101-solid-cho-workflows)
+>   - [10.2 6 Design Principles](#102-6-design-principles)
+> - [11. Best Practices](#11-best-practices)
+>   - [11.1 DO ✅](#111-do)
+>   - [11.2 DON'T ❌](#112-dont)
+> - [12. Tương Lai](#12-tương-lai)
+>   - [12.1 Xu Hướng 2026-2028](#121-xu-hướng-2026-2028)
+> - [Tài Liệu Tham Khảo](#tài-liệu-tham-khảo)
+>   - [Papers & Research](#papers-research)
+>   - [Frameworks](#frameworks)
+>
+---
 
 ### Câu Chuyện Mở Đầu
 

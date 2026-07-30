@@ -1,5 +1,48 @@
 # 🧠 I. Retrieve Memory & Knowledge
 
+> ## 📑 Mục Lục
+>
+> - [Tổng Quan](#tổng-quan)
+> - [Tại Sao Retrieve Memory & Knowledge Quan Trọng?](#tại-sao-retrieve-memory-knowledge-quan-trọng)
+> - [Nội Dung](#nội-dung)
+> - [1. Semantic Search / Vector Search](#1-semantic-search-vector-search)
+>   - [1.1 Khái Niệm Cơ Bản](#11-khái-niệm-cơ-bản)
+>   - [1.2 Vector Embedding — Cách Thức Hoạt Động](#12-vector-embedding-cách-thức-hoạt-động)
+>   - [1.3 Embedding Models So Sánh](#13-embedding-models-so-sánh)
+>   - [1.4 Chunking Strategies — Chi Tiết](#14-chunking-strategies-chi-tiết)
+>   - [1.5 Similarity Metrics — Chi Tiết](#15-similarity-metrics-chi-tiết)
+>   - [1.6 Vector Databases — Chi Tiết](#16-vector-databases-chi-tiết)
+> - [2. RAG (Retrieval-Augmented Generation)](#2-rag-retrieval-augmented-generation)
+>   - [2.1 Khái Niệm](#21-khái-niệm)
+>   - [2.2 RAG Pipeline Chi Tiết — 6 Bước](#22-rag-pipeline-chi-tiết-6-bước)
+>   - [2.3 Các Loại RAG](#23-các-loại-rag)
+>   - [2.4 RAG Evaluation Metrics](#24-rag-evaluation-metrics)
+> - [3. Knowledge Graph Retrieval](#3-knowledge-graph-retrieval)
+>   - [3.1 Khái Niệm](#31-khái-niệm)
+>   - [3.2 Entity-Relationship Triplets](#32-entity-relationship-triplets)
+>   - [3.3 Knowledge Graph Operations](#33-knowledge-graph-operations)
+>   - [3.4 Graph RAG Implementation](#34-graph-rag-implementation)
+> - [4. Hybrid Search](#4-hybrid-search)
+>   - [4.1 Tại Sao Cần Hybrid Search?](#41-tại-sao-cần-hybrid-search)
+>   - [4.2 BM25 Algorithm](#42-bm25-algorithm)
+>   - [4.3 Reciprocal Rank Fusion (RRF)](#43-reciprocal-rank-fusion-rrf)
+>   - [4.4 Hybrid Search Implementation](#44-hybrid-search-implementation)
+> - [5. Re-ranking](#5-re-ranking)
+>   - [5.1 Tại Sao Cần Re-ranking?](#51-tại-sao-cần-re-ranking)
+>   - [5.2 Cross-Encoder Implementation](#52-cross-encoder-implementation)
+>   - [5.3 Re-ranking Models Comparison](#53-re-ranking-models-comparison)
+> - [6. Memory Systems](#6-memory-systems)
+>   - [6.1 Memory Types Chi Tiết](#61-memory-types-chi-tiết)
+>   - [6.2 Memory Patterns Chi Tiết](#62-memory-patterns-chi-tiết)
+>   - [6.3 MemGPT-Style Memory Architecture](#63-memgpt-style-memory-architecture)
+>   - [6.4 Complete Memory Manager](#64-complete-memory-manager)
+> - [7. Labs Thực Hành](#7-labs-thực-hành)
+>   - [Lab 1: Semantic Search với nomic-embed-text](#lab-1-semantic-search-với-nomic-embed-text)
+>   - [Lab 2: BM25 + Vector Hybrid Search](#lab-2-bm25-vector-hybrid-search)
+>   - [Lab 3: Full RAG Pipeline](#lab-3-full-rag-pipeline)
+>
+---
+
 ### Câu Chuyện Mở Đầu
 
 Hãy tưởng tượng bạn đến gặp bác sĩ lần thứ 3 trong tuần. Lần đầu bạn kể bệnh sử, lần 2 bạn kể lại, lần 3 bạn kể **lần nữa**. Bác sĩ chẳng nhớ gì — mỗi lần như gặp bệnh nhân mới.

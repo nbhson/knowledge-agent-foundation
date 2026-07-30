@@ -1,6 +1,50 @@
 # ✍️ V. Prompt Builder
 
-> **"Prompt không phải là string – nó là hệ thống engineering với versioning, testing, và lifecycle management"**
+> ## 📑 Mục Lục
+>
+> - [Tổng Quan](#tổng-quan)
+> - [Nội Dung](#nội-dung)
+> - [1. Prompt Templates](#1-prompt-templates)
+>   - [1.1 Template Engine Nâng Cao](#11-template-engine-nâng-cao)
+>   - [1.2 Pre-built Templates](#12-pre-built-templates)
+>   - [1.3 Template Registry](#13-template-registry)
+> - [2. Few-shot Examples](#2-few-shot-examples)
+>   - [2.1 Advanced Few-shot Strategies](#21-advanced-few-shot-strategies)
+>   - [2.2 Dynamic Few-shot Caching](#22-dynamic-few-shot-caching)
+> - [3. Chain-of-Thought (CoT)](#3-chain-of-thought-cot)
+>   - [3.1 CoT Variants](#31-cot-variants)
+>   - [3.2 Advanced: Adaptive CoT](#32-advanced-adaptive-cot)
+> - [4. Meta-Prompting](#4-meta-prompting)
+> - [5. Self-Refine Pattern](#5-self-refine-pattern)
+> - [6. Structured Output](#6-structured-output)
+> - [7. Guardrails](#7-guardrails)
+> - [8. Prompt Versioning](#8-prompt-versioning)
+> - [9. A/B Testing](#9-ab-testing)
+> - [10. Harness Integration](#10-harness-integration)
+>   - [10.1 TypeScript Interfaces](#101-typescript-interfaces)
+> - [11. Case Studies](#11-case-studies)
+>   - [11.1. SWE-agent — Prompt-Driven Tool Use](#111-swe-agent-prompt-driven-tool-use)
+>   - [11.2. Claude Code — Structured System Prompt](#112-claude-code-structured-system-prompt)
+>   - [11.3. Cursor IDE — Context-Aware Prompting](#113-cursor-ide-context-aware-prompting)
+>   - [11.4. Prompt Leaking — Real-world Defense](#114-prompt-leaking-real-world-defense)
+> - [12. Design Principles](#12-design-principles)
+>   - [12.1 SOLID Cho Prompts](#121-solid-cho-prompts)
+>   - [12.2 The 10 Commandments of Prompt Engineering](#122-the-10-commandments-of-prompt-engineering)
+> - [13. Best Practices](#13-best-practices)
+>   - [13.1 DO ✅](#131-do)
+>   - [13.2 DON'T ❌](#132-dont)
+>   - [13.3 Token Optimization](#133-token-optimization)
+> - [14. Testing](#14-testing)
+> - [15. Tools & Frameworks](#15-tools-frameworks)
+>   - [15.1 LangSmith (Prompt Management)](#151-langsmith-prompt-management)
+>   - [15.2 Microsoft PromptFlow](#152-microsoft-promptflow)
+> - [16. Tương Lai](#16-tương-lai)
+>   - [16.1 Xu Hướng 2026-2028](#161-xu-hướng-2026-2028)
+> - [Tài Liệu Tham Khảo](#tài-liệu-tham-khảo)
+>   - [Papers & Research](#papers-research)
+>   - [Frameworks](#frameworks)
+>
+---
 
 ### Câu Chuyện Mở Đầu
 

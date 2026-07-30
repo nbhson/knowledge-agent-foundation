@@ -1,6 +1,44 @@
 # 🔧 VI. Decide Tools / MCP Calls
 
-> **"AI Agent không giỏi vì biết nhiều – nó giỏi vì biết KHI NÀO dùng CÔNG CỤ NÀO"**
+> ## 📑 Mục Lục
+>
+> - [Tổng Quan](#tổng-quan)
+> - [Nội Dung](#nội-dung)
+> - [1. Tool Selection Patterns](#1-tool-selection-patterns)
+>   - [1.1 Tool Registry](#11-tool-registry)
+>   - [1.2 Example Tools — Extended Set](#12-example-tools-extended-set)
+> - [2. Intent Classification](#2-intent-classification)
+>   - [2.1 Multi-Strategy Intent Classifier](#21-multi-strategy-intent-classifier)
+> - [3. MCP Protocol](#3-mcp-protocol)
+>   - [3.1 MCP Architecture Deep Dive](#31-mcp-architecture-deep-dive)
+>   - [3.2 MCP Client Implementation](#32-mcp-client-implementation)
+> - [4. Tool Executor](#4-tool-executor)
+> - [5. Function Calling](#5-function-calling)
+> - [6. Tool Decision Pipeline](#6-tool-decision-pipeline)
+> - [7. Tool Composition](#7-tool-composition)
+> - [8. Permission System](#8-permission-system)
+> - [9. Rate Limiting](#9-rate-limiting)
+> - [10. Harness Integration](#10-harness-integration)
+>   - [10.1 TypeScript Interfaces](#101-typescript-interfaces)
+> - [11. Case Studies](#11-case-studies)
+>   - [11.1. SWE-agent — Tool-Use for Software Engineering](#111-swe-agent-tool-use-for-software-engineering)
+>   - [11.2. Claude Code — Hierarchical Tool Access](#112-claude-code-hierarchical-tool-access)
+>   - [11.3. Cursor IDE — Context-Aware Tool Selection](#113-cursor-ide-context-aware-tool-selection)
+> - [12. Design Principles](#12-design-principles)
+>   - [12.1 SOLID Cho Tools](#121-solid-cho-tools)
+> - [13. Best Practices](#13-best-practices)
+>   - [13.1 DO ✅](#131-do)
+>   - [13.2 DON'T ❌](#132-dont)
+> - [14. Testing](#14-testing)
+> - [15. Advanced Patterns](#15-advanced-patterns)
+>   - [15.1 Tool Learning](#151-tool-learning)
+> - [16. Tương Lai](#16-tương-lai)
+>   - [16.1 Xu Hướng 2026-2028](#161-xu-hướng-2026-2028)
+> - [Tài Liệu Tham Khảo](#tài-liệu-tham-khảo)
+>   - [Papers & Research](#papers-research)
+>   - [Frameworks & Tools](#frameworks-tools)
+>
+---
 
 ### Câu Chuyện Mở Đầu
 

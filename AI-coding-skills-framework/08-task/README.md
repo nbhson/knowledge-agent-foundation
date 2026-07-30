@@ -1,5 +1,43 @@
 # 📋 VIII. Task
 
+> ## 📑 Mục Lục
+>
+> - [Tổng Quan](#tổng-quan)
+> - [Nội Dung](#nội-dung)
+> - [1. Task Classification](#1-task-classification)
+>   - [1.1 Phân Loại Task Coding](#11-phân-loại-task-coding)
+>   - [1.2 Task Classification Engine](#12-task-classification-engine)
+>   - [1.3 Decision Tree: Chọn Strategy Xử Lý Task](#13-decision-tree-chọn-strategy-xử-lý-task)
+> - [2. Task Decomposition](#2-task-decomposition)
+>   - [2.1 Patterns Phân Rã Task](#21-patterns-phân-rã-task)
+>   - [2.2 Task Decomposer](#22-task-decomposer)
+> - [3. Priority & Scheduling](#3-priority-scheduling)
+>   - [3.1 Priority Model](#31-priority-model)
+> - [4. Task State Management](#4-task-state-management)
+>   - [4.1 Task Lifecycle](#41-task-lifecycle)
+>   - [4.2 Task State Manager](#42-task-state-manager)
+> - [5. Dependency Management](#5-dependency-management)
+>   - [5.1 Task Dependency Graph](#51-task-dependency-graph)
+> - [6. Task Templates](#6-task-templates)
+>   - [6.1 Common Task Templates](#61-common-task-templates)
+> - [7. Estimation Techniques](#7-estimation-techniques)
+>   - [7.1 Token Estimation Model](#71-token-estimation-model)
+>   - [7.2 Effort Estimation Algorithm](#72-effort-estimation-algorithm)
+> - [8. Anti-Patterns & Solutions](#8-anti-patterns-solutions)
+>   - [8.1 Common Anti-Patterns](#81-common-anti-patterns)
+>   - [8.2 Anti-Pattern Detector](#82-anti-pattern-detector)
+> - [9. Real-World Workflows](#9-real-world-workflows)
+>   - [9.1 Feature Implementation Workflow](#91-feature-implementation-workflow)
+>   - [9.2 Debug Investigation Workflow](#92-debug-investigation-workflow)
+>   - [9.3 Refactoring Workflow](#93-refactoring-workflow)
+> - [10. Token Budget Management](#10-token-budget-management)
+>   - [10.1 Context Window Budget Allocation](#101-context-window-budget-allocation)
+>   - [10.2 Token Budget Manager](#102-token-budget-manager)
+> - [Best Practices](#best-practices)
+> - [Tài Liệu Tham Khảo](#tài-liệu-tham-khảo)
+>
+---
+
 ### Câu Chuyện Mở Đầu
 
 Hãy tưởng tượng bạn là **quản lý một bệnh viện đa khoa**. Mỗi ngày, hàng trăm bệnh nhân đến: người đau bụng cấp tính, người cần khám định kỳ, người muốn tiêm vaccine. Nếu bạn **không phân loại** — bệnh nhân cấp cứu phải xếp sau người khám thường — hậu quả sẽ là **thảm họa**.

@@ -1,6 +1,45 @@
 # 💾 III. Update Memory & Knowledge Store
 
-> *"Memory without update is like a library without new books — eventually irrelevant."*
+> ## 📑 Mục Lục
+>
+> - [Tổng Quan](#tổng-quan)
+> - [Tại Sao Update Memory & Knowledge Store Quan Trọng?](#tại-sao-update-memory-knowledge-store-quan-trọng)
+> - [Nội Dung](#nội-dung)
+> - [1. Write-back Memory](#1-write-back-memory)
+>   - [1.1 Khi Nào Cần Write-back?](#11-khi-nào-cần-write-back)
+>   - [1.2 Write-back Implementation](#12-write-back-implementation)
+> - [2. Memory Consolidation](#2-memory-consolidation)
+>   - [2.1 Consolidation Là Gì?](#21-consolidation-là-gì)
+>   - [2.2 Implementation](#22-implementation)
+> - [3. Report Generation](#3-report-generation)
+>   - [3.1 Report Types](#31-report-types)
+>   - [3.2 Implementation](#32-implementation)
+> - [4. KB Maintenance](#4-kb-maintenance)
+>   - [4.1 Knowledge Base Operations](#41-knowledge-base-operations)
+> - [5. Event Sourcing Pattern](#5-event-sourcing-pattern)
+>   - [5.1 Concept](#51-concept)
+>   - [5.2 Implementation](#52-implementation)
+> - [6. Memory Store Case Studies](#6-memory-store-case-studies)
+>   - [6.1. Claude Code — Session Memory & Cross-Session Persistence](#61-claude-code-session-memory-cross-session-persistence)
+>   - [6.2. Mem0 — Production Memory Layer for AI Agents](#62-mem0-production-memory-layer-for-ai-agents)
+>   - [6.3. OpenMemory — MCP-Based Memory Server](#63-openmemory-mcp-based-memory-server)
+> - [7. Advanced Memory Patterns](#7-advanced-memory-patterns)
+>   - [7.1. Write-Behind Cache Pattern](#71-write-behind-cache-pattern)
+>   - [7.2. Memory Consolidation Pipeline](#72-memory-consolidation-pipeline)
+>   - [7.3. Versioned Memory (Git-like Memory)](#73-versioned-memory-git-like-memory)
+> - [8. Best Practices & Anti-Patterns](#8-best-practices-anti-patterns)
+> - [9. Performance Metrics](#9-performance-metrics)
+> - [10. Labs Thực Hành](#10-labs-thực-hành)
+>   - [Lab 1: Write-back Memory](#lab-1-write-back-memory)
+>   - [Lab 2: Consolidation](#lab-2-consolidation)
+>   - [Lab 3: Versioned Memory](#lab-3-versioned-memory)
+>   - [Lab 4: Metrics](#lab-4-metrics)
+> - [11. Tài Liệu Tham Khảo](#11-tài-liệu-tham-khảo)
+>   - [Papers & Research](#papers-research)
+>   - [Frameworks & Tools](#frameworks-tools)
+>   - [Blogs & Resources](#blogs-resources)
+>
+---
 
 ### Câu Chuyện Mở Đầu
 

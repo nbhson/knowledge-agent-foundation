@@ -1,6 +1,55 @@
 # 🔄 XII. Loop Engineering
 
-> **"Hệ thống không có feedback loop giống như con tàu không có la bàn — có thể đi nhanh, nhưng không biết mình đang đi đâu."**
+> ## 📑 Mục Lục
+>
+> - [Tổng Quan](#tổng-quan)
+> - [Nội Dung](#nội-dung)
+> - [1. Loop Taxonomy](#1-loop-taxonomy)
+>   - [1.1 Phân Loại Các Loại Loop](#11-phân-loại-các-loại-loop)
+>   - [1.2 Bảng So Sánh Chi Tiết](#12-bảng-so-sánh-chi-tiết)
+>   - [1.3 Mối Quan Hệ Giữa Các Loop](#13-mối-quan-hệ-giữa-các-loop)
+> - [2. Inner Loop — Reasoning & Self-Refine](#2-inner-loop-reasoning-self-refine)
+>   - [2.1 Chain-of-Thought Loop (Think → Act → Reflect)](#21-chain-of-thought-loop-think-act-reflect)
+>   - [2.2 Self-Refine Pattern](#22-self-refine-pattern)
+>   - [2.3 Metacognitive Loop (Think About Thinking)](#23-metacognitive-loop-think-about-thinking)
+> - [3. Execution Loop — Retry & Error Recovery](#3-execution-loop-retry-error-recovery)
+>   - [3.1 Adaptive Retry Engine](#31-adaptive-retry-engine)
+>   - [3.2 Circuit Breaker Loop](#32-circuit-breaker-loop)
+>   - [3.3 Timeout Loop](#33-timeout-loop)
+> - [4. Validation Loop — Test & Verify](#4-validation-loop-test-verify)
+>   - [4.1 Test-Driven Loop](#41-test-driven-loop)
+>   - [4.2 Lint → Fix Loop](#42-lint-fix-loop)
+> - [5. Feedback Loop — Learn from Results](#5-feedback-loop-learn-from-results)
+>   - [5.1 Metrics Feedback Loop](#51-metrics-feedback-loop)
+>   - [5.2 Pattern Learning Loop](#52-pattern-learning-loop)
+> - [6. Outer Loop — Continuous Improvement](#6-outer-loop-continuous-improvement)
+>   - [6.1 Prompt Evolution Loop](#61-prompt-evolution-loop)
+>   - [6.2 A/B Testing Loop](#62-ab-testing-loop)
+>   - [6.3 Feedback-Driven Prompt Optimization](#63-feedback-driven-prompt-optimization)
+> - [7. Self-Improvement Patterns](#7-self-improvement-patterns)
+>   - [7.1 Self-Consistency Checking](#71-self-consistency-checking)
+>   - [7.2 Reflection Loop (Sau khi hoàn thành task)](#72-reflection-loop-sau-khi-hoàn-thành-task)
+> - [8. Loop Orchestration Engine](#8-loop-orchestration-engine)
+> - [9. Case Studies](#9-case-studies)
+>   - [9.1 Claude Code — Multi-Layer Loop System](#91-claude-code-multi-layer-loop-system)
+>   - [9.2 Cursor IDE — Fast Inner Loop](#92-cursor-ide-fast-inner-loop)
+>   - [9.3 Devin AI — Full Loop Stack](#93-devin-ai-full-loop-stack)
+> - [10. Loop Anti-Patterns](#10-loop-anti-patterns)
+>   - [10.1 Các Lỗi Thường Gặp](#101-các-lỗi-thường-gặp)
+>   - [10.2 Guardrails Cho Loops](#102-guardrails-cho-loops)
+> - [11. Best Practices](#11-best-practices)
+>   - [DO ✅](#do)
+>   - [DON'T ❌](#dont)
+>   - [11.1 Loop Design Checklist](#111-loop-design-checklist)
+> - [12. Tương Lai](#12-tương-lai)
+>   - [12.1 Xu Hướng 2026-2028](#121-xu-hướng-2026-2028)
+>   - [12.2 Research Directions](#122-research-directions)
+> - [Tài Liệu Tham Khảo](#tài-liệu-tham-khảo)
+>   - [Papers & Research](#papers-research)
+>   - [Frameworks & Tools](#frameworks-tools)
+>   - [Blogs & Resources](#blogs-resources)
+>
+---
 
 ### Câu Chuyện Mở Đầu
 

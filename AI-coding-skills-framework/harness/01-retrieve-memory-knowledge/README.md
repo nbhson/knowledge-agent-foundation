@@ -67,57 +67,43 @@ Mỗi lần bạn chat với AI, nếu nó không "nhớ" context trước đó,
 
 Trong AI, việc **truy xuất bộ nhớ và kiến thức** là quá trình lấy thông tin từ các nguồn bên ngoài (tài liệu, cơ sở dữ liệu, đồ thị tri thức) để cung cấp cho LLM, giúp model trả lời chính xác hơn và giảm thiểu hallucination.
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│               RETRIEVE MEMORY & KNOWLEDGE — RAG PIPELINE         │
-│                                                                  │
-│   User Query                                                    │
-│       │                                                          │
-│       ▼                                                          │
-│   ┌────────────────────────────────────────────────────────┐    │
-│   │  ① RETRIEVE                                             │   │
-│   │  │                                                      │   │
-│   │  ├── HYBRID SEARCH ──────────────────────┐             │   │
-│   │  │   ├── Semantic Search (vector DB)     │ tìm theo    │   │
-│   │  │   │                                   │ ý nghĩa    │   │
-│   │  │   └── Keyword Search (BM25)           │ tìm chính  │   │
-│   │  │                                       │ xác từ khóa│   │
-│   │  │   → RRF Fusion gộp kết quả            │             │   │
-│   │  └───────────────────────────────────────┘             │   │
-│   │                                                         │   │
-│   │  ├── Knowledge Graph Retrieval ── duyệt entities + rel │   │
-│   │  └── Web/DB Search             ── tìm từ external      │   │
-│   └──────────────────────┬─────────────────────────────────┘   │
-│                          │ top-50 docs (thô)                   │
-│                          ▼                                      │
-│   ┌────────────────────────────────────────────────────────┐    │
-│   │  ② RE-RANKING (Cross-Encoder)                          │   │
-│   │  │                                                      │   │
-│   │  │  (query, doc_1) → score 0.92    ✓ giữ             │   │
-│   │  │  (query, doc_2) → score 0.87    ✓ giữ             │   │
-│   │  │  (query, doc_3) → score 0.45    ✗ loại            │   │
-│   │  │                                                      │   │
-│   │  │  Mục tiêu: Tăng precision — chỉ giữ top-K docs     │   │
-│   │  │  chính xác nhất, loại bỏ docs ít liên quan         │   │
-│   │  └─────────────────────────────────────────────────────┘   │
-│   └──────────────────────┬─────────────────────────────────┘   │
-│                          │ top-5 docs (đã sắp xếp chính xác)  │
-│                          ▼                                      │
-│   ┌────────────────────────────────────────────────────────┐    │
-│   │  ③ BUILD CONTEXT                                       │   │
-│   │  ├── Ghép top-K chunks vào prompt                     │   │
-│   │  ├── Thêm system instructions                         │   │
-│   │  └── Compress nếu cần                                │   │
-│   └──────────────────────┬─────────────────────────────────┘   │
-│                          │                                      │
-│                          ▼                                      │
-│   ┌──────────────┐    ┌──────────┐    ┌──────────┐            │
-│   │   LLM (đã    │───►│ Response │───►│   Trả    │            │
-│   │   augmented  │    │  chính   │    │   lời    │            │
-│   │   context)   │    │  xác     │    │   user   │            │
-│   └──────────────┘    └──────────┘    └──────────┘            │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Q["🔍 User Query"]
+
+    subgraph RET["① RETRIEVE"]
+        direction TB
+        HS["HYBRID SEARCH"]
+        SS["Semantic Search<br/>(vector DB)"] -->|tìm theo ý nghĩa| HS
+        KS["Keyword Search<br/>(BM25)"] -->|tìm chính xác từ khóa| HS
+        HS -->|RRF Fusion gộp kết quả| COMB["Kết quả tổng hợp"]
+        KG["Knowledge Graph<br/>Retrieval"] -->|duyệt entities + rel| COMB
+        WS["Web/DB Search"] -->|tìm từ external| COMB
+    end
+
+    Q --> RET
+    COMB -->|"top-50 docs (thô)"| RERANK
+
+    subgraph RERANK["② RE-RANKING (Cross-Encoder)"]
+        direction TB
+        SC1["(query, doc_1) → score 0.92 ✓ giữ"]
+        SC2["(query, doc_2) → score 0.87 ✓ giữ"]
+        SC3["(query, doc_3) → score 0.45 ✗ loại"]
+        GOAL["Tăng precision — chỉ giữ top-K docs chính xác nhất"]
+    end
+
+    RERANK -->|"top-5 docs (đã sắp xếp chính xác)"| BUILD
+
+    subgraph BUILD["③ BUILD CONTEXT"]
+        direction TB
+        CONCAT["Ghép top-K chunks vào prompt"]
+        SYS["Thêm system instructions"]
+        CMP["Compress nếu cần"]
+        CONCAT --> SYS --> CMP
+    end
+
+    BUILD --> LLM["🧠 LLM (đã augmented context)"]
+    LLM --> RESP["Response chính xác"] --> OUT["Trả lời user"]
 ```
 
 ---

@@ -72,21 +72,27 @@ Bắt đầu từ **Phase 1** (Core Skills) và tiến dần đến **Phase 6** 
 ```
 AI/
 ├── AI_AGENT_FRAMEWORK.md                   ← TRANG CHỦ
+├── HARNESS_ENGINEERING.md                  ← KIẾN TRÚC HARNESS
 │
-│  ── CORE SKILLS (Kỹ Năng Cốt Lõi) ──
-├── 01-retrieve-memory-knowledge/           ← ĐỌC
-├── 02-build-context/                       ← XỬ LÝ
-├── 03-update-memory-store/                 ← GHI
-├── 04-plan-decompose-task/                 ← LẬP KẾ HOẠCH
-├── 05-prompt-builder/                      ← XÂY DỰNG PROMPT
-├── 06-decide-tools-mcp/                    ← QUYẾT ĐỊNH DỤNG CỤ
+├── harness/                                ← HARNESS (7 Components)
+│  │
+│  │  ── CORE SKILLS (Kỹ Năng Cốt Lõi) ──
+│  ├── 01-retrieve-memory-knowledge/         ← ĐỌC
+│  ├── 02-build-context/                     ← XỬ LÝ
+│  ├── 03-update-memory-store/               ← GHI
+│  ├── 04-plan-decompose-task/               ← LẬP KẾ HOẠCH
+│  ├── 05-prompt-builder/                    ← XÂY DỰNG PROMPT
+│  ├── 06-decide-tools-mcp/                  ← QUYẾT ĐỊNH DỤNG CỤ
+│  │
+│  │  ── ADVANCED SKILLS (Kỹ Năng Nâng Cao) ──
+│  ├── 07-workflow/                          ← QUY TRÌNH
+│  ├── 08-task/                              ← QUẢN LÝ TASK
+│  ├── 09-multi-agent/                       ← HỆ THỐNG ĐA AGENT
+│  ├── 10-automation/                        ← TỰ ĐỘNG HÓA
+│  └── 11-evaluation/                        ← ĐÁNH GIÁ
 │
-│  ── ADVANCED SKILLS (Kỹ Năng Nâng Cao) ──
-├── 07-workflow/                            ← QUY TRÌNH
-├── 08-task/                                ← QUẢN LÝ TASK
-├── 09-multi-agent/                         ← HỆ THỐNG ĐA AGENT
-├── 10-automation/                          ← TỰ ĐỘNG HÓA
-└── 11-evaluation/                          ← ĐÁNH GIÁ
+└── loop/                                    ← LOOP ENGINEERING
+   └── 12-loop-engineering/                  ← VÒNG LẶP CẢI THIỆN
 ```
 
 ## Lộ Trình Học
@@ -160,65 +166,65 @@ AI/
 
 | # | Topic | Mô tả |
 |---|-------|-------|
-| 1.1 | [Vector Search](01-retrieve-memory-knowledge/README.md#1-vector-search) | Semantic similarity với embeddings |
-| 1.2 | [BM25 Search](01-retrieve-memory-knowledge/README.md#2-bm25-search) | Keyword matching, term frequency |
-| 1.3 | [Hybrid Search](01-retrieve-memory-knowledge/README.md#3-hybrid-search) | Kết hợp Vector + BM25 |
-| 1.4 | [Knowledge Graph](01-retrieve-memory-knowledge/README.md#4-knowledge-graph) | Entity relationships, graph traversal |
-| 1.5 | [Multi-Source Retrieval](01-retrieve-memory-knowledge/README.md#5-multi-source-retrieval) | Fusing results từ nhiều nguồn |
+| 1.1 | [Vector Search](harness/01-retrieve-memory-knowledge/README.md#1-vector-search) | Semantic similarity với embeddings |
+| 1.2 | [BM25 Search](harness/01-retrieve-memory-knowledge/README.md#2-bm25-search) | Keyword matching, term frequency |
+| 1.3 | [Hybrid Search](harness/01-retrieve-memory-knowledge/README.md#3-hybrid-search) | Kết hợp Vector + BM25 |
+| 1.4 | [Knowledge Graph](harness/01-retrieve-memory-knowledge/README.md#4-knowledge-graph) | Entity relationships, graph traversal |
+| 1.5 | [Multi-Source Retrieval](harness/01-retrieve-memory-knowledge/README.md#5-multi-source-retrieval) | Fusing results từ nhiều nguồn |
 
 ### Part II: Build Context
 > Làm sao tổ chức thông tin hiệu quả?
 
 | # | Topic | Mô tả |
 |---|-------|-------|
-| 2.1 | [Context Window Management](02-build-context/README.md#1-context-window-management) | Token limits, sliding window |
-| 2.2 | [Context Compression](02-build-context/README.md#2-context-compression) | Tóm tắt, extract key info |
-| 2.3 | [Prompt Templates](02-build-context/README.md#3-prompt-templates) | System/user/assistant roles |
-| 2.4 | [Hierarchical Context](02-build-context/README.md#4-hierarchical-context) | Summary → Detail structure |
-| 2.5 | [Multi-turn Context](02-build-context/README.md#5-multi-turn-context) | Conversation memory management |
+| 2.1 | [Context Window Management](harness/02-build-context/README.md#1-context-window-management) | Token limits, sliding window |
+| 2.2 | [Context Compression](harness/02-build-context/README.md#2-context-compression) | Tóm tắt, extract key info |
+| 2.3 | [Prompt Templates](harness/02-build-context/README.md#3-prompt-templates) | System/user/assistant roles |
+| 2.4 | [Hierarchical Context](harness/02-build-context/README.md#4-hierarchical-context) | Summary → Detail structure |
+| 2.5 | [Multi-turn Context](harness/02-build-context/README.md#5-multi-turn-context) | Conversation memory management |
 
 ### Part III: Update Memory & Knowledge Store
 > Làm sao lưu lại thông tin mới?
 
 | # | Topic | Mô tả |
 |---|-------|-------|
-| 3.1 | [Write-back Memory](03-update-memory-store/README.md#1-write-back-memory) | Ghi sự kiện mới vào memory |
-| 3.2 | [Memory Consolidation](03-update-memory-store/README.md#2-memory-consolidation) | Merge, dedupe facts |
-| 3.3 | [Report Generation](03-update-memory-store/README.md#3-report-generation) | Tạo output có cấu trúc |
-| 3.4 | [KB Maintenance](03-update-memory-store/README.md#4-kb-maintenance) | CRUD knowledge base |
-| 3.5 | [Event Sourcing](03-update-memory-store/README.md#5-event-sourcing-pattern) | Full audit trail |
+| 3.1 | [Write-back Memory](harness/03-update-memory-store/README.md#1-write-back-memory) | Ghi sự kiện mới vào memory |
+| 3.2 | [Memory Consolidation](harness/03-update-memory-store/README.md#2-memory-consolidation) | Merge, dedupe facts |
+| 3.3 | [Report Generation](harness/03-update-memory-store/README.md#3-report-generation) | Tạo output có cấu trúc |
+| 3.4 | [KB Maintenance](harness/03-update-memory-store/README.md#4-kb-maintenance) | CRUD knowledge base |
+| 3.5 | [Event Sourcing](harness/03-update-memory-store/README.md#5-event-sourcing-pattern) | Full audit trail |
 
 ### Part IV: Plan & Decompose Task
 > Làm sao chia nhỏ task phức tạp?
 
 | # | Topic | Mô tả |
 |---|-------|-------|
-| 4.1 | [Task Decomposition](04-plan-decompose-task/README.md#1-task-decomposition-patterns) | Sequential, parallel, hierarchical |
-| 4.2 | [Planning Algorithms](04-plan-decompose-task/README.md#2-planning-algorithms) | Plan-and-Solve, ToT |
-| 4.3 | [Agent Workflows](04-plan-decompose-task/README.md#3-agent-workflows) | ReAct, Multi-agent, State Machine |
-| 4.4 | [State Management](04-plan-decompose-task/README.md#4-state-management) | Checkpoint, rollback |
-| 4.5 | [ReAct Pattern](04-plan-decompose-task/README.md#5-react-pattern) | Thought → Action → Observation |
+| 4.1 | [Task Decomposition](harness/04-plan-decompose-task/README.md#1-task-decomposition-patterns) | Sequential, parallel, hierarchical |
+| 4.2 | [Planning Algorithms](harness/04-plan-decompose-task/README.md#2-planning-algorithms) | Plan-and-Solve, ToT |
+| 4.3 | [Agent Workflows](harness/04-plan-decompose-task/README.md#3-agent-workflows) | ReAct, Multi-agent, State Machine |
+| 4.4 | [State Management](harness/04-plan-decompose-task/README.md#4-state-management) | Checkpoint, rollback |
+| 4.5 | [ReAct Pattern](harness/04-plan-decompose-task/README.md#5-react-pattern) | Thought → Action → Observation |
 
 ### Part V: Prompt Builder
 > Làm sao viết prompt tốt nhất?
 
 | # | Topic | Mô tả |
 |---|-------|-------|
-| 5.1 | [Prompt Templates](05-prompt-builder/README.md#1-prompt-templates) | Reusable templates với variables |
-| 5.2 | [Few-shot Examples](05-prompt-builder/README.md#2-few-shot-examples) | Dynamic example selection |
-| 5.3 | [Chain-of-Thought](05-prompt-builder/README.md#3-chain-of-thought-cot) | CoT variants |
-| 5.4 | [Guardrails](05-prompt-builder/README.md#4-guardrails) | Safety filters, validation |
-| 5.5 | [Output Format](05-prompt-builder/README.md#5-output-format-control) | JSON, Markdown, Table |
+| 5.1 | [Prompt Templates](harness/05-prompt-builder/README.md#1-prompt-templates) | Reusable templates với variables |
+| 5.2 | [Few-shot Examples](harness/05-prompt-builder/README.md#2-few-shot-examples) | Dynamic example selection |
+| 5.3 | [Chain-of-Thought](harness/05-prompt-builder/README.md#3-chain-of-thought-cot) | CoT variants |
+| 5.4 | [Guardrails](harness/05-prompt-builder/README.md#4-guardrails) | Safety filters, validation |
+| 5.5 | [Output Format](harness/05-prompt-builder/README.md#5-output-format-control) | JSON, Markdown, Table |
 
 ### Part VI: Decide Tools / MCP Calls
 > Khi nào dùng tool nào?
 
 | # | Topic | Mô tả |
 |---|-------|-------|
-| 6.1 | [Tool Selection](06-decide-tools-mcp/README.md#1-tool-selection-patterns) | Registry, search, categories |
-| 6.2 | [Intent Classification](06-decide-tools-mcp/README.md#2-intent-classification) | Rule-based & LLM-based |
-| 6.3 | [MCP Protocol](06-decide-tools-mcp/README.md#3-mcp-model-context-protocol) | Model Context Protocol |
-| 6.4 | [Tool Executor](06-decide-tools-mcp/README.md#4-tool-executor-with-error-handling) | Error handling & retry |
+| 6.1 | [Tool Selection](harness/06-decide-tools-mcp/README.md#1-tool-selection-patterns) | Registry, search, categories |
+| 6.2 | [Intent Classification](harness/06-decide-tools-mcp/README.md#2-intent-classification) | Rule-based & LLM-based |
+| 6.3 | [MCP Protocol](harness/06-decide-tools-mcp/README.md#3-mcp-model-context-protocol) | Model Context Protocol |
+| 6.4 | [Tool Executor](harness/06-decide-tools-mcp/README.md#4-tool-executor-with-error-handling) | Error handling & retry |
 
 ---
 
@@ -227,57 +233,57 @@ AI/
 
 | # | Topic | Mô tả |
 |---|-------|-------|
-| 7.1 | [Workflow Patterns](07-workflow/README.md#1-workflow-patterns) | Sequential, parallel, conditional |
-| 7.2 | [Pipeline Design](07-workflow/README.md#2-pipeline-design) | Transform, filter, sink |
-| 7.3 | [State Machine](07-workflow/README.md#3-state-machine) | FSM cho agent |
-| 7.4 | [Error Recovery](07-workflow/README.md#4-error-recovery) | Retry, circuit breaker |
-| 7.5 | [Observability](07-workflow/README.md#5-observability) | Logging, metrics |
+| 7.1 | [Workflow Patterns](harness/07-workflow/README.md#1-workflow-patterns) | Sequential, parallel, conditional |
+| 7.2 | [Pipeline Design](harness/07-workflow/README.md#2-pipeline-design) | Transform, filter, sink |
+| 7.3 | [State Machine](harness/07-workflow/README.md#3-state-machine) | FSM cho agent |
+| 7.4 | [Error Recovery](harness/07-workflow/README.md#4-error-recovery) | Retry, circuit breaker |
+| 7.5 | [Observability](harness/07-workflow/README.md#5-observability) | Logging, metrics |
 
 ### Part VIII: Task Management
 > Làm sao quản lý và theo dõi tasks?
 
 | # | Topic | Mô tả |
 |---|-------|-------|
-| 8.1 | [Task Classification](08-task/README.md#1-task-classification) | Phân loại theo category & complexity |
-| 8.2 | [Task Decomposition](08-task/README.md#2-task-decomposition) | Feature, layer, file, TDD |
-| 8.3 | [Priority & Scheduling](08-task/README.md#3-priority--scheduling) | Eisenhower matrix, token budget |
-| 8.4 | [Task State Management](08-task/README.md#4-task-state-management) | Lifecycle, valid transitions |
-| 8.5 | [Dependency Management](08-task/README.md#5-dependency-management) | DAG, topological sort |
+| 8.1 | [Task Classification](harness/08-task/README.md#1-task-classification) | Phân loại theo category & complexity |
+| 8.2 | [Task Decomposition](harness/08-task/README.md#2-task-decomposition) | Feature, layer, file, TDD |
+| 8.3 | [Priority & Scheduling](harness/08-task/README.md#3-priority--scheduling) | Eisenhower matrix, token budget |
+| 8.4 | [Task State Management](harness/08-task/README.md#4-task-state-management) | Lifecycle, valid transitions |
+| 8.5 | [Dependency Management](harness/08-task/README.md#5-dependency-management) | DAG, topological sort |
 
 ### Part IX: Multi-Agent Systems
 > Làm sao phối hợp nhiều agents?
 
 | # | Topic | Mô tả |
 |---|-------|-------|
-| 9.1 | [Agent Roles](09-multi-agent/README.md#1-agent-roles) | Planner, Coder, Reviewer, Tester |
-| 9.2 | [Communication Patterns](09-multi-agent/README.md#2-communication-patterns) | Hierarchical, P2P, pipeline |
-| 9.3 | [Orchestration](09-multi-agent/README.md#3-orchestration-strategies) | Sequential, parallel, debate, voting |
-| 9.4 | [Shared Memory](09-multi-agent/README.md#4-shared-memory) | Versioned, tagged, locked |
-| 9.5 | [Conflict Resolution](09-multi-agent/README.md#5-conflict-resolution) | File lock, voting, deadlock detection |
+| 9.1 | [Agent Roles](harness/09-multi-agent/README.md#1-agent-roles) | Planner, Coder, Reviewer, Tester |
+| 9.2 | [Communication Patterns](harness/09-multi-agent/README.md#2-communication-patterns) | Hierarchical, P2P, pipeline |
+| 9.3 | [Orchestration](harness/09-multi-agent/README.md#3-orchestration-strategies) | Sequential, parallel, debate, voting |
+| 9.4 | [Shared Memory](harness/09-multi-agent/README.md#4-shared-memory) | Versioned, tagged, locked |
+| 9.5 | [Conflict Resolution](harness/09-multi-agent/README.md#5-conflict-resolution) | File lock, voting, deadlock detection |
 
 ### Part X: Automation
 > Làm sao tự động hóa các task lặp đi lặp lại?
 
 | # | Topic | Mô tả |
 |---|-------|-------|
-| 10.1 | [Automation Patterns](10-automation/README.md#1-automation-patterns) | Event, scheduled, reactive, self-healing |
-| 10.2 | [CI/CD Pipelines](10-automation/README.md#2-cicd-pipelines) | GitHub Actions, deploy pipeline |
-| 10.3 | [Code Generation](10-automation/README.md#3-code-generation-automation) | Scaffolding, templates |
-| 10.4 | [Scheduled Tasks](10-automation/README.md#4-scheduled-tasks) | Cron, interval, daily |
-| 10.5 | [Git Automation](10-automation/README.md#5-git-automation) | Hooks, commit conventions |
-| 10.6 | [Monitoring & Alerts](10-automation/README.md#6-monitoring--alerts) | Thresholds, dashboards |
+| 10.1 | [Automation Patterns](harness/10-automation/README.md#1-automation-patterns) | Event, scheduled, reactive, self-healing |
+| 10.2 | [CI/CD Pipelines](harness/10-automation/README.md#2-cicd-pipelines) | GitHub Actions, deploy pipeline |
+| 10.3 | [Code Generation](harness/10-automation/README.md#3-code-generation-automation) | Scaffolding, templates |
+| 10.4 | [Scheduled Tasks](harness/10-automation/README.md#4-scheduled-tasks) | Cron, interval, daily |
+| 10.5 | [Git Automation](harness/10-automation/README.md#5-git-automation) | Hooks, commit conventions |
+| 10.6 | [Monitoring & Alerts](harness/10-automation/README.md#6-monitoring--alerts) | Thresholds, dashboards |
 
 ### Part XI: Evaluation
 > Làm sao đánh giá hiệu quả AI coding?
 
 | # | Topic | Mô tả |
 |---|-------|-------|
-| 11.1 | [Evaluation Dimensions](11-evaluation/README.md#1-evaluation-dimensions) | Correctness, quality, safety, speed |
-| 11.2 | [Quality Metrics](11-evaluation/README.md#2-quality-metrics) | Complexity, maintainability |
-| 11.3 | [Performance Benchmarks](11-evaluation/README.md#3-performance-benchmarks) | Benchmark suite, compare |
-| 11.4 | [Evaluation Framework](11-evaluation/README.md#4-evaluation-framework) | Auto-eval pipeline |
-| 11.5 | [Continuous Improvement](11-evaluation/README.md#5-continuous-improvement) | Trend analysis, suggestions |
-| 11.6 | [Reporting & Dashboards](11-evaluation/README.md#6-reporting--dashboards) | Markdown/JSON reports |
+| 11.1 | [Evaluation Dimensions](harness/11-evaluation/README.md#1-evaluation-dimensions) | Correctness, quality, safety, speed |
+| 11.2 | [Quality Metrics](harness/11-evaluation/README.md#2-quality-metrics) | Complexity, maintainability |
+| 11.3 | [Performance Benchmarks](harness/11-evaluation/README.md#3-performance-benchmarks) | Benchmark suite, compare |
+| 11.4 | [Evaluation Framework](harness/11-evaluation/README.md#4-evaluation-framework) | Auto-eval pipeline |
+| 11.5 | [Continuous Improvement](harness/11-evaluation/README.md#5-continuous-improvement) | Trend analysis, suggestions |
+| 11.6 | [Reporting & Dashboards](harness/11-evaluation/README.md#6-reporting--dashboards) | Markdown/JSON reports |
 
 ---
 

@@ -1965,4 +1965,4 @@ class MaxIterationsError(Exception):
 
 ---
 
-*Bài viết thuộc [AI Coding Skills Framework](../) — Module XII: Loop Engineering*
+*Bài viết thuộc [AI Coding Skills Framework](../..) — Module XII: Loop Engineering*

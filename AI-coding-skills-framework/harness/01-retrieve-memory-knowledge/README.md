@@ -1825,6 +1825,39 @@ class RAGPipeline:
 
 **Knowledge Graph (KG)** là đồ thị biểu diễn tri thức dưới dạng **entities** (đối tượng) và **relationships** (mối quan hệ).
 
+#### Tại Sao Cần Knowledge Graph? — Graph Khác Vector Search Ở Đâu?
+
+Nhớ lại [Phần 1 — Semantic Search](#1-semantic-search--vector-search) — vector search lưu mỗi chunk như một **"hòn đảo" độc lập** trong không gian embedding:
+
+```
+Vector DB:
+  chunk_1 → vector_1
+  chunk_2 → vector_2
+  chunk_3 → vector_3
+  (không có "sợi dây" nối giữa chúng)
+```
+
+Mỗi chunk **không biết** nó liên quan gì đến chunk khác. Nếu câu hỏi cần **nối 2–3 chunk** lại mới trả lời được (multi-hop reasoning), vector search thường fail.
+
+Knowledge Graph thì ngược lại — nó lưu các **mảnh kiến thức nhỏ** và **nối chúng lại bằng các sợi dây (relationships)**:
+
+```mermaid
+graph LR
+    A[gemma3:12b] -->|is_a| B[LLM]
+    A -->|runs_on| C[Ollama]
+    C -->|supports| D[qwen2.5-coder:14b]
+```
+
+Mỗi "mảnh kiến thức" gọi là một **triplet** — khi cùng một entity xuất hiện trong nhiều triplet, nó **tự động tạo ra "sợi dây"** nối giữa các mảnh kiến thức. Vì vậy gọi là *đồ thị*.
+
+| | Vector Search | Knowledge Graph Retrieval |
+|---|---|---|
+| Đơn vị lưu trữ | Chunk văn bản | Triplet `(subject, predicate, object)` |
+| Cách tìm | Embed query → tìm vector gần nhất | Trích entity → đi dọc các cạnh (traversal) |
+| Câu hỏi multi-hop | ❌ yếu | ✅ mạnh |
+| Chi phí xây dựng | Thấp (chunk + embed) | Cao (phải gọi LLM trích triplet) |
+| Khi nào dùng | Hầu hết mọi case | Câu hỏi về **mối quan hệ**, **thống kê**, cần **suy luận nhiều bước** |
+
 ### 3.2 Entity-Relationship Triplets
 
 ```
@@ -1872,6 +1905,34 @@ Ví dụ:
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**Cách đọc triplet — đọc như một câu tiếng Anh:**
+
+| Triplet | Đọc là |
+|---------|--------|
+| `(gemma3:12b, is_a, LLM)` | "gemma3:12b **là** một LLM" |
+| `(gemma3:12b, runs_on, Ollama)` | "gemma3:12b **chạy trên** Ollama" |
+| `(Ollama, supports, gemma3:12b)` | "Ollama **hỗ trợ** gemma3:12b" |
+
+Cùng graph trên, vẽ bằng Mermaid:
+
+```mermaid
+graph TD
+    Google[Google] -->|made_by| Gemma[gemma3:12b]
+    Gemma -->|is_a| LLM[LLM]
+    Gemma -->|has_size| P12[12B params]
+    Gemma -->|runs_on| Ollama[Ollama]
+    Ollama -->|supports| Qwen[qwen2.5-coder:14b]
+    Ollama -->|is_a| Runtime[LLM Runtime]
+    Ollama -->|platform| Local[Local]
+    Nomic[nomic-embed] -->|is_a| Embed[Embedding Model]
+    Nomic -->|dimensions| D768[768]
+    RAG[RAG] -->|uses| Embed
+    RAG -->|uses| VDB[Vector DB]
+    RAG -->|improves| Gen[LLM Generation]
+```
+
+> **📌 Ghi nhớ:** cùng một entity xuất hiện trong nhiều triplet → **tự động nối** các mảnh kiến thức lại. `gemma3:12b` nối với `LLM`, `Ollama`, `Google`, `12B`... — đây chính là lý do gọi là *đồ thị*.
 
 ### 3.3 Knowledge Graph Operations
 
@@ -2033,6 +2094,42 @@ Tóm tắt:"""
 
 </details>
 
+**Giải thích từng hàm:**
+
+| Hàm | Làm gì | Ví dụ |
+|-----|--------|-------|
+| `add_triplet()` | Thêm 1 sự kiện vào graph | `kg.add_triplet("Ollama", "supports", "qwen2.5")` |
+| `add_from_text()` | Đưa văn bản thô cho LLM → LLM **trích ra triplet** rồi tự thêm vào | `"gemma3 chạy trên Ollama"` → 3 triplets |
+| `query_entity()` | **BFS** (duyệt theo chiều rộng) từ 1 entity, lấy mọi triplet trong `max_hops` | Đây là hàm retrieval chính |
+| `find_path()` | Tìm đường đi ngắn nhất giữa 2 entity | `find_path("RAG", "Ollama")` |
+| `community_detection()` | Gom các entity liên quan thành nhóm (connected components) | Nhóm `{gemma3, Ollama, Google, qwen2.5...}` |
+| `summarize_community()` | Gom hết sự kiện trong 1 nhóm → LLM tóm tắt thành 1 đoạn | Đưa "1 ý lớn" vào context thay vì nhiều triplet rời rạc |
+
+**`query_entity(entity, max_hops=2)` chạy thế nào?** — Đi dọc các "sợi dây" (graph traversal / BFS):
+
+```mermaid
+flowchart LR
+    subgraph H0[hop 0 — entity gốc trích từ query]
+        A[gemma3:12b]
+    end
+    subgraph H1[hop 1]
+        B[LLM]
+        C[Ollama]
+        D[Google]
+    end
+    subgraph H2[hop 2]
+        E[qwen2.5-coder:14b]
+        F[LLM Runtime]
+    end
+    A -->|is_a| B
+    A -->|runs_on| C
+    A -->|made_by| D
+    C -->|supports| E
+    C -->|is_a| F
+```
+
+`max_hops=2` nghĩa là lấy những kiến thức cách entity gốc **tối đa 2 sợi dây**. Đây chính là lý do graph trả lời được câu hỏi **multi-hop** ("A liên quan B, B liên quan C, vậy A có liên quan C không?") mà vector search không làm được.
+
 ### 3.4 Graph RAG Implementation
 
 <details>
@@ -2113,6 +2210,24 @@ Entities (one per line):"""
 ```
 
 </details>
+
+---
+
+**Pipeline đầy đủ của Graph RAG — 4 bước:**
+
+```mermaid
+flowchart TD
+    Q["🔍 User Query"] --> E["① Trích entities bằng LLM<br/>(_extract_entities)"]
+    E --> S["② query_entity(entity, max_hops=2)<br/>lấy subgraph — mọi triplet trong 2 hops"]
+    S --> R["③ Rank lại: similarity × 1/(depth+1)<br/>càng gần entity gốc càng quan trọng"]
+    R --> C["④ Gom top-10 facts thành context"]
+    C --> L["🧠 LLM Generation"]
+    L --> O["Response chính xác"]
+```
+
+Điểm hay của bước ③: kết hợp cả **graph** (depth — càng gần entity gốc càng quan trọng) **và vector** (similarity — đo độ tương đồng ngữ nghĩa giữa từng fact và query) để xếp hạng. Đây là cách điển hình kết hợp hai thế mạnh.
+
+> **📌 Tóm tắt mục 3:** Graph RAG = **trích entity từ query** → **đi dọc các sợi dây lấy subgraph** → **xếp hạng bằng similarity + depth** → **gom thành context** → đưa cho LLM. Khác với vector search (tìm "gần nhất"), graph retrieval **duyệt theo mối quan hệ** — mạnh với câu hỏi multi-hop, thống kê, và quan hệ giữa các entities.
 
 ---
 

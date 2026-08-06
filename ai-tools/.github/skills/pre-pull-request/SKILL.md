@@ -46,3 +46,5 @@ Before creating a commit, pushing code, or submitting a Pull Request, execute th
 
 - **Pull Request Template**: `/.github/report-templates/pull-request.md`
 - **Engineering Report**: `/.github/report-templates/engineering-report.md` (for non-bug workflows)
+- **Bug Report**: `/.github/report-templates/bug-report.md` (for bug fix workflows)
+- **Jira Ticket Review**: `/.github/report-templates/jira-ticket-review.md` (for ticket review workflows)

@@ -3,6 +3,12 @@
   "hooks": {
     "sessionStart": [
       {
+        "id": "phase-load-guidance",
+        "enabled": true,
+        "hookFile": ".github/hooks/README.md",
+        "description": "Load the full hook index and all 5 phase hooks before any work begins."
+      },
+      {
         "id": "phase-1-understanding",
         "enabled": true,
         "hookFile": ".github/hooks/phase-1-understanding.hook.md",
@@ -29,6 +35,12 @@
         "enabled": true,
         "hookFile": ".github/hooks/phase-2-planning.hook.md",
         "description": "Create a draft plan and enforce approval gate for non-trivial requests."
+      },
+      {
+        "id": "phase-3-execution-formatting",
+        "enabled": true,
+        "hookFile": ".github/hooks/phase-3-execution-formatting.hook.md",
+        "description": "Execute approved plan, update tests, and run lint/format checks."
       }
     ],
     "preToolUse": [
@@ -36,7 +48,13 @@
         "id": "phase-guard-apply-rules",
         "enabled": true,
         "hookFile": ".github/hooks/phase-1-understanding.hook.md",
-        "description": "Before code-edit tools, verify guidance loading and rule application are complete."
+        "description": "Before read/search/context tools, verify guidance loading and rule application are complete."
+      },
+      {
+        "id": "phase-guard-plan-approval",
+        "enabled": true,
+        "hookFile": ".github/hooks/phase-2-planning.hook.md",
+        "description": "Before code-edit tools, verify a draft plan has been presented; for non-trivial requests, ensure explicit developer approval."
       }
     ],
     "postToolUse": [

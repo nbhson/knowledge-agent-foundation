@@ -5,7 +5,7 @@ description: Guide for selecting, completing, and saving structured reports to t
 
 # Hook: Report Generation Guide
 
-After completing any development workflow (Bug Fix, Feature Delivery, Refactor, Unit Test), generate a structured report based on the workflow type and save it to the `.github/reports` directory.
+After completing any development workflow (Bug Fix, Feature Delivery, Refactor, Unit Test, Code Review, Jira Ticket Review), generate a structured report based on the workflow type and save it to the `.github/reports` directory.
 
 ---
 
@@ -17,11 +17,12 @@ Based on your workflow type, select the corresponding template from `/.github/re
 
 | Workflow Type | Template File | Report File Name |
 | :--- | :--- | :--- |
-| **Bug Fix** | `bug-report.md` | `BUG-REPORT-[TICKET-ID]-[DATE].md` |
-| **Feature Delivery** | `engineering-report.md` | `ENGINEERING-REPORT-[FEATURE-NAME]-[DATE].md` |
-| **Refactor** | `technical-design.md` (planning phase) + `engineering-report.md` (completion) | `REFACTOR-REPORT-[COMPONENT-NAME]-[DATE].md` |
-| **Unit Test** | `engineering-report.md` | `TEST-REPORT-[COMPONENT-NAME]-[DATE].md` |
-| **Code Review** | `pull-request.md` | `CODE-REVIEW-[PR-ID]-[DATE].md` |
+| **Bug Fix** | `bug-report.md` | `BUG-REPORT-[TICKET-ID]-[DATE]-[TIME].ctx.md` |
+| **Feature Delivery** | `engineering-report.md` | `ENGINEERING-REPORT-[FEATURE-NAME]-[DATE]-[TIME].ctx.md` |
+| **Refactor** | `technical-design.md` (planning phase) + `engineering-report.md` (completion) | `REFACTOR-REPORT-[COMPONENT-NAME]-[DATE]-[TIME].ctx.md` |
+| **Unit Test** | `engineering-report.md` | `TEST-REPORT-[COMPONENT-NAME]-[DATE]-[TIME].ctx.md` |
+| **Code Review** | `pull-request.md` | `CODE-REVIEW-[PR-ID]-[DATE]-[TIME].ctx.md` |
+| **Jira Ticket Review** | `jira-ticket-review.md` | `JIRA-REVIEW-[TICKET-ID]-[DATE]-[TIME].ctx.md` |
 
 ### 2. Fill in the Template
 
@@ -38,11 +39,12 @@ Save the completed report to `.github/reports/` with the naming convention above
 - A descriptive timestamp (YYYYMMDD-HHMM format)
 - The ticket ID or component name
 - The workflow type
+- The `.ctx.md` extension (marks the file as report context for later phases)
 
 Example file names:
-- `BUG-REPORT-HZ2-1234-20260630-1430.md`
-- `ENGINEERING-REPORT-CustomViewFiltering-20260630-1415.md`
-- `REFACTOR-REPORT-SharedComponentModule-20260630-1400.md`
+- `BUG-REPORT-SP0168-1234-20260630-1430.ctx.md`
+- `ENGINEERING-REPORT-CustomViewFiltering-20260630-1415.ctx.md`
+- `REFACTOR-REPORT-SharedComponentModule-20260630-1400.ctx.md`
 
 ### 4. Link to Pull Request (if applicable)
 

@@ -33,7 +33,7 @@ Maintain consistency with our directory structure:
 - **Suffixes**:
   - Components: Class names must end with `Component` and files must use the `.component.ts` suffix (e.g., `home-page.component.ts` and `HomePageComponent`).
   - Services: Class names must end with `Service` and files must use the `.service.ts` suffix (e.g., `custom-view.service.ts` and `CustomViewService`).
-  - Modules: Class names must end with `Module` and files must use the `.module.ts` suffix (e.g., `share-module.module.ts` and `SharedModule`).
+  - Modules: Class names must end with `Module` and files must use the `.module.ts` suffix (e.g., `shared-module.module.ts` and `SharedModule`).
 - **Core Folder Organization**:
   - **Shared Assets**: `src/shared/` contains global components, decorators, directives, DTOs, guards, material configurations, and pipes.
   - **Constants**: `src/constants/` contains global constants (`constants.ts`, `enum.ts`, `messages.ts`, etc.).

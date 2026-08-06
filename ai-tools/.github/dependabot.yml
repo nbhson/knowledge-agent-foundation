@@ -1,0 +1,65 @@
+version: 2
+updates:
+  # npm dependencies (Angular 15 app)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Ho_Chi_Minh"
+    versioning-strategy: "auto"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "SP0168-dependabot"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "security"
+    groups:
+      # Group patch & minor updates per major Angular version to reduce noise.
+      # NOTE: Angular 15 is EOL — prefer security patches; do NOT auto-merge major upgrades.
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "@schematics/angular"
+        update-types:
+          - "patch"
+          - "minor"
+      rxjs:
+        patterns:
+          - "rxjs*"
+        update-types:
+          - "patch"
+          - "minor"
+      typescript:
+        patterns:
+          - "typescript"
+        update-types:
+          - "patch"
+          - "minor"
+    ignore:
+      # Keep Angular 15 line in place; major upgrades require manual engineering review.
+      - dependency-name: "@angular/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@angular-devkit/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@schematics/angular"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Asia/Ho_Chi_Minh"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "SP0168-dependabot"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"

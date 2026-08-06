@@ -39,12 +39,12 @@ Strict, step-by-step execution is the default behavior for all tasks:
 
 1. Read `.github/` before implementation.
 2. Execute hooks in exact order:
-	1) `.github/hooks/phase-1-understanding.hook.md`
-	2) `.github/hooks/phase-2-planning.hook.md`
-	3) `.github/hooks/phase-3-execution-formatting.hook.md`
-	4) `.github/hooks/phase-4-validation-pr.hook.md`
-	5) `.github/hooks/phase-5-report-generation.hook.md`
-3. Do not skip planning/review gates or any step on those phase.
+   1. `.github/hooks/phase-1-understanding.hook.md`
+   2. `.github/hooks/phase-2-planning.hook.md`
+   3. `.github/hooks/phase-3-execution-formatting.hook.md`
+   4. `.github/hooks/phase-4-validation-pr.hook.md`
+   5. `.github/hooks/phase-5-report-generation.hook.md`
+3. Do not skip phase hooks or their order; the Phase 2 approval gate is mandatory for non-trivial tasks, while trivial/no-code queries may proceed after presenting the draft plan.
 4. Before implementation, print a checklist of hook steps to run.
 5. Before finishing, print a completion checklist mapped to each hook.
 6. If Phase 4 validation fails, loop back to Phase 3 to apply fixes, then re-run Phase 4.

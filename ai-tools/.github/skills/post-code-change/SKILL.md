@@ -24,7 +24,7 @@ After making code changes, execute the following quality and verification steps:
 5. **Generate Draft Report**: After all quality checks pass, generate a structured draft report based on your workflow type:
    - Follow the [Report Generation Skill](../report-generation/SKILL.md).
    - Use the appropriate template from `/.github/report-templates/`.
-   - Save the report to `.github/reports/` with the naming convention: `[WORKFLOW-TYPE]-REPORT-[ID]-[DATE].md`.
+   - Save the report to `.github/reports/` with the naming convention: `[WORKFLOW-TYPE]-REPORT-[ID]-[DATE]-[TIME].ctx.md`.
 
 ---
 
@@ -33,3 +33,5 @@ After making code changes, execute the following quality and verification steps:
 - **Bug Report**: `/.github/report-templates/bug-report.md`
 - **Engineering Report**: `/.github/report-templates/engineering-report.md`
 - **Technical Design**: `/.github/report-templates/technical-design.md`
+- **Pull Request**: `/.github/report-templates/pull-request.md`
+- **Jira Ticket Review**: `/.github/report-templates/jira-ticket-review.md`

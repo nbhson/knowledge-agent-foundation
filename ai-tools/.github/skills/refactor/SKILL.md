@@ -13,6 +13,11 @@ This document outlines the workflow for improving the structure, style, or perfo
 
 1. **Smell Assessment**: Identify candidates for refactoring (such as large modules that need decomposition into container/presenter roles, duplicate `@import` rules, hardcoded variables in SCSS, direct DOM manipulation, or duplicate interfaces).
 2. **Plan & Get Approval**: Detail the refactoring changes in `implementation_plan.md` using the Technical Design template (`.github/report-templates/technical-design.md`). Obtain explicit developer confirmation before executing code changes if the task is non-trivial.
+   - **`implementation_plan.md` lifecycle**:
+     - **Location**: Create at the repository root as a working document (do not commit into `.github/reports/`).
+     - **Commit**: Do **not** commit `implementation_plan.md` to git; it is a temporary working artifact.
+     - **Cleanup**: Delete the file once the plan is approved or the task is completed.
+     - **Permanent record**: Transfer the approved plan content into the final report in `.github/reports/` (via the [Report Generation Skill](../report-generation/SKILL.md)) so it is archived and auditable.
 3. **Incremental Changes**: Make changes incrementally while preserving existing behavior. Keep refactoring sets focused, reuse shared assets, and strictly follow the project naming, module, and styling conventions.
 4. **Update Unit Tests**: Update corresponding unit tests in spec files (`*.spec.ts`) to match the refactored code and ensure proper mock configurations.
 5. **Formatting & Quality Checks**: Follow the [Post Code Change Skill](../post-code-change/SKILL.md) for canonical lint, format, and cleanup requirements.

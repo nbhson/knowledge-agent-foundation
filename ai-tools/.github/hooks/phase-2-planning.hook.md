@@ -28,12 +28,16 @@ For any non-trivial request, Copilot must first present a concise draft plan bef
 - the likely files/modules to touch,
 - the validation approach.
 
-If the request involves multiple files, behavior changes, or significant implementation work, Copilot must pause for the developer to review/approve the plan before proceeding to code changes. Only continue immediately when the user explicitly asks to do so.
+**Approval Gate scope:**
+- **Non-trivial requests** (multiple files, behavior changes, or significant implementation work): Copilot MUST pause and wait for the developer to review/approve the plan before proceeding to code changes.
+- **Trivial/no-code queries**: Copilot presents the draft plan (or brief summary) and may proceed without an explicit pause.
+
+Only continue immediately when the user explicitly asks to do so.
 
 ---
 
 ## Exit Criteria
 
 - Need to create a draft plan and get approve (DO NOT SKIP)
-- Approved plan is available.
+- Approved plan is available (or trivial case acknowledged).
 - Execution task list can be derived from the approved plan.

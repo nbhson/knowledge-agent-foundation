@@ -13,6 +13,11 @@ This document outlines the systematic flow for reproducing, identifying, fixing,
 
 1. **Replicate & Document**: Replicate the bug on the local development server. Document the details using the Bug Report template (`.github/report-templates/bug-report.md`).
 2. **Investigation & Scope**: Identify the root cause. For complex bug fixes, prepare a design in `implementation_plan.md` using the Technical Design template (`.github/report-templates/technical-design.md`). For simple/isolated fixes, proceed directly.
+   - **`implementation_plan.md` lifecycle**:
+     - **Location**: Create at the repository root as a working document (do not commit into `.github/reports/`).
+     - **Commit**: Do **not** commit `implementation_plan.md` to git; it is a temporary working artifact.
+     - **Cleanup**: Delete the file once the plan is approved or the task is completed.
+     - **Permanent record**: Transfer the approved plan content into the final report in `.github/reports/` (via the [Report Generation Skill](../report-generation/SKILL.md)) so it is archived and auditable.
 3. **Draft Plan**: Before implementation, provide a concise draft plan and wait for review/approval when the task is non-trivial.
 4. **Implement Fix**: Make targeted changes following the [Core Engineering Guidelines](../../knowledge/core-engineering-guidelines.md). Search existing constants, models, shared components, and services before introducing new logic. Avoid unrelated code modifications.
 5. **Write/Update Unit Tests**: Add or update Jest unit tests in the corresponding `*.spec.ts` file to verify the bug fix.

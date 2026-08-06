@@ -13,6 +13,11 @@ This document outlines the workflow for developing and delivering new features i
 
 1. **Discovery & Setup**: Clarify scope, acceptance criteria, and affected modules. Map out the layout, modules involved, and identify any core dependencies, shared services, constants, models, and components that can be reused before adding new implementation.
 2. **Plan & Get Approval**: Write an implementation plan in `implementation_plan.md` using the Technical Design template (`.github/report-templates/technical-design.md`). Wait for developer approval before coding if the task is non-trivial.
+   - **`implementation_plan.md` lifecycle**:
+     - **Location**: Create at the repository root as a working document (do not commit into `.github/reports/`).
+     - **Commit**: Do **not** commit `implementation_plan.md` to git; it is a temporary working artifact.
+     - **Cleanup**: Delete the file once the plan is approved or the task is completed.
+     - **Permanent record**: Transfer the approved plan content into the final report in `.github/reports/` (via the [Report Generation Skill](../report-generation/SKILL.md)) so it is archived and auditable.
 3. **Develop Components & Logic**:
    - Write NgModule-based components following Angular 15 guidelines (no standalone components).
    - Separate container/orchestrator responsibilities from UI presenter components.

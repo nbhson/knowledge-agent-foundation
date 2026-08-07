@@ -8,4 +8,4 @@ We use a modern, beautiful styling system using Dart Sass and CSS variables:
 - **Glassmorphism**: Use `@mixin glass-panel` to format consistent layout panels.
 - **Themes & Gradients**: Use category-specific gradients (e.g. `var(--grammar-gradient)`) and theme custom properties (`var(--primary)`, etc.) to facilitate dark mode compatibility.
 - **Rules**:
-  - Always put `@use` lines at the very top of `.scss` stylesheets before any rules/variables.
+  - Always put `@import` lines at the very top of `.scss` stylesheets before any rules/variables.

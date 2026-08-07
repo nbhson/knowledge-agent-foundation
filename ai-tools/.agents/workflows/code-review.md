@@ -1,6 +1,6 @@
 # Workflow: Code Review
 
-Instructions for reviewing code contributions and validating coding conventions in the TOEIC application.
+Instructions for reviewing code contributions and validating coding conventions in the Horizon 2 UI.
 
 ---
 
@@ -12,7 +12,7 @@ Always apply the following coding guidelines. Load additional rules based on the
 | ----------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------- |
 | **All Workflows / Modifications**   | `coding-style.md` | Enforces code reuse, check `/core` assets (constants, styles, models) before coding, and types safety.     |
 | **Routing & Folder Structure**      | `angular.md`      | Enforces Angular components structure, file suffixes, and lazy loading configuration.                      |
-| **Component Logic & Signals**       | `angular.md`      | Minimizes reactivity overhead, enforces modern signals, input/output APIs, and `resource()` data fetching. |
+| **Component Logic & Reactivity**       | `angular.md`      | Enforces Angular 15 module architecture, RxJS reactivity, @Input/@Output, and lazy-loaded feature modules. |
 | **Styling, Layout, Responsiveness** | `scss.md`         | Enforces SCSS imports conventions, mixins, glass panels, and prevents styling duplication.                 |
 | **Documentation & Reports**         | `templates.md`    | Dictates which markdown templates to use for Jira reviews, bug reports, and pull requests.                 |
 
@@ -27,11 +27,11 @@ You MUST NOT immediately start implementation. Always follow these sequential st
 - Enforce rules based on the **Rules Mapping by Scope** table above.
 
 ### Step 3 — Review Checklist
-- **Architecture**: Ensure standalone components with `ChangeDetectionStrategy.OnPush`. Verify parent/child container/presenter architecture.
-- **TypeScript & Angular**: Enforce Signal state management (`signal`, `computed`, `input`, `output`), the `resource()` API, modern `@if`/`@for` control flows, and no legacy Angular directives/modules.
-- **Styling & Layout**: Verify Dart Sass modular styles with `@use`. Avoid hardcoded hex colors, use variables (`var(--primary)`, gradients) and standard mixins. Prohibit inline CSS styling.
+- **Architecture**: Ensure NgModule-based components declared in the correct modules with `ChangeDetectionStrategy.OnPush` where appropriate. Verify parent/child container/presenter architecture.
+- **TypeScript & Angular**: Enforce Angular 15 patterns: RxJS state management, @Input/@Output, *ngIf/*ngFor (with trackBy), proper NgModule declarations, and services imported via @services/... aliases.
+- **Styling & Layout**: Verify classic Dart Sass `@import` modular styles. Avoid hardcoded hex colors, use variables (`var(--primary)`, gradients) and standard mixins. Prohibit inline CSS styling.
 - **Security & Tokens**: Confirm environment variables are loaded properly (no hardcoded secrets).
-- **Performance**: Verify router paths utilize `loadComponent` (lazy loading) and optimize reactivity (e.g. `untracked` inside effects).
+- **Performance**: Verify router paths utilize classic module lazy loading (`loadChildren` -> `.module()`).
 - _Do NOT modify source code during this phase._
 
 ### Step 4 — Approval Gate

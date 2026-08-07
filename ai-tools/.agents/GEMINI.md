@@ -1,28 +1,30 @@
 # Gemini Workspace Guidelines
 
-Guidelines for Gemini models working on the TOEIC Practice project.
+Guidelines for Gemini models working on the Horizon 2 UI (Angular 15) project.
 
 ---
 
 ## 1. Stack & Standards
 
-- **Core**: Angular 22+ (Standalone components, Zoneless Change Detection).
-- **State & Binding**: Signals (`signal`, `computed`, `input`, `output`), and `resource()` API for async loading.
-- **UI & Presentation**: Custom responsive templates and styles. Dart Sass modular styles with `@use`. Avoid duplication of base styles.
+- **Core**: Angular 15.2.1, classic **Module-Based (NgModule)** architecture. Do NOT use Standalone Components, Signals, `resource()`, or `@if`/`@for` control flow.
+- **State & Binding**: RxJS `Observable`, `Subject`, `BehaviorSubject`, and standard NgRx Store/Effects. Clean up subscriptions with `takeUntil` or the `async` pipe.
+- **Control Flow**: Use `*ngIf`, `*ngFor` (always with `trackBy`), and `*ngSwitch` directives. Ensure `CommonModule` is imported.
+- **UI & Presentation**: Bootstrap + Angular Material utilities, classic Dart Sass `@import` modular styles (see `.agents/rules/scss.md`). Reuse design system variables.
 
 ## 2. Validation & Quality Checklist
 
 Ensure quality checks are performed as follows:
 
-1. **Lint & Format**: Run `npx prettier --write "src/**/*.{ts,html,scss}"` immediately after making code changes (via `post-code-change` hook).
-2. **Dedicated Unit Tests**: Write and execute dedicated unit tests using Vitest (`npx vitest run`) for any modified logic (Validation Phase).
-3. **Build**: Run `npm run build` or `npx ng build` to verify zero build and compilation errors (Validation Phase).
-4. **Visual Check**: Run `npm start` and manually inspect the responsive layout and browser logs (Validation Phase).
+1. **Lint & Format**: Run `npm run lint` and `npm run format` immediately after making code changes (via `post-code-change` hook).
+2. **Dedicated Unit Tests**: Write and execute dedicated unit tests using Jest (`npm run test`) for any modified logic (Validation Phase).
+3. **Build**: Run `npm run build` to verify zero build and compilation errors (Validation Phase).
+4. **Visual Check**: Run `npm run startdev` and manually inspect the responsive layout and browser logs (Validation Phase).
 
 ## 3. Workflow Reference & Strict Compliance
 
-- Always refer to [.agents/AGENTS.md](file:///Users/nguyenson/Github/toeic/.agents/AGENTS.md) for the main orchestration workflow.
+- Always refer to [.agents/AGENTS.md](.agents/AGENTS.md) for the main orchestration workflow.
 - **CRITICAL COMPLIANCE RULE**: You MUST NOT skip any phases defined in the loaded workflow (e.g., `.agents/workflows/*.md`). You MUST execute them strictly and sequentially. Creating an explicit task checklist (Task Tracker) to track your progress across these phases is MANDATORY.
+- **Memory Artifacts**: Every completed task MUST output a `*.ctx.md` engineering report in `.agents/reports/` (Phase 5 — Report Generation). These reports are context memory for future tasks.
 
 ## 4. Context & Search Exclusions
 

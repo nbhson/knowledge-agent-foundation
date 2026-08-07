@@ -1,6 +1,6 @@
 # Rule: Template Selection
 
-Always use the designated markdown templates for generating investigation reports, technical designs, and PR summaries to ensure consistency across the TOEIC application workflows.
+Always use the designated markdown templates for generating investigation reports, technical designs, and PR summaries to ensure consistency across the Horizon 2 UI workflows.
 
 | **Phase**                    | **Template**                     | **When to Use**                                                           |
 | ---------------------------- | -------------------------------- | ------------------------------------------------------------------------- |

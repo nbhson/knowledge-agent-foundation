@@ -5,17 +5,17 @@ This document outlines the styling standards for SCSS files in this repository.
 ## 1. Modular SCSS
 
 - Split global styles into partials inside `src/app/core/styles/`.
-- Import core variables and mixins using `@use` instead of `@import`.
+- Import core variables and mixins using classic `@import` syntax (this project does not use `@use`).
 - Relative paths should be used to refer to core styles:
   ```scss
-  @use '../../../../core/styles/variables' as v;
-  @use '../../../../core/styles/mixins' as *;
+  @import '../../../../core/styles/variables';
+  @import '../../../../core/styles/mixins';
   ```
 
-## 2. Order of `@use` rules
+## 2. Order of `@import` rules
 
-- All `@use` lines must appear at the absolute top of the stylesheet.
-- No CSS properties, selectors, or variables can be declared before any `@use` statements.
+- All `@import` lines must appear at the absolute top of the stylesheet.
+- No CSS properties, selectors, or variables can be declared before any `@import` statements.
 
 ## 3. Mixins and CSS Variables
 

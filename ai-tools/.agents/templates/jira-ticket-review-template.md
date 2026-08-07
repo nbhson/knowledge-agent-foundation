@@ -22,7 +22,7 @@
 
 - **Affected Components/Files**:
   - `[Path to file]` - Description of necessary changes
-- **State Management & Reactivity**: [Required updates to signals, computed, resource loaders, or services]
+- **State Management & Reactivity**: [Required updates to RxJS observables/subjects, NgRx store, or services]
 - **UI & Presentation**: [Angular components, custom templates, or SCSS classes/mixins required]
 
 ## Recommended Next Steps

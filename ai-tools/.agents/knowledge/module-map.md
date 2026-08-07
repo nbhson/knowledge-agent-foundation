@@ -3,7 +3,7 @@
 The codebase layout is structured as follows:
 
 - `src/app/core/`: Application-wide core configurations.
-  - `routers/app.routes.ts`: Central routing using `loadComponent` for lazy loading.
+  - `routers/app.routes.ts`: Central routing using classic `loadChildren` module lazy loading.
   - `styles/`: Stylesheets, including global styles and Sass partials (`_variables.scss`, `_mixins.scss`).
   - `models/toeic.model.ts`: Data models and TypeScript interfaces.
   - `services/`: Global services and state controllers.

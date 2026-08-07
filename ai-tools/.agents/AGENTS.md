@@ -1,12 +1,13 @@
-# Agentic Workspace Configuration: TOEIC App
+# Agentic Workspace Configuration: Horizon 2 UI
 
-This directory contains the workspace configuration, rules, agents, workflows, templates, and knowledge bases for autonomous AI agents collaborating on the TOEIC Practice project.
+This directory contains the workspace configuration, rules, agents, workflows, templates, and knowledge bases for autonomous AI agents collaborating on the Horizon 2 UI (Angular 15) project.
 
-## 1. Tech Stack & Angular Architecture
+## 1. Tech Stack & Angular 15 Architecture
 
-We use the latest features in Angular 22+ to ensure high performance and modern code practices.
-For full details on our stack, components, state management, and declarative data loading, please see:
-[.agents/knowledge/frontend-architecture.md](file:///Users/nguyenson/Github/toeic/.agents/knowledge/frontend-architecture.md).
+We use **Angular 15.2.1** with classic module-based (NgModule) architecture. Do NOT assume modern Angular features (Standalone Components, Signals, `resource()`, `@if`/`@for` control flow) — they are **not available** in this codebase.
+
+For full details on our stack, components, and state management, please see:
+[.agents/knowledge/frontend-architecture.md](.agents/knowledge/frontend-architecture.md).
 
 ---
 
@@ -136,3 +137,12 @@ flowchart TD
     Output --> RunHooks
     Reviewer --> RunHooks
 ```
+
+---
+
+## 5. Strict Compliance & Memory Artifacts
+
+- **Strict Mode (Always-On)**: Execute all 5 phase hooks in exact order (Understanding → Planning → Execution → Validation/PR → Report). See `.agents/hooks/README.md`.
+- **Planning Gate**: For non-trivial tasks, present the implementation plan and wait for explicit developer approval before writing code.
+- **Memory Artifacts**: Every completed task MUST generate a `*.ctx.md` engineering report in `.agents/reports/`. These reports act as context memory for future tasks (see `.agents/skills/report-generation/SKILL.md`).
+- **Validation**: Run `npm run lint` + `npm run format` (formatting) and `npm run build` + `npm run test` (validation) before any PR.

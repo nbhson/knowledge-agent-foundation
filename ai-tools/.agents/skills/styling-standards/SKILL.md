@@ -1,50 +1,42 @@
 ---
 name: styling-standards
-description: Guides writing, refactoring, and maintaining SCSS files, modular stylesheets, using global themes, variables, mixins, and loops in the TOEIC workspace.
+description: Guidelines for modular SCSS structures, order of imports, CSS variables, and responsive grid layouts in the Horizon 2 UI project.
 ---
 
-# SCSS Styling Standards & Refactoring
+# Styling Standards & SCSS Guidelines
 
-This skill enforces strict Sass styling practices to maintain high performance, small stylesheets, and DRY rules.
+This skill enforces strict Sass styling practices to keep styles small, clean, and DRY.
 
-## 1. Modular SCSS Structure
+---
 
-We split global styles into partials inside `src/app/core/styles/`:
+## 1. Modular SCSS Structure & Variables
 
-- `_variables.scss`: Global styling constants.
-- `_mixins.scss`: Common mixins (e.g., `glass-panel`, `btn-base`).
-- `_theme.scss`: Light and dark mode tokens using CSS custom properties.
-- `_reset.scss`: Reset rules and scrollbars.
-- `_layout.scss`: Common grid alignments and card structures.
-- `_badges.scss`: Badge loop generators.
-- `_shimmer.scss`: Skeleton loading shimmers.
+All styling should reuse configurations and partials:
 
-## 2. Component SCSS Rules
+- **Variables Sheet**: Reference variables defined in `scss/helpers/variable` (such as colors, fonts, margins) rather than inlining values.
+- **Mixins**: Reuse core mixins or animations. Do not write duplicate styling rules for cards, shimmers, buttons, or scrollbars.
+- **Material Theme**: Leverage Angular Material component overrides rather than writing ad-hoc overrides.
+- **Gradients & Custom Colors**: If styling specific items, verify if a theme variable exists (e.g. `$primary-color`, `$secondary-color`).
 
-1. **Relative Imports**:
-   Always import design system variables and mixins using `@use`:
-   ```scss
-   @use '../../../../core/styles/variables' as v;
-   @use '../../../../core/styles/mixins' as *;
-   ```
-2. **Order of `@use`**:
-   All `@use` lines MUST be at the very top of the stylesheet.
-3. **No Duplication**:
-   - Do not define `.badge` or duplicate skeleton loading animation keyframes inside component-level styles. Refer to the global classes instead.
-   - For custom badges, bind CSS variables using theme custom properties:
-     ```scss
-     .my-badge {
-       background-color: var(--badge-mytype-bg);
-       color: var(--badge-mytype-text);
-     }
-     ```
+---
 
-## 3. Responsive Breakpoints
+## 2. Order of Imports
 
-Use variables or CSS grid layouts for responsive behavior:
+- **At the Top**: All `@import` lines must be at the absolute top of the stylesheet.
+- **Paths**: Keep imports relative or point to standard locations:
+  ```scss
+  @import 'scss/helpers/variable';
+  @import 'scss/helpers/common';
+  ```
+
+---
+
+## 3. Responsive Layouts
+
+Use CSS grids, flexbox, and media queries consistently:
 
 ```scss
-.practice-main-grid {
+.tracker-main-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
@@ -55,12 +47,12 @@ Use variables or CSS grid layouts for responsive behavior:
 }
 ```
 
-For sticky positioning, make sure sidebar/left column behaves static on smaller displays:
+Keep sidebars, dialog headers, or lists responsive:
 
 ```scss
-.passage-column {
+.sidebar-panel {
   position: sticky;
-  top: 2rem;
+  top: 1rem;
 
   @media (max-width: 992px) {
     position: static;

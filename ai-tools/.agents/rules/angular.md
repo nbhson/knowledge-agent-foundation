@@ -1,30 +1,35 @@
-# Angular Style Rules & Coding Standards
+# Angular 15 Style Rules & Coding Standards
 
-This document outlines the strict style rules and coding standards for Angular development in this repository.
+This document outlines the strict style rules and coding standards for Angular 15 development in this repository.
 
-## 1. Standalone Components
+## 1. Module-Based (NgModule) Architecture
 
-- Every component must be `standalone: true`.
-- Do not import `CommonModule` directly. Instead, import specific dependencies if needed, or rely entirely on modern Angular control flow.
-- Explicitly define `changeDetection: ChangeDetectionStrategy.OnPush` in the `@Component` decorator.
+- Every component must be declared in an `NgModule` (`declarations`, and `exports` if reusable). Standalone Components are **NOT used**.
+- New feature modules must be registered in the lazy-loaded route configuration: `loadChildren: () => import('./tracker/tracker.module').then((m) => m.TrackerModule)`.
+- Import `CommonModule` in modules that use `*ngIf`, `*ngFor`, `*ngSwitch`, or common pipes.
 
-## 2. Signal Usage
+## 2. Component Inputs / Outputs & Reactivity
 
-- Use `signal<T>` for writable state (e.g., toggle flags, selected options, search terms).
-- Use `computed<T>` for all read-only, derived values (e.g., filtering lists, progress percentage).
-- Use `input<T>` and `input.required<T>` instead of the legacy `@Input()` decorator.
-- Use `output<T>` instead of the legacy `@Output()` decorator.
+- Use `@Input()` and `@Output()` decorators with `EventEmitter`. Do NOT use signal-based `input()`/`output()`.
+- Manage state with RxJS (`Observable`, `Subject`, `BehaviorSubject`) and NgRx Store/Effects. Do NOT use Angular Signals, `computed()`, or the `resource()` API (not available in Angular 15).
+- Remove subscriptions properly with the `takeUntil` (destroyer subject) pattern or the `async` pipe in templates.
 
-## 3. Data Fetching
+## 3. Change Detection & Template Control Flow
 
-- Use the `resource()` API for asynchronous loaders and API requests.
-- Bind loading (`resource.isLoading()`) and error (`resource.error()`) states in the HTML templates.
-- Do not trigger side effects inside constructor unless wrapped in `effect()` or `untracked()`.
+- Use standard Zone.js change detection. Use `changeDetection: ChangeDetectionStrategy.OnPush` where inputs are immutable and performance is critical.
+- Use `*ngIf`, `*ngFor` (always with a `trackBy` function for collections), and `*ngSwitch`. Do NOT use the modern `@if` / `@for` / `@switch` block control flow.
 
-## 4. File Suffixes
+## 4. Service Imports & Path Aliases
+
+- Import services via path alias `@services/<subfolder>/<service-name>.service` (e.g., `@services/state/custom-view/custom-view.service`).
+- **Do NOT** import from the root `@services` barrel file.
+- **Do NOT** use relative paths (e.g., `../services/...`) for services.
+
+## 5. File Suffixes
 
 - Components: `*.component.ts` (Class name ends with `Component`)
 - Services: `*.service.ts` (Class name ends with `Service`)
 - Guards: `*.guard.ts`
 - Models: `*.model.ts`
 - Constants: `*.constants.ts` or `mock-*.ts`
+- Modules: `*.module.ts` (Class name ends with `Module`)

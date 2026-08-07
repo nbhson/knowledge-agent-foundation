@@ -1,6 +1,6 @@
 # Workflow: Jira Ticket Review
 
-Systematic flow for retrieving and reviewing ticket details from Jira, assessing requirements, mapping technical impacts, and recommending downstream development or review workflows in the TOEIC application.
+Systematic flow for retrieving and reviewing ticket details from Jira, assessing requirements, mapping technical impacts, and recommending downstream development or review workflows in the Horizon 2 UI.
 
 ---
 
@@ -12,7 +12,7 @@ Always apply the following coding guidelines. Load additional rules based on the
 | ----------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------- |
 | **All Workflows / Modifications**   | `coding-style.md` | Enforces code reuse, check `/core` assets (constants, styles, models) before coding, and types safety.     |
 | **Routing & Folder Structure**      | `angular.md`      | Enforces Angular components structure, file suffixes, and lazy loading configuration.                      |
-| **Component Logic & Signals**       | `angular.md`      | Minimizes reactivity overhead, enforces modern signals, input/output APIs, and `resource()` data fetching. |
+| **Component Logic & Reactivity**       | `angular.md`      | Enforces Angular 15 module architecture, RxJS reactivity, @Input/@Output, and lazy-loaded feature modules. |
 | **Styling, Layout, Responsiveness** | `scss.md`         | Enforces SCSS imports conventions, mixins, glass panels, and prevents styling duplication.                 |
 | **Documentation & Reports**         | `templates.md`    | Dictates which markdown templates to use for Jira reviews, bug reports, and pull requests.                 |
 

@@ -12,9 +12,9 @@ if [ -n "$STAGED_FILES" ]; then
     echo "$STAGED_FILES" | xargs git add
 fi
 
-# Run vitest unit tests
-echo "Running Vitest unit tests..."
-npx vitest run
+# Run jest unit tests
+echo "Running Jest unit tests..."
+npm run test
 
 # Check if tests passed
 if [ $? -ne 0 ]; then

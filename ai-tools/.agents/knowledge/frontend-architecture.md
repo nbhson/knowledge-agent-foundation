@@ -1,28 +1,29 @@
 # Knowledge: Frontend Architecture
 
-We use the latest features in Angular 22+ to ensure high performance and modern code practices:
+We use **Angular 15.2.1** with classic **Module-Based (NgModule)** architecture. Modern Angular features (Standalone Components, Signals, `resource()`, `@if`/`@for`) are **NOT available** in this codebase.
 
-- **Core Framework**: Angular 22+.
-- **Zoneless Change Detection**: Always use `provideZonelessChangeDetection()` in the application config. Ensure all components use `changeDetection: ChangeDetectionStrategy.OnPush`.
-- **Signals State Management**:
-  - Use Signals (`signal`) for writable state.
-  - Use Computed Signals (`computed`) for read-only derived values.
-  - Use `effect` only when doing side-effects (e.g., synchronizing storage or resetting state on signal changes). Wrap any untracked reads inside `untracked()`.
-- **Modern Signal Inputs & Outputs**:
-  - Use signal-based inputs: `myInput = input<type>()` or `requiredInput = input.required<type>()`.
-  - Use signal-based outputs: `myOutput = output<type>()`.
-- **Declarative Data Loading**:
-  - Use the new `resource()` API for asynchronous requests and fetching data.
-  - Utilize `resource.isLoading` and `resource.error` inside templates to handle loading and error states cleanly.
-- **Modern Control Flow**:
-  - Always use `@if`, `@else`, `@for` (with `track` parameter), and `@switch` syntax.
-  - Avoid importing `CommonModule` (`ngIf`, `ngFor`, etc.) in Standalone component imports.
+- **Core Framework**: Angular 15.2.1, Zone.js change detection.
+- **Module-Based Architecture**:
+  - Components must be declared in an `NgModule` (typically `SharedModule` or feature modules like `EmbeddedModule`, `TrackerModule`, `AdminModule`).
+  - To add a new component, also register it in its corresponding module's `declarations` and `exports` arrays (if reusable).
+- **State Management & Reactivity**:
+  - Do NOT use Angular Signals, computed signals, or the `resource()` API.
+  - Use RxJS `Observable`, `Subject`, `BehaviorSubject`, and standard NgRx Store/Effects for state management.
+  - Clean up subscriptions (using the `takeUntil` pattern with a destroyer subject or the `async` pipe in templates) to prevent memory leaks.
+- **Component Inputs/Outputs**:
+  - Use `@Input()` / `@Output()` decorators with `EventEmitter` (NOT signal-based inputs/outputs).
+- **Control Flow**:
+  - Do NOT use `@if`, `@for`, or `@switch`.
+  - Use `*ngIf`, `*ngFor` (always specify `trackBy` for collections), and `*ngSwitch` directives instead. Ensure `CommonModule` is imported in modules using these directives.
+- **Change Detection**:
+  - Standard Zone.js change detection.
+  - Implement `changeDetection: ChangeDetectionStrategy.OnPush` where performance is critical and inputs are immutable.
 - **Lazy Loading**:
-  - Lazy-load route definitions inside [app.routes.ts](file:///Users/nguyenson/Github/toeic/src/app/core/routers/app.routes.ts) using `loadComponent`.
-  - Use `@defer` (e.g., `(on interaction)`) to lazy-load non-critical child views like settings modals.
-- **Styling**: Dart Sass namespace imports (`@use`), utility classes, and global variables/mixins.
-- **Testing**: Vitest (`npx vitest`).
-- **Formatting**: Prettier (`npx prettier`).
+  - Lazy-load routes using classic module loading: `loadChildren: () => import('./tracker/tracker.module').then((m) => m.TrackerModule)`.
+- **Styling**: Classic Dart Sass `@import` modular styles, design system variables (`src/scss/helpers/...`), Bootstrap/Material utility classes.
+- **Testing**: Jest (`npm run test`).
+- **Formatting**: Prettier (`npm run format`).
+- **Linting**: ESLint (`npm run lint`).
 
 ---
 
@@ -32,17 +33,19 @@ We use the latest features in Angular 22+ to ensure high performance and modern 
 We separate responsibilities cleanly using container and presenter components:
 
 - **Container/Orchestrator Components** (Parent):
-  - Responsible for fetching data (using `resource()`), managing routing, submission handlers, and route transition guards (`canDeactivate`).
+  - Responsible for fetching data (via RxJS services + `async` pipe), managing routing, submission handlers, and route guards (`canActivate: MAIN_ROLE_GUARDS`, `canDeactivate`).
 - **Stateless Presenter Components** (Children):
-  - Located under the `components/` subfolder.
-  - Accept inputs via Signal inputs (`input<type>()`) and emit actions via outputs (`output<type>()`).
+  - Located under the feature module's `components/` subfolder.
+  - Accept inputs via `@Input()` and emit actions via `@Output()` + `EventEmitter`.
   - Purely presentational and state-free.
+- Every component must be registered in its parent `NgModule` `declarations` (and `exports` if reusable).
 
 ### 2. Symmetrical Refactoring
-Maintain strict symmetry between similar domains (e.g. `practice-part5` and `practice-part6` have parallel folder structures and route guard patterns).
+Maintain strict symmetry between similar domains — parallel folder structures, module patterns, and route guard patterns.
 
 ### 3. Core Assets Organization
-- **Routes**: Keep routing configurations inside `src/app/core/routers/`.
-- **Global Styles**: Keep style entrypoint and partials inside `src/app/core/styles/`.
-- **Models**: Keep interfaces inside `src/app/core/models/toeic.model.ts`.
-- **Services**: Keep services inside `src/app/core/services/`.
+- **Shared Components**: `src/shared/` (global components, decorators, directives, DTOs, guards, material configurations, pipes).
+- **Global Constants**: `src/constants/` (`constants.ts`, `enum.ts`, `messages.ts`, etc.).
+- **Models**: `src/models/` (global interface types, e.g., `table.model.ts`).
+- **Global Styles**: `src/scss/` split into `base/`, `components/`, `helpers/`, `pages/`.
+- **Path Aliases**: Use `@services/*` for services (mapped to `src/app/services/*`). Do NOT import from the root `@services` barrel — always use specific category subfolders (e.g., `@services/state/custom-view/custom-view.service`). Do NOT use relative paths (like `../services/...`) for services.

@@ -6,8 +6,8 @@ Triggered before submitting code for review.
 
 ## Instructions
 
-1. **Confirm Validation**: Ensure all code quality checks (prettier format) and validation checks (Vitest unit tests, build checks, and manual dev server checks) have passed successfully.
-2. **Review Checklist**: Verify standard features use Angular 22+ Standalone components, Signals, `resource()` API, and SCSS variables/mixins.
+1. **Confirm Validation**: Ensure all code quality checks (prettier format) and validation checks (Jest unit tests, build checks, and manual dev server checks) have passed successfully.
+2. **Review Checklist**: Verify standard features use Angular 15 NgModule architecture, @Input/@Output, RxJS observable streams, and SCSS variables/mixins with @import.
 3. **PR details**: Fill out Pull Request details using `.agents/templates/pull-request-template.md`.
 4. **Automated GitHub PR Creation**:
    - Check out a descriptive branch (e.g., `feat/feature-name` or `fix/bug-name`).

@@ -1,6 +1,6 @@
 # Hook: Post Code Change
 
-Triggered automatically after any source code files are modified to ensure code hygiene in the TOEIC application.
+Triggered automatically after any source code files are modified to ensure code hygiene in the Horizon 2 UI.
 
 ---
 

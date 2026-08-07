@@ -1,6 +1,6 @@
 # Workflow: Refactor
 
-Workflow for improving codebase structure, style, or performance without breaking features in the TOEIC application.
+Workflow for improving codebase structure, style, or performance without breaking features in the Horizon 2 UI.
 
 ---
 
@@ -12,7 +12,7 @@ Always apply the following coding guidelines. Load additional rules based on the
 | ----------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------- |
 | **All Workflows / Modifications**   | `coding-style.md` | Enforces code reuse, check `/core` assets (constants, styles, models) before coding, and types safety.     |
 | **Routing & Folder Structure**      | `angular.md`      | Enforces Angular components structure, file suffixes, and lazy loading configuration.                      |
-| **Component Logic & Signals**       | `angular.md`      | Minimizes reactivity overhead, enforces modern signals, input/output APIs, and `resource()` data fetching. |
+| **Component Logic & Reactivity**       | `angular.md`      | Enforces Angular 15 module architecture, RxJS reactivity, @Input/@Output, and lazy-loaded feature modules. |
 | **Styling, Layout, Responsiveness** | `scss.md`         | Enforces SCSS imports conventions, mixins, glass panels, and prevents styling duplication.                 |
 | **Documentation & Reports**         | `templates.md`    | Dictates which markdown templates to use for Jira reviews, bug reports, and pull requests.                 |
 
@@ -27,7 +27,7 @@ You MUST NOT immediately start implementation. Always follow these sequential st
 - Enforce rules based on the **Rules Mapping by Scope** table above.
 
 ### Step 3 — Smell Assessment
-- Identify candidates (such as complex components that should be decomposed into presenter children, direct DOM manipulations, missing `OnPush` detection, duplicate SCSS/CSS declarations, or non-signal inputs/outputs).
+- Identify candidates (such as complex components that should be decomposed into presenter children, direct DOM manipulations, missing `OnPush` detection, duplicate SCSS/CSS declarations, or legacy inputs/outputs).
 - _Do NOT modify source code during this phase._
 
 ### Step 4 — Planning Phase
@@ -42,9 +42,9 @@ You MUST NOT immediately start implementation. Always follow these sequential st
 - Run code formatting workflow: `.agents/knowledge/code-formatting-workflow.md` immediately after code changes.
 
 ### Step 7 — Validation Phase
-- **Automated Tests**: Write and execute dedicated unit tests using Vitest (`npx vitest run`).
+- **Automated Tests**: Write and execute dedicated unit testsJest (`npm run test`).
 - **Build Check**: Run `npm run build` or `npx ng build`.
-- **Visual Check**: Run `npm start` and manually inspect the responsive layout and browser logs.
+- **Visual Check**: Run `npm run startdev` and manually inspect the responsive layout and browser logs.
 - _Return to the Implementation Phase if any check fails._
 
 ### Step 8 — Engineering Report

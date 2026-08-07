@@ -1,6 +1,6 @@
 # Rule: Coding Style & Code Reuse
 
-This document enforces rules for code reuse, formatting, and cleanliness across the TOEIC application.
+This document enforces rules for code reuse, formatting, and cleanliness across the Horizon 2 UI.
 
 ---
 
@@ -8,8 +8,8 @@ This document enforces rules for code reuse, formatting, and cleanliness across 
 
 Before defining any new constants, typescript models, utility functions, or services, agents **MUST** search the `src/app/core/` directory to see if they are already defined:
 
-- **Constants**: Check [app.constants.ts](file:///Users/nguyenson/Github/toeic/src/app/core/constants/app.constants.ts) or feature-specific mock files before creating new config variables, API routes, or mock questions.
-- **Models/Types**: Re-use interfaces defined in [toeic.model.ts](file:///Users/nguyenson/Github/toeic/src/app/core/models/toeic.model.ts) instead of declaring duplicate inline types.
+- **Constants**: Check [app.constants.ts](src/app/core/constants/app.constants.ts) or feature-specific mock files before creating new config variables, API routes, or mock questions.
+- **Models/Types**: Re-use interfaces defined in [toeic.model.ts](src/app/core/models/toeic.model.ts) instead of declaring duplicate inline types.
 - **Services**: Reuse core services (e.g., state controllers, storage synchronizers) instead of rewriting logic.
 
 ## 2. SCSS Styles & Variables Reuse

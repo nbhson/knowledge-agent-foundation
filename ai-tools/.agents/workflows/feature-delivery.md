@@ -1,6 +1,6 @@
 # Workflow: Feature Delivery
 
-Workflow for delivering new features in the TOEIC application, aligned with architectural and styling standards.
+Workflow for delivering new features in the Horizon 2 UI, aligned with architectural and styling standards.
 
 ---
 
@@ -12,7 +12,7 @@ Always apply the following coding guidelines. Load additional rules based on the
 | ----------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------- |
 | **All Workflows / Modifications**   | `coding-style.md` | Enforces code reuse, check `/core` assets (constants, styles, models) before coding, and types safety.     |
 | **Routing & Folder Structure**      | `angular.md`      | Enforces Angular components structure, file suffixes, and lazy loading configuration.                      |
-| **Component Logic & Signals**       | `angular.md`      | Minimizes reactivity overhead, enforces modern signals, input/output APIs, and `resource()` data fetching. |
+| **Component Logic & Reactivity**       | `angular.md`      | Enforces Angular 15 module architecture, RxJS reactivity, @Input/@Output, and lazy-loaded feature modules. |
 | **Styling, Layout, Responsiveness** | `scss.md`         | Enforces SCSS imports conventions, mixins, glass panels, and prevents styling duplication.                 |
 | **Documentation & Reports**         | `templates.md`    | Dictates which markdown templates to use for Jira reviews, bug reports, and pull requests.                 |
 
@@ -40,15 +40,15 @@ You MUST NOT immediately start implementation. Always follow these sequential st
 - _Do NOT write implementation code until approved._
 
 ### Step 6 — Implementation Phase
-- Build standalone components using signals, SCSS mixins/variables, and modern Angular template control flow.
-- Integrate state logic using Signal inputs/outputs, Angular services, and the `resource()` API.
+- Build NgModule-based components following Angular 15 patterns, reuse SCSS mixins/variables, and use structural directives (*ngIf, *ngFor with trackBy).
+- Integrate state logic using @Input/@Output with EventEmitter, RxJS services, and the async pipe.
 - Keep changes minimal and follow project standards.
 - Run code formatting workflow: `.agents/knowledge/code-formatting-workflow.md` immediately after code changes.
 
 ### Step 7 — Validation Phase
-- **Automated Tests**: Write and execute dedicated unit tests using Vitest (`npx vitest run`).
+- **Automated Tests**: Write and execute dedicated unit testsJest (`npm run test`).
 - **Build Check**: Run `npm run build` or `npx ng build`.
-- **Visual Check**: Run `npm start` and manually inspect the responsive layout and browser logs.
+- **Visual Check**: Run `npm run startdev` and manually inspect the responsive layout and browser logs.
 - _Return to the Implementation Phase if any check fails._
 
 ### Step 8 — Engineering Report

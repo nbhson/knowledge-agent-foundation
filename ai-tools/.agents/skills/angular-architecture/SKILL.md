@@ -1,77 +1,85 @@
 ---
 name: angular-architecture
-description: Guides creating standalone components, presenting child sub-components, and handling Angular Signals state (inputs, outputs, resource, computed) in the TOEIC application.
+description: Guidelines for Container vs. Presentation architecture, component splitting, and RxJS/NgRx asynchronous data loading in Angular 15.
 ---
 
 # Angular Architecture & Component Blueprint
 
-This skill guides you on how to construct, split, and manage Angular components in this repository.
+This skill guides on how to structure, decompose, and manage Angular components and data flows in this repository.
 
-## 1. Container vs. Presentation Pattern
+---
 
-When a feature screen grows beyond 200 lines of template or SCSS:
+## 1. Container vs. Presentation Component Blueprint
 
-1. **Parent (Container)**:
-   - File: `practice-partX.component.ts`
-   - Role: Orchestrates data loading via `resource()`, manages URL routing/navigation, coordinates submissions, handles confirm guards, and maintains global state.
-   - Example markup:
-     ```html
-     <div class="practice-main-grid">
-       <app-passage-content [passage]="currentPassage()" (gapClicked)="onScroll($event)" />
-       <app-question-list
-         [questions]="currentPassage().questions"
-         (selectOption)="onSelect($event)"
-       />
-     </div>
-     ```
-2. **Children (Presenters)**:
-   - Folder: `components/my-sub-component/`
-   - Role: Stateless rendering. Receives inputs via `input<T>()` or `input.required<T>()`, emits actions via `output<T>()`.
-   - Rules:
-     - No direct service injection (e.g., `inject(ToeicService)`) inside presenters.
-     - Add `changeDetection: ChangeDetectionStrategy.OnPush` to every presenter.
+To avoid bloated templates and hard-to-maintain files, decompose components when they grow large or handle complex layouts:
 
-## 2. Signals & Resource Loading Guidelines
+### A. Parent (Container / Orchestrator)
 
-Always write data loading declaratively:
+- **Role**: Fetch data, integrate with NgRx store, inject services, manage routing, coordinate submissions, handle dialog boxes, and hold states.
+- **Example Template**:
+  ```html
+  <div class="tracker-main-container">
+    <app-tracker-overview-table [data]="trackerData" (rowClicked)="onRowSelect($event)"></app-tracker-overview-table>
+    <app-pagination [total]="totalCount" (pageChange)="onPageChange($event)"></app-pagination>
+  </div>
+  ```
 
-```typescript
-// Good: Declarative API resource
-readonly itemsResource = resource({
-  request: () => this.mySignalDependency(),
-  loader: async ({ request }) => {
-    return await this.myService.loadData(request);
+### B. Children (Presenters / Stateless components)
+
+- **Folder Location**: Nested inside a `components/` subdirectory under the parent component directory or inside `src/shared/components/`.
+- **Role**: Strictly render UI.
+- **Rules**:
+  - Accept state via classic `@Input()` decorators.
+  - Emit actions via `@Output() outputEvent = new EventEmitter<T>()`.
+  - Do NOT inject services directly inside presenters. Let the parent component handle operations.
+  - Always implement `changeDetection: ChangeDetectionStrategy.OnPush`.
+
+---
+
+## 2. Reactivity & Async Data Blueprint
+
+Do NOT use Angular Signals or `resource()`. Always write data loading and reactivity using RxJS Observables and classical Angular patterns:
+
+- **Fetching Data**:
+
+  ```typescript
+  // In Service:
+  getData(params: PaginationParams): Observable<PaginationResultModel<DataDTO>> {
+    return this.apiService.get(params);
   }
-});
 
-// Derived states:
-readonly items = computed(() => this.itemsResource.value() || []);
-readonly isLoading = this.itemsResource.isLoading;
-```
+  // In Component:
+  loadData() {
+    this.isLoading = true;
+    this.dataService.getData(this.params)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isLoading = false)
+      )
+      .subscribe({
+        next: (res) => this.items = res.content,
+        error: (err) => this.toastr.error('Failed to load data')
+      });
+  }
+  ```
 
-**State mutations**:
+- **Derived State**: Use RxJS `.pipe(map(...))` rather than manual recalculation inside templates to ensure efficiency and clean derived data.
 
-- Writable state: Use `signal<T>(initial)`.
-- Derived read-only state: Always use `computed()`.
-- Avoid triggering signals inside `effect()` unless wrapped in `untracked()` or performing side-effects (e.g., saving to local storage).
+---
 
 ## 3. Template Code Blueprint
 
-Use standalone components without `CommonModule`. Use modern control flow:
+Use classical Angular 15 template directives:
 
-```html
-<!-- my-component.component.html -->
-@if (isLoading()) {
-<div class="shimmer-card">...</div>
-} @else if (items().length > 0) {
-<div class="items-grid">
-  @for (item of items(); track item.id; let idx = $index) {
-  <div class="item-card" [class.active]="activeId() === item.id">
-    <h4>{{ item.title }}</h4>
+- Always use `*ngIf`, `*ngFor`, and `*ngSwitch` (imported via `CommonModule` or `SharedModule`).
+- Always specify `trackBy` for loops to prevent redundant DOM re-rendering:
+  ```html
+  <div *ngIf="!isLoading; else loadingTpl">
+    <div *ngFor="let item of items; trackBy: trackById" class="item-card">
+      <h4>{{ item.title }}</h4>
+    </div>
   </div>
-  }
-</div>
-} @else {
-<p>Không tìm thấy dữ liệu.</p>
-}
-```
+  <ng-template #loadingTpl>
+    <div class="shimmer-loader">Loading...</div>
+  </ng-template>
+  ```

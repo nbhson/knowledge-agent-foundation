@@ -19,7 +19,7 @@ Bạn đã thiết kế một harness hoàn chỉnh — tools, memory, context, 
 
 **Harness Engineering** dạy bạn thiết kế môi trường xung quanh AI. **Tools** là nơi chứa những công cụ thực thi cụ thể — phần mềm bạn cài đặt và cấu hình — để hiện thực hóa lý thuyết đó trong môi trường thật.
 
-Công cụ đầu tiên trong thư mục này là **RTK (Rust Token Killer)** — một CLI proxy giúp cắt tới 90% bash output trước khi nó chạm vào LLM context.
+Thư mục này không chỉ có **RTK (Rust Token Killer)** — CLI proxy cắt tới 90% bash output — mà còn là nơi tập hợp các công cụ hiện thực hóa **từng component của harness**: framework orchestration, vector databases cho memory, guardrails, observability, và evaluation.
 
 ### Tại Sao Tools Quan Trọng?
 
@@ -44,8 +44,15 @@ Công cụ đầu tiên trong thư mục này là **RTK (Rust Token Killer)** �
 │  harness/      → Kiến thức: 7 components, 12 modules (01–12)       │
 │  loop/         → Vòng lặp: concepts, patterns, safety, operating   │
 │  tools/        → ❯ Công cụ thực thi (binary/CLI/plugins)           │
-│     └── rtk/   →   ❯ Rust Token Killer — cắt 90% bash output      │
-│                                                                     │
+│     ├── rtk/           →   Rust Token Killer — cắt 90% bash output │
+│     ├── loop-cli/      →   Bộ CLI loop-* — scaffold + gate + audit │
+│     ├── langchain/     →   LangChain/LangGraph — graph harness     │
+│     ├── autogen/       →   AutoGen — multi-agent conversation      │
+│     ├── crewai/        →   CrewAI — multi-agent role-based         │
+│     ├── vector-db/     →   Vector DBs — memory/RAG retrieval       │
+│     ├── guardrails/    →   Lớp an toàn cho tool calls              │
+│     ├── observability/ →   Giám sát + logging + cost tracking      │
+│     └── evaluation/    →   Đo chất lượng harness response          │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -54,18 +61,37 @@ Công cụ đầu tiên trong thư mục này là **RTK (Rust Token Killer)** �
 ```
 tools/
 ├── README.md            ← BẠN ĐANG Ở ĐÂY — tổng quan + lộ trình + references
-└── rtk/                 ← Tutorial RTK (Rust Token Killer)
-    ├── README.md        ←   Tổng quan RTK: là gì, quan hệ với harness, lộ trình học
-    ├── 01-concepts/     ←   Kiến trúc RTK: hook system, 4 chiến lược nén, luồng dữ liệu
-    ├── 02-setup/        ←   Cài đặt + tích hợp từng AI tool (Claude, Cline, Gemini...)
-    ├── 03-patterns/     ←   Các pattern sử dụng, mỗi pattern một file
-    │   ├── README.md    ←     Pattern picker + bảng tổng hợp
-    │   ├── git-speedup.md
-    │   ├── test-only-failures.md
-    │   ├── file-smart-read.md
-    │   └── build-lint-compact.md
-    ├── 04-savings/      ←   Đo lường: rtk gain, discover, session — token saved
-    └── 05-troubleshooting/ ← Xử lý sự cố, failure modes & mitigations
+├── rtk/                 ← Tutorial RTK (Rust Token Killer)
+│   ├── README.md        ←   Tổng quan RTK: là gì, quan hệ với harness, lộ trình học
+│   ├── 01-concepts/     ←   Kiến trúc RTK: hook system, 4 chiến lược nén, luồng dữ liệu
+│   ├── 02-setup/        ←   Cài đặt + tích hợp từng AI tool (Claude, Cline, Gemini...)
+│   ├── 03-patterns/     ←   Các pattern sử dụng, mỗi pattern một file
+│   ├── 04-savings/      ←   Đo lường: rtk gain, discover, session — token saved
+│   └── 05-troubleshooting/ ← Xử lý sự cố, failure modes & mitigations
+│
+├── loop-cli/            ← Bộ CLI `@cobusgreyling/loop-*` (init, audit, gate, sandbox)
+│   └── README.md        ←   Scaffold + điều phối loop, Harness Runtime score
+│
+├── langchain/           ← LangChain/LangGraph — framework xây harness có state
+│   └── README.md        ←   StateGraph mô hình 7 components, ToolNode, RAG
+│
+├── autogen/             ← AutoGen (Microsoft) — multi-agent conversation-based
+│   └── README.md        ←   UserProxyAgent = harness, GroupChat orchestration
+│
+├── crewai/              ← CrewAI — multi-agent role-based
+│   └── README.md        ←   Agent/Task/Crew, Process.sequential vs hierarchical
+│
+├── vector-db/           ← Chroma, Pinecone, Qdrant, Weaviate — memory retrieval
+│   └── README.md        ←   Embedding, semantic search, Tier 2 Warm Memory
+│
+├── guardrails/          ← Guardrails AI, NeMo, LlamaGuard — an toàn tool calls
+│   └── README.md        ←   Validators, rails, permission + rate limit
+│
+├── observability/       ← LangSmith, Helicone, OpenLLMetry, W&B — monitoring
+│   └── README.md        ←   Traces, cost tracking, tool latency SLO
+│
+└── evaluation/          ← PromptFoo, Deepeval, Ragas — đo chất lượng
+    └── README.md        ←   Eval suite, regression detection, RAG metrics
 ```
 
 > Mỗi thư mục chứa một `README.md` — đồng nhất với convention của `harness/` và `loop/`.
@@ -73,28 +99,37 @@ tools/
 ### Lộ Trình Đề Xuất
 
 ```
-Bước 1: Đọc tools/rkt/README.md để hiểu RTK là gì và quan hệ với harness
+Giai đoạn 1 — Giảm chi phí ngay lập tức:
+   Đọc tools/rtk/README.md → cài RTK → áp dụng pattern git-speedup
    ↓
-Bước 2: 01-concepts/ — hiểu kiến trúc hook + 4 chiến lược nén hoạt động ra sao
+Giai đoạn 2 — Hiện thực hóa harness:
+   Chọn framework: langchain/ (graph) HOẶC autogen/crewai (multi-agent)
+   Thêm vector-db/ cho memory + RAG retrieval
    ↓
-Bước 3: 02-setup/ — cài đặt + tích hợp vào AI tool bạn đang dùng (Cline/Claude Code)
+Giai đoạn 3 — Làm an toàn:
+   guardrails/ → validate tool calls, permission, rate limit
    ↓
-Bước 4: 03-patterns/ — áp dụng pattern đầu tiên (gợi ý: git-speedup)
+Giai đoạn 4 — Đo lường & giám sát:
+   observability/ → cost tracking + latency SLO
+   evaluation/ → eval suite chặn regression
    ↓
-Bước 5: 04-savings/ — đo lường token đã tiết kiệm bằng `rtk gain`
-   ↓
-Bước 6: 05-troubleshooting/ — khi có sự cố hoặc lệnh bị rewrite sai
+Giai đoạn 5 — Tự động hóa:
+   loop-cli/ → scaffold loops, loop gate trong CI, worktree isolation
 ```
 
 | Bạn muốn... | Đọc |
 |-------------|-----|
-| Hiểu RTK hoạt động thế nào | [01-concepts](rtk/01-concepts/) |
-| Cài đặt + tích hợp vào AI tool | [02-setup](rtk/02-setup/) |
-| Chọn pattern nào dùng trước | [03-patterns](rtk/03-patterns/) — pattern picker |
-| Làm git nhanh hơn | [03-patterns/git-speedup.md](rtk/03-patterns/git-speedup.md) |
-| Chỉ xem test failures | [03-patterns/test-only-failures.md](rtk/03-patterns/test-only-failures.md) |
-| Đo token đã tiết kiệm | [04-savings](rtk/04-savings/) |
-| Xử lý lệnh bị rewrite sai | [05-troubleshooting](rtk/05-troubleshooting/) |
+| Giảm token bash output | [rtk](rtk/) |
+| Hiểu RTK hoạt động thế nào | [rtk/01-concepts](rtk/01-concepts/) |
+| Cài đặt + tích hợp RTK vào AI tool | [rtk/02-setup](rtk/02-setup/) |
+| Chọn pattern RTK nào dùng trước | [rtk/03-patterns](rtk/03-patterns/) — pattern picker |
+| Scaffold + điều phối loops | [loop-cli](loop-cli/) |
+| Xây harness bằng graph | [langchain](langchain/) |
+| Xây multi-agent harness | [autogen](autogen/) hoặc [crewai](crewai/) |
+| Memory + RAG retrieval | [vector-db](vector-db/) |
+| An toàn tool calls | [guardrails](guardrails/) |
+| Giám sát cost + latency | [observability](observability/) |
+| Đo chất lượng response | [evaluation](evaluation/) |
 
 ---
 
@@ -113,7 +148,19 @@ Repo `rtk-ai/rtk` chính là một harness engineering case study: nó hỗ tr�
 | Codex | AGENTS.md + RTK.md instructions | Instruction-based |
 | Cursor | preToolUse hook (hooks.json) | Transparent rewrite |
 
-### 2. Kết Quả Đo Lường
+### 2. Stack Hoàn Chỉnh Cho Một Harness Production
+
+```
+rtk/           → cắt 90% bash output trước khi vào context
+vector-db/     → memory tiers + RAG retrieval (harness/01, 02, 03)
+langchain/     → StateGraph orchestrate 7 components (harness/07)
+guardrails/    → validate mọi tool call trước khi execute (harness/06)
+observability/ → LangSmith trace + Helicone cost (harness/11)
+evaluation/    → PromptFoo regression-check trong CI (harness/11)
+loop-cli/      → loop gate + worktree isolation cho tự động hóa (harness/10)
+```
+
+### 3. Kết Quả Đo Lường RTK
 
 | Command | Output thô | Output RTK | Giảm |
 |---------|-----------|------------|------|
@@ -129,15 +176,28 @@ Repo `rtk-ai/rtk` chính là một harness engineering case study: nó hỗ tr�
 
 ### Công Cụ Trong Nhánh Này
 
-- **[RTK — Rust Token Killer](rtk/)** — CLI proxy nén bash output trước khi vào LLM context. Repo: https://github.com/rtk-ai/rtk · Website: https://www.rtk-ai.app
+| Tool | Vai trò | Liên kết |
+|------|---------|----------|
+| **RTK — Rust Token Killer** | CLI proxy nén bash output trước khi vào LLM context | [rtk/](rtk/) · https://github.com/rtk-ai/rtk · https://www.rtk-ai.app |
+| **Loop CLI** | Bộ CLI loop-*: init, doctor, audit, gate, sandbox, worktree | [loop-cli/](loop-cli/) · https://github.com/cobusgreyling/loop-engineering |
+| **LangChain / LangGraph** | Framework xây harness dạng stateful graph | [langchain/](langchain/) · https://langchain.com |
+| **AutoGen (Microsoft)** | Multi-agent harness conversation-based | [autogen/](autogen/) · https://microsoft.github.io/autogen/ |
+| **CrewAI** | Multi-agent harness role-based | [crewai/](crewai/) · https://docs.crewai.com |
+| **Vector DBs** | Chroma, Pinecone, Qdrant, Weaviate — memory/RAG | [vector-db/](vector-db/) |
+| **Guardrails** | Guardrails AI, NeMo, LlamaGuard — an toàn tool calls | [guardrails/](guardrails/) |
+| **Observability** | LangSmith, Helicone, OpenLLMetry, W&B | [observability/](observability/) |
+| **Evaluation** | PromptFoo, Deepeval, Ragas | [evaluation/](evaluation/) |
 
 ### Liên Kết Sang Nhánh Khác
 
 - [HARNESS_ENGINEERING.md](../HARNESS_ENGINEERING.md) — 7 components của harness
+- [harness/01-retrieve-memory-knowledge](../harness/01-retrieve-memory-knowledge/) — Retrieval (vector-db)
 - [harness/02-build-context](../harness/02-build-context/) — Context Management (nơi RTK đóng vai trò)
-- [harness/06-decide-tools-mcp](../harness/06-decide-tools-mcp/) — Tool design & permissions
-- [harness/11-evaluation](../harness/11-evaluation/) — Đo lường hiệu quả
-- [loop/](../loop/) — Vòng lặp tự duy trì được hưởng lợi từ context nhẹ hơn
+- [harness/06-decide-tools-mcp](../harness/06-decide-tools-mcp/) — Tool design & permissions (guardrails)
+- [harness/09-multi-agent](../harness/09-multi-agent/) — Multi-agent (autogen, crewai)
+- [harness/11-evaluation](../harness/11-evaluation/) — Đo lường hiệu quả (evaluation, observability)
+- [loop/](../loop/) — Vòng lặp tự duy trì (loop-cli)
+- [MCP_SETUP.md](../MCP_SETUP.md) — MCP ecosystem (harness/06)
 
 ---
 

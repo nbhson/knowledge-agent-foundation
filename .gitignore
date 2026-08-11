@@ -1,0 +1,7 @@
+# macOS system files
+.DS_Store
+
+# Editor/IDE files
+.idea/
+.vscode/
+*.swp

@@ -33,6 +33,7 @@ To avoid bloated templates and hard-to-maintain files, decompose components when
   - Emit actions via `@Output() outputEvent = new EventEmitter<T>()`.
   - Do NOT inject services directly inside presenters. Let the parent component handle operations.
   - Always implement `changeDetection: ChangeDetectionStrategy.OnPush`.
+  - Expose an optional `@Input() autoId?: string` and bind `[attr.autoId]="autoId"` inside the template so callers can pass page-specific IDs (see [UI AutoId Skill](../ui-autoid/SKILL.md)).
 
 ---
 

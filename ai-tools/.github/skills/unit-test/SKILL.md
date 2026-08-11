@@ -22,6 +22,7 @@ This document outlines the systematic flow for writing, updating, and executing 
      - **Edge cases**: Empty lists, null or undefined inputs, extreme pagination values.
      - **Error flows**: HTTP error handling, failed actions, toast reminders.
    - **Assertion Strategy**: Prefer real component/service behavior over mock-only assertions where possible. Keep Angular 15 and RxJS patterns consistent with the existing test setup.
+   - **Element Selection**: Use `autoId` as the primary selector (`fixture.nativeElement.querySelector('[autoId="..."]')`) instead of fragile CSS/text selectors. Follow the [UI AutoId Skill](../ui-autoid/SKILL.md) for naming conventions.
    - Determine setup dependencies, importing test modules such as `HttpClientTestingModule` or using `jasmine.spyOn` / `jest.spyOn` as appropriate.
 
 3. **Execution**:

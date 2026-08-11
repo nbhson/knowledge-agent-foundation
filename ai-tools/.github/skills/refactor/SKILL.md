@@ -19,6 +19,7 @@ This document outlines the workflow for improving the structure, style, or perfo
      - **Cleanup**: Delete the file once the plan is approved or the task is completed.
      - **Permanent record**: Transfer the approved plan content into the final report in `.github/reports/` (via the [Report Generation Skill](../report-generation/SKILL.md)) so it is archived and auditable.
 3. **Incremental Changes**: Make changes incrementally while preserving existing behavior. Keep refactoring sets focused, reuse shared assets, and strictly follow the project naming, module, and styling conventions.
+   - Add/update `autoId` attributes for any touched template with interactive or viewable elements, following the [UI AutoId Skill](../ui-autoid/SKILL.md).
 4. **Update Unit Tests**: Update corresponding unit tests in spec files (`*.spec.ts`) to match the refactored code and ensure proper mock configurations.
 5. **Formatting & Quality Checks**: Follow the [Post Code Change Skill](../post-code-change/SKILL.md) for canonical lint, format, and cleanup requirements.
 6. **Validation & Report**:

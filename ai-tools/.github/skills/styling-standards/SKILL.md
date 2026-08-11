@@ -31,7 +31,15 @@ All styling should reuse configurations and partials:
 
 ---
 
-## 3. Responsive Layouts
+## 3. UI Automation Attributes (autoId)
+
+- `autoId` attributes do not affect styling — always use SCSS classes for presentation.
+- Keep styling selectors (classes) separate from automation attributes (`autoId`); do not style elements via `autoId`.
+- See [UI AutoId Skill](../ui-autoid/SKILL.md) for naming conventions.
+
+---
+
+## 4. Responsive Layouts
 
 Use CSS grids, flexbox, and media queries consistently:
 

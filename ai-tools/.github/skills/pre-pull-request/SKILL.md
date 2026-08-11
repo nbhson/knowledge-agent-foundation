@@ -26,6 +26,7 @@ Before creating a commit, pushing code, or submitting a Pull Request, execute th
 4. **Diff Review**:
    - Review all file changes for redundant edits, accidental modifications, or missing documentation.
    - Verify that no unrelated or temporary code/logs are included.
+   - Verify new/modified templates comply with the `ui-autoid` naming convention (see [UI AutoId Skill](../ui-autoid/SKILL.md)); no accidental renames of stable `autoId` values.
 
 5. **Alignment Check**:
    - Ensure the implementation follows repository guidance in [Core Engineering Guidelines](../../knowledge/core-engineering-guidelines.md).

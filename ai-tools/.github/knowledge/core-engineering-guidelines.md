@@ -92,4 +92,5 @@ Before completing changes, ensure Copilot fulfills this quality checklist:
 1. **Types**: Strictly avoid using `any` types. Provide interface declarations or models in `src/models/`.
 2. **Reusability**: Search the project first. If a service, utility, or constant already exists in `src/constants/` or `src/shared/`, reuse it.
 3. **No Unused Code**: Clean up unused imports, variables, and commented out sections before compiling.
-4. **Validation**: Run `npm run lint` and `npm run format` on modified files.
+4. **UI Automation (autoId)**: Add/update `autoId` attributes on interactive and viewable elements following the naming convention in `skills/ui-autoid/SKILL.md`.
+5. **Validation**: Run `npm run lint` and `npm run format` on modified files.

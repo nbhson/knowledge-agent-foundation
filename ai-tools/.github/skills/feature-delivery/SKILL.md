@@ -22,6 +22,7 @@ This document outlines the workflow for developing and delivering new features i
    - Write NgModule-based components following Angular 15 guidelines (no standalone components).
    - Separate container/orchestrator responsibilities from UI presenter components.
    - Use standard styles, variables, and common helper layouts.
+   - Add/update `autoId` attributes for any touched template with interactive or viewable elements, following the [UI AutoId Skill](../ui-autoid/SKILL.md).
 4. **Data Flows**: Integrate state logic using RxJS (observables, behavior subjects) and NgRx where application-wide state is needed.
 5. **Write Unit Tests**: Write or update unit tests inside the corresponding `*.spec.ts` files to test component renderings, data logic, and event flows.
 6. **Formatting & Quality Checks**: Follow the [Post Code Change Skill](../post-code-change/SKILL.md) for canonical formatting, lint/format, and cleanup steps.

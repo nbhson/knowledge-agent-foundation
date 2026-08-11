@@ -31,10 +31,15 @@ Instructions for reviewing code changes, pull requests, and validating coding co
    - Prohibit inline CSS styling.
    - Verify layout is responsive on smaller screens.
 
-4. **Security & Secrets**:
+4. **UI Automation (autoId)**:
+   - Verify new/modified templates comply with the `ui-autoid` naming convention (`<pageName>-<contextLevel...>-<elementId>`, camelCase).
+   - Ensure every clickable element (button, link, navbar, dropdown, checkbox, radio, pagination) and viewable/assertable element (title, label, message, table header) has an `autoId` when applicable.
+   - Confirm `autoId` values are unique within the page, set via `autoId="..."` or `[attr.autoId]="'...'"` (never `[autoId]`), and no accidental renames of stable `autoId` values.
+
+5. **Security & Secrets**:
    - Confirm no passwords, client secrets, API tokens, or credentials are hardcoded.
 
-5. **Performance & Cleanliness**:
+6. **Performance & Cleanliness**:
    - Ensure feature modules are lazy loaded in `app-routing.module.ts` via `loadChildren`.
    - Check for and clean up unused imports, variables, console logs, or commented out blocks of code.
    - Confirm that types are explicit (avoid `any`) and formatting/linting expectations are met.

@@ -86,33 +86,59 @@ Build Context là nghệ thuật **tổ chức thông tin đúng cách, đúng l
 
 **Build Context** là quá trình **tổ chức và quản lý thông tin** để đưa vào prompt của LLM. Context tốt giúp model hiểu rõ hơn, trả lời chính xác hơn, và tránh hallucination.
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                      BUILD CONTEXT                                │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │                                                            │  │
-│  │  Retrieved Info     Context Building       Optimized      │  │
-│  │  ┌──────┐          ┌──────────────┐       ┌──────────┐   │  │
-│  │  │ Doc1 │──────┐   │  Budget      │       │ System   │   │  │
-│  │  ├──────┤      │   │  Allocation  │       │ Prompt   │   │  │
-│  │  │ Doc2 │──────┼──►│  ──►         │──────►│ Context  │   │  │
-│  │  ├──────┤      │   │  Compress    │       │ Query    │   │  │
-│  │  │ Doc3 │──────┘   │  ──►         │       │ Response │   │  │
-│  │  └──────┘          │  Structure   │       └──────────┘   │  │
-│  │                    │  ──►         │                       │  │
-│  │  Chat History      │  Hierarchical│       Token-efficient │  │
-│  │  ┌──────┐          └──────────────┘       Context         │  │
-│  │  │ Msg1 │                                             │  │
-│  │  ├──────┤          ┌──────────────┐                    │  │
-│  │  │ Msg2 │─────────►│  Prompt      │                    │  │
-│  │  ├──────┤          │  Engineering │                    │  │
-│  │  │ Msg3 │─────────►│  ──►         │                    │  │
-│  │  └──────┘          └──────────────┘                    │  │
-│  │                                                            │  │
-│  └────────────────────────────────────────────────────────────┘  │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph INPUT["📥 Retrieved Info"]
+        D1["📄 Doc1"]
+        D2["📄 Doc2"]
+        D3["📄 Doc3"]
+        M1["💬 Msg1"]
+        M2["💬 Msg2"]
+        M3["💬 Msg3"]
+    end
+
+    subgraph BUILD["⚙️ Context Building"]
+        A["💰 Budget Allocation"]
+        C["🗜️ Compress"]
+        S["🏗️ Structure"]
+        H["🌳 Hierarchical"]
+        P["📝 Prompt Engineering"]
+    end
+
+    subgraph OUTPUT["✨ Optimized Context"]
+        SP["⚙️ System Prompt"]
+        CTX["🧠 Context"]
+        Q["❓ Query"]
+        R["💡 Response"]
+    end
+
+    D1 --> A
+    D2 --> A
+    D3 --> A
+    D1 --> C
+    D2 --> C
+    D3 --> C
+    D1 --> S
+    D2 --> S
+    D3 --> S
+    D1 --> H
+    D2 --> H
+    D3 --> H
+
+    M1 --> P
+    M2 --> P
+    M3 --> P
+
+    A --> SP
+    C --> CTX
+    S --> CTX
+    H --> CTX
+    P --> Q
+    CTX --> R
+
+    style INPUT fill:#fef9c3,stroke:#ca8a04
+    style BUILD fill:#dcfce7,stroke:#16a34a
+    style OUTPUT fill:#dbeafe,stroke:#2563eb
 ```
 
 ## Tại Sao Build Context Quan Trọng?
@@ -179,7 +205,7 @@ Build Context là nghệ thuật **tổ chức thông tin đúng cách, đúng l
 │  KHÔNG CÓ CONTEXT MANAGEMENT:                                   │
 │  ├── Token usage: 100% (full context mỗi lần)                  │
 │  ├── Cost: $0.03 × 100K tokens = $3/query                      │
-│  ├── Accuracy: 50-60% (noise干扰)                              │
+│  ├── Accuracy: 50-60% (noise (nhiễu))                              │
 │  └── Latency: Cao (quá nhiều tokens)                           │
 │                                                                  │
 │  CÓ CONTEXT MANAGEMENT:                                         │
@@ -314,6 +340,13 @@ Context window là **bộ nhớ tạm thời** của LLM — tất cả token m�
 ```
 
 ### 1.2 Token Budget Allocation
+
+**Token Budget Allocation** là quá trình **phân bổ số lượng token (đơn vị đo lường của LLM) cho từng thành phần** bên trong context window: system prompt, retrieved context, conversation history, tool results và user query.
+
+**Ý nghĩa:**
+- Context window có giới hạn (ví dụ 128K tokens) → nếu không phân bổ, một thành phần sẽ "ăn hết" chỗ của thành phần khác, khiến model thiếu thông tin cần thiết.
+- Phân bổ hợp lý giúp **tối đa hóa thông tin hữu ích** trong khi vẫn đảm bảo model còn chỗ dành cho output.
+- Phân bổ **động** (dynamic allocation) theo loại câu hỏi giúp tối ưu từng tình huống: câu hỏi đơn giản cần ít retrieved context, câu hỏi retrieval nặng cần nhiều retrieved context hơn.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -459,6 +492,13 @@ Available:                            124,000 tokens
 
 ### 1.3 Context Window Sizes — So Sánh
 
+**Context Window Sizes** là **kích thước tối đa của context window** mà mỗi mô hình hỗ trợ — tức là số token tối đa mà model có thể "nhìn thấy" trong một lần suy luận.
+
+**Ý nghĩa của việc so sánh kích thước:**
+- Giúp **chọn đúng mô hình cho đúng bài toán**: model context nhỏ (4K-8K) phù hợp tác vụ đơn giản và rẻ; model context lớn (128K-1M) phù hợp xử lý tài liệu dài, mã nguồn lớn.
+- **Context window lớn hơn KHÔNG đồng nghĩa với tốt hơn** — nhiều context hơn đồng nghĩa nhiều nhiễu hơn và dễ gặp "Lost in the Middle".
+- Model chạy local qua Ollama (gemma3:12b, Llama 3.1) có context 128K, miễn phí, phù hợp triển khai RAG tại chỗ.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │               CONTEXT WINDOW SIZES ACROSS MODELS                 │
@@ -488,6 +528,13 @@ Available:                            124,000 tokens
 ```
 
 ### 1.4 "Lost in the Middle" Problem
+
+**"Lost in the Middle" Problem** mô tả hiện tượng: **LLM tập trung chú ý vào thông tin ở ĐẦU và CUỐI context window, nhưng bỏ qua (hoặc ghi nhớ kém) thông tin nằm ở GIỮA.**
+
+**Ý nghĩa / Tại sao quan trọng:**
+- Nghiên cứu Google (2024): accuracy giảm **từ 76% xuống 20%** khi thông tin quan trọng nằm giữa context.
+- Ảnh hưởng trực tiếp đến RAG: nếu document quan trọng bị xếp vào giữa context → model có thể bỏ qua, dẫn đến trả lời thiếu hoặc sai.
+- Giải pháp chính: xếp thông tin quan trọng ở đầu/cuối, dùng re-ranking để đưa document tốt nhất lên đầu, và nén context để giảm nhiễu.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -523,7 +570,26 @@ Available:                            124,000 tokens
 
 ## 2. Context Construction Strategies
 
+> **Đọc nhanh:** 2.1, 2.2, 2.3 nhìn context construction ở **3 góc độ KHÁC NHAU** của cùng một vấn đề — chúng không phải là 3 bộ phân loại cạnh tranh, mà bổ sung cho nhau:
+>
+> | Subsection | Góc nhìn | Trả lời câu hỏi |
+> |---|---|---|
+> | **2.1 — 5 Strategies** | **Chiến lược** (trừu tượng) | "Tôi muốn xử lý thông tin theo hướng nào?" — nhét hết, lọc, nén, cấu trúc, hay tự thích ứng? |
+> | **2.2 — 5 Patterns** | **Triển khai** (code mẫu) | "Tình huống cụ thể của tôi cần code gì?" — trích dẫn, sắp xếp, phân loại, theo hội thoại, đa nguồn |
+> | **2.3 — 4 Chain Types** | **Framework cụ thể** (LangChain) | "Dùng LangChain thì chọn tham số `chain_type` nào?" — stuff / map-reduce / refine / compression |
+>
+> Cùng một chiến lược (2.1) có thể được triển khai bằng pattern (2.2) và/hoặc chọn chain type (2.3) — xem bảng mapping ở cuối 2.3.
+
 ### 2.1 5 Strategies Tổng Quan
+
+**Context Construction Strategies** là các **chiến lược tổ chức thông tin đã retrieve được thành context trước khi đưa vào prompt** — quyết định cách sắp xếp, lọc bỏ và định dạng tài liệu đầu vào cho LLM.
+
+**Ý nghĩa:**
+- Không phải cứ retrieve bao nhiêu là nhét bấy nhiêu vào prompt — mỗi chiến lược có đánh đổi riêng giữa **độ đầy đủ** (completeness) và **độ sạch/ngắn gọn** (precision).
+- Chọn sai chiến lược dẫn đến: context nhiễu (giảm accuracy), token lãng phí (tăng chi phí), hoặc thiếu thông tin (hallucination).
+- Chiến lược **ADAPTIVE** (thích ứng) là hướng đi hiện đại: tự động chọn chiến lược phù hợp dựa trên loại câu hỏi.
+
+5 chiến lược chính:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -568,6 +634,15 @@ Available:                            124,000 tokens
 ```
 
 ### 2.2 Context Building Patterns — Code Examples
+
+**Context Building Patterns** là các **mẫu code cụ thể hóa chiến lược xây dựng context trong thực tế** — mỗi pattern giải quyết một tình huống điển hình khi tích hợp RAG.
+
+**Ý nghĩa:**
+- **Citation-based**: Gán số nguồn [1], [2]... cho từng tài liệu → model trích dẫn đúng nguồn, dễ kiểm chứng (quan trọng cho lĩnh vực pháp lý, y tế).
+- **Relevance-ranked**: Sắp xếp tài liệu theo độ liên quan → giảm "Lost in the Middle", đặt thông tin quan trọng ở đầu/cuối.
+- **Categorized**: Nhóm tài liệu theo chủ đề → model dễ dàng tìm và tổng hợp thông tin theo category.
+- **Conversation-aware**: Kết hợp hồ sơ người dùng + lịch sử chat + tài liệu → câu trả lời cá nhân hóa và theo ngữ cảnh hội thoại.
+- **Multi-source**: Kết hợp nhiều nguồn (official, expert, database...) với thứ tự ưu tiên rõ ràng → cân bằng độ tin cậy.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -668,7 +743,7 @@ def build_categorized_context(documents):
 # ============================================================
 def build_conversational_context(query, docs, chat_history, user_profile=None):
     """
-    Xây context考虑到 cuộc trò chuyện hiện tại
+    Xây context theo cuộc trò chuyện hiện tại
     
     Kết hợp: user profile + chat history + retrieved docs
     """
@@ -748,7 +823,7 @@ if __name__ == "__main__":
          "category": "legal", "score": 0.95},
         {"content": "Mức đóng 4.5% lương cơ sở", "source": "QĐ 105", 
          "category": "finance", "score": 0.88},
-        {"content": "Thẻ BHYT有效期 5 năm", "source": "Luật BHYT", 
+        {"content": "Thẻ BHYT có hiệu lực 5 năm", "source": "Luật BHYT", 
          "category": "legal", "score": 0.72},
         {"content": "Khám tại tuyến huyện trở lên", "source": "Hướng dẫn", 
          "category": "medical", "score": 0.65},
@@ -1003,11 +1078,90 @@ qa_chain = RetrievalQA.from_chain_type(
 
 > **Ghi chú:** "Chain Types" là tên gọi của LangChain. Trong thực tế, 4 pattern này xuất hiện trong mọi RAG framework (LlamaIndex gọi là `ResponseMode`, hay trong code tự viết bạn implement manual).
 
+#### Mối Quan Hệ: 2.1 ↔ 2.2 ↔ 2.3
+
+Ba subsection không trình bày 3 thứ độc lập — chúng là **cùng một chiến lược được nhìn ở các mức độ khác nhau**. Bảng dưới đây map từng chiến lược (2.1) sang pattern code (2.2) và chain type LangChain (2.3):
+
+| 2.1 — Strategy | 2.2 — Pattern (code) | 2.3 — LangChain Chain Type | Ví dụ thực tế |
+|---|---|---|---|
+| **PASS-THROUGH** (nhét hết) | Citation-based (gán số nguồn [1][2]...) | **STUFF** | Đưa toàn bộ tài liệu kèm số nguồn để model trích dẫn |
+| **SELECTIVE** (lọc giữ tốt nhất) | Relevance-ranked (xếp theo độ liên quan) | — (tự lọc top-K trước rồi dùng stuff) | Chỉ giữ 3 tài liệu có score cao nhất, đặt quan trọng ở đầu/cuối |
+| **COMPRESSED** (tóm tắt cho nhỏ) | — (thuộc mục 3 — Compression) | **MAP-REDUCE** / **CONTEXT COMPRESSION** | Tóm tắt từng document rồi gộp lại, hoặc nén trước khi nhồi |
+| **STRUCTURED** (sắp xếp có tổ chức) | Categorized (nhóm theo chủ đề) | — (LangChain không có sẵn, tự làm) | Nhóm tài liệu theo legal / finance / medical |
+| **ADAPTIVE** (tự chọn theo câu hỏi) | Conversation-aware / Multi-source | — (kết hợp với Router ở mục 8.1) | Câu hỏi đơn giản → ít docs + nhiều lịch sử; câu hỏi code → context file + conventions |
+
+**Cách đọc:** Một hệ thống RAG thường kết hợp **nhiều chiến lược cùng lúc**. Ví dụ: `SELECTIVE + STRUCTURED + STUFF` = lọc top-K tài liệu, nhóm theo chủ đề, rồi nhồi toàn bộ vào một prompt duy nhất — đây chính là pattern phổ biến nhất trong production.
+
+#### Nên Chọn 1 Hay Kết Hợp Nhiều Chiến Lược?
+
+**Câu trả lời ngắn: Hầu như luôn KẾT HỢP nhiều chiến lược**, vì chúng giải quyết các vấn đề KHÁC NHAU ở các tầng khác nhau — không phải "chọn 1 trong 5".
+
+**Vì sao phải kết hợp?** Mỗi chiến lược trả lời một câu hỏi riêng, ở một tầng riêng trong pipeline:
+
+| Chiến lược | Tầng hoạt động | Giải quyết vấn đề | Ví dụ cụ thể |
+|---|---|---|---|
+| **SELECTIVE** | Tầng lọc (retrieval) | "Chọn tài liệu nào?" — loại nhiễu | Retrieve 50 docs → chỉ giữ top 10 |
+| **COMPRESSED** | Tầng nén (post-processing) | "Làm sao cho vừa token budget?" | 10 docs × 2K tokens → mỗi doc còn ~800 |
+| **STRUCTURED** | Tầng tổ chức (assembly) | "Sắp xếp context ra sao?" — tránh lost-in-middle | Nhóm theo chủ đề, quan trọng ở đầu/cuối |
+| **PASS-THROUGH / STUFF** | Tầng giao (delivery) | "Đưa vào prompt thế nào?" | Nhồi toàn bộ vào 1 prompt duy nhất |
+| **ADAPTIVE** | Tầng điều phối (orchestration) | "Chọn tổ hợp nào cho câu hỏi này?" | Câu hỏi đơn giản ≠ câu hỏi complex |
+
+**Ví dụ pipeline production điển hình — kết hợp 4 tầng:**
+
+```
+Query "BHYT đóng bao nhiêu?"
+        │
+        ▼
+┌─ 1. SELECTIVE ──────────────────────────────┐
+│  Retrieve 50 docs → lọc còn top 10 liên quan│
+│  (giảm nhiễu, tập trung)                    │
+└─────────────────────────────────────────────┘
+        │
+        ▼
+┌─ 2. COMPRESSED ─────────────────────────────┐
+│  Mỗi doc 2K tokens → nén còn ~800 tokens    │
+│  (vừa token budget, giữ ý chính)           │
+└─────────────────────────────────────────────┘
+        │
+        ▼
+┌─ 3. STRUCTURED ─────────────────────────────┐
+│  Nhóm: legal / finance / medical            │
+│  Quan trọng nhất đặt đầu & cuối            │
+│  (dễ đọc, tránh lost-in-the-middle)        │
+└─────────────────────────────────────────────┘
+        │
+        ▼
+┌─ 4. STUFF (PASS-THROUGH) ──────────────────┐
+│  Toàn bộ context đã tối ưu → 1 prompt      │
+│  1 lần gọi LLM duy nhất                    │
+└─────────────────────────────────────────────┘
+```
+
+**Khi nào chỉ dùng 1 chiến lược?** — Hiếm khi, chỉ trong trường hợp rất đơn giản:
+
+| Tình huống | Khuyến nghị | Lý do |
+|---|---|---|
+| Context rất ngắn (< 1K tokens), 1-2 tài liệu | Chỉ **STUFF** | Không cần lọc/nén — thêm tầng chỉ tốn latency |
+| Prototype / POC đang kiểm chứng | Chỉ **SELECTIVE** | Đơn giản nhất vẫn có kiểm soát chất lượng |
+| Production retrieval đơn giản, docs ít | **SELECTIVE + STUFF** | Lọc top-K rồi nhồi — đủ tốt |
+| Production RAG chuẩn | **SELECTIVE + STRUCTURED + STUFF** | Pattern phổ biến nhất hiện nay |
+| Context rất dài, nhiều docs | **SELECTIVE + COMPRESSED + STUFF** | Nén là bắt buộc để vừa token budget |
+| Hệ thống phức tạp, đa dạng câu hỏi | **ADAPTIVE + tất cả** | Tự chọn tổ hợp theo loại câu hỏi |
+
+**Nguyên tắc vàng:** Chỉ thêm một tầng khi nó giải quyết được **một vấn đề đo được** (token overflow, accuracy thấp, latency cao). Đừng kết hợp mọi thứ một cách mù quáng — mỗi tầng thêm vào = thêm latency + độ phức tạp.
+
 ---
 
 ## 3. Context Compression & Summarization
 
 ### 3.1 Tại Sao Cần Compression?
+
+**Compression (Nén context)** là quá trình **giảm kích thước context** bằng cách loại bỏ thông tin dư thừa, tóm tắt, hoặc chỉ giữ lại phần quan trọng — với mục tiêu giữ nguyên ý nghĩa cốt lõi trong khi giảm số token.
+
+**Tại sao cần:**
+- Context window có hạn (ví dụ 128K tokens) nhưng tài liệu retrieve được thường vượt xa ngân sách — ví dụ 10 documents × 2K tokens = 20K tokens nhưng budget chỉ 8K.
+- **Mỗi token = tiền** (chi phí API) và = thời gian xử lý (latency). Context dài hơn không tự động tốt hơn — nhiều nhiễu hơn dễ gây "Lost in the Middle".
+- Compression giúp đưa **nhiều thông tin hữu ích nhất vào đúng ngân sách token** thay vì cắt bớt context một cách tùy tiện (mất thông tin quan trọng).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1034,6 +1188,16 @@ qa_chain = RetrievalQA.from_chain_type(
 ```
 
 ### 3.2 Compression Techniques
+
+**Compression Techniques** là các **kỹ thuật cụ thể để nén context**, mỗi kỹ thuật có thế mạnh riêng tùy vào loại tài liệu và mục tiêu:
+
+| Kỹ thuật | Cách hoạt động | Phù hợp khi |
+|----------|---------------|-------------|
+| **Map-Reduce Summarization** | Tóm tắt từng tài liệu rồi gộp lại | Nhiều tài liệu, cần tóm tắt toàn cục |
+| **Extractive** | Giữ nguyên câu gốc, chỉ chọn câu quan trọng | Cần thông tin chính xác từng câu chữ |
+| **Selective Key-Fact** | Trích xuất sự kiện theo dạng có cấu trúc | Cần output dễ parse, chứa số liệu |
+| **Sliding Window Hierarchical** | Tóm tắt theo cấp bậc nhiều tầng | Văn bản rất dài |
+| **Deduplication** | Loại tài liệu trùng/giống nhau quá mức | Kho tài liệu có nhiều bản gần giống |
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1274,6 +1438,13 @@ print(f"Ratio: {len(compressed)/sum(len(d) for d in documents):.1%}")
 
 ### 3.3 Compression Comparison
 
+**Compression Comparison** so sánh các kỹ thuật nén theo 4 tiêu chí: **chất lượng** (mức giữ nguyên ý nghĩa), **tốc độ** (độ trễ xử lý), **tỷ lệ giảm kích thước** (size reduction) và **tình huống phù hợp** — giúp bạn chọn đúng kỹ thuật cho đúng bài toán.
+
+**Cách đọc bảng dưới đây:**
+- ⭐ càng nhiều = càng tốt cho tiêu chí đó.
+- **Size Reduction %** = phần trăm giảm được so với gốc (60-70% nghĩa là còn lại 30-40%).
+- Chọn **Extractive** khi cần giữ nguyên từng câu chữ (pháp lý, hợp đồng); chọn **Hierarchical** khi văn bản cực dài; chọn **Deduplication** khi tài liệu bị trùng lặp.
+
 ```
 ┌──────────────────────┬──────────┬──────────┬──────────┬──────────────────┐
 │ Technique            │ Quality  │ Speed    │ Size     │ Best For         │
@@ -1407,6 +1578,15 @@ class SmartContextManager {
 
 ### 4.1 Prompt Templates
 
+**Prompt Templates** là các **khuôn mẫu (template) có sẵn cho prompt** — định sẵn cấu trúc, cách sắp xếp context, system message và hướng dẫn trả lời — để bạn không phải viết lại prompt mỗi lần.
+
+**Ý nghĩa:**
+- Đảm bảo **nhất quán**: cùng một cấu trúc prompt cho mọi query → kết quả ổn định, dễ đoán.
+- **Định hướng hành vi LLM**: template quy định rõ "chỉ dùng context", "trích dẫn nguồn [n]", "nếu thiếu thông tin thì nói rõ" → giảm hallucination.
+- **Đa dạng theo mục đích**: template BASIC cho câu hỏi thường; CHAIN-OF-THOUGHT cho câu hỏi phân tích; SELF-CONSTRAINED cho lĩnh vực cần chính xác (BHYT, pháp lý); CITATION-HEAVY khi cần trích dẫn nguồn nghiêm ngặt.
+
+5 template điển hình:
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │              PROMPT TEMPLATES FOR RAG CONTEXT                     │
@@ -1503,6 +1683,13 @@ class SmartContextManager {
 ```
 
 ### 4.2 Advanced Prompt Techniques
+
+**Advanced Prompt Techniques** là các **kỹ thuật prompt nâng cao** giúp tăng độ chính xác của câu trả lời RAG: thêm ràng buộc tường minh (constraints), ép model "suy nghĩ từng bước" (reasoning), định dạng output cụ thể (JSON/Markdown/bảng), và đặt guardrails chống hallucination.
+
+**Ý nghĩa:**
+- **Chain-of-thought** giảm hallucination đáng kể bằng cách bắt model phân tích trước khi trả lời.
+- **Guardrails** (quy tắc an toàn) yêu cầu model nói rõ "không đủ thông tin" thay vì bịa đặt — đặc biệt quan trọng cho lĩnh vực nhạy cảm (BHYT, pháp lý, y tế).
+- **Output format** giúp kết quả dễ tích hợp vào ứng dụng (parse JSON, render bảng) thay vì trả lời tự do khó xử lý.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1655,7 +1842,7 @@ prompt = builder.build_with_guardrails(
     query="BHYT đóng bao nhiêu?",
     context_docs=[
         {"content": "Mức đóng BHYT là 4.5% lương cơ sở", "score": 0.95},
-        {"content": "Thẻ BHYT有效期 5 năm", "score": 0.7},
+        {"content": "Thẻ BHYT có hiệu lực 5 năm", "score": 0.7},
     ]
 )
 ```
@@ -1667,6 +1854,13 @@ prompt = builder.build_with_guardrails(
 ## 5. Hierarchical Context
 
 ### 5.1 Cấu Trúc Phân Cấp
+
+**Hierarchical Context (Context phân cấp)** là cách **tổ chức context thành nhiều tầng (level) với mức ưu tiên khác nhau** — từ thông tin bất biến (luôn có) đến thông tin tạm thời (dễ bị xóa nhất).
+
+**Ý nghĩa:**
+- Không phải thông tin nào cũng quan trọng như nhau → cần phân cấp để **biết xóa gì trước khi context đầy**.
+- **Level 0 (Global)** không bao giờ bị xóa (system prompt, identity); **Level 4 (Focused)** bị xóa đầu tiên (chi tiết cụ thể).
+- Khi context đầy, quy tắc chuẩn: **xóa từ dưới lên trên** (focused → retrieved → recent → session), giữ nguyên global — đảm bảo model luôn còn "nhân cách" và nhiệm vụ.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1839,7 +2033,7 @@ ctx.set_retrieved([
     {"content": "Điều 12 Luật BHYT: Quyền lợi tham gia"},
     {"content": "QĐ 105: Mức đóng chi tiết"},
 ])
-ctx.set_focused("Điều 12: Người tham gia BHYT được享受 quyền lợi...")
+ctx.set_focused("Điều 12: Người tham gia BHYT được hưởng quyền lợi...")
 
 prompt = ctx.build_prompt("Thẻ BHYT có hạn không?", max_tokens=5000)
 ctx.report()
@@ -1852,6 +2046,13 @@ ctx.report()
 ## 6. Streaming Context
 
 ### 6.1 Khái Niệm
+
+**Streaming Context** là kỹ thuật **cập nhật context liên tục trong khi người dùng đang nhập liệu** — thay vì chờ người dùng gõ xong câu hỏi rồi mới build context một lần, hệ thống xử lý từng phần nhỏ (chunk) của câu hỏi.
+
+**Ý nghĩa:**
+- **Phản hồi nhanh hơn**: người dùng chỉ cần gõ "BHYT" là hệ thống đã bắt đầu retrieve tài liệu BHYT, rút ngắn thời gian chờ đợi.
+- **Context tăng dần theo câu hỏi**: mỗi lượt gõ thêm chữ, context được bổ sung chủ đề tương ứng (BHYT → BHYT + tài chính → BHYT + tài chính + thời hạn).
+- **Debounce**: hệ thống chờ một khoảng ngắn (500ms) sau khi người dùng ngừng gõ rồi mới xử lý, tránh gọi API liên tục lãng phí.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -2520,6 +2721,13 @@ class ProductionRAGContext {
 
 ### 8.1. Context Routing
 
+**Context Routing** là kỹ thuật **tự động phân loại câu hỏi và chọn chiến lược xây dựng context phù hợp** cho từng loại — giống như router trong mạng quyết định gói tin đi đường nào.
+
+**Ý nghĩa:**
+- Không phải câu hỏi nào cũng cần context giống nhau: câu hỏi đơn giản cần ít tài liệu nhưng nhiều lịch sử hội thoại; câu hỏi code cần context về file đang mở và conventions; câu hỏi phân tích cần nhiều nguồn + chain-of-thought.
+- Routing giúp **tối ưu token và chất lượng**: đúng loại câu hỏi → đúng loại context → kết quả tốt hơn với chi phí thấp hơn.
+- Phân loại có thể dùng quy tắc (keyword) đơn giản hoặc dùng chính LLM để phân loại.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2641,6 +2849,13 @@ class ContextRouter:
 
 ### 8.2. RAG Fusion Pattern
 
+**RAG Fusion Pattern** là kỹ thuật **chạy nhiều biến thể của câu hỏi (query variations) đồng thời, retrieve riêng cho từng biến thể, rồi gộp (fusion) kết quả lại** theo Reciprocal Rank Fusion (RRF) — thay vì chỉ dùng một câu hỏi gốc duy nhất.
+
+**Ý nghĩa:**
+- Một câu hỏi có thể diễn tả bằng nhiều cách; biến thể ("BHYT đóng bao nhiêu?", "mức đóng bảo hiểm y tế?", "phí BHYT hàng tháng?") sẽ retrieve được **các tài liệu khác nhau** → fusion giúp tăng recall (tìm được nhiều tài liệu liên quan hơn) mà không giảm precision.
+- **RRF (k=60)**: điểm của mỗi tài liệu = tổng `1/(k+rank)` trên mọi danh sách kết quả → tài liệu xuất hiện ở vị trí cao ở NHIỀU danh sách sẽ được ưu tiên — tự động loại nhiễu.
+- Trade-off: tốn thêm 1 LLM call để sinh biến thể câu hỏi, nhưng chất lượng retrieval cải thiện rõ rệt.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2736,6 +2951,13 @@ Return only the queries, one per line:"""
 
 ### 8.3. Context Caching Strategy
 
+**Context Caching** là kỹ thuật **lưu lại context đã build trước đó và tái sử dụng cho các câu hỏi tương tự** — thay vì retrieve + build lại từ đầu mỗi lần.
+
+**Ý nghĩa:**
+- Với hệ thống có nhiều câu hỏi lặp lại (nhân viên hỏi cùng chính sách BHYT), caching giúp **giảm latency 50-80%** và **giảm chi phí** vì không phải gọi embedding + retrieval + build lại.
+- **TTL (Time-to-Live)**: cache chỉ có giá trị trong một khoảng thời gian (ví dụ 5 phút) vì dữ liệu có thể thay đổi — hết hạn là tự xóa để tránh dùng context cũ (stale).
+- **Cache invalidation**: xóa cache thủ công khi dữ liệu nguồn thay đổi (vd: cập nhật chính sách mới).
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2827,6 +3049,13 @@ class ContextCache:
 </details>
 
 ### 8.4. Multi-turn Context Management
+
+**Multi-turn Context Management** là quản lý context **xuyên suốt nhiều lượt hội thoại** (turns) — vì người dùng không hỏi một câu duy nhất mà trao đổi qua lại nhiều lần, câu hỏi sau thường dựa trên ngữ cảnh của câu trước.
+
+**Ý nghĩa:**
+- Context window có hạn nhưng hội thoại có thể dài → cần chiến lược **sliding window + summary + key facts**: giữ N tin nhắn gần nhất, nén phần cũ thành tóm tắt, và lưu các sự kiện quan trọng (quyết định, số liệu, sở thích).
+- Tránh "lãng quên" ngữ cảnh: nếu bỏ hết lịch sử thì câu hỏi "vậy còn thời hạn thì sao?" (đang nói về BHYT) sẽ bị hiểu sai.
+- **Key facts extraction**: trích xuất thông tin quan trọng từng lượt để dùng về sau mà không tốn nhiều token.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2949,6 +3178,12 @@ class MultiTurnContextManager:
 
 ### 9.1. Context Building Best Practices
 
+**Context Building Best Practices** là **tập hợp các nguyên tắc thực hành tốt nhất** khi xây dựng context — những việc nên làm (DO) và không nên làm (DON'T) đúc kết từ kinh nghiệm thực tế và nghiên cứu.
+
+**Ý nghĩa:**
+- Tránh các lỗi phổ biến tốn tiền và giảm chất lượng: nhét toàn bộ codebase, giữ lịch sử chat vô hạn, bỏ qua "Lost in the Middle", dùng context tĩnh cho mọi câu hỏi.
+- Là **checklist nhanh** để đánh giá hệ thống context của bạn đang tốt hay tệ — đối chiếu từng mục DO còn thiếu là chỗ cần cải thiện.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                   CONTEXT BUILDING DO's                           │
@@ -3027,6 +3262,14 @@ class MultiTurnContextManager:
 ```
 
 ### 9.2. Common Anti-Patterns
+
+**Anti-Patterns** là các **mẫu lỗi phổ biến** mà hầu hết hệ thống context đều mắc phải — với mỗi anti-pattern, tài liệu đưa ra **code minh họa BAD (sai) và GOOD (đúng)** để bạn nhận diện và tránh.
+
+**Ý nghĩa:**
+- **Context Overflow**: nhét quá nhiều tài liệu/lịch sử vượt ngân sách → chữa bằng budget-aware + ưu tiên.
+- **Stale Context**: cache không bao giờ hết hạn → chữa bằng TTL (Time-to-Live).
+- **Lost in the Middle**: sắp xếp tài liệu ngẫu nhiên → chữa bằng relevance-ranked, đặt thông tin quan trọng đầu/cuối.
+- **No Context Validation**: không kiểm tra context trước khi gửi → chữa bằng validate token count + relevance.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -3128,6 +3371,13 @@ response = llm.generate(context)  # ✅ Validated context
 ---
 
 ## 10. Context Validation & Testing
+
+**Context Validation & Testing** là quá trình **kiểm tra chất lượng context TRƯỚC KHI gửi đến LLM** — đảm bảo context không vượt token budget, chứa đúng thành phần bắt buộc (system, query), có độ liên quan đủ cao, không bị stale và có cấu trúc rõ ràng.
+
+**Ý nghĩa:**
+- Context lỗi (overflow, thiếu section, relevance thấp) → LLM trả lời kém hoặc lỗi ngay giữa request → tốn tiền, tệ UX.
+- **Validate sớm** giúp phát hiện và tự sửa (auto-fix) trước khi tốn chi phí gọi LLM.
+- Testing (unit + integration) trong CI/CD đảm bảo mỗi lần sửa code context builder không làm hỏng chất lượng.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -3333,6 +3583,16 @@ class TestContextQuality:
 
 ### 11.1. Context Quality Metrics
 
+**Context Quality Metrics** là các **chỉ số đo lường chất lượng của quá trình build context** — giúp bạn biết hệ thống đang hoạt động tốt hay tệ, và chỗ nào cần tối ưu.
+
+**Ý nghĩa của từng chỉ số:**
+- **Latency (ms)**: thời gian build context — nếu cao nghĩa là retrieval/build chậm, người dùng phải chờ lâu.
+- **Token usage**: số token dùng mỗi lần — liên quan trực tiếp đến chi phí API.
+- **Relevance scores**: độ liên quan trung bình của tài liệu retrieve được — thấp nghĩa là retrieval kém hoặc câu hỏi mơ hồ.
+- **Cache hit rate**: tỷ lệ query tái sử dụng cache — cao nghĩa là tiết kiệm nhiều chi phí và thời gian.
+- **Compression ratio**: tỷ lệ nén — thấp nghĩa là đang tốn token thừa.
+- **Query distribution**: phân bố loại câu hỏi — giúp tối ưu routing cho từng loại.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -3429,6 +3689,12 @@ print(metrics.report())
 
 ### 11.2. Cost Optimization Strategies
 
+**Cost Optimization Strategies** là các **chiến lược giảm chi phí API và tài nguyên** khi xây dựng context — vì mỗi token đưa vào context đều tốn tiền (input) và token trả về cũng tốn tiền (output).
+
+**Ý nghĩa:**
+- Context chiếm phần lớn chi phí của một RAG pipeline: càng nhiều tài liệu, lịch sử, số lần gọi LLM... càng đắt.
+- Kết hợp các chiến lược (caching 40-60%, compression 60-80%, retrieval thông minh 50-70%, tiered models 30-50%) có thể giảm **60-80% tổng chi phí context** mà không giảm chất lượng.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │              CONTEXT COST OPTIMIZATION                            │
@@ -3466,6 +3732,13 @@ print(metrics.report())
 ---
 
 ## 12. Complete Production Pipeline
+
+**Complete Production Pipeline** là **một pipeline context engineering hoàn chỉnh tích hợp TẤT CẢ các kỹ thuật** đã học: routing → multi-source retrieval → fusion → assembly → compression → validation → caching → metrics.
+
+**Ý nghĩa:**
+- Các kỹ thuật riêng lẻ (budget, compression, routing, caching...) khi đứng độc lập chỉ giải quyết một phần; kết hợp chúng thành một pipeline thống nhất mới đạt hiệu quả production thực sự.
+- Pipeline có **thứ tự bắt buộc**: check cache trước (tiết kiệm), rồi mới retrieve, assemble, compress nếu cần, validate và auto-fix, cuối cùng ghi metrics để tối ưu tiếp.
+- Đây là **bản mẫu (template) chạy được** để bạn điều chỉnh theo hệ thống của mình.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -3614,18 +3887,13 @@ class ProductionContextPipeline:
 ## 13. Labs Thực Hành
 
 ### Lab 1: Context Budget Demo
-## 13. Labs Thực Hành
-
-### Lab 1: Context Budget Demo
-
-### Lab 1: Context Budget Demo
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
 ```python
 # python 02-build-context/lab_budget.py
-from README import ContextBudget
+from 02_build_context.context_budget import ContextBudget
 
 # Different scenarios
 scenarios = [
@@ -3884,55 +4152,4 @@ Key takeaways:
 *Tài liệu: II. Build Context*  
 *Ngày cập nhật: 19/07/2026*  
 *Tác giả: AI Knowledge Repository*  
-*Môi trường: Ollama (gemma3:12b, nomic-embed-text)*
-
-<details>
-<summary>Python Code (Click to expand/collapse)</summary>
-
-```python
-# python 02-build-context/lab_compression.py
-
-long_text = """
-Bảo hiểm y tế (BHYT) là hình thức bảo hiểm bắt buộc được thực hiện 
-theo Luật BHYT. Theo đó, mọi công dân Việt Nam đều phải tham gia BHYT.
-
-Mức đóng BHYT được quy định cụ thể:
-- Người lao động: 4.5% mức lương cơ sở
-- Người sử dụng lao động: 3%
-- Ngân sách nhà nước: 1.5%
-
-Quyền lợi khi tham gia BHYT:
-- Được khám chữa bệnh tại các cơ sở y tế tuyến huyện trở lên
-- Chi trả từ 80% đến 100% chi phí tùy tuyến
-- Được cấp thuốc theo danh mục
-
-Thẻ BHYT có hiệu lực trong 5 năm kể từ ngày cấp.
-Người tham gia cần đóng đúng hạn để được hưởng quyền lợi liên tục.
-""" * 5  # Simulate long document
-
-from README import ContextCompressor
-
-compressor = ContextCompressor()
-
-# Test different compression techniques
-print("=== Original ===")
-print(f"Length: {len(long_text)} chars")
-
-print("\n=== Extractive Compression ===")
-extracted = compressor.extractive_compress(long_text, num_sentences=5)
-print(f"Length: {len(extracted)} chars")
-print(extracted[:200])
-
-print("\n=== Selective Compression ===")
-selective = compressor.selective_compress(long_text)
-print(f"Length: {len(selective)} chars")
-print(selective[:200])
-```
-
-</details>
-
----
-
-*Tài liệu: II. Build Context*
-*Ngày tạo: 2026-07-11*
 *Môi trường: Ollama (gemma3:12b, nomic-embed-text)*

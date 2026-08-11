@@ -18,6 +18,8 @@ Harness của bạn đã có tools, memory, context — nhưng có một kẻ ng
 
 **RTK (Rust Token Killer)** là một CLI proxy viết bằng Rust, chèn mình vào giữa agent và shell command, cắt tới **90% bash output** trước khi nó chạm vào LLM context. Một binary duy nhất, hỗ trợ 100+ commands, overhead <10ms.
 
+> __RTK là một phần của hệ sinh thái harness — nó là công cụ hiện thực hóa `harness/02-build-context`, nằm trong `tools/rtk/`.__ Không phải là component trong `harness/`, và giờ `tools/` đã là nơi tập trung đầy đủ các công cụ hỗ trợ hiện thực hóa toàn bộ 7 components của harness.
+
 ---
 
 ### RTK Có Phải Là Một Phần Của Harness Không?

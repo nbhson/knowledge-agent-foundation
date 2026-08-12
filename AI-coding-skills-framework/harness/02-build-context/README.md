@@ -4132,6 +4132,96 @@ for q in test_queries:
 
 ---
 
+## 15. Tóm Tắt Nhanh (Quick Summary)
+
+> Bài viết này là bản tóm tắt nhanh toàn bộ tài liệu, kèm link tới từng section để dễ theo dõi chi tiết.
+
+### Ý chính quan trọng
+
+#### 1. Phân tầng context theo độ ưu tiên (Layered Context)
+→ [Section 1. Context Window Management](#1-context-window-management) · [1.2 Token Budget Allocation](#12-token-budget-allocation) · [1.4 "Lost in the Middle" Problem](#14-lost-in-the-middle-problem)
+
+Thứ tự __bắt buộc__: `System > Task > Domain > History > Immediate`
+- Khi đầy token → xóa từ dưới lên, __KHÔNG BAO GIỜ xóa system__
+- Mỗi tầng gán token budget riêng, có thể điều chỉnh theo loại query
+
+#### 2. Budget-aware (Mỗi token = tiền)
+→ [Section 1.2 Token Budget Allocation](#12-token-budget-allocation)
+
+- Phân bổ ngân sách token có chủ đích, không nhét bừa
+- Điều chỉnh theo loại câu hỏi: factual (ít tài liệu, nhiều lịch sử), complex (nhiều tài liệu, ít lịch sử), code/dạo chuyện...
+
+#### 3. Query-aware routing (Context khác nhau cho từng câu hỏi)
+→ [Section 8.1 Context Routing](#81-context-routing)
+
+- Simple query → ít docs, nhiều history
+- Complex query → nhiều docs, ít history
+- Code query → file context + conventions
+- Có code mẫu phân loại query: factual, analytical, code, creative, conversational
+
+#### 4. Retrieval đa nguồn + RAG Fusion
+→ [Section 8.2 RAG Fusion Pattern](#82-rag-fusion-pattern)
+
+- Kết hợp vector + keyword + graph search
+- __Multi-query + Reciprocal Rank Fusion (RRF)__: sinh nhiều biến thể query, fusion lại → cải thiện recall đáng kể so với single query
+
+#### 5. Nén context chủ động (Compression) + Multi-turn Management
+→ [Section 3. Context Compression & Summarization](#3-context-compression--summarization) · [Section 8.4 Multi-turn Context Management](#84-multi-turn-context-management)
+
+- 4 phương pháp: __map-reduce, hierarchical, extractive + LLM__
+- __Multi-turn__: sliding window (giữ N tin gần nhất) + summary (nén phần cũ) + key facts extraction (quyết định, số liệu, sở thích) — tránh "lãng quên" ngữ cảnh
+
+#### 6. Caching thông minh
+→ [Section 8.3 Context Caching Strategy](#83-context-caching-strategy)
+
+- Cache context theo query + params (hash MD5), TTL ~5 phút
+- Có thể đạt __80% hit rate__, giảm latency đáng kể
+
+#### 7. Anti-patterns cần tránh (4 lỗi kinh điển)
+→ [Section 9.2 Common Anti-Patterns](#92-common-anti-patterns)
+
+- __Context Overflow__: nhét quá nhiều → fix bằng budget-aware + ưu tiên
+- __Stale Context__: cache không hết hạn → fix bằng TTL
+- __Lost in the Middle__: đặt thông tin quan trọng ở __ĐẦU và CUỐI__ context (LLM hay bỏ sót phần giữa)
+- __No Context Validation__: luôn kiểm tra trước khi gửi
+
+#### 8. Validation & Testing
+→ [Section 10. Context Validation & Testing](#10-context-validation--testing)
+
+- Kiểm tra: token budget, required sections, relevance score, độ tươi (freshness), cấu trúc
+- Test unit + integration trong CI/CD; auto-fix lỗi trước khi gọi LLM
+
+#### 9. Metrics & Cost Optimization
+→ [Section 11.1 Context Quality Metrics](#111-context-quality-metrics) · [11.2 Cost Optimization Strategies](#112-cost-optimization-strategies)
+
+- Đo: latency, token usage, relevance, cache hit rate, compression ratio, query distribution
+- __4 chiến lược giảm 60-80% chi phí__: smart caching (40-60%), aggressive compression (60-80%), smart retrieval (embedding nhỏ + reranker chỉ cho top-20), __tiered models__ (câu đơn giản → model rẻ gemma3, phức tạp → model đắt)
+- Tool gợi ý: LangChain, LlamaIndex, Chroma, Qdrant, Guardrails AI → [Frameworks & Tools](#frameworks--tools)
+
+#### 10. Production Pipeline hoàn chỉnh (template chạy được)
+→ [Section 12. Complete Production Pipeline](#12-complete-production-pipeline)
+
+Thứ tự bắt buộc: __cache check → route query → multi-source retrieval → fusion → budget-aware assembly → compress nếu quá → validate & auto-fix → metrics → cache lại__
+
+### Key Takeaways (7 nguyên tắc vàng)
+→ [Section 9. Best Practices & Anti-Patterns](#9-best-practices--anti-patterns)
+
+1. Layer by priority — System > Task > Domain > History > Immediate
+2. Budget-aware — mỗi token đều tốn tiền
+3. Query-adaptive — mỗi câu hỏi cần context riêng
+4. Cache aggressively — giảm 40-60% latency
+5. Compress proactively — đừng chờ đến lúc overflow
+6. Validate always — kiểm tra chất lượng trước khi gửi LLM
+7. Measure everything — không đo được thì không cải thiện được
+
+### Labs & References
+
+- __5 lab thực hành__ (budget, RAG fusion, cache, validation, routing): [Section 13. Labs](#13-labs-thực-hành)
+  - [Lab 1: Context Budget](#lab-1-context-budget-demo) · [Lab 2: RAG Fusion](#lab-2-rag-fusion-demo) · [Lab 3: Cache Performance](#lab-3-context-cache-performance) · [Lab 4: Validation](#lab-4-context-validation) · [Lab 5: Routing](#lab-5-context-routing)
+- __References__ gồm các paper nổi tiếng: Lost in the Middle (Stanford), FreshLLMs (Google), RAGAS, Reciprocal Rank Fusion... → [Section 14. References](#14-tài-liệu-tham-khảo)
+
+---
+
 **Kết Luận**
 
 Context Engineering là nghệ thuật và khoa học của việc tổ chức thông tin cho LLM. Nó không chỉ là "đưa document vào prompt" mà là một hệ thống phức tạp bao gồm retrieval, fusion, compression, validation, và optimization.

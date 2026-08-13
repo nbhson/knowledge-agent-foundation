@@ -1,11 +1,11 @@
-# 📋 IV. Plan & Decompose Task
+# 📋 IV. Lập Kế Hoạch & Chia Nhỏ Tác Vụ
 
 > ## 📑 Mục Lục
 >
 > - [Tổng Quan](#tổng-quan)
-> - [Tại Sao Planning & Decomposition Quan Trọng?](#tại-sao-planning-decomposition-quan-trọng)
+> - [Tại Sao Lập Kế Hoạch & Chia Nhỏ Tác Vụ Quan Trọng?](#tại-sao-lập-kế-hoạch-chia-nhỏ-tác-vụ-quan-trọng)
 > - [Nội Dung](#nội-dung)
-> - [1. Task Decomposition Patterns](#1-task-decomposition-patterns)
+> - [1. Các Mô Hình Chia Nhỏ Tác Vụ](#1-các-mô-hình-chia-nhỏ-tác-vụ)
 >   - [1.1 Các Mô Hình Phân Chia](#11-các-mô-hình-phân-chia)
 >   - [1.2 Implementation](#12-implementation)
 >   - [1.3 So Sánh Các Pattern](#13-so-sánh-các-pattern)
@@ -61,7 +61,7 @@ LLM rất giỏi "nói" — nhưng khi đối mặt task phức tạp như *"tri
 
 ### Tại Sao Plan & Decompose Task Quan Trọng?
 
-> *"A goal without a plan is just a wish. And an AI without decomposition is just a chatbot."*
+> *"Một mục tiêu không có kế hoạch chỉ là một mong ước. Và một AI không có khả năng phân chia tác vụ (decomposition) chỉ là một chatbot."*
 
 #### 3 Bằng Chứng Khoa Học
 
@@ -82,8 +82,8 @@ Plan & Decompose = Analyze → Prioritize → Sequence → Execute → Validate
 ```
 
 **5 Levels của Task Planning**:
-- **Level 1**: Break task into subtasks (decomposition)
-- **Level 2**: Sequence subtasks theo dependency (ordering)
+- **Level 1**: Chia nhỏ tác vụ thành các subtask (decomposition)
+- **Level 2**: Sắp xếp thứ tự subtask theo phụ thuộc (ordering)
 - **Level 3**: Estimate effort cho mỗi subtask (estimation)
 - **Level 4**: Identify risks và fallback plans (risk assessment)
 - **Level 5**: Monitor progress và replan khi cần (adaptive planning)
@@ -159,7 +159,7 @@ Nguyên nhân: Plan trước → biết cần tool nào → giảm false starts 
 #### Devin AI & OpenHands (2025)
 > Top coding agents đều sử dụng **hierarchical decomposition**: Task → Epic → Story → Sub-task. Tốc độ hoàn thành **2.8x** so với flat task list.
 
-### Cost-Benefit Analysis
+### Phân Tích Chi Phí & Lợi Ích (Cost-Benefit Analysis)
 
 | Chi Phí / Giá Trị | Không Có Planning | Có Planning + Decomposition |
 |---|---|---|
@@ -188,7 +188,7 @@ Nguyên nhân: Plan trước → biết cần tool nào → giảm false starts 
 - **Có planning** = Sprint planning → User stories → Tasks → Code
 - **Decomposition** = Epic → Feature → Story → Sub-task → Code
 
-### Evolutionary Context
+### Bối Cảnh Tiến Hóa (Evolutionary Context)
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -225,21 +225,21 @@ Nguyên nhân: Plan trước → biết cần tool nào → giảm false starts 
 - Agent thêm tính năng không cần thiết → Token waste, time waste
 - Ví dụ: "Viết hello world" → Agent thêm authentication, logging, i18n...
 
-**3. Wrong Tool Selection**
+**3. Chọn Sai Tool (Wrong Tool Selection)**
 - Không plan trước → Chọn sai tool cho mỗi step → Phải undo và làm lại
 - Ví dụ: Dùng search khi cần write, dùng write khi cần verify
 
-**4. Missing Steps**
+**4. Bỏ Sót Bước (Missing Steps)**
 - Agent quên steps quan trọng → Kết quả incomplete
 - Ví dụ: Deploy code mà không test, không lint, không commit
 
-**5. Cascading Errors**
+**5. Lỗi Dây Chuyền (Cascading Errors)**
 - Sub-task 1 sai → Sub-task 2-5 đều sai theo → Phải làm lại toàn bộ
 - Thiếu validation checkpoints giữa các sub-tasks
 
 ### Best Practices (Và Tại Sao)
 
-| Rule | Why |
+| Quy tắc | Lý do |
 |---|---|
 | Luôn decompose task > 3 steps thành sub-tasks |LLM context window hạn chế, 1 task quá lớn dễ lose focus |
 | Đặt termination condition cho mỗi sub-task | Ngăn infinite loops, biết khi nào "done" |
@@ -271,6 +271,11 @@ Nguyên nhân: Plan trước → biết cần tool nào → giảm false starts 
 ---
 
 ## 1. Task Decomposition Patterns
+
+> **Khái niệm**: Task Decomposition Patterns (Mô hình phân chia tác vụ) là các chiến lược kiến trúc giúp chia nhỏ một mục tiêu lớn, phức tạp thành các tác vụ con (subtasks) có phạm vi nhỏ hơn, dễ kiểm soát và thực thi bởi AI Agent.
+>
+> **Ý nghĩa**: Giúp tối ưu hóa Context Window của LLM, ngăn ngừa hiện tượng hallucination khi xử lý câu lệnh phức tạp, hỗ trợ thực thi song song (Parallel execution) hoặc phân cấp (Hierarchical execution) để tăng tốc độ và độ tin cậy của hệ thống.
+
 
 ### 1.1 Các Mô Hình Phân Chia
 
@@ -502,7 +507,7 @@ Output JSON:
             except (json.JSONDecodeError, KeyError):
                 pass
         
-        # Fallback: simple decomposition
+        # Phản ứng dự phòng: phân chia tác vụ đơn giản
         return [Task(
             id=f"task_{current_depth}_0",
             name=task_description[:50],
@@ -527,7 +532,7 @@ Output JSON:
                 self._traverse(subtask, plan)
         
         elif task.task_type == TaskType.PARALLEL:
-            plan.append(task)  # Parallel marker
+            plan.append(task)  # Dấu hiệu song song
             for subtask in task.subtasks:
                 self._traverse(subtask, plan)
         
@@ -551,13 +556,13 @@ Output JSON:
         depth = self._get_depth(task)
         breadth = self._get_breadth(task)
         
-        # Advanced scoring
+        # Chấm điểm nâng cao
         score = min(10, depth * 2 + breadth)
         
-        # Token estimation
+        # Ước tính Token
         estimated_tokens = self._estimate_tokens(task)
         
-        # Recommended strategy
+        # Chiến lược đề xuất
         if score <= 3:
             strategy = "direct"
             reasoning = "Task đơn giản, execute trực tiếp"
@@ -591,7 +596,7 @@ Output JSON:
     
     def _estimate_tokens(self, task):
         """Ước tính số token cần thiết"""
-        base_tokens = len(task.description.split()) * 2  # Rough estimate
+        base_tokens = len(task.description.split()) * 2  # Ước tính thô
         for sub in task.subtasks:
             base_tokens += self._estimate_tokens(sub)
         return base_tokens
@@ -617,6 +622,11 @@ Output JSON:
 ---
 
 ## 2. Planning Algorithms
+
+> **Khái niệm**: Planning Algorithms (Thuật toán lập kế hoạch) là các thuật toán và chiến lược suy luận (reasoning) định hướng cách AI Agent phân tích bài toán, dự đoán các bước thực thi và lựa chọn phương án tối ưu trước hoặc trong quá trình làm việc.
+>
+> **Ý nghĩa**: Cung cấp khả năng lập luận đa chiều (Tree of Thoughts), tách biệt quá trình suy luận và gọi tool (ReWOO, Plan-and-Solve), giúp giảm đáng kể chi phí Token, tránh suy luận thừa và tăng tỷ lệ thành công của tác vụ.
+
 
 ### 2.1 LLM-Based Planning (Plan-and-Solve)
 
@@ -731,7 +741,7 @@ Kế hoạch mới (mỗi bước trên 1 dòng):
                 results.append({"step": step, "result": result})
                 context += f"\nBước {i+1} đã hoàn thành: {result[:200]}"
             
-            # Verify
+            # Xác minh
             verification = self.verify(problem, "\n".join(
                 f"{r['step']}: {r['result']}" for r in results
             ))
@@ -744,7 +754,7 @@ Kế hoạch mới (mỗi bước trên 1 dòng):
                     "attempts": attempt + 1,
                 }
             
-            # Re-plan based on issues
+            # Lập lại kế hoạch dựa trên các vấn đề
             if verification.get("issues"):
                 plan = self.replan(
                     problem, plan, 
@@ -827,7 +837,7 @@ Tiêu chí:
             except (ValueError, IndexError):
                 pass
         
-        return 5  # Default score
+        return 5  # Điểm mặc định
     
     def solve(self, problem):
         """
@@ -864,7 +874,7 @@ Tiêu chí:
                     
                     next_frontier.append(new_state)
             
-            # Prune: keep only top-k paths
+            # Cắt tỉa: chỉ giữ lại top-k đường dẫn tốt nhất
             frontier = sorted(next_frontier, key=lambda x: x["score"], reverse=True)
             frontier = frontier[:self.branching_factor]
         
@@ -933,7 +943,7 @@ Output JSON:
             tool_name = step.get("tool", "")
             query = step.get("query", "")
             
-            # Replace references with previous evidence
+            # Thay thế tham chiếu bằng bằng chứng trước đó
             for ref_id, ref_val in evidence.items():
                 query = query.replace(f"#{ref_id}", str(ref_val))
             
@@ -952,6 +962,11 @@ Output JSON:
 ---
 
 ## 3. Agent Workflows
+
+> **Khái niệm**: Agent Workflows (Luồng công việc của Agent) là mô hình tổ chức và điều phối mối quan hệ giữa các hoạt động suy luận (Reasoning), thực thi (Action), và quan sát (Observation) trong hệ thống Agent.
+>
+> **Ý nghĩa**: Định hình cấu trúc tương tác của Agent (ReAct, Plan-and-Execute, Multi-Agent workflow, State Machine), quyết định khả năng phản hồi linh hoạt với thay đổi của môi trường và đảm bảo tiến trình hoàn thành mục tiêu đúng đắn.
+
 
 ### 3.1 Các Kiểu Agent
 
@@ -1034,10 +1049,10 @@ class SimpleAgent:
         context = f"Task: {task}\n\nAvailable tools: {list(self.tools.keys())}"
         
         for i in range(self.max_iterations):
-            # Think: decide what to do
+            # Suy luận (Think): quyết định bước tiếp theo
             thought = self._think(context)
             
-            # Check if done
+            # Kiểm tra nếu đã hoàn thành
             if thought.get("done"):
                 return {
                     "answer": thought.get("answer", ""),
@@ -1046,25 +1061,25 @@ class SimpleAgent:
                     "metrics": self.metrics,
                 }
             
-            # Act: execute tool with validation
+            # Hành động (Act): thực thi tool với kiểm tra hợp lệ
             tool_name = thought.get("tool")
             tool_input = thought.get("input", {})
             
             if tool_name and tool_name in self.tools:
-                # Pre-execution validation
+                # Kiểm tra hợp lệ trước khi thực thi
                 if not self._validate_tool_call(tool_name, tool_input):
                     context += f"\n\nStep {i+1}: Tool validation failed for '{tool_name}'. Try different approach."
                     continue
                 
                 result = self._execute_tool(tool_name, tool_input)
                 
-                # Post-execution validation
+                # Kiểm tra hợp lệ sau khi thực thi
                 if not self._validate_result(result):
                     self.metrics["errors"] += 1
                     context += f"\n\nStep {i+1}: Result validation failed. Retry with different parameters."
                     continue
                 
-                # Observe: add result to context
+                # Quan sát (Observe): thêm kết quả vào Context
                 observation = f"Tool '{tool_name}' returned: {result}"
                 context += f"\n\nStep {i+1}: {thought.get('reasoning', '')}"
                 context += f"\n→ Used {tool_name}({tool_input})"
@@ -1119,11 +1134,11 @@ If you have enough information to answer, set "done": true and provide "answer".
     
     def _validate_tool_call(self, tool_name, tool_input):
         """Pre-execution validation (Harness guardrail)"""
-        # Check tool exists
+        # Kiểm tra tool có tồn tại không
         if tool_name not in self.tools:
             return False
         
-        # Check required params
+        # Kiểm tra các tham số bắt buộc
         tool = self.tools[tool_name]
         required = tool.get("required_params", [])
         for param in required:
@@ -1162,7 +1177,7 @@ class MultiAgent:
     """
     
     def __init__(self, agents, coordinator_llm=None):
-        self.agents = agents  # {name: agent}
+        self.agents = agents  # {tên: agent}
         self.coordinator = coordinator_llm
     
     def run(self, task):
@@ -1178,9 +1193,9 @@ class MultiAgent:
                 result = self.agents[agent_name].run(subtask)
                 results[agent_name] = result
                 
-                # Check if result is satisfactory
+                # Kiểm tra xem kết quả có đạt yêu cầu không
                 if not self._evaluate_result(result, subtask):
-                    # Retry with feedback
+                    # Thử lại với phản hồi (feedback)
                     retry_result = self.agents[agent_name].run(
                         f"{subtask}\n\nLần trước thất bại vì: {result.get('answer', 'unknown error')}"
                     )
@@ -1244,6 +1259,11 @@ Tổng hợp:"""
 ---
 
 ## 4. State Management
+
+> **Khái niệm**: State Management (Quản lý trạng thái) là cơ chế theo dõi, lưu trữ và cập nhật trạng thái toàn cục (global state) cũng như trạng thái từng bước tiến trình của Agent trong suốt vòng đời thực thi.
+>
+> **Ý nghĩa**: Đảm bảo tính nhất quán (Consistency), hỗ trợ khả năng lưu điểm phục hồi (Checkpointing), khôi phục trạng thái khi gặp lỗi (Rollback), theo dõi phiên bản (Versioning) và phục hồi luồng làm việc dài hạn (State Persistence).
+
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1333,6 +1353,11 @@ class AgentState:
 
 ## 5. ReAct Pattern
 
+> **Khái niệm**: ReAct Pattern (Reasoning + Acting) là mô hình kết hợp chặt chẽ giữa vòng lặp suy luận độc thoại (Thought), thực thi hành động gọi công cụ (Action) và thu nhận phản hồi từ môi trường (Observation).
+>
+> **Ý nghĩa**: Giúp Agent tự điều chỉnh kế hoạch linh hoạt dựa trên dữ liệu thực tế thu được ở từng bước thực thi, giải quyết hạn chế của việc lập kế hoạch tĩnh (Static planning) khi đối mặt với môi trường biến động.
+
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -1382,7 +1407,7 @@ Final Answer: [your answer]"""
         for step in range(self.max_steps):
             response = self._llm_call(history)
             
-            # Parse response
+            # Phân tích cú pháp phản hồi
             parsed = self._parse_response(response)
             
             if parsed.get("final_answer"):
@@ -1393,11 +1418,11 @@ Final Answer: [your answer]"""
                     "token_usage": self.token_usage,
                 }
             
-            # Execute action
+            # Thực thi hành động
             if parsed.get("action"):
                 tool_name, tool_input = self._parse_action(parsed["action"])
                 
-                # Validate tool call
+                # Kiểm tra hợp lệ lệnh gọi tool
                 if not self._validate_tool(tool_name):
                     history += f"\n{response}"
                     history += f"\nObservation: Invalid tool '{tool_name}'. Use available tools only."
@@ -1484,6 +1509,11 @@ Final Answer: [your answer]"""
 
 ## 6. Harness-Integrated Planning
 
+> **Khái niệm**: Harness-Integrated Planning (Lập kế hoạch tích hợp Harness) là việc nhúng mô hình lập kế hoạch trực tiếp vào hạ tầng điều phối (Harness Framework), kết nối đồng bộ với Memory Store, Guardrails và Tool Execution Engine.
+>
+> **Ý nghĩa**: Giúp kiểm soát kế hoạch an toàn bằng các chính sách Guardrails, tận dụng thông tin lưu trữ từ Memory, đồng thời tự động lập lại kế hoạch (Re-planning) khi xảy ra sự cố ngoài dự kiến trên môi trường thực tế.
+
+
 ### 6.1 TypeScript Interface (Harness Architecture)
 
 <details>
@@ -1492,17 +1522,17 @@ Final Answer: [your answer]"""
 ```typescript
 // Planning System Interface — Tích hợp hoàn chỉnh với Harness
 interface PlanningSystem {
-  // Core planning capabilities
+  // Các năng lực lập kế hoạch cốt lõi
   decompose: (task: Task) => Promise<DecomposedPlan>;
   replan: (task: Task, failure: FailureInfo) => Promise<DecomposedPlan>;
   estimateComplexity: (task: Task) => ComplexityEstimate;
   
-  // State management
+  // Quản lý trạng thái (State management)
   getState: () => AgentState;
   checkpoint: () => number;
   rollback: (checkpointId: number) => boolean;
   
-  // Integration points
+  // Các điểm tích hợp
   tools: ToolRegistry;
   memory: MemorySystem;
   guardrails: GuardrailSystem;
@@ -1527,7 +1557,7 @@ interface ExecutionStep {
   requiredPermissions: string[];
 }
 
-// Complete Harness-Integrated Planner
+// Bộ lập kế hoạch tích hợp Harness hoàn chỉnh
 class HarnessPlanner implements PlanningSystem {
   private tools: ToolRegistry;
   private memory: MemorySystem;
@@ -1536,48 +1566,48 @@ class HarnessPlanner implements PlanningSystem {
   private state: AgentState;
   
   async decompose(task: Task): Promise<DecomposedPlan> {
-    // 1. Validate input
+    // 1. Kiểm tra tính hợp lệ của đầu vào
     const inputCheck = await this.guardrails.validateInput(task);
     if (!inputCheck.valid) {
       throw new Error(`Task validation failed: ${inputCheck.reason}`);
     }
     
-    // 2. Check memory for similar past tasks
+    // 2. Kiểm tra Memory cho các tác vụ tương tự trong quá khứ
     const similarTasks = await this.memory.longTerm.search(
       `task: ${task.description}`,
       { limit: 3 }
     );
     
-    // 3. Decompose with context from past experiences
+    // 3. Phân chia tác vụ với Context từ kinh nghiệm quá khứ
     const plan = await this.decomposeWithMemory(task, similarTasks);
     
-    // 4. Validate plan against guardrails
+    // 4. Kiểm tra kế hoạch đối chiếu với Guardrails
     const planValidation = await this.guardrails.validatePlan(plan);
     if (!planValidation.valid) {
       throw new Error(`Plan validation failed: ${planValidation.reason}`);
     }
     
-    // 5. Log for feedback
+    // 5. Ghi log phục vụ phản hồi
     await this.feedback.logPlan(task, plan);
     
     return plan;
   }
   
   async replan(task: Task, failure: FailureInfo): Promise<DecomposedPlan> {
-    // Learn from failure
+    // Học hỏi từ thất bại
     await this.memory.longTerm.add(
       `Failed task: ${task.name}, Error: ${failure.error}`,
       { type: 'failure_pattern', task: task.name }
     );
     
-    // Replan with failure context
+    // Lập lại kế hoạch với Context thất bại
     const plan = await this.decompose(task);
     
-    // Adjust based on failure
+    // Điều chỉnh dựa trên thất bại
     plan.executionOrder = plan.executionOrder.map(step => ({
       ...step,
-      timeoutMs: step.timeoutMs * 1.5, // Increase timeout
-      tokenBudget: step.tokenBudget * 1.2, // Increase budget
+      timeoutMs: step.timeoutMs * 1.5, // Tăng thời gian chờ (timeout)
+      tokenBudget: step.tokenBudget * 1.2, // Tăng ngân sách Token
     }));
     
     return plan;
@@ -1601,8 +1631,8 @@ class HarnessPlanner implements PlanningSystem {
   rollback(id: number): boolean { return this.state.rollback(id); }
   
   private async decomposeWithMemory(task: Task, memories: any[]): Promise<DecomposedPlan> {
-    // Implementation that uses past task memories
-    // to improve decomposition quality
+    // Triển khai sử dụng Memory của các tác vụ quá khứ
+    // để nâng cao chất lượng phân chia tác vụ
     return { /* ... */ } as DecomposedPlan;
   }
   
@@ -1616,6 +1646,11 @@ class HarnessPlanner implements PlanningSystem {
 ---
 
 ## 7. Case Studies Thực Tế
+
+> **Khái niệm**: Case Studies Thực Tế là các phân tích chi tiết về kiến trúc lập kế hoạch đang được triển khai thực tế trong những sản phẩm AI tiên tiến hàng đầu (SWE-agent, Anthropic Multi-Agent, Claude Code, Cursor IDE).
+>
+> **Ý nghĩa**: Rút ra bài học kinh nghiệm, các mẫu thiết kế đã được chứng minh hiệu quả trong thực tế (production-proven design patterns) để áp dụng vào việc xây dựng hệ thống AI Agent doanh nghiệp.
+
 
 ### 7.1. SWE-agent (Princeton NLP) — Planning-First Approach
 
@@ -1632,7 +1667,7 @@ class HarnessPlanner implements PlanningSystem {
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
-// Harness planning cho SWE-agent
+// Lập kế hoạch Harness cho SWE-agent
 const swePlanner = {
   async plan(issue: string, codebase: CodebaseInfo) {
     // 1. Phân tích issue
@@ -1663,7 +1698,7 @@ const swePlanner = {
 - Token usage giảm 30%
 - Thời gian giải quyết giảm 40%
 
-**Lesson**: **"Plan before act — mapping codebase reduces wasted exploration"**
+**Bài học**: **"Lập kế hoạch trước khi hành động — sơ đồ hóa codebase giúp giảm lãng phí thời gian khám phá"**
 
 ---
 
@@ -1677,7 +1712,7 @@ const swePlanner = {
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
 ```typescript
-// Planner → Generator → Evaluator
+// Bộ lập kế hoạch → Bộ tạo → Bộ đánh giá (Planner → Generator → Evaluator)
 class AnthropicPlannerAgent {
   systemPrompt = `
     You are a planning specialist.
@@ -1687,13 +1722,13 @@ class AnthropicPlannerAgent {
   `;
   
   async plan(task: string): Promise<Plan> {
-    // 1. Analyze task complexity
+    // 1. Phân tích độ phức tạp của tác vụ
     const complexity = await this.estimateComplexity(task);
     
-    // 2. Generate step-by-step plan
+    // 2. Tạo kế hoạch theo từng bước
     const steps = await this.generateSteps(task, complexity);
     
-    // 3. Add dependency graph
+    // 3. Thêm đồ thị phụ thuộc (dependency graph)
     const graphedSteps = this.addDependencies(steps);
     
     return {
@@ -1704,7 +1739,7 @@ class AnthropicPlannerAgent {
   }
   
   private findParallelGroups(steps: Step[]): Step[][] {
-    // Find steps that can run in parallel (no dependencies between them)
+    // Tìm các bước có thể chạy song song (không có phụ thuộc lẫn nhau)
     const groups: Step[][] = [];
     const remaining = [...steps];
     
@@ -1730,7 +1765,7 @@ class AnthropicPlannerAgent {
 - Success rate cao hơn 80% so với single-agent
 - Code quality tốt hơn nhờ evaluation loop
 
-**Lesson**: **"Decompose → Parallelize → Evaluate — the 3-step formula"**
+**Bài học**: **"Phân chia tác vụ → Song song hóa → Đánh giá (Decompose → Parallelize → Evaluate) — công thức 3 bước"**
 
 ---
 
@@ -1744,7 +1779,7 @@ class AnthropicPlannerAgent {
 ```typescript
 // Hierarchical Planning — 3 cấp độ
 class ClaudePlanningSystem {
-  // Level 1: Strategic Planning (task-level)
+  // Cấp độ 1: Lập kế hoạch chiến lược (Strategic Planning - cấp độ tác vụ)
   async strategicPlan(goal: string): Promise<StrategicPlan> {
     return {
       approach: await this.selectApproach(goal),
@@ -1754,7 +1789,7 @@ class ClaudePlanningSystem {
     };
   }
   
-  // Level 2: Tactical Planning (phase-level)
+  // Cấp độ 2: Lập kế hoạch chiến thuật (Tactical Planning - cấp độ giai đoạn)
   async tacticalPlan(phase: Phase): Promise<TacticalPlan> {
     return {
       steps: await this.breakDownPhase(phase),
@@ -1764,7 +1799,7 @@ class ClaudePlanningSystem {
     };
   }
   
-  // Level 3: Operational Planning (step-level)
+  // Cấp độ 3: Lập kế hoạch vận hành (Operational Planning - cấp độ bước)
   async operationalPlan(step: Step): Promise<OperationalPlan> {
     return {
       action: await this.defineAction(step),
@@ -1778,7 +1813,7 @@ class ClaudePlanningSystem {
 
 </details>
 
-**Key Feature — Dynamic Re-planning**:
+**Tính năng cốt lõi — Dynamic Re-planning**:
 
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
@@ -1791,15 +1826,15 @@ class DynamicReplanner {
     error: Error, 
     currentPlan: Plan
   ): Promise<Plan> {
-    // 1. Analyze failure
+    // 1. Phân tích lỗi
     const analysis = await this.analyzeFailure(failedStep, error);
     
-    // 2. Try to fix within current plan
+    // 2. Thử sửa lỗi trong phạm vi kế hoạch hiện tại
     if (analysis.canFixInPlace) {
       return this.adjustStep(failedStep, analysis.fix);
     }
     
-    // 3. Re-plan from this point
+    // 3. Lập lại kế hoạch từ điểm này
     const remainingSteps = currentPlan.steps.filter(
       s => !s.dependencies.includes(failedStep.id)
     );
@@ -1821,7 +1856,7 @@ class DynamicReplanner {
 ```typescript
 class CursorPlanner {
   async plan(codeChange: string): Promise<Plan> {
-    // 1. Understand current context
+    // 1. Thấu hiểu Context hiện tại
     const context = {
       currentFile: editor.getCurrentFile(),
       selectedCode: editor.getSelection(),
@@ -1831,10 +1866,10 @@ class CursorPlanner {
       gitContext: await git.getContext(),
     };
     
-    // 2. Plan changes
+    // 2. Lập kế hoạch thay đổi
     const plan = await this.planChanges(codeChange, context);
     
-    // 3. Minimize scope (don't change unrelated files)
+    // 3. Tối thiểu hóa phạm vi (không thay đổi các file không liên quan)
     const scopedPlan = this.minimizeScope(plan, context.currentFile);
     
     return scopedPlan;
@@ -1855,7 +1890,7 @@ class CursorPlanner {
 
 **Bài học từ Case Studies**:
 
-| Lesson | SWE-agent | Anthropic | Claude Code | Cursor |
+| Bài học | SWE-agent | Anthropic | Claude Code | Cursor |
 |--------|-----------|-----------|-------------|--------|
 | **Plan before act** | ✅ File mapping | ✅ Step decomposition | ✅ 3-level planning | ✅ Context-aware |
 | **Limit scope** | ✅ 50 results max | ✅ Step-level | ✅ Hierarchical | ✅ File-scoped |
@@ -1867,25 +1902,30 @@ class CursorPlanner {
 
 ## 8. Design Principles
 
+> **Khái niệm**: Design Principles (Nguyên tắc thiết kế) là tập hợp các chỉ dẫn kiến trúc phần mềm (bao gồm nguyên lý SOLID và 10 Điều răn trong Task Planning) áp dụng riêng cho module lập kế hoạch.
+>
+> **Ý nghĩa**: Đảm bảo hệ thống Planning có tính cô lập cao (Decoupled), dễ mở rộng (Extensible), dễ bảo trì và vận hành ổn định khi quy mô tác vụ và hệ thống tăng lên.
+
+
 ### 8.1 SOLID Cho Planning System
 
-**1. Single Responsibility**
+**1. Single Responsibility (Đơn Trách Nhiệm)**
 - Mỗi planner chỉ phân 1 loại task (code, research, deploy)
 - Mỗi decomposition strategy xử lý 1 pattern cụ thể
 
-**2. Open/Closed**
+**2. Open/Closed (Mở để Mở rộng, Đóng để Sửa đổi)**
 - Mở cho thêm planning strategies mới
 - Đóng cho sửa đổi core decomposition logic
 
-**3. Liskov Substitution**
+**3. Liskov Substitution (Thay thế Liskov)**
 - Các planner có thể thay thế cho nhau
 - Cùng interface, khác implementation (ToT, Plan-and-Solve, ReWOO)
 
-**4. Interface Segregation**
+**4. Interface Segregation (Phân tách Interface)**
 - Không ép planner phải handle tất cả types
 - Tách planner theo domain
 
-**5. Dependency Inversion**
+**5. Dependency Inversion (Đảo ngược Phụ thuộc)**
 - Planner phụ thuộc vào Task abstraction, không vào具体 implementation
 - Dễ dàng swap decomposition strategy
 
@@ -1926,6 +1966,11 @@ class CursorPlanner {
 ---
 
 ## 9. Best Practices
+
+> **Khái niệm**: Best Practices (Thực hành tốt nhất) là các quy tắc nên làm (DO), không nên làm (DON'T) và chiến lược quản lý ngân sách Token (Token Budget Management) được tối ưu từ kinh nghiệm thực tiễn.
+>
+> **Ý nghĩa**: Ngăn ngừa các lỗi phổ biến như vòng lặp vô hạn (Infinite loops), vượt trần Token (Budget exhaustion), đồng thời tối ưu chi phí và tăng tốc độ xử lý của Agent.
+
 
 ### 9.1 DO ✅
 
@@ -1970,7 +2015,7 @@ class TokenBudgetManager {
     const totalAllocated = Array.from(this.allocated.values()).reduce((a, b) => a + b, 0);
     
     if (totalAllocated + budget > this.totalBudget) {
-      return false; // Not enough budget
+      return false; // Không đủ ngân sách Token
     }
     
     this.allocated.set(taskId, budget);
@@ -1984,7 +2029,7 @@ class TokenBudgetManager {
   canContinue(taskId: string): boolean {
     const allocated = this.allocated.get(taskId) || 0;
     const used = this.used.get(taskId) || 0;
-    return used < allocated * 0.9; // Allow 90% usage
+    return used < allocated * 0.9; // Cho phép sử dụng tối đa 90%
   }
   
   getRemaining(): number {
@@ -2010,6 +2055,11 @@ class TokenBudgetManager {
 ---
 
 ## 10. Testing Planning Systems
+
+> **Khái niệm**: Testing Planning Systems (Kiểm thử hệ thống lập kế hoạch) là quy trình xây dựng các bài kiểm thử đơn vị (Unit test) và kiểm thử tích hợp để đánh giá độ chính xác của bộ lập kế hoạch (Task Planner), quản lý bộ nhớ và ngân sách Token.
+>
+> **Ý nghĩa**: Phát hiện sớm các rủi ro vỡ kế hoạch (Plan failures), đảm bảo tính ổn định của Agent trước khi phát hành và giúp dễ dàng refactor bộ lập kế hoạch.
+
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2048,13 +2098,13 @@ class TestTaskPlanner(unittest.TestCase):
         t3 = Task(id="t3", name="Insert data", dependencies=["t2"])
         
         completed = set()
-        # t1 should be executable first
+        # t1 phải có thể thực thi trước
         self.assertTrue(t1.can_execute(completed))
         
-        # t2 should NOT be executable yet
+        # t2 CHƯA ĐƯỢC thực thi
         self.assertFalse(t2.can_execute(completed))
         
-        # After t1 completes
+        # Sau khi t1 hoàn thành
         completed.add("t1")
         self.assertTrue(t2.can_execute(completed))
     
@@ -2073,11 +2123,11 @@ class TestTaskPlanner(unittest.TestCase):
         """Test task retry on failure"""
         task = Task(id="t1", name="Flaky task", max_retries=3)
         
-        # First failure
+        # Thất bại lần đầu
         task.mark_failed("timeout")
         self.assertTrue(task.can_retry())
         
-        # After 3 retries
+        # Sau 3 lần thử lại (retries)
         task.retry_count = 3
         self.assertFalse(task.can_retry())
 
@@ -2143,6 +2193,11 @@ if __name__ == "__main__":
 
 ## 11. Advanced Patterns
 
+> **Khái niệm**: Advanced Patterns (Các mô hình nâng cao) bao gồm những kỹ thuật lập kế hoạch chuyên sâu như Hierarchical Task Network (HTN) và Self-Reflective Planning.
+>
+> **Ý nghĩa**: Giúp Agent giải quyết các tác vụ cực kỳ phức tạp theo nhiều mức độ chi tiết (Multi-level granularity), tự phân tích và tự sửa lỗi kế hoạch của chính mình dựa trên kết quả trung gian.
+
+
 ### 11.1 Hierarchical Task Network (HTN)
 
 <details>
@@ -2160,8 +2215,8 @@ class HTNPlanner:
     """
     
     def __init__(self):
-        self.methods = {}  # task_type -> list of decomposition methods
-        self.primitive_actions = {}  # action_name -> implementation
+        self.methods = {}  # task_type -> danh sách phương pháp phân chia tác vụ
+        self.primitive_actions = {}  # action_name -> phần triển khai
     
     def add_method(self, task_type, method):
         if task_type not in self.methods:
@@ -2181,7 +2236,7 @@ class HTNPlanner:
                         result.extend(self.decompose(subtask, depth + 1, max_depth))
                     return result
         
-        return [task]  # Primitive task
+        return [task]  # Tác vụ nguyên thủy (primitive task)
     
     def execute_plan(self, plan):
         results = []
@@ -2209,20 +2264,20 @@ class SelfReflectivePlanner:
     
     def __init__(self, llm_func=None):
         self.llm = llm_func
-        self.plan_history = []  # Past plans and their outcomes
+        self.plan_history = []  # Lịch sử kế hoạch và kết quả
     
     def plan_with_reflection(self, task, max_reflections=3):
         """Plan with self-reflection"""
         plan = self._initial_plan(task)
         
         for reflection_round in range(max_reflections):
-            # Reflect on plan quality
+            # Tự ngẫm (Reflect) về chất lượng kế hoạch
             reflection = self._reflect_on_plan(task, plan)
             
             if reflection["quality_score"] >= 8:
-                break  # Plan is good enough
+                break  # Dừng lại nếu kế hoạch đã đủ tốt
             
-            # Improve plan based on reflection
+            # Cải thiện kế hoạch dựa trên tự ngẫm
             plan = self._improve_plan(plan, reflection["suggestions"])
         
         return plan
@@ -2272,6 +2327,11 @@ Plan: {plan}
 
 ## 12. Tools & Frameworks
 
+> **Khái niệm**: Tools & Frameworks (Công cụ & Thư viện) là các bộ công cụ phần mềm phổ biến hỗ trợ xây dựng và điều phối hệ thống Planning & Agent Workflows (như LangGraph, CrewAI, AutoGen).
+>
+> **Ý nghĩa**: Rút ngắn thời gian phát triển, tận dụng các abstraction chuẩn hóa về State Machine, Multi-agent Orchestration và tích hợp dễ dàng với hệ sinh thái AI hiện tại.
+
+
 ### 12.1 LangGraph (Recommended for Planning)
 
 <details>
@@ -2280,18 +2340,18 @@ Plan: {plan}
 ```python
 from langgraph.graph import StateGraph, END
 
-# Define planning state machine
+# Định nghĩa State Machine lập kế hoạch
 def create_planning_graph():
     graph = StateGraph(dict)
     
-    # Add nodes
+    # Thêm các Node
     graph.add_node("analyze", analyze_task)
     graph.add_node("plan", create_plan)
     graph.add_node("validate", validate_plan)
     graph.add_node("execute", execute_step)
     graph.add_node("replan", replan_on_failure)
     
-    # Add edges
+    # Thêm các Edge
     graph.add_edge("analyze", "plan")
     graph.add_edge("plan", "validate")
     graph.add_conditional_edges("validate", decide_next, {
@@ -2315,7 +2375,7 @@ def create_planning_graph():
 ```python
 from crewai import Agent, Task, Crew
 
-# Create specialized planning agents
+# Tạo các Agent lập kế hoạch chuyên biệt
 planner = Agent(
     role="Task Planner",
     goal="Break down complex tasks into actionable steps",
@@ -2336,7 +2396,7 @@ reviewer = Agent(
     backstory="Expert at quality assurance and risk assessment",
 )
 
-# Create tasks
+# Tạo các tác vụ (tasks)
 planning_task = Task(
     description="Create execution plan for: {task}",
     agent=planner,
@@ -2347,7 +2407,7 @@ execution_task = Task(
     agent=executor,
 )
 
-# Assemble crew
+# Tập hợp Crew
 crew = Crew(
     agents=[planner, executor, reviewer],
     tasks=[planning_task, execution_task],
@@ -2393,32 +2453,37 @@ user = UserProxyAgent(
 
 ## 13. Tương Lai
 
+> **Khái niệm**: Tương Lai phản ánh các xu hướng công nghệ nổi bật trong lập kế hoạch cho AI Agent giai đoạn 2026-2028 (AI Self-Planning, Collaborative Planning, Predictive Planning).
+>
+> **Ý nghĩa**: Định hình tầm nhìn chiến lược cho các kỹ sư phần mềm và nhà kiến trúc hệ thống để đón đầu sự tiến hóa của AI Agent hướng tới tự chủ hoàn toàn.
+
+
 ### 13.1 Xu Hướng 2026-2028
 
-**1. AI Self-Planning**
+**1. AI Tự Lập Kế Hoạch (AI Self-Planning)**
 - Agent tự động tạo kế hoạch không cần human input
 - Adaptive planning dựa trên real-time feedback
 - Cross-task learning (học từ planning history)
 
-**2. Collaborative Planning**
+**2. Lập Kế Hoạch Hiệp Tác (Collaborative Planning)**
 - Nhiều agents cùng plan và vote
-- Distributed planning across teams
-- Shared planning knowledge bases
+- Lập kế hoạch phân tán giữa các đội ngũ
+- Chia sẻ cơ sở tri thức lập kế hoạch
 
-**3. Predictive Planning**
-- Predict failures before they happen
-- Proactive re-planning
-- Risk-aware task allocation
+**3. Lập Kế Hoạch Dự Đoán (Predictive Planning)**
+- Dự đoán thất bại trước khi xảy ra
+- Chủ động lập lại kế hoạch (Re-planning)
+- Phân bổ tác vụ nhận biết rủi ro
 
-**4. Context-Aware Planning**
-- Plans adapt to available context
-- Dynamic resource allocation
-- Smart token budget management
+**4. Lập Kế Hoạch Nhận Biết Context (Context-Aware Planning)**
+- Kế hoạch thích ứng với Context khả dụng
+- Phân bổ tài nguyên động
+- Quản lý ngân sách Token thông minh
 
-**5. Visual Planning Interfaces**
-- Drag-and-drop plan builders
-- Real-time plan visualization
-- Interactive plan editing
+**5. Giao Diện Lập Kế Hoạch Trực Quan (Visual Planning Interfaces)**
+- Trình dựng kế hoạch kéo thả
+- Trực quan hóa kế hoạch theo thời gian thực
+- Chỉnh sửa kế hoạch tương tác
 
 ### 13.2 Lời Khuyên
 

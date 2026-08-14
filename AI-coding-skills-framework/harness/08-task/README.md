@@ -116,6 +116,8 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 
 ## 1. Task Classification
 
+> **Khái niệm**: Task Classification (Phân loại task) là quá trình phân tích và phân nhóm các task lập trình theo đặc tính (loại code, độ phức tạp, ngữ cảnh) để chọn chiến lược xử lý phù hợp, tối ưu token và độ chính xác cho AI Agent.
+
 ### 1.1 Phân Loại Task Coding
 
 ```
@@ -343,6 +345,8 @@ class TaskClassifier:
 ---
 
 ## 2. Task Decomposition
+
+> **Khái niệm**: Task Decomposition (Phân rã task) là kỹ thuật chia nhỏ task lớn thành các subtask con có thể quản lý, mỗi subtask độc lập về input/output và có thể ủy thác cho agent phù hợp, giúp giảm tải context và tăng khả năng hoàn thành.
 
 ### 2.1 Patterns Phân Rã Task
 
@@ -681,6 +685,8 @@ class TaskDecomposer:
 
 ## 3. Priority & Scheduling
 
+> **Khái niệm**: Priority & Scheduling (Ưu tiên và lập lịch) là cơ chế xác định thứ tự xử lý các task dựa trên mức ưu tiên, mức tiêu thụ tokens và thời gian phản hồi, đảm bảo task quan trọng được thực thi trước trong giới hạn tài nguyên.
+
 ### 3.1 Priority Model
 
 <details>
@@ -778,6 +784,8 @@ class TaskScheduler:
 ---
 
 ## 4. Task State Management
+
+> **Khái niệm**: Task State Management (Quản lý trạng thái task) là mô hình theo dõi vòng đời của task qua các trạng thái (pending, running, completed, failed) cùng cơ chế lưu trữ và khôi phục trạng thái, giúp hệ thống tiếp tục công việc sau khi bị gián đoạn.
 
 ### 4.1 Task Lifecycle
 
@@ -946,6 +954,8 @@ class InvalidTransitionError(Exception):
 
 ## 5. Dependency Management
 
+> **Khái niệm**: Dependency Management (Quản lý phụ thuộc) là kỹ thuật mô hình hóa quan hệ giữa các task qua đồ thị phụ thuộc (dependency graph), xác định task nào phải hoàn thành trước và phát hiện vòng lặp/xung đột để thực thi đúng thứ tự.
+
 ### 5.1 Task Dependency Graph
 
 <details>
@@ -1048,6 +1058,8 @@ class TaskDependencyGraph:
 ---
 
 ## 6. Task Templates
+
+> **Khái niệm**: Task Templates (Mẫu task) là các khuôn mẫu chuẩn hóa cho từng loại task lập trình phổ biến (sửa bug, thêm feature, refactor) với cấu trúc prompt, checklist và tiêu chí hoàn thành định sẵn, giúp agent xử lý nhanh và nhất quán.
 
 ### 6.1 Common Task Templates
 
@@ -1174,6 +1186,8 @@ def create_task_from_template(template_name: str, **kwargs) -> Task:
 
 ## 7. Estimation Techniques
 
+> **Khái niệm**: Estimation Techniques (Kỹ thuật ước lượng) là các phương pháp dự đoán chi phí thực thi task — số tokens, thời gian, effort — dựa trên độ phức tạp và lịch sử, giúp lập kế hoạch tài nguyên và cảnh báo trước nguy cơ vượt ngân sách.
+
 ### 7.1 Token Estimation Model
 
 ```
@@ -1293,6 +1307,8 @@ class EffortEstimator:
 
 ## 8. Anti-Patterns & Solutions
 
+> **Khái niệm**: Anti-Patterns & Solutions (Phản mẫu và giải pháp) là tập hợp các lỗi thiết kế task management thường gặp — task quá lớn, thiếu ưu tiên, quản lý trạng thái lỏng lẻo — kèm giải pháp và cơ chế phát hiện tự động để khắc phục.
+
 ### 8.1 Common Anti-Patterns
 
 ```
@@ -1410,6 +1426,8 @@ class AntiPatternDetector:
 ---
 
 ## 9. Real-World Workflows
+
+> **Khái niệm**: Real-World Workflows (Quy trình thực tế) là các luồng công việc lập trình phổ biến được chuẩn hóa — feature implementation, debug investigation, refactoring — minh họa cách áp dụng task management vào tình huống sản xuất thực tế.
 
 ### 9.1 Feature Implementation Workflow
 
@@ -1564,6 +1582,8 @@ class AntiPatternDetector:
 ---
 
 ## 10. Token Budget Management
+
+> **Khái niệm**: Token Budget Management (Quản lý ngân sách token) là chiến lược phân bổ và giám sát lượng token tiêu thụ trong context window cho từng task và toàn hệ thống, ngăn chặn tràn context và đảm bảo chất lượng phản hồi.
 
 ### 10.1 Context Window Budget Allocation
 

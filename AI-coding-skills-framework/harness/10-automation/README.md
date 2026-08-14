@@ -134,6 +134,8 @@ Automation = Repetition → Rule → Script → Self-Healing Pipeline
 
 ## 1. Automation Patterns
 
+> **Khái niệm**: Automation Patterns (Mô hình tự động hóa) là các mẫu thiết kế chuẩn hóa quy trình chạy tự động — trigger-based, schedule-based, event-driven — giúp AI Agent thực hiện tác vụ lặp lại mà không cần can thiệp thủ công.
+
 ### 1.1 Pattern Taxonomy
 
 ```
@@ -330,6 +332,8 @@ class AutomationPipeline:
 ---
 
 ## 2. CI/CD Pipelines
+
+> **Khái niệm**: CI/CD Pipelines (Đường ống tích hợp và triển khai liên tục) là chuỗi các bước tự động — build, test, deploy — kích hoạt khi code thay đổi, đảm bảo code mới luôn được kiểm chứng và đưa lên production an toàn.
 
 ### 2.1 CI/CD Pipeline Architecture
 
@@ -649,6 +653,8 @@ class CIPipelineConfig:
 
 ## 3. Code Generation Automation
 
+> **Khái niệm**: Code Generation Automation (Tự động sinh mã) là quá trình dùng AI Agent sinh code theo yêu cầu — scaffold project, boilerplate, completion — kèm cơ chế kiểm tra chất lượng và đánh dấu để con người review trước khi dùng.
+
 ### 3.1 Automated Code Generation
 
 <details>
@@ -936,6 +942,8 @@ class Test{name}CRUD:
 
 ## 4. Testing Automation
 
+> **Khái niệm**: Testing Automation (Tự động hóa kiểm thử) là việc để AI Agent tự viết test, chạy test suite và phân tích kết quả — phát hiện lỗi sớm, đảm bảo chất lượng code trước khi merge mà không cần làm thủ công.
+
 ### 4.1 Test Automation Strategy
 
 ```
@@ -1095,6 +1103,8 @@ class AutomatedTestRunner:
 ---
 
 ## 5. Monitoring & Alerting
+
+> **Khái niệm**: Monitoring & Alerting (Giám sát và cảnh báo) là hệ thống theo dõi liên tục trạng thái ứng dụng — metrics, logs, errors — gửi cảnh báo kịp thời khi phát hiện bất thường để AI Agent xử lý hoặc thông báo cho con người.
 
 ### 5.1 Monitoring Architecture
 
@@ -1293,6 +1303,8 @@ class MonitoringSystem:
 
 ## 6. Self-Healing Systems
 
+> **Khái niệm**: Self-Healing Systems (Hệ thống tự phục hồi) là kiến trúc cho phép hệ thống tự phát hiện lỗi, chẩn đoán nguyên nhân và tự khôi phục — restart service, rollback, sửa config — giảm thời gian chết và can thiệp thủ công.
+
 ### 6.1 Self-Healing Patterns
 
 ```
@@ -1481,6 +1493,8 @@ class SelfHealingSystem:
 
 ## 7. Scheduled Tasks
 
+> **Khái niệm**: Scheduled Tasks (Tác vụ theo lịch) là cơ chế chạy tự động các công việc định kỳ — dọn dẹp log, tạo báo cáo, cập nhật dependency — theo lịch trình xác định, giảm gánh nặng vận hành cho đội ngũ.
+
 ### 7.1 Task Scheduler
 
 <details>
@@ -1614,6 +1628,8 @@ class TaskScheduler:
 
 ## 8. Workflow Templates
 
+> **Khái niệm**: Workflow Templates (Mẫu quy trình) là các khuôn mẫu chuẩn hóa cho quy trình tự động phổ biến — test suite mỗi commit, deploy khi merge, triage issue — giúp thiết lập automation nhanh và nhất quán.
+
 ### 8.1 Common Automation Workflows
 
 <details>
@@ -1676,6 +1692,8 @@ WORKFLOW_TEMPLATES = {
 
 ## 9. Anti-Patterns & Solutions
 
+> **Khái niệm**: Anti-Patterns & Solutions (Phản mẫu và giải pháp) là tập hợp các lỗi thiết kế automation thường gặp — pipeline quá cồng kềnh, trigger trùng lặp, thiếu kiểm tra an toàn — kèm giải pháp khắc phục để automation ổn định.
+
 ### 9.1 Common Anti-Patterns
 
 ```
@@ -1720,6 +1738,8 @@ WORKFLOW_TEMPLATES = {
 ---
 
 ## 10. Production Automation
+
+> **Khái niệm**: Production Automation (Tự động hóa sản xuất) là việc đưa automation vào môi trường production — an toàn cho deploy tự động, rollout dần, rollback nhanh — đảm bảo quy trình ổn định, giám sát và chấp nhận rủi ro có kiểm soát.
 
 ### 10.1 Production Checklist
 
@@ -1821,6 +1841,8 @@ WORKFLOW_TEMPLATES = {
 ---
 
 ## 11. Case Studies Thực Tế
+
+> **Khái niệm**: Case Studies Thực Tế (Nghiên cứu điển hình) là các ví dụ automation được triển khai trong sản xuất — startup, enterprise, open-source — minh họa quy trình, lợi ích và bài học rút ra từ thực tiễn.
 
 ### 11.1 SWE-agent: Automated Software Engineering
 
@@ -1982,6 +2004,8 @@ WORKFLOW_TEMPLATES = {
 ---
 
 ## 12. TypeScript Interfaces cho Automation
+
+> **Khái niệm**: TypeScript Interfaces (Giao diện TypeScript) là tập hợp định nghĩa kiểu dữ liệu cho automation — config, trigger, task, pipeline — giúp biểu diễn và kiểm tra automation bằng ngôn ngữ lập trình có kiểu tĩnh.
 
 ### 12.1 Core Automation Types
 
@@ -2192,6 +2216,8 @@ interface DeploymentRestriction {
 
 ## 13. Design Principles cho Automation
 
+> **Khái niệm**: Design Principles (Nguyên tắc thiết kế) là bộ nguyên tắc cốt lõi khi xây dựng automation — đơn giản, có thể tái sử dụng, dễ giám sát, an toàn — đảm bảo hệ thống tự động bền vững và dễ bảo trì.
+
 ### 13.1 SOLID cho Automation Systems
 
 ```
@@ -2279,6 +2305,8 @@ interface DeploymentRestriction {
 ---
 
 ## 14. Testing Automation Harness
+
+> **Khái niệm**: Testing Automation Harness (Khung kiểm thử tự động) là khung kiểm chứng automation — test trigger, pipeline giả lập, kiểm tra rollback — đảm bảo mỗi quy trình tự động hoạt động đúng trước khi chạy thật.
 
 ### 14.1 Testing Automation Systems
 
@@ -2534,6 +2562,8 @@ harness.register(AutomationTest(
 
 ## 15. Anti-Patterns & Solutions Chi Tiết
 
+> **Khái niệm**: Anti-Patterns & Solutions Chi Tiết (Phản mẫu và giải pháp chi tiết) là phân tích sâu các lỗi automation nâng cao — tự phục hồi sai, phụ thuộc lẫn nhau, tài nguyên leo thang — kèm chiến lược phát hiện và khắc phục cụ thể.
+
 ### 15.1 Common Anti-Patterns
 
 ```
@@ -2614,6 +2644,8 @@ harness.register(AutomationTest(
 ---
 
 ## 16. Future Trends trong Automation
+
+> **Khái niệm**: Future Trends (Xu hướng tương lai) là các hướng phát triển sắp tới của automation — agent tự chủ, ML-driven, tự tối ưu — và tác động của chúng đến cách xây dựng hệ thống tự động trong tương lai.
 
 ### 16.1 AI-Powered Automation (2024-2026)
 

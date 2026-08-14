@@ -94,6 +94,10 @@ Plan & Decompose = Analyze → Prioritize → Sequence → Execute → Validate
 
 ## Tổng Quan
 
+> **Khái niệm**: Quá trình chuyển đổi yêu cầu tổng quát thành các bước nhỏ, có thể thực thi được.
+> **Mục đích**: Thiết lập ngữ cảnh, định hướng tư duy giải quyết vấn đề.
+> **Ý nghĩa**: Giảm thiểu sự mơ hồ, tối ưu hóa khả năng xử lý của AI.
+
 Khi đối mặt task phức tạp, AI Agent cần **phân tích → lập kế hoạch → chia nhỏ → thực hiện tuần tự**. Đây là kỹ năng cốt lõi biến LLM từ "chatbot" thành "agent".
 
 Trong hệ thống Harness Engineering, Planning & Decomposition là **"bộ não điều khiển"** — quyết định tất cả các thành phần khác (tools, memory, guardrails) được sử dụng như thế nào.
@@ -131,6 +135,10 @@ Trong hệ thống Harness Engineering, Planning & Decomposition là **"bộ nã
 ```
 
 ## Tại Sao Planning & Decomposition Quan Trọng?
+
+> **Khái niệm**: Giải thích vai trò nền tảng của lập kế hoạch — yếu tố biến LLM từ công cụ "trả lời câu hỏi" thành tác nhân "hành động" — cùng các hệ quả khi thiếu planning.
+> **Mục đích**: Cung cấp bằng chứng khoa học (nghiên cứu, số liệu thực tế) và phân tích chi phí-lợi ích để thuyết phục người đọc đầu tư vào structured planning ngay từ đầu.
+> **Ý nghĩa**: Xây dựng tư duy "nghĩ trước khi làm" làm nền tảng cho mọi phần nội dung triển khai phía sau.
 
 > *"Một agent không có planning giống như một người lái xe không có bản đồ — có thể di chuyển, nhưng chắc chắn sẽ lạc đường."*
 
@@ -273,6 +281,8 @@ Nguyên nhân: Plan trước → biết cần tool nào → giảm false starts 
 ## 1. Task Decomposition Patterns
 
 > **Khái niệm**: Task Decomposition Patterns (Mô hình phân chia tác vụ) là các chiến lược kiến trúc giúp chia nhỏ một mục tiêu lớn, phức tạp thành các tác vụ con (subtasks) có phạm vi nhỏ hơn, dễ kiểm soát và thực thi bởi AI Agent.
+>
+> **Mục đích**: Lựa chọn chiến lược chia nhỏ phù hợp (tuần tự, song song, có điều kiện, phân cấp, lặp lại, DAG) để biến mục tiêu phức tạp thành chuỗi subtask vừa sức xử lý, giúp Agent dễ ước lượng tài nguyên (token, thời gian) và kiểm soát tiến độ thực thi.
 >
 > **Ý nghĩa**: Giúp tối ưu hóa Context Window của LLM, ngăn ngừa hiện tượng hallucination khi xử lý câu lệnh phức tạp, hỗ trợ thực thi song song (Parallel execution) hoặc phân cấp (Hierarchical execution) để tăng tốc độ và độ tin cậy của hệ thống.
 
@@ -625,6 +635,8 @@ Output JSON:
 
 > **Khái niệm**: Planning Algorithms (Thuật toán lập kế hoạch) là các thuật toán và chiến lược suy luận (reasoning) định hướng cách AI Agent phân tích bài toán, dự đoán các bước thực thi và lựa chọn phương án tối ưu trước hoặc trong quá trình làm việc.
 >
+> **Mục đích**: Trang bị cho Agent các chiến lược suy luận có cấu trúc để xác định đúng trình tự hành động, so sánh nhiều phương án thay thế và chọn lộ trình tối ưu trước khi tốn chi phí thực thi vào các bước kém hiệu quả.
+>
 > **Ý nghĩa**: Cung cấp khả năng lập luận đa chiều (Tree of Thoughts), tách biệt quá trình suy luận và gọi tool (ReWOO, Plan-and-Solve), giúp giảm đáng kể chi phí Token, tránh suy luận thừa và tăng tỷ lệ thành công của tác vụ.
 
 
@@ -965,6 +977,8 @@ Output JSON:
 
 > **Khái niệm**: Agent Workflows (Luồng công việc của Agent) là mô hình tổ chức và điều phối mối quan hệ giữa các hoạt động suy luận (Reasoning), thực thi (Action), và quan sát (Observation) trong hệ thống Agent.
 >
+> **Mục đích**: Xác định kiến trúc vận hành phù hợp với đặc thù từng tác vụ (đơn agent hay đa agent, tuần tự hay vòng phản hồi), đảm bảo sự phối hợp nhịp nhàng giữa suy luận, hành động và quan sát trong toàn bộ vòng đời xử lý.
+>
 > **Ý nghĩa**: Định hình cấu trúc tương tác của Agent (ReAct, Plan-and-Execute, Multi-Agent workflow, State Machine), quyết định khả năng phản hồi linh hoạt với thay đổi của môi trường và đảm bảo tiến trình hoàn thành mục tiêu đúng đắn.
 
 
@@ -1262,6 +1276,8 @@ Tổng hợp:"""
 
 > **Khái niệm**: State Management (Quản lý trạng thái) là cơ chế theo dõi, lưu trữ và cập nhật trạng thái toàn cục (global state) cũng như trạng thái từng bước tiến trình của Agent trong suốt vòng đời thực thi.
 >
+> **Mục đích**: Duy trì một nguồn dữ liệu trạng thái duy nhất (single source of truth) xuyên suốt quá trình thực thi, cho phép Agent truy vết tiến trình, lưu điểm khôi phục và tiếp tục công việc dở dang một cách nhất quán, đáng tin cậy.
+>
 > **Ý nghĩa**: Đảm bảo tính nhất quán (Consistency), hỗ trợ khả năng lưu điểm phục hồi (Checkpointing), khôi phục trạng thái khi gặp lỗi (Rollback), theo dõi phiên bản (Versioning) và phục hồi luồng làm việc dài hạn (State Persistence).
 
 
@@ -1354,6 +1370,8 @@ class AgentState:
 ## 5. ReAct Pattern
 
 > **Khái niệm**: ReAct Pattern (Reasoning + Acting) là mô hình kết hợp chặt chẽ giữa vòng lặp suy luận độc thoại (Thought), thực thi hành động gọi công cụ (Action) và thu nhận phản hồi từ môi trường (Observation).
+>
+> **Mục đích**: Kết hợp suy luận và hành động trong một vòng lặp thống nhất để Agent vừa lập luận về bước tiếp theo vừa thu thập thông tin thực tế từ môi trường, từ đó ra quyết định chính xác hơn so với suy luận thuần túy (pure reasoning).
 >
 > **Ý nghĩa**: Giúp Agent tự điều chỉnh kế hoạch linh hoạt dựa trên dữ liệu thực tế thu được ở từng bước thực thi, giải quyết hạn chế của việc lập kế hoạch tĩnh (Static planning) khi đối mặt với môi trường biến động.
 
@@ -1511,6 +1529,8 @@ Final Answer: [your answer]"""
 
 > **Khái niệm**: Harness-Integrated Planning (Lập kế hoạch tích hợp Harness) là việc nhúng mô hình lập kế hoạch trực tiếp vào hạ tầng điều phối (Harness Framework), kết nối đồng bộ với Memory Store, Guardrails và Tool Execution Engine.
 >
+> **Mục đích**: Gắn kết module lập kế hoạch vào Harness để kế hoạch được kiểm soát bởi Guardrails, được hỗ trợ bởi Memory Store và được tối ưu qua vòng phản hồi, tạo nên hệ thống lập kế hoạch an toàn, thông minh và tự thích nghi.
+>
 > **Ý nghĩa**: Giúp kiểm soát kế hoạch an toàn bằng các chính sách Guardrails, tận dụng thông tin lưu trữ từ Memory, đồng thời tự động lập lại kế hoạch (Re-planning) khi xảy ra sự cố ngoài dự kiến trên môi trường thực tế.
 
 
@@ -1648,6 +1668,8 @@ class HarnessPlanner implements PlanningSystem {
 ## 7. Case Studies Thực Tế
 
 > **Khái niệm**: Case Studies Thực Tế là các phân tích chi tiết về kiến trúc lập kế hoạch đang được triển khai thực tế trong những sản phẩm AI tiên tiến hàng đầu (SWE-agent, Anthropic Multi-Agent, Claude Code, Cursor IDE).
+>
+> **Mục đích**: Minh họa cách các sản phẩm AI hàng đầu áp dụng planning & decomposition vào môi trường sản xuất, giúp người đọc đối chiếu lý thuyết với thực tiễn và rút ra các mẫu thiết kế có thể tái sử dụng.
 >
 > **Ý nghĩa**: Rút ra bài học kinh nghiệm, các mẫu thiết kế đã được chứng minh hiệu quả trong thực tế (production-proven design patterns) để áp dụng vào việc xây dựng hệ thống AI Agent doanh nghiệp.
 
@@ -1904,6 +1926,8 @@ class CursorPlanner {
 
 > **Khái niệm**: Design Principles (Nguyên tắc thiết kế) là tập hợp các chỉ dẫn kiến trúc phần mềm (bao gồm nguyên lý SOLID và 10 Điều răn trong Task Planning) áp dụng riêng cho module lập kế hoạch.
 >
+> **Mục đích**: Thiết lập bộ chuẩn kiến trúc và quy tắc vàng khi xây dựng module lập kế hoạch, bảo đảm hệ thống dễ mở rộng, dễ bảo trì, ít lỗi tiềm ẩn và nhất quán giữa các thành phần khi quy mô dự án tăng trưởng.
+>
 > **Ý nghĩa**: Đảm bảo hệ thống Planning có tính cô lập cao (Decoupled), dễ mở rộng (Extensible), dễ bảo trì và vận hành ổn định khi quy mô tác vụ và hệ thống tăng lên.
 
 
@@ -1968,6 +1992,8 @@ class CursorPlanner {
 ## 9. Best Practices
 
 > **Khái niệm**: Best Practices (Thực hành tốt nhất) là các quy tắc nên làm (DO), không nên làm (DON'T) và chiến lược quản lý ngân sách Token (Token Budget Management) được tối ưu từ kinh nghiệm thực tiễn.
+>
+> **Mục đích**: Cung cấp bộ quy tắc thực hành đã được kiểm chứng và chiến lược quản lý tài nguyên Token, giúp Agent vận hành ổn định, tránh các lỗi tốn kém và tối ưu chi phí trong suốt vòng đời tác vụ.
 >
 > **Ý nghĩa**: Ngăn ngừa các lỗi phổ biến như vòng lặp vô hạn (Infinite loops), vượt trần Token (Budget exhaustion), đồng thời tối ưu chi phí và tăng tốc độ xử lý của Agent.
 
@@ -2057,6 +2083,8 @@ class TokenBudgetManager {
 ## 10. Testing Planning Systems
 
 > **Khái niệm**: Testing Planning Systems (Kiểm thử hệ thống lập kế hoạch) là quy trình xây dựng các bài kiểm thử đơn vị (Unit test) và kiểm thử tích hợp để đánh giá độ chính xác của bộ lập kế hoạch (Task Planner), quản lý bộ nhớ và ngân sách Token.
+>
+> **Mục đích**: Xây dựng quy trình kiểm thử tự động để xác nhận bộ lập kế hoạch hoạt động đúng (phân chia chính xác, tôn trọng dependency, quản lý token hợp lý...), giảm rủi ro lỗi khi triển khai vào sản xuất.
 >
 > **Ý nghĩa**: Phát hiện sớm các rủi ro vỡ kế hoạch (Plan failures), đảm bảo tính ổn định của Agent trước khi phát hành và giúp dễ dàng refactor bộ lập kế hoạch.
 
@@ -2195,6 +2223,8 @@ if __name__ == "__main__":
 
 > **Khái niệm**: Advanced Patterns (Các mô hình nâng cao) bao gồm những kỹ thuật lập kế hoạch chuyên sâu như Hierarchical Task Network (HTN) và Self-Reflective Planning.
 >
+> **Mục đích**: Trang bị cho Agent những kỹ thuật lập kế hoạch tiên tiến (phân cấp nhiều tầng, tự phản ánh) để giải quyết các tác vụ có độ phức tạp cao, nơi các phương pháp tuyến tính thông thường không đủ hiệu quả.
+>
 > **Ý nghĩa**: Giúp Agent giải quyết các tác vụ cực kỳ phức tạp theo nhiều mức độ chi tiết (Multi-level granularity), tự phân tích và tự sửa lỗi kế hoạch của chính mình dựa trên kết quả trung gian.
 
 
@@ -2329,6 +2359,8 @@ Plan: {plan}
 
 > **Khái niệm**: Tools & Frameworks (Công cụ & Thư viện) là các bộ công cụ phần mềm phổ biến hỗ trợ xây dựng và điều phối hệ thống Planning & Agent Workflows (như LangGraph, CrewAI, AutoGen).
 >
+> **Mục đích**: Giới thiệu và hướng dẫn lựa chọn các công cụ, thư viện phổ biến nhằm rút ngắn thời gian phát triển, chuẩn hóa kiến trúc và tận dụng hệ sinh thái đã được cộng đồng kiểm chứng.
+>
 > **Ý nghĩa**: Rút ngắn thời gian phát triển, tận dụng các abstraction chuẩn hóa về State Machine, Multi-agent Orchestration và tích hợp dễ dàng với hệ sinh thái AI hiện tại.
 
 
@@ -2454,6 +2486,8 @@ user = UserProxyAgent(
 ## 13. Tương Lai
 
 > **Khái niệm**: Tương Lai phản ánh các xu hướng công nghệ nổi bật trong lập kế hoạch cho AI Agent giai đoạn 2026-2028 (AI Self-Planning, Collaborative Planning, Predictive Planning).
+>
+> **Mục đích**: Định hướng chiến lược đầu tư công nghệ và phát triển năng lực cho đội ngũ, giúp doanh nghiệp chủ động đón đầu xu hướng tiến hóa của AI Agent.
 >
 > **Ý nghĩa**: Định hình tầm nhìn chiến lược cho các kỹ sư phần mềm và nhà kiến trúc hệ thống để đón đầu sự tiến hóa của AI Agent hướng tới tự chủ hoàn toàn.
 

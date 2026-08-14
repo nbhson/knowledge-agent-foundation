@@ -53,6 +53,12 @@
       - [C. Phân Quyền Tool Chặt Chẽ](#c-phân-quyền-tool-chặt-chẽ)
       - [D. Tone Detection với Regex (!)](#d-tone-detection-với-regex-)
     - [6.4. Cursor IDE - Harness Tối Ưu Cho Coding](#64-cursor-ide---harness-tối-ưu-cho-coding)
+    - [6.5. DeepSeek Harness — Micro-Kernel \& Trajectory Traceability Framework](#65-deepseek-harness--micro-kernel--trajectory-traceability-framework)
+      - [A. Kiến Trúc Micro-Kernel \& Ecosystem Plugin](#a-kiến-trúc-micro-kernel--ecosystem-plugin)
+      - [B. 4 Runtime Modes Phân Hóa](#b-4-runtime-modes-phân-hóa)
+      - [C. Trajectory Traceability Engine (Session Event Stream \& Branching)](#c-trajectory-traceability-engine-session-event-stream--branching)
+      - [D. Code Mode SDK \& Sandboxed Execution](#d-code-mode-sdk--sandboxed-execution)
+      - [E. Minimal Benchmark Harness Cho Đánh Giá Năng Lực AI](#e-minimal-benchmark-harness-cho-đánh-giá-năng-lực-ai)
     - [Bài Học Chung Từ Các Case Studies](#bài-học-chung-từ-các-case-studies)
   - [7. Nguyên Tắc Thiết Kế Harness](#7-nguyên-tắc-thiết-kế-harness)
     - [7.1. Nguyên Tắc SOLID Cho Harness](#71-nguyên-tắc-solid-cho-harness)
@@ -2197,17 +2203,50 @@ class CursorHarness {
 
 ---
 
+### 6.5. DeepSeek Harness — Micro-Kernel & Trajectory Traceability Framework
+
+DeepSeek Harness đại diện cho thế hệ AI Agent Harness siêu mở rộng dựa trên triết lý **"Agent = Model + Harness"** và **"Everything is a Plugin"**. Được xây dựng trên nền tảng micro-kernel Cordis, DeepSeek Harness biến mọi thành phần của Agent (tools, context, memory, sub-agents) thành các plugins độc lập có thể tháo lắp linh hoạt.
+
+#### A. Kiến Trúc Micro-Kernel & Ecosystem Plugin
+- **Cordis Core Framework**: Quản lý vòng đời plugin qua 4 giai đoạn (`init`, `attach`, `ready`, `detach`).
+- **Context Service Registry**: Sử dụng `ctx.provide()` và `ctx.inject()` cho phép các plugins đăng ký và tiêu thụ service độc lập (như logger, llmProvider, memoryStore).
+- **Xem hướng dẫn chi tiết**: [`harness/07-workflow/cordis-kernel-plugin.md`](./harness/07-workflow/cordis-kernel-plugin.md)
+
+#### B. 4 Runtime Modes Phân Hóa
+DeepSeek Harness thiết kế 4 môi trường thực thi chuyên biệt phù hợp với mọi nhu cầu:
+1. **Standard Mode**: Full-featured interactive CLI/GUI agent với đầy đủ MCP tools và middleware guardrails.
+2. **Code Mode**: Chạy qua SDK (`@deepseek-ai/dsh`), gộp nhiều tool calls thành 1 kịch bản code duy nhất, giảm 70-90% latency và token cost.
+3. **Minimal Benchmark Mode**: Môi trường tối giản chỉ có 2 tools (`bash`, `editor`) và minimal prompt để đánh giá năng lực suy luận nguyên bản của LLM.
+4. **Creator Inspector Mode**: Runtime trực quan hóa timeline, cho phép inspect context state và chỉnh sửa preset agent.
+
+#### C. Trajectory Traceability Engine (Session Event Stream & Branching)
+- **Append-Only Event Log**: Mọi diễn biến session (Prompt, Reason, Tool Call, Output) được lưu dưới dạng chuỗi sự kiện không thể sửa đổi (`SessionEventStream`).
+- **Time-Travel Replay & Forking**: Khả năng "tạm dừng" session tại bất kỳ bước nào, khôi phục trạng thái context (`replayToStep`) và rẽ nhánh (`forkSession`) để thử nghiệm giải pháp khác mà không làm hỏng session gốc.
+- **Xem hướng dẫn chi tiết**: [`harness/03-update-memory-store/trajectory-fork-replay.md`](./harness/03-update-memory-store/trajectory-fork-replay.md)
+
+#### D. Code Mode SDK & Sandboxed Execution
+- Khắc phục nhược điểm latency của multi-turn tool calling truyền thống. LLM nhận diện kịch bản phức tạp và sinh ra mã lệnh TypeScript/Python gọi SDK `@deepseek-ai/dsh`.
+- Kịch bản chạy trong Node.js `vm` sandbox an toàn, thực thi hàng chục thao tác ghi/đọc/build trong 1 turn duy nhất.
+- **Xem hướng dẫn chi tiết**: [`harness/06-decide-tools-mcp/code-mode-sdk.md`](./harness/06-decide-tools-mcp/code-mode-sdk.md)
+
+#### E. Minimal Benchmark Harness Cho Đánh Giá Năng Lực AI
+- Cách ly hoàn toàn nhiễu từ framework phức tạp. Cho phép thực hiện đánh giá benchmark (như SWE-bench) với độ chính xác cao và độ lặp lại tuyệt đối.
+- **Xem hướng dẫn chi tiết**: [`harness/11-evaluation/minimal-benchmark-harness.md`](./harness/11-evaluation/minimal-benchmark-harness.md)
+
+---
+
 ### Bài Học Chung Từ Các Case Studies
 
-| Lesson | SWE-agent | Anthropic | Claude Leak | Cursor |
-|--------|-----------|-----------|-------------|--------|
-| **Giới hạn output** | ✅ 50 results max | - | - | - |
-| **Multi-agent** | - | ✅ 3 agents | ✅ Planner/Generator | - |
-| **Context layers** | ✅ 3 levels | - | ✅ 5 levels | ✅ Smart context |
-| **Memory tiers** | ✅ Compression | - | ✅ 3 tiers | - |
-| **Tool permissions** | - | - | ✅ Strict | ✅ Sandbox |
-| **User feedback** | - | ✅ Evaluation | ✅ Tone detection | ✅ Suggestions |
-| **Incremental** | - | - | - | ✅ Smart edits |
+| Lesson | SWE-agent | Anthropic | Claude Leak | Cursor | DeepSeek Harness |
+|--------|-----------|-----------|-------------|--------|------------------|
+| **Giới hạn output** | ✅ 50 results max | - | - | - | ✅ Stream limits |
+| **Multi-agent** | - | ✅ 3 agents | ✅ Planner/Generator | - | ✅ Cordis Micro-Kernel |
+| **Context layers** | ✅ 3 levels | - | ✅ 5 levels | ✅ Smart context | ✅ Service Registry |
+| **Memory tiers** | ✅ Compression | - | ✅ 3 tiers | - | ✅ Session Event Stream |
+| **Tool permissions** | - | - | ✅ Strict | ✅ Sandbox | ✅ VM Sandbox & SDK |
+| **User feedback** | - | ✅ Evaluation | ✅ Tone detection | ✅ Suggestions | ✅ Creator Inspector |
+| **Incremental** | - | - | - | ✅ Smart edits | ✅ Code Mode Single-turn |
+| **Time-Travel / Fork** | - | - | - | - | ✅ Replay & Branching |
 
 **Nguyên tắc chung**:
 1. ✅ **Constraints enable creativity** - Giới hạn giúp AI tập trung

@@ -145,6 +145,8 @@ Mỗi agent = **chuyên gia 1 lĩnh vực**. Giống bệnh viện đa khoa — 
 
 ## 1. Agent Roles
 
+> **Khái niệm**: Agent Roles (Vai trò agent) là tập hợp các định nghĩa chuyên môn hóa — orchestrator, coder, reviewer, tester — mỗi agent đảm nhận trách nhiệm và kỹ năng riêng, phối hợp với nhau để hoàn thành nhiệm vụ phức tạp.
+
 ### 1.1 Agent Role Taxonomy
 
 ```
@@ -345,6 +347,8 @@ AGENT_DEFINITIONS = {
 ---
 
 ## 2. Communication Patterns
+
+> **Khái niệm**: Communication Patterns (Mô hình giao tiếp) là các cấu trúc trao đổi thông tin giữa các agent — trực tiếp, broadcast, thông qua message bus — với giao thức message chuẩn để đảm bảo dữ liệu truyền tin cậy và đồng bộ.
 
 ### 2.1 Communication Patterns Overview
 
@@ -547,6 +551,8 @@ class MessageRouter:
 ---
 
 ## 3. Orchestration Strategies
+
+> **Khái niệm**: Orchestration Strategies (Chiến lược điều phối) là các cách tổ chức luồng làm việc nhiều agent — tập trung (centralized), phi tập trung (decentralized), lai (hybrid) — quyết định agent nào khởi động, phối hợp và tổng hợp kết quả.
 
 ### 3.1 Strategy Comparison
 
@@ -823,6 +829,8 @@ class AgentOrchestrator:
 
 ## 4. Shared Memory
 
+> **Khái niệm**: Shared Memory (Bộ nhớ dùng chung) là kiến trúc lưu trữ tập trung cho phép nhiều agent đọc/ghi cùng một nguồn dữ liệu và ngữ cảnh, giúp các agent hoạt động nhất quán mà không phải truyền lại toàn bộ thông tin.
+
 ### 4.1 Memory Architecture
 
 ```
@@ -976,6 +984,8 @@ class SharedMemoryManager:
 ---
 
 ## 5. Conflict Resolution
+
+> **Khái niệm**: Conflict Resolution (Giải quyết xung đột) là cơ chế xử lý các mâu thuẫn giữa các agent — kết quả khác nhau, tài nguyên tranh chấp, ý kiến trái chiều — thông qua phân loại xung đột và chiến lược hòa giải có kiểm soát.
 
 ### 5.1 Conflict Types & Resolution
 
@@ -1137,6 +1147,8 @@ class ConflictResolutionManager:
 
 ## 6. Agent Selection Guide
 
+> **Khái niệm**: Agent Selection Guide (Hướng dẫn chọn agent) là bộ tiêu chí quyết định khi nào nên dùng multi-agent thay vì single-agent — dựa trên độ phức tạp task, chi phí token và yêu cầu chuyên môn — tránh lạm dụng multi-agent cho task đơn giản.
+
 ### 6.1 When to Use Multi-Agent
 
 ```
@@ -1188,6 +1200,8 @@ class ConflictResolutionManager:
 ---
 
 ## 7. Real-World Implementations
+
+> **Khái niệm**: Real-World Implementations (Triển khai thực tế) là các ví dụ ứng dụng multi-agent trong sản xuất — pipeline code review, đội phát triển feature, đội debug — minh họa cách thiết kế vai trò và giao tiếp cho từng tình huống cụ thể.
 
 ### 7.1 Code Review Pipeline
 
@@ -1425,6 +1439,8 @@ class DebugSquad:
 
 ## 8. Debugging Multi-Agent Systems
 
+> **Khái niệm**: Debugging Multi-Agent Systems (Gỡ lỗi hệ thống đa agent) là quá trình truy vết lỗi trong hệ thống nhiều agent tương tác — lỗi giao tiếp, trạng thái không đồng bộ, xung đột kết quả — dùng logging, tracing và chiến lược cô lập thành phần để tìm nguyên nhân gốc.
+
 ### 8.1 Debug Strategy
 
 ```
@@ -1536,6 +1552,8 @@ class MultiAgentDebugger:
 
 ## 9. Performance Optimization
 
+> **Khái niệm**: Performance Optimization (Tối ưu hiệu năng) là các kỹ thuật giảm độ trễ và chi phí trong hệ thống đa agent — song song hóa, giảm lượt giao tiếp, ước lượng token — giúp hệ thống phản hồi nhanh hơn với chi phí hợp lý.
+
 ### 9.1 Optimization Strategies
 
 ```
@@ -1616,6 +1634,8 @@ class MultiAgentDebugger:
 
 ## 10. Anti-Patterns & Solutions
 
+> **Khái niệm**: Anti-Patterns & Solutions (Phản mẫu và giải pháp) là tập hợp các lỗi thiết kế hệ thống đa agent thường gặp — vai trò chồng chéo, giao tiếp nhiễu, phối hợp lỏng lẻo — kèm giải pháp để tránh và khắc phục hiệu quả.
+
 ### 10.1 Common Anti-Patterns
 
 ```
@@ -1660,6 +1680,8 @@ class MultiAgentDebugger:
 ---
 
 ## 11. Production Deployment
+
+> **Khái niệm**: Production Deployment (Triển khai sản xuất) là quá trình đưa hệ thống multi-agent vào hoạt động thực tế — đảm bảo tính sẵn sàng, giám sát, bảo mật và khả năng mở rộng — với checklist kiểm tra toàn diện trước khi chạy production.
 
 ### 11.1 Deployment Checklist
 
@@ -1750,6 +1772,8 @@ class MultiAgentDebugger:
 ---
 
 ## 12. Case Studies — Real-World Multi-Agent Architectures
+
+> **Khái niệm**: Case Studies (Nghiên cứu điển hình) là phân tích kiến trúc multi-agent của các hệ thống thực tế nổi bật — Claude Code, Devin, OpenHands — rút ra bài học về thiết kế vai trò, quy trình và cách chọn lựa kiến trúc phù hợp.
 
 ### 12.1 Claude Code — Anthropic's Multi-Agent Architecture
 
@@ -1995,6 +2019,8 @@ class OpenHandsStyleOrchestrator:
 ---
 
 ## 13. Advanced Multi-Agent Patterns
+
+> **Khái niệm**: Advanced Multi-Agent Patterns (Mô hình đa agent nâng cao) là các mẫu kiến trúc phức tạp — MapReduce, Debate, Critique-Revision, Ensemble — khai thác nhiều agent song song để tăng chất lượng kết quả so với một agent đơn lẻ.
 
 ### 13.1 MapReduce Pattern for Code Generation
 
@@ -2403,6 +2429,8 @@ class EnsemblePattern:
 
 ## 14. Multi-Agent Testing Strategies
 
+> **Khái niệm**: Multi-Agent Testing Strategies (Chiến lược kiểm thử đa agent) là các phương pháp kiểm chứng hệ thống nhiều agent — test tương tác, mô phỏng lỗi giao tiếp, kiểm thử hội tụ — đảm bảo hệ thống hoạt động chính xác và ổn định trong đa dạng tình huống.
+
 ### 14.1 Testing Multi-Agent Systems
 
 ```
@@ -2612,6 +2640,8 @@ class MultiAgentTestSuite:
 ---
 
 ## 15. Cost-Benefit Analysis
+
+> **Khái niệm**: Cost-Benefit Analysis (Phân tích chi phí-lợi ích) là đánh giá kinh tế khi dùng multi-agent — so sánh token cost với độ cải thiện chất lượng — giúp quyết định thời điểm multi-agent thực sự đáng giá so với single-agent.
 
 ### 15.1 When Multi-Agent Is Worth It
 

@@ -272,6 +272,41 @@ class SequentialWorkflow:
 
 ### 1.2 Parallel Workflow (Song Song)
 
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    PARALLEL WORKFLOW (Song Song)                  │
+│                                                                  │
+│                        ┌──────────┐                              │
+│                        │  Input   │                              │
+│                        └────┬─────┘                              │
+│                             │                                    │
+│                             ▼                                    │
+│                  ┌─────────────────────┐                         │
+│                  │   Fan-Out (chia)    │                         │
+│                  └───┬────┬────┬────┬──┘                         │
+│                      │    │    │    │                            │
+│                      ▼    ▼    ▼    ▼                            │
+│              ┌──────┐┌──────┐┌──────┐┌──────┐                    │
+│              │Task A││Task B││Task C││Task D│                    │
+│              │Parse ││Analyze││Build ││Test  │                    │
+│              └──────┘└──────┘└──────┘└──────┘                    │
+│                      │    │    │    │                            │
+│                      ▼    ▼    ▼    ▼                            │
+│                  ┌─────────────────────┐                         │
+│                  │   Fan-In (gộp)      │                         │
+│                  └─────────┬───────────┘                         │
+│                            │                                     │
+│                            ▼                                     │
+│                        ┌──────────┐                              │
+│                        │  Output  │                              │
+│                        └──────────┘                              │
+│                                                                  │
+│  Nhiều bước chạy ĐỒNG THỜI, chờ tất cả hoàn thành             │
+│  → Nhanh, nhưng phức tạp khi gộp kết quả                      │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -365,6 +400,26 @@ class ParallelWorkflow:
 </details>
 
 ### 1.3 DAG Workflow (Directed Acyclic Graph)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    DAG WORKFLOW (Directed Acyclic Graph)          │
+│                                                                  │
+│   Level 1          Level 2          Level 3                      │
+│                                                                  │
+│   ┌──────┐         ┌──────┐         ┌──────┐                     │
+│   │Node A│────────►│Node C│────────►│Node E│                     │
+│   └──────┘         └──────┘         └──────┘                     │
+│                                                                  │
+│   ┌──────┐         ┌──────┐         ┌──────┐                     │
+│   │Node B│────────►│Node D│────────►│Node F│                     │
+│   └──────┘         └──────┘         └──────┘                     │
+│                                                                  │
+│   A, B chạy song song → C chờ A, D chờ B → E chờ C, F chờ D    │
+│   → Tối ưu dependency, không vòng lặp (acyclic)                │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -525,6 +580,28 @@ class DAGWorkflow:
 </details>
 
 ### 1.4 Event-Driven Workflow
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    EVENT-DRIVEN WORKFLOW                          │
+│                                                                  │
+│   ┌──────────┐     ┌──────────┐     ┌──────────┐                 │
+│   │  Event   │────►│  Event   │────►│  Event   │                 │
+│   │  A       │     │  B       │     │  C       │                 │
+│   └────┬─────┘     └────┬─────┘     └────┬─────┘                 │
+│        │                │                │                       │
+│        ▼                ▼                ▼                       │
+│   ┌──────────┐     ┌──────────┐     ┌──────────┐                 │
+│   │ Handler  │     │ Handler  │     │ Handler  │                 │
+│   │  1       │     │  2       │     │  3       │                 │
+│   └──────────┘     └──────────┘     └──────────┘                 │
+│                                                                  │
+│   Workflow phản ứng theo sự kiện; handler có thể phát sinh      │
+│   sự kiện mới → chuỗi phản ứng linh hoạt, không cần định        │
+│   trước thứ tự                                                  │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>

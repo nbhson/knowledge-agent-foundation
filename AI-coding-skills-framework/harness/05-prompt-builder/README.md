@@ -290,7 +290,7 @@ class PromptTemplate:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
+````python
 # ─── System Prompts ───
 
 SYSTEM_PROMPT = PromptTemplate(
@@ -378,9 +378,7 @@ Context:
 
 {{#if existing_code}}
 Current code to modify:
-```
-
-</details>{language}
+```{language}
 {existing_code}
 ```
 {{/if}}
@@ -426,7 +424,9 @@ Output JSON:
     version="1.0.0",
     description="Structured analysis prompt",
 )
-```
+````
+
+</details>
 
 ### 1.3 Template Registry
 

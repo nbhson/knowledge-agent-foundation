@@ -90,13 +90,17 @@ Plan & Decompose = Analyze → Prioritize → Sequence → Execute → Validate
 
 **Analogies**: Plan & Decompose giống GPS navigation — không chỉ cho biết đích đến (goal), mà còn phân tích đường đi (decompose), chọn tuyến tối ưu (prioritize), tính thời gian (estimate), và reroute khi có traffic (replan). Without GPS, bạn có thể lái xe cả ngày mà không đến nơi.
 
-**Nếu bỏ qua**: Agent cố gắng làm mọi thứ cùng lúc → context overload, hallucinate khi lacking structure, tạo code không consistent, và cuối cùng浪费 3-5× token so với planned approach.
+**Nếu bỏ qua**: Agent cố gắng làm mọi thứ cùng lúc → context overload, hallucinate khi không có cấu trúc rõ ràng, tạo code không nhất quán, và cuối cùng tốn gấp 3-5 lần token so với planned approach.
 
 ## Tổng Quan
 
-> **Khái niệm**: Quá trình chuyển đổi yêu cầu tổng quát thành các bước nhỏ, có thể thực thi được.
-> **Mục đích**: Thiết lập ngữ cảnh, định hướng tư duy giải quyết vấn đề.
-> **Ý nghĩa**: Giảm thiểu sự mơ hồ, tối ưu hóa khả năng xử lý của AI.
+> 📌 **Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Tổng Quan là bức tranh bao quát về Planning & Decomposition — quá trình biến một công việc lớn, mơ hồ thành chuỗi các bước nhỏ, rõ ràng và thực thi được, giống như chia một con voi lớn thành nhiều miếng nhỏ dễ nuốt.
+>
+> **Ẩn dụ/so sánh:** Giống đầu bếp trước một bữa tiệc lớn: thay vì nấu "một món khổng lồ", anh ta chia thành nhiều món nhỏ, mỗi món một khâu, rồi mới bắt tay vào bếp.
+>
+> **Vì sao quan trọng:** Vì không có kế hoạch, AI dễ nhảy lung tung, làm sai thứ tự hoặc bỏ sót bước — phần này giúp bạn hiểu khung tổng thể trước khi đi vào chi tiết.
 
 Khi đối mặt task phức tạp, AI Agent cần **phân tích → lập kế hoạch → chia nhỏ → thực hiện tuần tự**. Đây là kỹ năng cốt lõi biến LLM từ "chatbot" thành "agent".
 
@@ -136,9 +140,13 @@ Trong hệ thống Harness Engineering, Planning & Decomposition là **"bộ nã
 
 ## Tại Sao Planning & Decomposition Quan Trọng?
 
-> **Khái niệm**: Giải thích vai trò nền tảng của lập kế hoạch — yếu tố biến LLM từ công cụ "trả lời câu hỏi" thành tác nhân "hành động" — cùng các hệ quả khi thiếu planning.
-> **Mục đích**: Cung cấp bằng chứng khoa học (nghiên cứu, số liệu thực tế) và phân tích chi phí-lợi ích để thuyết phục người đọc đầu tư vào structured planning ngay từ đầu.
-> **Ý nghĩa**: Xây dựng tư duy "nghĩ trước khi làm" làm nền tảng cho mọi phần nội dung triển khai phía sau.
+> 📌 **Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Đây là phần lý giải vì sao lập kế hoạch được xem là "bộ não điều khiển" của AI Agent: nó biến LLM từ công cụ chỉ biết trả lời câu hỏi thành tác nhân biết hành động từng bước có chủ đích.
+>
+> **Ẩn dụ/so sánh:** Giống người lái xe có bản đồ so với người lái xe không bản đồ: cả hai đều biết chạy, nhưng người có bản đồ sẽ đến đích còn người kia thì lạc đường.
+>
+> **Vì sao quan trọng:** Vì thiếu planning, agent làm lộn xộn, tốn token và dễ kẹt trong vòng lặp — phần này đưa bằng chứng khoa học để bạn đầu tư vào structured planning ngay từ đầu.
 
 > *"Một agent không có planning giống như một người lái xe không có bản đồ — có thể di chuyển, nhưng chắc chắn sẽ lạc đường."*
 
@@ -252,13 +260,21 @@ Nguyên nhân: Plan trước → biết cần tool nào → giảm false starts 
 | Luôn decompose task > 3 steps thành sub-tasks |LLM context window hạn chế, 1 task quá lớn dễ lose focus |
 | Đặt termination condition cho mỗi sub-task | Ngăn infinite loops, biết khi nào "done" |
 | Thêm validation checkpoint sau mỗi major step | Catch errors early, không để cascade |
-| Đánh giá dependency trước khi execute | Task A cần完成 trước Task B → execute tuần tự |
+| Đánh giá dependency trước khi execute | Task A cần hoàn thành trước Task B → execute tuần tự |
 | Limit plan depth ≤ 4 levels | Quá sâu dễ lose context tổng thể |
-| Re-plan khi sub-task fail | Thay vì retry盲目, phân tích root cause và adjust plan |
+| Re-plan khi sub-task fail | Thay vì retry một cách mù quáng, phân tích root cause và adjust plan |
 
 ---
 
 ## Nội Dung
+
+> 📌 **Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Đây là bảng mục lục của module: 13 chủ đề lớn từ chia nhỏ tác vụ, thuật toán lập kế hoạch, kiểu agent, đến case study thực tế và các công cụ hỗ trợ.
+>
+> **Ẩn dụ/so sánh:** Giống bản đồ tuyến tàu điện — nhìn qua các trạm để biết mình nên xuống ở đâu; đọc theo thứ tự 1 đến 13 là lộ trình hợp lý nhất.
+>
+> **Vì sao quan trọng:** Vì nhìn bao quát trước giúp bạn biết mình đang đứng ở đâu và nên đi sâu vào phần nào.
 
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
@@ -280,14 +296,20 @@ Nguyên nhân: Plan trước → biết cần tool nào → giảm false starts 
 
 ## 1. Task Decomposition Patterns
 
-> **Khái niệm**: Task Decomposition Patterns (Mô hình phân chia tác vụ) là các chiến lược kiến trúc giúp chia nhỏ một mục tiêu lớn, phức tạp thành các tác vụ con (subtasks) có phạm vi nhỏ hơn, dễ kiểm soát và thực thi bởi AI Agent.
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Lựa chọn chiến lược chia nhỏ phù hợp (tuần tự, song song, có điều kiện, phân cấp, lặp lại, DAG) để biến mục tiêu phức tạp thành chuỗi subtask vừa sức xử lý, giúp Agent dễ ước lượng tài nguyên (token, thời gian) và kiểm soát tiến độ thực thi.
+> **Khái niệm:** Task Decomposition (phân chia tác vụ) là cách chia một mục tiêu lớn thành nhiều mảnh nhỏ gọi là subtask, mỗi mảnh đủ nhỏ để AI xử lý gọn gàng và dễ kiểm soát.
 >
-> **Ý nghĩa**: Giúp tối ưu hóa Context Window của LLM, ngăn ngừa hiện tượng hallucination khi xử lý câu lệnh phức tạp, hỗ trợ thực thi song song (Parallel execution) hoặc phân cấp (Hierarchical execution) để tăng tốc độ và độ tin cậy của hệ thống.
+> **Ẩn dụ/so sánh:** Giống chia một công trình lớn thành các hạng mục: đổ móng → xây tường → lợp mái → hoàn thiện. Không thể đổ cả tòa nhà làm một lần.
+>
+> **Vì sao quan trọng:** Vì một task quá to làm LLM dễ lạc đề, ngốn context window và hallucinate — chia nhỏ giúp agent thực hiện chắc chắn từng bước và kiểm soát tiến độ dễ dàng.
 
 
 ### 1.1 Các Mô Hình Phân Chia
+
+Mục này chỉ ra **các cách khác nhau để cắt một task thành nhiều phần**: làm tuần tự, làm song song, rẽ nhánh theo điều kiện, phân cấp cha-con, lặp lại, hoặc kết hợp theo đồ thị. Mỗi pattern là một "kiểu bố trí" luồng chạy khác nhau — nhìn vào các ô ASCII bên dưới để hiểu hình dạng của từng kiểu rồi mới chọn cái phù hợp với bài toán.
+
+> Giống cách sếp phân việc cho đội: chia người làm tuần tự, chia nhiều người làm cùng lúc (song song), hoặc giao có điều kiện "nếu xong A thì mới làm B".
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -360,6 +382,10 @@ Nguyên nhân: Plan trước → biết cần tool nào → giảm false starts 
 ```
 
 ### 1.2 Implementation
+
+Code bên dưới là bộ cài đặt Python hoàn chỉnh cho các pattern ở mục 1.1: lớp `Task` định nghĩa "một mảnh công việc" (loại, trạng thái, dependency, retry...), còn lớp `TaskPlanner` là "bộ não chia việc" dùng LLM để phân tích task lớn thành subtask, phát hiện dependency và ước tính độ phức tạp. Bạn có thể bấm mở để đọc theo thứ tự: khai báo `Task` trước, rồi đến phương thức `decompose()` và `estimate_complexity()`.
+
+> Giống đọc bản thiết kế chi tiết: xem cách "khai báo một mảnh việc" ra sao, rồi mới xem cách "bộ não" cắt công việc đó thành các mảnh nhỏ.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -616,6 +642,10 @@ Output JSON:
 
 ### 1.3 So Sánh Các Pattern
 
+Bảng dưới là "bảng tổng hợp điểm" so sánh 6 pattern theo 4 tiêu chí: tốc độ (Speed), chất lượng (Quality), chi phí token (Token Cost) và trường hợp dùng tốt nhất (Best For). Đọc theo hàng để chọn: cần nhanh → Sequential/Parallel; cần chất lượng cao, chấp nhận chậm → Hierarchical/Iterative.
+
+> Giống bảng so sánh điện thoại khi đi mua: nhìn một bảng là thấy ngay loại nào hợp với nhu cầu của mình, không cần thử từng cái.
+
 ```
 ┌──────────────────┬──────────┬──────────┬────────────────┬──────────────┐
 │ Pattern          │ Speed    │ Quality  │ Token Cost     │ Best For     │
@@ -633,14 +663,20 @@ Output JSON:
 
 ## 2. Planning Algorithms
 
-> **Khái niệm**: Planning Algorithms (Thuật toán lập kế hoạch) là các thuật toán và chiến lược suy luận (reasoning) định hướng cách AI Agent phân tích bài toán, dự đoán các bước thực thi và lựa chọn phương án tối ưu trước hoặc trong quá trình làm việc.
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Trang bị cho Agent các chiến lược suy luận có cấu trúc để xác định đúng trình tự hành động, so sánh nhiều phương án thay thế và chọn lộ trình tối ưu trước khi tốn chi phí thực thi vào các bước kém hiệu quả.
+> **Khái niệm:** Planning Algorithms là những "cách suy nghĩ" có cấu trúc giúp AI quyết định thực hiện công việc theo trình tự nào, cân nhắc nhiều phương án và chọn đường đi tối ưu trước hoặc trong khi làm.
 >
-> **Ý nghĩa**: Cung cấp khả năng lập luận đa chiều (Tree of Thoughts), tách biệt quá trình suy luận và gọi tool (ReWOO, Plan-and-Solve), giúp giảm đáng kể chi phí Token, tránh suy luận thừa và tăng tỷ lệ thành công của tác vụ.
+> **Ẩn dụ/so sánh:** Giống người đi du lịch dùng GPS: người chỉ lên kế hoạch một lần rồi đi (Plan-and-Solve), người thử nhiều tuyến rồi chọn tuyến tốt nhất (Tree of Thoughts), người vẽ hết cả hành trình rồi giao cho ai đó chạy (ReWOO).
+>
+> **Vì sao quan trọng:** Vì chọn sai thứ tự hành động khiến agent lãng phí token và kẹt trong những bước không cần thiết — đúng thuật toán giúp làm ít mà đạt hiệu quả cao.
 
 
 ### 2.1 LLM-Based Planning (Plan-and-Solve)
+
+Cách tiếp cận này giống hệt việc bạn lên "to-do list" trước khi bắt tay làm: AI viết ra các bước chi tiết trước, thực hiện từng bước, kiểm tra lại kết quả, và nếu bước nào thất bại thì **lập kế hoạch mới** (re-plan) thay vì thử lại y nguyên. Code bên dưới mô phỏng đúng vòng đời đó qua các phương thức `plan()` → `solve_step()` → `verify()` → `replan()`.
+
+> Giống nấu ăn theo công thức: ghi sẵn các bước → làm từng bước → nếm thử (verify) → nếu mặn quá thì điều chỉnh công thức thay vì nấu lại y hệt từ đầu.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -787,6 +823,10 @@ Kế hoạch mới (mỗi bước trên 1 dòng):
 
 ### 2.2 Tree of Thoughts (ToT)
 
+Thay vì suy luận theo một đường thẳng như Plan-and-Solve, ToT **rẽ nhiều nhánh suy nghĩ cùng lúc**, chấm điểm từng nhánh, rồi tập trung đào sâu nhánh nào hứa hẹn nhất. Code bên dưới dùng BFS (duyệt theo từng tầng) kèm cắt tỉa (pruning) để tránh số nhánh bùng nổ: mỗi tầng chỉ giữ lại top-k nhánh tốt nhất.
+
+> Giống bác sĩ đề xuất 3 phác đồ điều trị, chấm điểm từng phác đồ theo rủi ro và triển vọng, rồi chọn phác đồ tốt nhất để theo đuổi.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -901,6 +941,10 @@ Tiêu chí:
 
 ### 2.3 ReWOO (Reasoning Without Observation)
 
+Ý tưởng chính là **tách việc suy nghĩ và việc chạy tool thành hai giai đoạn riêng**: AI lập toàn bộ kế hoạch ngay từ đầu (bước nào dùng tool gì, query gì), chạy hết một lượt, rồi mới dùng kết quả để tổng hợp câu trả lời. Ưu điểm là gọi LLM ít lần hơn nên rẻ hơn; nhược điểm là kém thích ứng khi một bước thất bại giữa chừng. Code trong `ReWOOPlanner` minh họa đúng chu trình plan-all → execute → synthesize.
+
+> Giống đặt trọn một tour du lịch từ A đến Z trước khi đi: không cần gọi điện hỏi lại giữa chừng, nhưng nếu một điểm dừng bị đóng cửa thì phải xử lý dồn dập sau.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -975,14 +1019,20 @@ Output JSON:
 
 ## 3. Agent Workflows
 
-> **Khái niệm**: Agent Workflows (Luồng công việc của Agent) là mô hình tổ chức và điều phối mối quan hệ giữa các hoạt động suy luận (Reasoning), thực thi (Action), và quan sát (Observation) trong hệ thống Agent.
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Xác định kiến trúc vận hành phù hợp với đặc thù từng tác vụ (đơn agent hay đa agent, tuần tự hay vòng phản hồi), đảm bảo sự phối hợp nhịp nhàng giữa suy luận, hành động và quan sát trong toàn bộ vòng đời xử lý.
+> **Khái niệm:** Agent Workflows là các "kịch bản vận hành" mô tả trình tự AI suy nghĩ (reasoning), hành động (action) và nhìn lại kết quả (observation) để hoàn thành mục tiêu.
 >
-> **Ý nghĩa**: Định hình cấu trúc tương tác của Agent (ReAct, Plan-and-Execute, Multi-Agent workflow, State Machine), quyết định khả năng phản hồi linh hoạt với thay đổi của môi trường và đảm bảo tiến trình hoàn thành mục tiêu đúng đắn.
+> **Ẩn dụ/so sánh:** Giống cách một đoàn phim tổ chức làm việc: đội một người tự lo mọi thứ (single agent), đội chia vai như đạo diễn – biên kịch – diễn viên (multi-agent), hay đội chạy theo quy trình cố định (state machine).
+>
+> **Vì sao quan trọng:** Vì kịch bản vận hành quyết định agent phản ứng linh hoạt hay máy móc — chọn đúng kiểu workflow giúp công việc hoàn thành mịn và đúng hạn.
 
 
 ### 3.1 Các Kiểu Agent
+
+Đây là bản đồ mô tả **6 kiểu tổ chức agent phổ biến nhất**, từ đơn giản đến phức tạp: ReAct (suy nghĩ – hành động xen kẽ), Plan-and-Execute (lập kế hoạch trước rồi chạy), Reflective (làm rồi rút kinh nghiệm), Multi-Agent (nhiều vai cùng phối hợp), LangGraph-style (máy trạng thái với các node rẽ nhánh), và Hierarchical (cấp trên giao việc cho cấp dưới). Nhìn vào các ô ASCII để thấy luồng gọi giữa các thành phần — đây là hình ảnh trực quan nhất của cả module.
+
+> Giống một công ty: có thể một nhân viên xử lý tất cả, hoặc phòng kế hoạch chia việc cho nhiều phòng ban phối hợp.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1028,6 +1078,10 @@ Output JSON:
 ```
 
 ### 3.2 Agent Implementation
+
+Code dưới đây hiện thực hóa 2 kiểu workflow nói trên: lớp `SimpleAgent` là agent đơn lẻ chạy vòng lặp Think → Act → Observe kèm guardrail (validate tool trước và sau khi gọi), còn lớp `MultiAgent` là hệ nhiều agent chuyên biệt được điều phối bởi một coordinator — chia việc, nhận kết quả, đánh giá, rồi tổng hợp. Bấm mở để xem từng phương thức theo thứ tự tương ứng.
+
+> Giống một nhân viên tự quản (SimpleAgent) so với một team leader chia việc rồi gom kết quả về (MultiAgent).
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1274,12 +1328,15 @@ Tổng hợp:"""
 
 ## 4. State Management
 
-> **Khái niệm**: State Management (Quản lý trạng thái) là cơ chế theo dõi, lưu trữ và cập nhật trạng thái toàn cục (global state) cũng như trạng thái từng bước tiến trình của Agent trong suốt vòng đời thực thi.
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Duy trì một nguồn dữ liệu trạng thái duy nhất (single source of truth) xuyên suốt quá trình thực thi, cho phép Agent truy vết tiến trình, lưu điểm khôi phục và tiếp tục công việc dở dang một cách nhất quán, đáng tin cậy.
+> **Khái niệm:** State Management là cơ chế "ghi sổ" toàn bộ trạng thái của agent trong lúc làm việc: biến số nào đã đổi, tiến trình đang ở đâu, và có thể quay về mốc nào nếu xảy ra lỗi.
 >
-> **Ý nghĩa**: Đảm bảo tính nhất quán (Consistency), hỗ trợ khả năng lưu điểm phục hồi (Checkpointing), khôi phục trạng thái khi gặp lỗi (Rollback), theo dõi phiên bản (Versioning) và phục hồi luồng làm việc dài hạn (State Persistence).
+> **Ẩn dụ/so sánh:** Giống trò chơi điện tử có điểm lưu (save point): trước trận boss bạn lưu game, chết thì load lại điểm đó thay vì chơi lại từ đầu.
+>
+> **Vì sao quan trọng:** Vì agent chạy lâu hoặc gặp lỗi giữa chừng rất dễ mất sạch tiến trình — có state management thì tiếp tục ngay được, không phải làm lại từ con số 0.
 
+Code dưới đây là lớp `AgentState` — bộ quản lý trạng thái hoàn chỉnh: lưu giá trị kèm lịch sử phiên bản (`history`), chụp ảnh trạng thái (`checkpoint`), quay lại mốc cũ (`rollback`), và xuất ra chuỗi context để đưa cho LLM (`to_context`). Bấm mở để đọc từng phương thức theo tên mô tả.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1369,12 +1426,15 @@ class AgentState:
 
 ## 5. ReAct Pattern
 
-> **Khái niệm**: ReAct Pattern (Reasoning + Acting) là mô hình kết hợp chặt chẽ giữa vòng lặp suy luận độc thoại (Thought), thực thi hành động gọi công cụ (Action) và thu nhận phản hồi từ môi trường (Observation).
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Kết hợp suy luận và hành động trong một vòng lặp thống nhất để Agent vừa lập luận về bước tiếp theo vừa thu thập thông tin thực tế từ môi trường, từ đó ra quyết định chính xác hơn so với suy luận thuần túy (pure reasoning).
+> **Khái niệm:** ReAct (Reasoning + Acting) là vòng lặp "suy nghĩ → hành động → nhìn lại kết quả" lặp đi lặp lại: AI tự độc thoại về bước tiếp theo (Thought), gọi công cụ (Action), rồi đọc kết quả phản hồi (Observation) trước khi quyết định bước sau.
 >
-> **Ý nghĩa**: Giúp Agent tự điều chỉnh kế hoạch linh hoạt dựa trên dữ liệu thực tế thu được ở từng bước thực thi, giải quyết hạn chế của việc lập kế hoạch tĩnh (Static planning) khi đối mặt với môi trường biến động.
+> **Ẩn dụ/so sánh:** Giống người nấu ăn nếm thử từng lần: nêm → nếm → điều chỉnh, cứ lặp cho đến khi vừa miệng — không làm một phát rồi xong luôn.
+>
+> **Vì sao quan trọng:** Vì môi trường thực tế hay thay đổi, agent cần đọc lại kết quả thật để tự hiệu chỉnh thay vì bám cứng vào kế hoạch cũ (static planning).
 
+Code bên dưới là lớp `ReActAgent` — bản cài đặt nguyên mẫu của vòng lặp Thought → Action → Observation kèm guardrail `max_steps`, validate tool trước khi gọi và đếm token. Bấm mở để xem cách parse phản hồi của LLM và cách luân chuyển giữa các bước cho tới khi đạt "Final Answer".
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1527,14 +1587,20 @@ Final Answer: [your answer]"""
 
 ## 6. Harness-Integrated Planning
 
-> **Khái niệm**: Harness-Integrated Planning (Lập kế hoạch tích hợp Harness) là việc nhúng mô hình lập kế hoạch trực tiếp vào hạ tầng điều phối (Harness Framework), kết nối đồng bộ với Memory Store, Guardrails và Tool Execution Engine.
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Gắn kết module lập kế hoạch vào Harness để kế hoạch được kiểm soát bởi Guardrails, được hỗ trợ bởi Memory Store và được tối ưu qua vòng phản hồi, tạo nên hệ thống lập kế hoạch an toàn, thông minh và tự thích nghi.
+> **Khái niệm:** Harness-Integrated Planning là cách "cắm" bộ lập kế hoạch vào khung nền (Harness) của hệ thống: đến đây bộ planner không hoạt động đơn độc mà được giám sát bởi Guardrails, trợ giúp bởi Memory và hưởng lợi từ vòng phản hồi (Feedback).
 >
-> **Ý nghĩa**: Giúp kiểm soát kế hoạch an toàn bằng các chính sách Guardrails, tận dụng thông tin lưu trữ từ Memory, đồng thời tự động lập lại kế hoạch (Re-planning) khi xảy ra sự cố ngoài dự kiến trên môi trường thực tế.
+> **Ẩn dụ/so sánh:** Giống dự án xây nhà có ban giám sát: thợ (planner) vẫn chia giai đoạn và thi công, nhưng mọi bản vẽ phải qua kiểm duyệt (guardrails), có kho hồ sơ cũ để tham khảo (memory), và có biên bản nghiệm thu mỗi giai đoạn (feedback).
+>
+> **Vì sao quan trọng:** Vì một kế hoạch tự do, không ai kiểm soát dễ vượt quyền hạn hoặc lặp lại sai lầm cũ — tích hợp vào Harness giúp kế hoạch an toàn và tự thích nghi hơn.
 
 
 ### 6.1 TypeScript Interface (Harness Architecture)
+
+Mục này mô tả **giao diện (interface) khai báo cấu trúc Harness**: liệt kê các năng lực mà một Planning System phải có (decompose, replan, estimateComplexity...) và cách nó kết nối với tools, memory, guardrails, feedback. Trong TypeScript, `interface` giống "bản hợp đồng" — dòng nào khai báo trong interface là bạn cam kết lớp triển khai phải có năng lực đó. Phần `HarnessPlanner` bên dưới là ví dụ triển khai thực sự theo đúng hợp đồng này.
+
+> Giống danh sách hạng mục trong hợp đồng giao khoán: ai nhận thầu bắt buộc phải có đủ các hạng mục được liệt kê, không được thiếu sót.
 
 <details>
 <summary><b>6.1 TypeScript Interface (Harness Architecture) (Click to expand/collapse)</b></summary>
@@ -1667,11 +1733,13 @@ class HarnessPlanner implements PlanningSystem {
 
 ## 7. Case Studies Thực Tế
 
-> **Khái niệm**: Case Studies Thực Tế là các phân tích chi tiết về kiến trúc lập kế hoạch đang được triển khai thực tế trong những sản phẩm AI tiên tiến hàng đầu (SWE-agent, Anthropic Multi-Agent, Claude Code, Cursor IDE).
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Minh họa cách các sản phẩm AI hàng đầu áp dụng planning & decomposition vào môi trường sản xuất, giúp người đọc đối chiếu lý thuyết với thực tiễn và rút ra các mẫu thiết kế có thể tái sử dụng.
+> **Khái niệm:** Case Studies là những "ca điển hình" phân tích thật về cách 4 sản phẩm AI nổi tiếng (SWE-agent, Anthropic Multi-Agent, Claude Code, Cursor) xây dựng hệ thống lập kế hoạch trong sản xuất thực tế.
 >
-> **Ý nghĩa**: Rút ra bài học kinh nghiệm, các mẫu thiết kế đã được chứng minh hiệu quả trong thực tế (production-proven design patterns) để áp dụng vào việc xây dựng hệ thống AI Agent doanh nghiệp.
+> **Ẩn dụ/so sánh:** Giống xem "bài văn mẫu điểm 10" của học sinh giỏi: bạn học được cách họ trình bày, đặt câu hỏi và sửa lỗi — rồi áp dụng lại cho bài của mình.
+>
+> **Vì sao quan trọng:** Vì lý thuyết sách vở dễ xa rời thực tế — xem sản phẩm đang chạy tốt giúp bạn rút ra các mẫu thiết kế đã được kiểm chứng (production-proven) để tái sử dụng.
 
 
 ### 7.1. SWE-agent (Princeton NLP) — Planning-First Approach
@@ -1872,6 +1940,8 @@ class DynamicReplanner {
 
 ### 7.4. Cursor IDE — Context-Aware Planning
 
+Bối cảnh: Cursor phải lập kế hoạch sửa code **dựa trên ngữ cảnh hiện tại của lập trình viên** — file đang mở, đoạn code đang chọn, dòng con trỏ, các chỉnh sửa gần đây. Code bên dưới minh họa cách nó thu thập ngữ cảnh, lập kế hoạch thay đổi, rồi tự thu hẹp phạm vi để không đụng vào những file không liên quan.
+
 <details>
 <summary><b>7.4. Cursor IDE — Context-Aware Planning (Click to expand/collapse)</b></summary>
 
@@ -1924,11 +1994,13 @@ class CursorPlanner {
 
 ## 8. Design Principles
 
-> **Khái niệm**: Design Principles (Nguyên tắc thiết kế) là tập hợp các chỉ dẫn kiến trúc phần mềm (bao gồm nguyên lý SOLID và 10 Điều răn trong Task Planning) áp dụng riêng cho module lập kế hoạch.
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Thiết lập bộ chuẩn kiến trúc và quy tắc vàng khi xây dựng module lập kế hoạch, bảo đảm hệ thống dễ mở rộng, dễ bảo trì, ít lỗi tiềm ẩn và nhất quán giữa các thành phần khi quy mô dự án tăng trưởng.
+> **Khái niệm:** Design Principles là tập hợp các nguyên tắc thiết kế phần mềm (nguyên lý SOLID và "10 Điều răn" riêng cho lập kế hoạch) giúp bạn xây dựng một module planner sạch, gọn và dễ mở rộng.
 >
-> **Ý nghĩa**: Đảm bảo hệ thống Planning có tính cô lập cao (Decoupled), dễ mở rộng (Extensible), dễ bảo trì và vận hành ổn định khi quy mô tác vụ và hệ thống tăng lên.
+> **Ẩn dụ/so sánh:** Giống bộ quy tắc xây nhà: tường chịu lực đặt ở đâu, dây điện đi chỗ nào — tuân thủ thì nhà bền và dễ sửa chữa; vi phạm thì về sau phải đập phá, tốn kém.
+>
+> **Vì sao quan trọng:** Vì một planner phát triển một thời gian rất dễ thành "mớ spaghetti" khó bảo trì — áp đúng nguyên tắc giúp hệ thống sống lâu và mở rộng dễ dàng.
 
 
 ### 8.1 SOLID Cho Planning System
@@ -1950,10 +2022,12 @@ class CursorPlanner {
 - Tách planner theo domain
 
 **5. Dependency Inversion (Đảo ngược Phụ thuộc)**
-- Planner phụ thuộc vào Task abstraction, không vào具体 implementation
+- Planner phụ thuộc vào Task abstraction, không phụ thuộc vào implementation cụ thể
 - Dễ dàng swap decomposition strategy
 
 ### 8.2 The 10 Commandments of Task Planning
+
+Đây là 10 "điều răn" gói gọn toàn bộ kinh nghiệm của module thành những câu ngắn dễ nhớ. Mỗi dòng gồm quy tắc tiếng Anh (thuật ngữ chuẩn) kèm câu giải thích tiếng Việt. Bạn cứ đọc tuần tự và đối chiếu với các ví dụ phía trên — phần lớn những lỗi agent mắc phải đều vi phạm một trong các điều này.
 
 ```
 1. Thou shall DECOMPOSE before EXECUTE
@@ -1963,7 +2037,7 @@ class CursorPlanner {
    → Tôn trọng thứ tự, đừng chạy parallel khi cần sequential
 
 3. Thou shall SET token budgets
-   → Giới hạn token mỗi task,防止 token explosion
+   → Giới hạn token mỗi task, tránh việc token bùng nổ
 
 4. Thou shall CHECKPOINT regularly
    → Lưu state thường xuyên, để rollback khi cần
@@ -1991,11 +2065,13 @@ class CursorPlanner {
 
 ## 9. Best Practices
 
-> **Khái niệm**: Best Practices (Thực hành tốt nhất) là các quy tắc nên làm (DO), không nên làm (DON'T) và chiến lược quản lý ngân sách Token (Token Budget Management) được tối ưu từ kinh nghiệm thực tiễn.
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Cung cấp bộ quy tắc thực hành đã được kiểm chứng và chiến lược quản lý tài nguyên Token, giúp Agent vận hành ổn định, tránh các lỗi tốn kém và tối ưu chi phí trong suốt vòng đời tác vụ.
+> **Khái niệm:** Best Practices ("các thói quen tốt") gom lại những việc nên làm (DO), không nên làm (DON'T) và cách quản lý ngân sách token — rút ra từ kinh nghiệm chạy agent thực tế.
 >
-> **Ý nghĩa**: Ngăn ngừa các lỗi phổ biến như vòng lặp vô hạn (Infinite loops), vượt trần Token (Budget exhaustion), đồng thời tối ưu chi phí và tăng tốc độ xử lý của Agent.
+> **Ẩn dụ/so sánh:** Giống danh sách "kinh nghiệm của người đi trước": nên mang áo mưa khi dự báo mưa, đừng xuất phát khi bình xăng gần cạn — nghe theo sẽ đỡ tốn kém.
+>
+> **Vì sao quan trọng:** Vì những lỗi như vòng lặp vô hạn hay cạn token xảy ra rất dễ và rất tốn kém — biết trước để tránh là cách rẻ nhất.
 
 
 ### 9.1 DO ✅
@@ -2021,6 +2097,8 @@ class CursorPlanner {
 - **Đừng use single agent cho complex tasks**: Multi-agent tốt hơn
 
 ### 9.3 Token Budget Management
+
+Mỗi task nên có một "hạn mức tiêu dùng" token rõ ràng, giống hạn mức thẻ tín dụng. Code bên dưới là lớp `TokenBudgetManager`: phân bổ ngân sách cho từng task (`allocate`), ghi nhận số token đã dùng (`report`), kiểm tra còn đủ hạn mức để chạy tiếp không (`canContinue`), và xuất báo cáo hiệu suất cuối kỳ (`getReport`).
 
 <details>
 <summary><b>9.3 Token Budget Management (Click to expand/collapse)</b></summary>
@@ -2082,12 +2160,15 @@ class TokenBudgetManager {
 
 ## 10. Testing Planning Systems
 
-> **Khái niệm**: Testing Planning Systems (Kiểm thử hệ thống lập kế hoạch) là quy trình xây dựng các bài kiểm thử đơn vị (Unit test) và kiểm thử tích hợp để đánh giá độ chính xác của bộ lập kế hoạch (Task Planner), quản lý bộ nhớ và ngân sách Token.
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Xây dựng quy trình kiểm thử tự động để xác nhận bộ lập kế hoạch hoạt động đúng (phân chia chính xác, tôn trọng dependency, quản lý token hợp lý...), giảm rủi ro lỗi khi triển khai vào sản xuất.
+> **Khái niệm:** Testing Planning Systems là việc viết các bài kiểm thử tự động (unit test) để chắc chắn bộ lập kế hoạch hoạt động đúng: chia được task, tôn trọng dependency và quản lý token hợp lý.
 >
-> **Ý nghĩa**: Phát hiện sớm các rủi ro vỡ kế hoạch (Plan failures), đảm bảo tính ổn định của Agent trước khi phát hành và giúp dễ dàng refactor bộ lập kế hoạch.
+> **Ẩn dụ/so sánh:** Giống bài kiểm tra định kỳ trước khi nộp bài lớn: kiểm tra lẻ từng phần (unit test) giúp bắt lỗi sớm, tránh để tới lúc ra sản xuất mới vỡ.
+>
+> **Vì sao quan trọng:** Vì một planner không được kiểm thử giống một quả bom nổ chậm — phát hiện lỗi sớm rẻ hơn nhiều so với sửa khi hệ thống đã chạy production.
 
+Code bên dưới là bộ kiểm thử mẫu cho `TaskPlanner`, `TokenBudgetManager` và `AgentState`: bạn có thể chạy trực tiếp để xem từng hành vi (chia task, giới hạn độ sâu, retry, checkpoint/rollback) có đúng như mong đợi không.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2221,14 +2302,20 @@ if __name__ == "__main__":
 
 ## 11. Advanced Patterns
 
-> **Khái niệm**: Advanced Patterns (Các mô hình nâng cao) bao gồm những kỹ thuật lập kế hoạch chuyên sâu như Hierarchical Task Network (HTN) và Self-Reflective Planning.
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Trang bị cho Agent những kỹ thuật lập kế hoạch tiên tiến (phân cấp nhiều tầng, tự phản ánh) để giải quyết các tác vụ có độ phức tạp cao, nơi các phương pháp tuyến tính thông thường không đủ hiệu quả.
+> **Khái niệm:** Advanced Patterns là những kỹ thuật lập kế hoạch nâng cao dành cho task cực phức tạp: HTN (chia theo tầng bằng "công thức" đã cài sẵn cho từng loại việc) và Self-Reflective Planning (tự nhìn lại rồi sửa kế hoạch của chính mình).
 >
-> **Ý nghĩa**: Giúp Agent giải quyết các tác vụ cực kỳ phức tạp theo nhiều mức độ chi tiết (Multi-level granularity), tự phân tích và tự sửa lỗi kế hoạch của chính mình dựa trên kết quả trung gian.
+> **Ẩn dụ/so sánh:** Giống đầu bếp bậc thầy: HTN như có sẵn tủ sách công thức để chia món; Self-Reflective giống việc sau mỗi lần nấu tự ngẫm "lần sau nêm ít muối hơn".
+>
+> **Vì sao quan trọng:** Vì những task cực khó sẽ đánh bại kế hoạch tuyến tính đơn giản — kỹ thuật này cho phép agent phân tích đa tầng và tự sửa sai ngay khi phát hiện vấn đề.
 
 
 ### 11.1 Hierarchical Task Network (HTN)
+
+HTN mở rộng ý tưởng chia nhỏ ở mục 1 bằng cách dùng sẵn **các "công thức chia việc" (methods)**: với mỗi loại task có sẵn cách chia thành các mảnh nhỏ hơn, và cứ bóc tách đến khi gặp tác vụ nguyên thủy (primitive) có thể chạy trực tiếp. Code dưới đây cho thấy cách đăng ký method, điều kiện áp dụng (precondition), rồi lần lượt đệ quy chia nhỏ theo tầng.
+
+> Giống tủ đựng mẫu biên bản sẵn: gặp loại việc nào thì rút mẫu đó ra chia — nhanh và chuẩn hơn là tự nghĩ ra cách chia mỗi lần.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2280,6 +2367,10 @@ class HTNPlanner:
 </details>
 
 ### 11.2 Self-Reflective Planning
+
+Ý tưởng: agent làm kế hoạch rồi **tự chấm điểm chất lượng kế hoạch đó** (tính đầy đủ, khả thi, rủi ro); nếu điểm thấp thì tự sửa theo gợi ý của chính nó rồi lặp lại vài vòng. Class `SelfReflectivePlanner` bên dưới triển khai đúng vòng lặp Plan → Reflect → Improve, đồng thời ghi lại lịch sử kế hoạch để học từ kết quả thực tế.
+
+> Giống bạn viết nháp bài văn: viết xong đọc lại, thấy chỗ nào yếu thì sửa, rồi mới nộp bản cuối cùng.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2357,14 +2448,20 @@ Plan: {plan}
 
 ## 12. Tools & Frameworks
 
-> **Khái niệm**: Tools & Frameworks (Công cụ & Thư viện) là các bộ công cụ phần mềm phổ biến hỗ trợ xây dựng và điều phối hệ thống Planning & Agent Workflows (như LangGraph, CrewAI, AutoGen).
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Giới thiệu và hướng dẫn lựa chọn các công cụ, thư viện phổ biến nhằm rút ngắn thời gian phát triển, chuẩn hóa kiến trúc và tận dụng hệ sinh thái đã được cộng đồng kiểm chứng.
+> **Khái niệm:** Tools & Frameworks là các thư viện mã nguồn mở sẵn có giúp bạn xây hệ thống planning/agent nhanh chóng thay vì tự viết từ con số 0 — tiêu biểu là LangGraph, CrewAI và AutoGen.
 >
-> **Ý nghĩa**: Rút ngắn thời gian phát triển, tận dụng các abstraction chuẩn hóa về State Machine, Multi-agent Orchestration và tích hợp dễ dàng với hệ sinh thái AI hiện tại.
+> **Ẩn dụ/so sánh:** Giống chọn mua nhà tiền chế thay vì tự xây gạch: có khung sẵn (state machine, agent orchestration), bạn chỉ việc lắp ráp và tùy biến theo nhu cầu.
+>
+> **Vì sao quan trọng:** Vì tự viết lại mọi thứ vừa chậm vừa dễ sai — dùng framework đã được cộng đồng kiểm chứng giúp rút ngắn thời gian phát triển và chuẩn hóa kiến trúc.
 
 
 ### 12.1 LangGraph (Recommended for Planning)
+
+LangGraph cho phép bạn mô tả workflow như một **máy trạng thái (state machine)** bằng đồ thị: mỗi node là một công đoạn, mỗi edge là đường đi, và có thể rẽ nhánh tùy điều kiện. Code dưới đây dựng một vòng lặp planning hoàn chỉnh: analyze → plan → validate → execute — nếu validate fail thì rẽ sang replan, còn thành công thì kết thúc.
+
+> Giống sơ đồ tuyến tàu điện: vẽ sẵn các ga (node) và đường ray (edge), tàu chạy đúng lộ trình, có nhánh rẽ khi cần đổi hướng.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2400,6 +2497,10 @@ def create_planning_graph():
 </details>
 
 ### 12.2 CrewAI (Multi-Agent Planning)
+
+CrewAI tổ chức các agent như một **đội ngũ (crew)**: bạn định nghĩa từng vai (Agent) với mục tiêu và công cụ riêng, giao các task (nhiệm vụ), rồi để chúng phối hợp hoàn thành. Code dưới đây tạo ra ba vai điển hình: Planner (lập kế hoạch), Executor (thực thi) và Reviewer (kiểm duyệt).
+
+> Giống dựng một công ty thu nhỏ với ba phòng ban, mỗi phòng có sứ mệnh riêng, cùng làm xong một dự án.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2451,6 +2552,10 @@ crew = Crew(
 
 ### 12.3 AutoGen (Microsoft)
 
+AutoGen của Microsoft cho phép các agent **trò chuyện với nhau** để phối hợp — mỗi agent là một "đầu óc" có thể gửi tin cho agent khác. Code mẫu bên dưới định nghĩa planner bày kế hoạch, executor thực thi, và user proxy đại diện cho người thật để duyệt kết quả cuối.
+
+> Giống nhóm chat thảo luận công việc: người này đề xuất, người kia làm, có người chốt duyệt trước khi nộp.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2485,11 +2590,13 @@ user = UserProxyAgent(
 
 ## 13. Tương Lai
 
-> **Khái niệm**: Tương Lai phản ánh các xu hướng công nghệ nổi bật trong lập kế hoạch cho AI Agent giai đoạn 2026-2028 (AI Self-Planning, Collaborative Planning, Predictive Planning).
+> 📌 **Khái Niệm Cơ Bản**
 >
-> **Mục đích**: Định hướng chiến lược đầu tư công nghệ và phát triển năng lực cho đội ngũ, giúp doanh nghiệp chủ động đón đầu xu hướng tiến hóa của AI Agent.
+> **Khái niệm:** Tương Lai là phần nhìn xa về các xu hướng lập kế hoạch của AI Agent giai đoạn 2026-2028: tự lập kế hoạch, lập kế hoạch hiệp tác, dự đoán rủi ro trước khi xảy ra, và giao diện lập kế hoạch trực quan.
 >
-> **Ý nghĩa**: Định hình tầm nhìn chiến lược cho các kỹ sư phần mềm và nhà kiến trúc hệ thống để đón đầu sự tiến hóa của AI Agent hướng tới tự chủ hoàn toàn.
+> **Ẩn dụ/so sánh:** Giống đọc dự báo thị trường trước khi đầu tư: hiểu xu hướng để chuẩn bị từ sớm thay vì chạy theo khi mọi người đã đổ về.
+>
+> **Vì sao quan trọng:** Vì kiến trúc bạn xây hôm nay sẽ quyết định bạn có đón đầu được 3 năm tới hay không — đọc để đầu tư đúng hướng.
 
 
 ### 13.1 Xu Hướng 2026-2028
@@ -2541,6 +2648,14 @@ user = UserProxyAgent(
 ---
 
 ## Tài Liệu Tham Khảo
+
+> 📌 **Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Danh sách các bài nghiên cứu (papers) và framework là nguồn gốc của toàn bộ kiến thức trong module — nếu muốn đào sâu học thuật thì bắt đầu từ đây.
+>
+> **Ẩn dụ/so sánh:** Giống mục "nguồn gốc" cuối bài viết: ghi nơi lấy ý tưởng, đồng thời cho bạn đường về bản gốc nếu muốn tìm hiểu chi tiết hơn.
+>
+> **Vì sao quan trọng:** Vì các số liệu và mô hình trong module đều bắt nguồn từ những nghiên cứu này — tra đúng gốc giúp bạn tự tin khi trình bày lại.
 
 ### Papers & Research
 

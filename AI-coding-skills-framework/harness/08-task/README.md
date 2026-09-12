@@ -72,6 +72,14 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 
 ## Tổng Quan
 
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Task Management trong AI coding là quá trình phân loại, chia nhỏ, ưu tiên và theo dõi các tác vụ lập trình để agent làm đúng việc, đúng lúc, đúng thứ tự.
+>
+> **Ẩn dụ/so sánh:** Giống quản lý một bệnh viện bận rộn — phải xếp ca cấp cứu trước, hẹn khám thường sau, phân kíp trực rõ ràng thì bệnh nhân mới không bị bỏ sót.
+>
+> **Vì sao quan trọng:** Không quản lý task, agent dễ bị quá tải, làm sai thứ tự và lãng phí tài nguyên.
+
 **Task Management** trong AI coding là quá trình **phân tích, chia nhỏ, ưu tiên và theo dõi** các tác vụ coding. Task tốt giúp AI agent tập trung vào đúng việc, tránh overload, và deliver kết quả chất lượng.
 
 ```
@@ -99,6 +107,14 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 
 ## Nội Dung
 
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Đây là mục lục của toàn module — mười chủ đề chính của Task Management được trình bày từ nhận diện task (phân loại, phân rã), điều hành (ưu tiên, trạng thái, phụ thuộc) đến quản lý nguồn lực (ước lượng, token budget).
+>
+> **Ẩn dụ/so sánh:** Giống bản đồ tuyến tàu điện ngầm — nhìn trước là biết có những ga nào và nên xuống ở đâu cho mục tiêu của bạn.
+>
+> **Vì sao quan trọng:** Mỗi chủ đề giải quyết một phần của cùng một bài toán, nên nắm tổng thể sẽ dễ định hướng việc cần học.
+
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
 | 1 | [Task Classification](#1-task-classification) | Phân loại task theo kiểu |
@@ -116,9 +132,17 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 
 ## 1. Task Classification
 
-> **Khái niệm**: Task Classification (Phân loại task) là quá trình phân tích và phân nhóm các task lập trình theo đặc tính (loại code, độ phức tạp, ngữ cảnh) để chọn chiến lược xử lý phù hợp, tối ưu token và độ chính xác cho AI Agent.
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Task Classification là bước "chẩn đoán" task trước khi xử lý — đọc yêu cầu, nhận diện task thuộc loại nào (viết code mới, sửa bug, refactor, viết test v.v.) và độ phức tạp ra sao (1 file hay nguyên module), rồi chọn chiến lược phù hợp.
+>
+> **Ẩn dụ/so sánh:** Giống bác sĩ cấp cứu phân loại bệnh nhân (triage) trước khi điều trị — chẩn đoán đúng thì mới xử lý đúng, còn chẩn đoán sai thì mọi bước tiếp theo đều lệch.
+>
+> **Vì sao quan trọng:** Phân loại đúng giúp agent chọn đúng cách tiếp cận, tiết kiệm token và giảm sai sót ngay từ đầu.
 
 ### 1.1 Phân Loại Task Coding
+
+Sơ đồ dưới tóm tắt hệ thống phân loại task coding theo 5 nhóm chính — mỗi nhóm là một "chuyên khoa" khác nhau (viết code mới, sửa code, phân tích code, tài liệu, test). Hãy đọc như một cây phân cấp: từ nhóm lớn ở trên, theo nhánh xuống loại task cụ thể, để biết task bạn đang gặp nằm ở đâu.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -158,6 +182,8 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 ```
 
 ### 1.2 Task Classification Engine
+
+Đoạn code dưới là bộ máy phân loại thật sự: nó nhận vào mô tả task bằng ngôn ngữ tự nhiên, dò keyword patterns (ví dụ thấy chữ "fix" hay "bug" thì xếp vào nhóm MODIFICATION), rồi ước lượng độ phức tạp để trả về một đối tượng Task đầy đủ thông tin. Chạy thử với một câu mô tả bất kỳ để xem cách agent "hiểu" yêu cầu như thế nào.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -313,6 +339,8 @@ class TaskClassifier:
 
 ### 1.3 Decision Tree: Chọn Strategy Xử Lý Task
 
+Sơ đồ dưới mô tả luật ra quyết định khi một task được giao tới: nếu yêu cầu chưa rõ thì phải hỏi rõ trước, nếu nhỏ hơn 500 tokens thì làm luôn, còn nếu lớn thì phân rã thành sub-task rồi chọn chiến lược chạy tuần tự, song song hay theo TDD. Đi theo các mũi tên từ trên xuống để biết agent sẽ "đi cửa nào" cho từng loại task.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │              TASK HANDLING DECISION TREE                          │
@@ -346,9 +374,17 @@ class TaskClassifier:
 
 ## 2. Task Decomposition
 
-> **Khái niệm**: Task Decomposition (Phân rã task) là kỹ thuật chia nhỏ task lớn thành các subtask con có thể quản lý, mỗi subtask độc lập về input/output và có thể ủy thác cho agent phù hợp, giúp giảm tải context và tăng khả năng hoàn thành.
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Task Decomposition là kỹ thuật chia một task lớn, khó nuốt thành nhiều subtask nhỏ, mỗi subtask có input/output gần như độc lập và có thể giao cho agent phù hợp xử lý riêng.
+>
+> **Ẩn dụ/so sánh:** Giống xây nhà — không ai đổ cả căn nhà một lần, mà phải làm móng, dựng khung, lợp mái theo từng giai đoạn; mỗi giai đoạn là một việc nhỏ dễ kiểm soát.
+>
+> **Vì sao quan trọng:** Task lớn dễ làm agent mất context và bỏ sót bước; chia nhỏ giúp giảm tải context và tăng xác suất hoàn thành.
 
 ### 2.1 Patterns Phân Rã Task
+
+Sơ đồ dưới liệt kê 6 kiểu phân rã task phổ biến. Điểm khác nhau nằm ở cách các subtask liên hệ với nhau: chạy nối tiếp theo thứ tự bắt buộc (sequential), chạy song song rồi gộp kết quả (parallel, map-reduce), hay phân cấp cha-con (hierarchical). Nhìn các mũi tên trong hình để chọn pattern phù hợp với loại việc bạn đang làm.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -411,6 +447,8 @@ class TaskClassifier:
 ```
 
 ### 2.2 Task Decomposer
+
+Đây là code triển khai bộ phân rã: đối tượng TaskDecomposer nhận vào một Task và tự chọn chiến lược phân rã (feature, layer, file, TDD, vertical slice, spike) rồi trả về danh sách SubTask có thứ tự, dependency, token ước lượng và tiêu chí kiểm tra. Nếu không biết chọn gì, nó tự gợi ý dựa trên loại và độ phức tạp của task.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -685,9 +723,19 @@ class TaskDecomposer:
 
 ## 3. Priority & Scheduling
 
-> **Khái niệm**: Priority & Scheduling (Ưu tiên và lập lịch) là cơ chế xác định thứ tự xử lý các task dựa trên mức ưu tiên, mức tiêu thụ tokens và thời gian phản hồi, đảm bảo task quan trọng được thực thi trước trong giới hạn tài nguyên.
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Priority & Scheduling là cơ chế quyết định task nào làm trước, task nào làm sau dựa trên mức khẩn cấp, tầm quan trọng, công sức cần bỏ ra và lượng token tiêu thụ.
+>
+> **Ẩn dụ/so sánh:** Giống xếp hàng ở bệnh viện — ca cấp cứu vào trước, ca khám thường chờ sau; việc nhỏ mà giá trị cao (quick win) cũng được ưu tiên như giải quyết món nợ nhỏ để giải phóng ngân quỹ.
+>
+> **Vì sao quan trọng:** Làm sai thứ tự sẽ khiến việc quan trọng bị trễ, tốn token và dễ bỏ sót yêu cầu của user.
 
 ### 3.1 Priority Model
+
+Đoạn code dưới thể hiện cách tính điểm ưu tiên cho từng task bằng công thức kiểu Eisenhower Matrix: mỗi task được chấm urgency (khẩn cấp), importance (quan trọng), effort (công sức cần bỏ ra), rồi cộng thêm khoản bonus nếu đó là việc nhỏ dễ làm (quick win) hoặc nhiều task khác đang phụ thuộc nó. TaskScheduler sau đó xếp tasks vào từng batch vừa đúng thứ tự vừa không vượt ngân sách token mỗi phiên.
+
+Nói nôm na, đây giống thang điểm xếp hàng: việc khẩn cấp và quan trọng thì điểm cao, việc to mà không gấp thì xếp sau, việc nho nhỏ dễ làm được ưu tiên để "quét bàn" cho nhanh.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -785,9 +833,19 @@ class TaskScheduler:
 
 ## 4. Task State Management
 
-> **Khái niệm**: Task State Management (Quản lý trạng thái task) là mô hình theo dõi vòng đời của task qua các trạng thái (pending, running, completed, failed) cùng cơ chế lưu trữ và khôi phục trạng thái, giúp hệ thống tiếp tục công việc sau khi bị gián đoạn.
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Task State Management là cách theo dõi vòng đời của từng task qua các trạng thái như pending, running, blocked, done — kèm cơ chế lưu lại và khôi phục trạng thái để lúc nào cũng biết "công việc đang dở đến đâu" khi bị gián đoạn.
+>
+> **Ẩn dụ/so sánh:** Giống cuốn sổ trực của bệnh viện — ca trực nào cũng đọc được tai nạn nói gì, bệnh nhân đang ở giai đoạn nào, rồi làm tiếp từ đó thay vì hỏi lại từ đầu.
+>
+> **Vì sao quan trọng:** Nếu không biết task đang ở trạng thái nào, agent không thể tiếp tục công việc sau khi gián đoạn và dễ làm lặp hoặc bỏ sót công đoạn.
 
 ### 4.1 Task Lifecycle
+
+Sơ đồ dưới là bản đồ trạng thái của một task từ lúc sinh ra đến lúc kết thúc: PENDING → PLANNING → IN_PROGRESS → TESTING → REVIEW → DONE. Ngoài nhánh chính còn có các lối rẽ đặc biệt — BLOCKED (bị chặn thì quay về chờ), FAILED (thất bại thì làm lại), CANCELLED (hủy). Đọc theo mũi tên để hiểu task đi từ trạng thái nào sang trạng thái nào là hợp lệ.
+
+Nói cho dễ hình dung, đây là "hành trình một task qua các khoa": vừa tạo là chờ khám (PENDING), được lên kế hoạch (PLANNING), đang điều trị (IN_PROGRESS), đang xét nghiệm (TESTING), đang hội chẩn (REVIEW), rồi xuất viện (DONE).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -826,6 +884,8 @@ class TaskScheduler:
 ```
 
 ### 4.2 Task State Manager
+
+Đây là code quản lý trạng thái: TaskStateManager giữ "sổ theo dõi" cho mọi task, chỉ cho phép chuyển trạng thái khi hợp lệ (valid transitions), ghi lại thời gian bắt đầu, số lần thử, lỗi cuối cùng và phát sự kiện để phần khác của hệ thống biết mà phản hồi. Nếu bạn cố chuyển trạng thái trái phép (ví dụ TESTING → PENDING), code sẽ báo lỗi ngay — giống lệ phòng khám không cho làm liều.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -954,9 +1014,17 @@ class InvalidTransitionError(Exception):
 
 ## 5. Dependency Management
 
-> **Khái niệm**: Dependency Management (Quản lý phụ thuộc) là kỹ thuật mô hình hóa quan hệ giữa các task qua đồ thị phụ thuộc (dependency graph), xác định task nào phải hoàn thành trước và phát hiện vòng lặp/xung đột để thực thi đúng thứ tự.
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Dependency Management là cách mô hình hóa quan hệ "task này phải xong trước task kia" bằng một đồ thị phụ thuộc (dependency graph), từ đó tính ra thứ tự thực thi đúng và phát hiện vòng lặp chết (deadlock).
+>
+> **Ẩn dụ/so sánh:** Giống thứ tự nấu một bữa ăn nhiều món — phải ninh canh trước, xào sau, vì món này cần nguyên liệu của món kia; làm ngược thứ tự thì bữa ăn vỡ trận.
+>
+> **Vì sao quan trọng:** Làm sai thứ tự hoặc để hai task chờ nhau vô hạn sẽ làm agent tắc nghẽn và không bao giờ hoàn thành.
 
 ### 5.1 Task Dependency Graph
+
+Đoạn code dưới triển khai DAG (Directed Acyclic Graph) để quản lý dependency. Quy ước đọc rất đơn giản: "A → B" nghĩa là task A phải xong trước task B mới được bắt đầu. Lớp này hỗ trợ kiểm tra vòng lặp (cycle detection), sắp xếp thứ tự thực thi (topological sort) và tách các nhóm task chạy được song song (parallel groups).
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1059,9 +1127,17 @@ class TaskDependencyGraph:
 
 ## 6. Task Templates
 
-> **Khái niệm**: Task Templates (Mẫu task) là các khuôn mẫu chuẩn hóa cho từng loại task lập trình phổ biến (sửa bug, thêm feature, refactor) với cấu trúc prompt, checklist và tiêu chí hoàn thành định sẵn, giúp agent xử lý nhanh và nhất quán.
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Task Templates là các khuôn mẫu có sẵn cho từng loại task quen thuộc (fix bug, thêm feature, refactor v.v.) gồm danh sách bước, token ước lượng và tiêu chí hoàn thành, để agent không phải nghĩ lại từ đầu mỗi lần gặp việc giống nhau.
+>
+> **Ẩn dụ/so sánh:** Giống form mẫu điền sẵn trong phòng khám — các ô cần thiết đã có sẵn, chỉ cần đổ dữ liệu vào là dùng được, khỏi lo thiếu mục.
+>
+> **Vì sao quan trọng:** Dùng template giúp agent xử lý nhanh, nhất quán và ít quên bước hơn so với làm tự do.
 
 ### 6.1 Common Task Templates
+
+Đoạn code dưới định nghĩa các mẫu task phổ biến dưới dạng dictionary: mỗi mẫu (bug_fix, new_feature, code_review, refactor, debug_investigation, performance_optimization, migration) chứa tiêu đề, danh sách subtask với token riêng rẽ và tổng token ước lượng. Hàm create_task_from_template chỉ cần nhận tên mẫu rồi điền thông tin cụ thể để tạo ra một Task hoàn chỉnh ngay lập tức.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1186,9 +1262,17 @@ def create_task_from_template(template_name: str, **kwargs) -> Task:
 
 ## 7. Estimation Techniques
 
-> **Khái niệm**: Estimation Techniques (Kỹ thuật ước lượng) là các phương pháp dự đoán chi phí thực thi task — số tokens, thời gian, effort — dựa trên độ phức tạp và lịch sử, giúp lập kế hoạch tài nguyên và cảnh báo trước nguy cơ vượt ngân sách.
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Estimation Techniques là các phương pháp dự đoán trước chi phí thực thi một task — cần bao nhiêu token, bao nhiêu thời gian — dựa trên độ phức tạp, loại task và kinh nghiệm từ những lần trước.
+>
+> **Ẩn dụ/so sánh:** Giống thợ xây báo giá trước khi nhận thầu — nhìn bản vẽ (task) là ước lượng ngay cần bao nhiêu vật liệu và mấy ngày mới xong, để chủ nhà không lo hụt ngân sách giữa chừng.
+>
+> **Vì sao quan trọng:** Ước lượng đúng giúp lên kế hoạch tài nguyên và cảnh báo sớm trước khi context window tràn ngập.
 
 ### 7.1 Token Estimation Model
+
+Bảng dưới là "bảng giá" kinh nghiệm để ước lượng token cho từng loại task: dò theo loại task (bug fix, new feature, migration v.v.) và độ phức tạp, tra cột Estimated Tokens là biết nên dự trù bao nhiêu. Phần dưới cùng cho biết các con số ước lượng nhanh (ví dụ 1 dòng code rơi vào 5-10 tokens) và cách phân bổ một context window 128K.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1225,6 +1309,8 @@ def create_task_from_template(template_name: str, **kwargs) -> Task:
 ```
 
 ### 7.2 Effort Estimation Algorithm
+
+Đây là code ước lượng tự động: EffortEstimator nhận một Task, dựa trên độ phức tạp để chọn con số gốc (BASE_TOKENS), nhân thêm hệ số theo loại task (ví dụ viết tài liệu rẻ hơn code mới), cộng thêm "phí" cho mỗi file đụng tới, rồi trả về token, thời gian ước lượng (giả định khoảng 100 token mỗi phút) và bản tổng kết cho cả batch.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1307,9 +1393,17 @@ class EffortEstimator:
 
 ## 8. Anti-Patterns & Solutions
 
-> **Khái niệm**: Anti-Patterns & Solutions (Phản mẫu và giải pháp) là tập hợp các lỗi thiết kế task management thường gặp — task quá lớn, thiếu ưu tiên, quản lý trạng thái lỏng lẻo — kèm giải pháp và cơ chế phát hiện tự động để khắc phục.
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Anti-Patterns là những thói quen xử lý task sai mà rất dễ gặp — ví dụ task quá to, mô tả mơ hồ, task đổi scope giữa chừng — kèm giải pháp khắc phục và bộ phát hiện tự động.
+>
+> **Ẩn dụ/so sánh:** Giống danh sách "bệnh thường gặp" của phòng khám — mỗi bệnh có triệu chứng nhận diện và đơn thuốc điều trị, để biết mình đang mắc bệnh nào mà chữa cho đúng.
+>
+> **Vì sao quan trọng:** Nhận ra anti-pattern sớm sẽ tránh được phần lớn những hỏng hóc tốn kém nhất khi chạy agent.
 
 ### 8.1 Common Anti-Patterns
+
+Sơ đồ dưới liệt kê 8 lỗi task management thường gặp nhất. Mỗi lỗi được đánh dấu bằng "❌ ANTI-PATTERN", kèm triệu chứng nhận diện và mũi tên "→ SOLUTION" là cách chữa. Hãy đọc như một bảng tra cứu: thấy task của mình có triệu chứng nào thì áp dụng giải pháp tương ứng ngay.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1351,6 +1445,8 @@ class EffortEstimator:
 ```
 
 ### 8.2 Anti-Pattern Detector
+
+Đây là bộ máy phát hiện anti-pattern tự động: AntiPatternDetector nhận vào một Task, chạy lần lượt các kiểm tra (task quá lớn hơn 20K token, mô tả mơ hồ, thiếu ước lượng, quá nhiều dependencies, thiếu phạm vi file) rồi trả về danh sách vấn đề kèm mức nghiêm trọng và gợi ý khắc phục. Hãy chạy nó trước khi bắt đầu task để "khám bệnh" từ lúc còn sớm.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1427,9 +1523,17 @@ class AntiPatternDetector:
 
 ## 9. Real-World Workflows
 
-> **Khái niệm**: Real-World Workflows (Quy trình thực tế) là các luồng công việc lập trình phổ biến được chuẩn hóa — feature implementation, debug investigation, refactoring — minh họa cách áp dụng task management vào tình huống sản xuất thực tế.
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Real-World Workflows là các quy trình chuẩn hóa cho những tình huống coding thực tế — thêm tính năng, điều tra bug, refactor — gộp toàn bộ bài học task management ở trên thành các bước có thứ tự rõ ràng.
+>
+> **Ẩn dụ/so sánh:** Giống checklist bay của phi công — không cần nghĩ từng bước trong lúc gấp, cứ theo đúng danh sách là không sót việc nào.
+>
+> **Vì sao quan trọng:** Có sẵn workflow giúp agent xử lý việc thật một cách có kỷ luật, ít quên và dễ kiểm soát chất lượng.
 
 ### 9.1 Feature Implementation Workflow
+
+Sơ đồ dưới mô tả quy trình thêm tính năng mới qua 4 phase: UNDERSTAND → PLAN → IMPLEMENT → VERIFY. Mỗi phase là một hộp chứa các công việc cụ thể (đọc requirement, tìm code tương tự, ước lượng token v.v.). Hãy theo đúng thứ tự phase, giống đi theo công thức nấu ăn — chuẩn bị nguyên liệu xong mới bắt đầu nấu.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1475,6 +1579,8 @@ class AntiPatternDetector:
 ```
 
 ### 9.2 Debug Investigation Workflow
+
+Sơ đồ dưới là quy trình điều tra và sửa lỗi gồm 5 bước: REPRODUCE (tái hiện lỗi) → INVESTIGATE (điều tra) → HYPOTHESIZE (đưa giả thuyết) → FIX (sửa) → PREVENT (ngừa tái phát). Điểm mấu chốt là dừng lại để kiểm tra giả thuyết trước khi vội sửa — tránh tình trạng sửa lụi nhưng lỗi vẫn còn.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1525,6 +1631,8 @@ class AntiPatternDetector:
 ```
 
 ### 9.3 Refactoring Workflow
+
+Sơ đồ dưới là quy trình refactor an toàn gồm 5 bước: characterize hành vi hiện tại, nhận diện code smells, lập kế hoạch từng bước nhỏ, áp dụng refactor rồi verify lại. Quy tắc vàng được ghi ngay đầu sơ đồ: đừng refactor và thêm feature cùng lúc, và phải chạy test sau mỗi bước để đảm bảo hành vi không đổi.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1583,9 +1691,17 @@ class AntiPatternDetector:
 
 ## 10. Token Budget Management
 
-> **Khái niệm**: Token Budget Management (Quản lý ngân sách token) là chiến lược phân bổ và giám sát lượng token tiêu thụ trong context window cho từng task và toàn hệ thống, ngăn chặn tràn context và đảm bảo chất lượng phản hồi.
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Token Budget Management là chiến lược chia và kiểm soát ngân sách token trong context window — bao nhiêu cho system prompt, project context, task context, working memory — để không bao giờ đụng trần và hết chỗ trả lời.
+>
+> **Ẩn dụ/so sánh:** Giống ví tiền đi chợ — biết tổng tiền đang có, chi khoản nào bao nhiêu, luôn chừa một khoản dự phòng để không phải dừng giữa chừng vì hết tiền đột xuất.
+>
+> **Vì sao quan trọng:** Tràn context window là một trong những lỗi chết người nhất khi chạy agent — token budget giúp phòng trước.
 
 ### 10.1 Context Window Budget Allocation
+
+Sơ đồ dưới cho thấy ngân sách token của một context window 128K được chia làm 4 hộp: System Prompt (cố định), Project Context, Task Context và Working Memory, cộng thêm khoản Reserve để dự phòng. Đọc cột tokens bên phải để biết mỗi hộp chiếm bao nhiêu. Đặc biệt chú ý phần cảnh báo cuối sơ đồ: khi budget còn dưới 20% thì phải tóm tắt hoặc dọn bớt context ngay.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1624,6 +1740,8 @@ class AntiPatternDetector:
 ```
 
 ### 10.2 Token Budget Manager
+
+Đây là code quản lý ngân sách: TokenBudgetManager giữ tổng hạn mức, cấp token cho task qua allocate_for_task (trả False nếu không đủ tiền), theo dõi tỷ lệ dùng (usage_percent), in bản tóm tắt tình trạng "ví tiền" bằng summarize_context và gợi ý cách dọn dẹp khi context gần đầy. Nói ngắn gọn, đây chính là thủ quỹ của hệ thống agent.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1721,6 +1839,14 @@ class TokenBudgetManager:
 
 ## Best Practices
 
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Best Practices là tập hợp 12 nguyên tắc vàng rút ra từ kinh nghiệm thực tế khi xây dựng task management cho AI agent — từ "một task chỉ làm một việc" đến "quản lý token budget".
+>
+> **Ẩn dụ/so sánh:** Giống bộ nội quy an toàn lao động — không cần nhớ tại sao từng điều lại đúng, chỉ cần làm theo thì phần lớn rủi ro tự động biến mất.
+>
+> **Vì sao quan trọng:** Section này gói gọn toàn bộ module thành các quy tắc thực hành dễ dùng hằng ngày.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                TASK MANAGEMENT BEST PRACTICES                     │
@@ -1780,6 +1906,14 @@ class TokenBudgetManager:
 ---
 
 ## Tài Liệu Tham Khảo
+
+> ## 📌 Khái Niệm Cơ Bản
+>
+> **Khái niệm:** Đây là danh sách nguồn tài liệu gốc mà module dựa trên ý tưởng và kỹ thuật — từ LangGraph, CrewAI đến Eisenhower Matrix, cuốn Refactoring của Martin Fowler và bộ chuẩn engineering của Google.
+>
+> **Ẩn dụ/so sánh:** Giống danh sách sách tham khảo cuối giáo trình — muốn đào sâu hay xem nguồn gốc thì mở đúng cuốn.
+>
+> **Vì sao quan trọng:** Khi cần chi tiết kỹ thuật đầy đủ hơn, bạn có nơi đáng tin cậy để tra cứu tiếp.
 
 - [LangGraph State Management](https://langchain-ai.github.io/langgraph/)
 - [CrewAI Task Management](https://docs.crewai.com/)

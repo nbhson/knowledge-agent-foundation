@@ -93,6 +93,12 @@ Mỗi agent = **chuyên gia 1 lĩnh vực**. Giống bệnh viện đa khoa — 
 
 ## Tổng Quan
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Multi-Agent System là kiến trúc trong đó **nhiều AI agent phối hợp với nhau**, mỗi agent đảm nhận một vai trò chuyên biệt (viết code, review, test...) để hoàn thành task quá phức tạp so với một agent đơn lẻ.
+> - **Ẩn dụ/so sánh:** Giống một bệnh viện — bác sĩ tổng quát khám bệnh, chuyên khoa tim xử lý tim mạch, dược sĩ kê thuốc. Không ai làm mọi thứ, nhưng phối hợp lại cho ra kết quả chính xác.
+> - **Vì sao quan trọng:** Single agent dễ overload và "tự confirm sai lầm của chính mình" khi gặp task phức tạp — multi-agent thêm kiểm tra chéo (checks & balances).
+
 **Multi-Agent Systems** trong AI coding là kiến trúc **nhiều AI agent làm việc cùng nhau**, mỗi agent có vai trò chuyên biệt, phối hợp để hoàn thành task phức tạp mà một agent đơn lẻ khó xử lý.
 
 ```
@@ -145,9 +151,15 @@ Mỗi agent = **chuyên gia 1 lĩnh vực**. Giống bệnh viện đa khoa — 
 
 ## 1. Agent Roles
 
-> **Khái niệm**: Agent Roles (Vai trò agent) là tập hợp các định nghĩa chuyên môn hóa — orchestrator, coder, reviewer, tester — mỗi agent đảm nhận trách nhiệm và kỹ năng riêng, phối hợp với nhau để hoàn thành nhiệm vụ phức tạp.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Agent Roles (Vai trò agent) là cách phân chia chuyên môn hóa — mỗi agent (orchestrator, coder, reviewer, tester...) đảm nhận một trách nhiệm và bộ kỹ năng riêng để phối hợp hoàn thành nhiệm vụ phức tạp.
+> - **Ẩn dụ/so sánh:** Giống một đội bóng: thủ môn chuyên bắt bóng, tiền đạo chuyên ghi bàn. Vai trò rõ ràng thì cả đội chạy đúng nhịp.
+> - **Vì sao quan trọng:** Không phân vai rõ ràng, các agent làm chồng chéo, bỏ sót việc và không ai chịu trách nhiệm rốt ráo.
 
 ### 1.1 Agent Role Taxonomy
+
+Ở đây là bản đồ đầy đủ các vai trò agent, chia thành 4 tầng: **Coordination** (điều phối), **Execution** (thực thi), **Quality** (kiểm soát chất lượng) và **Support** (hỗ trợ). Đọc giống như sơ đồ tổ chức công ty — tầng trên ra quyết định, tầng dưới làm việc và kiểm tra chéo. Ẩn dụ: đây là "bảng mô tả công việc" của cả đội, ai cũng biết mình phải làm gì.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -180,6 +192,8 @@ Mỗi agent = **chuyên gia 1 lĩnh vực**. Giống bệnh viện đa khoa — 
 ```
 
 ### 1.2 Detailed Agent Definitions
+
+Code này định nghĩa từng vai trò agent bằng Python: mỗi role có **system prompt riêng** (hướng dẫn hành vi), **giới hạn số agent chạy đồng thời**, **token trung bình** và **danh sách công cụ** được phép dùng. Khối code lớn nhưng thực chất chỉ là "thẻ công việc" liệt kê ai làm gì và được phép dùng gì. Mục đích: chuẩn hóa để agent không làm việc ngoài phạm vi của mình.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -348,9 +362,15 @@ AGENT_DEFINITIONS = {
 
 ## 2. Communication Patterns
 
-> **Khái niệm**: Communication Patterns (Mô hình giao tiếp) là các cấu trúc trao đổi thông tin giữa các agent — trực tiếp, broadcast, thông qua message bus — với giao thức message chuẩn để đảm bảo dữ liệu truyền tin cậy và đồng bộ.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Communication Patterns (Mô hình giao tiếp) là các cấu trúc trao đổi thông tin giữa các agent — truyền tuần tự, fan-out song song, qua message bus... — kèm một message protocol chuẩn để dữ liệu được truyền tin cậy và đồng bộ.
+> - **Ẩn dụ/so sánh:** Giống một công ty: vài người chuyền giấy tờ theo dây chuyền (pipeline), hoặc ai cũng đọc chung một bảng thông báo (blackboard).
+> - **Vì sao quan trọng:** Agents giao tiếp không theo chuẩn ⟶ thông tin thất lạc, agent làm việc trên dữ liệu cũ và cho kết quả sai lệch.
 
 ### 2.1 Communication Patterns Overview
+
+Section này so sánh 6 cách để các agent "trò chuyện" với nhau: truyền tuần tự (pipeline), chia việc song song (fan-out), chia sẻ bảng trạng thái chung (blackboard), hỏi-đáp trực tiếp (request-reply), quản lý giao việc (hierarchical) và phát sự kiện qua bus (pub/sub). Mỗi cách có ưu (✓) và nhược (✗) riêng — bạn đọc để chọn đúng kiểu cho bài toán của mình. Ẩn dụ: pipeline là dây chuyền lắp ráp, blackboard là bảng tin chung của công ty.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -425,6 +445,8 @@ AGENT_DEFINITIONS = {
 ```
 
 ### 2.2 Message Protocol
+
+Code này chuẩn hóa "phong bì thư" mà các agent trao đổi: mỗi message có **người gửi, người nhận, loại tin** (giao việc, báo xong, hỏi thông tin...), **payload** (nội dung), dấu thời gian, độ ưu tiên và thời gian sống. Hàm `MessageRouter` đóng vai bưu cục: nhận thư, xếp hàng đợi cho từng agent, gửi broadcast nếu cần. Ẩn dụ: nếu không có format chuẩn, agent A "viết tay" còn agent B "đọc số" thì thông tin sẽ vỡ vụn.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -552,9 +574,15 @@ class MessageRouter:
 
 ## 3. Orchestration Strategies
 
-> **Khái niệm**: Orchestration Strategies (Chiến lược điều phối) là các cách tổ chức luồng làm việc nhiều agent — tập trung (centralized), phi tập trung (decentralized), lai (hybrid) — quyết định agent nào khởi động, phối hợp và tổng hợp kết quả.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Orchestration Strategies (Chiến lược điều phối) là cách tổ chức luồng làm việc nhiều agent — chạy tuần tự, song song, phân cấp manager/worker hay thảo luận để chốt — quyết định agent nào bắt đầu, phối hợp và tổng hợp kết quả.
+> - **Ẩn dụ/so sánh:** Giống đạo diễn phim: có thể quay từng cảnh tuần tự (sequential), cho nhiều ekip quay song song (parallel), hoặc giao quản lý trường quay phân việc (hierarchical).
+> - **Vì sao quan trọng:** Chọn sai chiến lược ⟶ cả hệ thống chạy chậm, tốn token, hoặc kết quả không thống nhất.
 
 ### 3.1 Strategy Comparison
+
+Bảng so sánh 6 chiến lược điều phối với các cột: **khi nào nên dùng** và **ưu/nhược điểm** của từng loại. Cách đọc: xác định đặc điểm task của bạn (độc lập? phụ thuộc? cần tranh luận?) rồi tìm đúng hàng tương ứng. Ẩn dụ: giống chọn cách tổ chức công việc — việc rõ ràng thì lập dây chuyền tuần tự, việc độc lập thì chia cho nhiều người làm cùng lúc.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -586,6 +614,8 @@ class MessageRouter:
 ```
 
 ### 3.2 Orchestrator Implementation
+
+Code này là bản cài đặt sống của một orchestrator: nó **nhận danh sách task, sắp xếp theo thứ tự phụ thuộc** (task nào phải chờ task nào), **giao đúng agent** theo loại task, **thử lại khi lỗi** và theo dõi token tiêu thụ. Hàm `_resolve_execution_order` giống "lịch làm việc" tự động xếp việc nào làm trước. Ẩn dụ: orchestrator là quản lý dự án — lên lịch, phân việc, chốt từng đầu mục.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -829,9 +859,15 @@ class AgentOrchestrator:
 
 ## 4. Shared Memory
 
-> **Khái niệm**: Shared Memory (Bộ nhớ dùng chung) là kiến trúc lưu trữ tập trung cho phép nhiều agent đọc/ghi cùng một nguồn dữ liệu và ngữ cảnh, giúp các agent hoạt động nhất quán mà không phải truyền lại toàn bộ thông tin.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Shared Memory (Bộ nhớ dùng chung) là một kho dữ liệu tập trung để nhiều agent cùng đọc/ghi — context dự án, hàng đợi task, quyết định đã chốt — nhờ đó các agent chia sẻ hiểu biết mà không phải truyền lại toàn bộ thông tin.
+> - **Ẩn dụ/so sánh:** Giống bảng trắng trong phòng họp: ai cũng nhìn thấy và ghi thêm, thay vì mỗi người giữ một quyển sổ riêng rồi đọc to cho nhau nghe.
+> - **Vì sao quan trọng:** Không có shared memory, mỗi agent "nhớ khác nhau" ⟶ làm việc trên context cũ và kết quả không nhất quán.
 
 ### 4.1 Memory Architecture
+
+Sơ đồ cho thấy 2 tầng bộ nhớ: **Global Memory** (bảng trắng chung: context dự án, hàng đợi task, trạng thái, nhật ký quyết định) và **Agent Memory** của từng agent (private context + working memory riêng). Ý tưởng: cái gì cần chia sẻ thì đưa lên bảng chung, cái gì riêng tư thì giữ trong ngăn kéo của mình. Ẩn dụ: giống văn phòng dùng chung bảng công việc, mỗi người vẫn có quyển sổ tay riêng.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -864,6 +900,8 @@ class AgentOrchestrator:
 ```
 
 ### 4.2 Shared Memory Manager
+
+Code này cài đặt "bảng trắng" an toàn để nhiều agent đọc/ghi cùng lúc mà không giẫm chân nhau — nhờ `Lock` (khóa đồng bộ), mỗi thao tác ghi sẽ không bị agent khác chèn giữa chừng. Ngoài global memory, nó còn lưu **artifact** (file, kết quả test) và **nhật ký thay đổi** ghi ai đã sửa gì. Ẩn dụ: giống két sắt ngân hàng — mỗi lần mở/đóng phải tuần tự, và mọi giao dịch đều được ghi sổ.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -985,16 +1023,22 @@ class SharedMemoryManager:
 
 ## 5. Conflict Resolution
 
-> **Khái niệm**: Conflict Resolution (Giải quyết xung đột) là cơ chế xử lý các mâu thuẫn giữa các agent — kết quả khác nhau, tài nguyên tranh chấp, ý kiến trái chiều — thông qua phân loại xung đột và chiến lược hòa giải có kiểm soát.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Conflict Resolution (Giải quyết xung đột) là cơ chế xử lý mâu thuẫn giữa các agent — hai agent cùng sửa một file, trái quan điểm, tranh tài nguyên — bằng cách phân loại xung đột và áp chiến lược hòa giải có kiểm soát.
+> - **Ẩn dụ/so sánh:** Giống hai đồng nghiệp cùng sửa một báo cáo: rủi ro ghi đè lên nhau. Có quy tắc "ai khóa file, ai quyết sau cùng" thì việc của nhau không bị phá.
+> - **Vì sao quan trọng:** Không có cơ chế giải quyết xung đột, các agent có thể ghi đè và "phá" kết quả của nhau.
 
 ### 5.1 Conflict Types & Resolution
+
+Sơ đồ liệt kê 5 loại xung đột phổ biến giữa các agent — cùng sửa file, trái cách tiếp cận, tranh tài nguyên, đọc trạng thái không nhất quán, kết quả trái ngược — và chiến lược giải quyết cho từng loại. Cách đọc: xác định xung đột rơi vào loại nào rồi áp đúng giải pháp đã có sẵn. Ẩn dụ: giống luật an toàn giao thông — có luật sẵn thì hai xe gặp nhau biết ngay ai được ưu tiên.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │              MULTI-AGENT CONFLICT RESOLUTION                      │
 │                                                                  │
 │  CONFLICT TYPE 1: CODE CONFLICT                                  │
-│  Agent A and Agent B修改 cùng 1 file                            │
+│  Agent A and Agent B cùng sửa 1 file                           │
 │  → SOLUTION: File locking + merge strategy                       │
 │    - Last-write-wins (simple but risky)                          │
 │    - Three-way merge (safe)                                      │
@@ -1032,6 +1076,8 @@ class SharedMemoryManager:
 ```
 
 ### 5.2 Conflict Resolution Manager
+
+Code này triển khai cơ chế "giữ hòa bình" giữa các agent: khóa file (agent khác không được sửa khi đang có người dùng), chấm điểm phương án khi hai agent bất đồng quan điểm, và ghi nhật ký mọi xung đột đã giải quyết. Hàm `_score_approach` cho điểm lý lẽ — lập luận càng cụ thể (có "because", "trade-off", "tested") càng dễ thắng. Ẩn dụ: giống trọng tài chấm điểm bài tranh biện để chọn người thuyết phục hơn.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1147,9 +1193,15 @@ class ConflictResolutionManager:
 
 ## 6. Agent Selection Guide
 
-> **Khái niệm**: Agent Selection Guide (Hướng dẫn chọn agent) là bộ tiêu chí quyết định khi nào nên dùng multi-agent thay vì single-agent — dựa trên độ phức tạp task, chi phí token và yêu cầu chuyên môn — tránh lạm dụng multi-agent cho task đơn giản.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Agent Selection Guide (Hướng dẫn chọn agent) là bộ tiêu chí giúp quyết định khi nào dùng multi-agent và khi nào chỉ cần single-agent, dựa trên độ phức tạp task, chi phí token và yêu cầu chuyên môn.
+> - **Ẩn dụ/so sánh:** Giống chọn phương tiện đi lại: gần thì đi bộ (single-agent), xa và nhiều việc mới thuê đội ngũ (multi-agent). Đi xe cho quãng đường 100m chỉ tốn kém vô nghĩa.
+> - **Vì sao quan trọng:** Dùng multi-agent cho task đơn giản chỉ tốn token và gây chậm — guide giúp tránh over-engineering.
 
 ### 6.1 When to Use Multi-Agent
+
+Đây là sơ đồ quyết định dạng câu hỏi-nhánh: bắt đầu từ task, trả lời từng câu hỏi (single agent xử lý được không? các việc độc lập chứ? có pipeline rõ ràng? cần thảo luận? nhiều sub-task?), mỗi câu "Có" sẽ dẫn đến một kiến trúc phù hợp. Cuối biểu đồ có bảng ước lượng token cho từng kiểu hệ thống. Ẩn dụ: giống trắc nghiệm "đi đến trạm nào" — mỗi câu trả lời sẽ đưa bạn rẽ đúng hướng.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1201,9 +1253,15 @@ class ConflictResolutionManager:
 
 ## 7. Real-World Implementations
 
-> **Khái niệm**: Real-World Implementations (Triển khai thực tế) là các ví dụ ứng dụng multi-agent trong sản xuất — pipeline code review, đội phát triển feature, đội debug — minh họa cách thiết kế vai trò và giao tiếp cho từng tình huống cụ thể.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Real-World Implementations (Triển khai thực tế) là các ví dụ multi-agent áp dụng trong sản xuất — pipeline code review, đội phát triển feature, đội debug — cho thấy cách gán vai trò và thiết lập luồng giao tiếp cụ thể.
+> - **Ẩn dụ/so sánh:** Giống xem quy trình làm việc thật của một công ty phần mềm: ai review, ai viết code, ai kiểm thử — thay vì chỉ đọc lý thuyết khô khan.
+> - **Vì sao quan trọng:** Ví dụ thực tế cho bạn một thiết kế đã được kiểm chứng để "sao chép" và tùy biến, không cần mò mẫm từ đầu.
 
 ### 7.1 Code Review Pipeline
+
+Đoạn code xây một pipeline review tự động kiểu công ty phần mềm: thu thập file thay đổi → review code → review bảo mật → review hiệu năng → gộp feedback. Cách "đọc": mỗi task trong danh sách `tasks` có trường `depends_on` quyết định việc nào phải chờ việc nào. Ẩn dụ: giống quy trình merge request thực tế cần 2-3 reviewer bấm Approve trước khi merge.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1294,6 +1352,8 @@ class CodeReviewPipeline:
 
 ### 7.2 Feature Development Team
 
+Code này mô phỏng một đội phát triển feature hoàn chỉnh theo kiểu **hierarchical**: Architect thiết kế trước → nhiều Coder làm song song các module độc lập → Tester viết test → Reviewer chốt chất lượng. Điểm đáng chú ý: `implement-core` và `implement-api` đều phụ thuộc `design` nhưng không phụ thuộc nhau, nên chạy song song được. Ẩn dụ: giống đội xây nhà — thợ điện và thợ ống nước làm cùng lúc nhưng cùng chờ bản thiết kế.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -1370,6 +1430,8 @@ class FeatureDevTeam:
 
 ### 7.3 Debug Squad
 
+Code này lập một "đội xử lý sự cố" 4 bước tuần tự: Debugger tìm nguyên nhân → Coder sửa → Tester chạy regression → Reviewer kiểm lại chất lượng. Mỗi bước phụ thuộc bước trước (qua `depends_on`), nên luồng chạy đúng thứ tự: bắt bug, vá lỗi, kiểm lại, duyệt. Ẩn dụ: giống quy trình xử lý sự cố ở công ty — support chẩn đoán, engineer sửa, QA xác nhận, lead duyệt.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -1439,9 +1501,15 @@ class DebugSquad:
 
 ## 8. Debugging Multi-Agent Systems
 
-> **Khái niệm**: Debugging Multi-Agent Systems (Gỡ lỗi hệ thống đa agent) là quá trình truy vết lỗi trong hệ thống nhiều agent tương tác — lỗi giao tiếp, trạng thái không đồng bộ, xung đột kết quả — dùng logging, tracing và chiến lược cô lập thành phần để tìm nguyên nhân gốc.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Debugging Multi-Agent Systems (Gỡ lỗi hệ thống đa agent) là quá trình truy vết nguyên nhân lỗi trong hệ thống nhiều agent tương tác — lỗi giao tiếp, trạng thái không đồng bộ, xung đột kết quả — bằng logging, tracing và cô lập từng thành phần.
+> - **Ẩn dụ/so sánh:** Giống tìm chỗ rò trong tòa nhà nhiều tầng: phải xem từng ống nước (message log), từng tầng (agent state) và thiết bị hẹn giờ (timeline) thay vì đoán mò.
+> - **Vì sao quan trọng:** Lỗi multi-agent hiếm khi nằm ở đúng một agent — thường nằm ở "giữa" các agent, nên cần công cụ truy vết riêng.
 
 ### 8.1 Debug Strategy
+
+Sơ đồ này là "cẩm nang chẩn bệnh" cho multi-agent: với mỗi triệu chứng (agent không phản hồi, giao nhầm task, lặp vô hạn, kết quả xung đột, chất lượng kém) nó liệt kê các bước kiểm tra ("Check") rồi hướng đến cách khắc phục ("Fix"). Cách dùng: đối chiếu triệu chứng bạn gặp, đi theo nhánh check đến khi tìm ra nguyên nhân. Ẩn dụ: giống thợ sửa xe chẩn đoán — hết dầu? Hết xăng? Hỏng bugi? Loại dần từng khả năng.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1486,6 +1554,8 @@ class DebugSquad:
 ```
 
 ### 8.2 Debug Logger
+
+Code này là bộ công cụ "xem lại băng ghi hình trận đấu" cho multi-agent: `trace_message_flow` in lại toàn bộ tin nhắn giữa các agent theo thời gian, `inspect_agent_state` xem một agent đang biết gì, còn `generate_timeline` dựng lại trình tự sự kiện. Khi hệ thống lỗi, đây là nơi xem "ai đã nói gì, làm gì, khi nào". Ẩn dụ: giống xem camera an ninh để biết ai va phải ai.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1552,9 +1622,15 @@ class MultiAgentDebugger:
 
 ## 9. Performance Optimization
 
-> **Khái niệm**: Performance Optimization (Tối ưu hiệu năng) là các kỹ thuật giảm độ trễ và chi phí trong hệ thống đa agent — song song hóa, giảm lượt giao tiếp, ước lượng token — giúp hệ thống phản hồi nhanh hơn với chi phí hợp lý.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Performance Optimization (Tối ưu hiệu năng) là nhóm kỹ thuật giảm độ trễ và chi phí cho hệ thống đa agent — tăng song song, giảm message thừa, cache, ước lượng token — để hệ thống phản hồi nhanh hơn và rẻ hơn.
+> - **Ẩn dụ/so sánh:** Giống tối ưu một nhà máy: bỏ khâu trung chuyển thừa, cho các dây chuyền độc lập chạy song song thay vì nối đuôi nhau.
+> - **Vì sao quan trọng:** Multi-agent vốn tốn gấp 2-5× token — không tối ưu thì chi phí vận hành tăng rất nhanh.
 
 ### 9.1 Optimization Strategies
+
+Danh sách 5 chiến lược tối ưu cho hệ thống đa agent: giảm token, tối đa song song, giảm giao tiếp, đội hình vừa đủ và cache tái sử dụng. Mỗi chiến lược là một "mẹo thực tế" bạn áp dụng ngay được, không cần công cụ phức tạp. Ẩn dụ: giống dọn nhà kho — bỏ vật thừa (token), sắp xếp cho nhiều người làm song song, và để đồ hay dùng ra chỗ dễ lấy (cache).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1595,6 +1671,8 @@ class MultiAgentDebugger:
 
 ### 9.2 Cost Estimation
 
+Bảng ước lượng "ngân sách token" cho multi-agent: chi phí = chi phí mỗi agent × số agent × chi phí giao tiếp. Nó phá giá từng vai trò (orchestrator ~2K, coder ~5K token...), cộng thêm "phí bưu điện" (message, handoff, xung đột), rồi đưa ra các kịch bản điển hình. Ẩn dụ: giống ước toán chi phí dự án — biết giá từng đầu việc thì mới dự đoán được tổng chi tiêu.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │              MULTI-AGENT COST ESTIMATION                          │
@@ -1634,9 +1712,15 @@ class MultiAgentDebugger:
 
 ## 10. Anti-Patterns & Solutions
 
-> **Khái niệm**: Anti-Patterns & Solutions (Phản mẫu và giải pháp) là tập hợp các lỗi thiết kế hệ thống đa agent thường gặp — vai trò chồng chéo, giao tiếp nhiễu, phối hợp lỏng lẻo — kèm giải pháp để tránh và khắc phục hiệu quả.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Anti-Patterns & Solutions (Phản mẫu và giải pháp) là tập hợp các sai lầm thiết kế thường gặp trong hệ thống đa agent — vai trò chồng chéo, agent "chuyện phiếm" quá nhiều, phụ thuộc một điểm — kèm cách tránh và khắc phục.
+> - **Ẩn dụ/so sánh:** Giống danh sách "đừng làm" đúc kết từ kinh nghiệm: biết trước lỗi mà người khác hay vấp thì bạn sẽ không lặp lại.
+> - **Vì sao quan trọng:** Đa số hệ thống multi-agent thất bại vì những anti-pattern này, không phải vì model yếu.
 
 ### 10.1 Common Anti-Patterns
+
+Danh sách 8 "cái bẫy" mà hầu hết người xây multi-agent từng vấp phải — dùng quá nhiều agent, agent nói chuyện quá nhiều, phụ thuộc một điểm, vai trò không rõ... — mỗi bẫy kèm giải pháp xử lý ngay trong dòng "→ SOLUTION". Cách dùng: soi project của bạn vào từng bẫy, gặp đúng thì áp giải pháp. Ẩn dụ: giống danh sách "kiểm tra trước khi chốt đơn" — biết sai ở đâu thì đỡ hơn việc vá sửa sau này.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1681,9 +1765,15 @@ class MultiAgentDebugger:
 
 ## 11. Production Deployment
 
-> **Khái niệm**: Production Deployment (Triển khai sản xuất) là quá trình đưa hệ thống multi-agent vào hoạt động thực tế — đảm bảo tính sẵn sàng, giám sát, bảo mật và khả năng mở rộng — với checklist kiểm tra toàn diện trước khi chạy production.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Production Deployment (Triển khai sản xuất) là quá trình đưa hệ thống multi-agent vận hành thực tế — đảm bảo sẵn sàng, giám sát, bảo mật và khả năng mở rộng — với checklist kiểm tra trước khi chạy thật.
+> - **Ẩn dụ/so sánh:** Giống đưa một tòa nhà vào sử dụng: trước khi khai trương phải kiểm tra điện nước, báo cháy và ai làm gì khi có sự cố — không thể bàn giao là chạy ngay.
+> - **Vì sao quan trọng:** Một hệ thống chạy lab tốt có thể sập ngay trong production nếu thiếu giám sát và quy trình xử lý lỗi.
 
 ### 11.1 Deployment Checklist
+
+Checklist này chia 3 giai đoạn trước khi hệ thống multi-agent lên production: **chuẩn bị** (vai trò rõ, routing đã test, chống xung đột, giới hạn token...), **giám sát** (token, latency, conflict...) và **tối ưu liên tục**. Cách dùng: đánh dấu từng ô; ô nào chưa được đánh dấu thì hệ thống chưa nên chạy thật. Ẩn dụ: giống danh sách kiểm tra chuyến bay trước khi cất cánh — bỏ qua một ô nhỏ có thể dẫn đến sự cố lớn.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1718,6 +1808,12 @@ class MultiAgentDebugger:
 ---
 
 ## Best Practices
+
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Best Practices (Các thực hành tốt nhất) là những nguyên tắc nền tảng được đúc kết khi xây dựng hệ thống multi-agent — bắt đầu đơn giản, vai trò rõ ràng, giao tiếp có cấu trúc, đề phòng lỗi và theo dõi chi phí.
+> - **Ẩn dụ/so sánh:** Giống bộ quy tắc ứng xử của một đội ngũ kỳ cựu — họ biết điều gì khiến dự án thành công vì đã từng vấp rất nhiều lần.
+> - **Vì sao quan trọng:** Áp dụng từ đầu rẻ hơn nhiều so với sửa chữa khi hệ thống đã phình to.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1773,7 +1869,11 @@ class MultiAgentDebugger:
 
 ## 12. Case Studies — Real-World Multi-Agent Architectures
 
-> **Khái niệm**: Case Studies (Nghiên cứu điển hình) là phân tích kiến trúc multi-agent của các hệ thống thực tế nổi bật — Claude Code, Devin, OpenHands — rút ra bài học về thiết kế vai trò, quy trình và cách chọn lựa kiến trúc phù hợp.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Case Studies (Nghiên cứu điển hình) là phân tích kiến trúc multi-agent của các hệ thống thực nổi tiếng — Claude Code, Devin, OpenHands — để rút ra bài học về thiết kế vai trò, luồng làm việc và cách chọn kiến trúc.
+> - **Ẩn dụ/so sánh:** Giống nghiên cứu sơ đồ chiến thuật của các đội bóng hàng đầu trước khi xây dựng đội hình của chính bạn.
+> - **Vì sao quan trọng:** Học từ hệ thống đã chạy sản xuất giúp bạn không phải "phát minh lại bánh xe".
 
 ### 12.1 Claude Code — Anthropic's Multi-Agent Architecture
 
@@ -1857,6 +1957,8 @@ Devin (Cognition AI) sử dụng multi-agent pattern với specialized modules:
 ```
 
 ### 12.3 OpenHands (OpenDevin) — Open-Source Multi-Agent
+
+Code này mô phỏng kiến trúc theo kiểu OpenHands/Devin: một **bộ não trung tâm (LLM)** tự quyết hành động theo vòng lặp **quan sát → quyết định → hành động → quan sát lại** (thấy trong `run_agent_loop`), sống trong một **sandbox** an toàn và tự động thử lại khi lỗi. Cách đọc: chú ý hàm `run_agent_loop` — đó là trái tim của toàn bộ pattern này. Ẩn dụ: giống người chơi cờ vừa đi vừa nhìn bàn cờ, mỗi nước đi đều đánh giá kết quả rồi mới đi tiếp.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2020,9 +2122,15 @@ class OpenHandsStyleOrchestrator:
 
 ## 13. Advanced Multi-Agent Patterns
 
-> **Khái niệm**: Advanced Multi-Agent Patterns (Mô hình đa agent nâng cao) là các mẫu kiến trúc phức tạp — MapReduce, Debate, Critique-Revision, Ensemble — khai thác nhiều agent song song để tăng chất lượng kết quả so với một agent đơn lẻ.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Advanced Multi-Agent Patterns (Mô hình đa agent nâng cao) là các mẫu kiến trúc tinh vi — MapReduce, Debate, Critique-Revision, Ensemble — dùng nhiều agent song song để nâng chất lượng vượt hẳn một agent đơn lẻ.
+> - **Ẩn dụ/so sánh:** Giống tổ chức một vòng thi: giao nhiều người cùng làm rồi chọn bài tốt nhất (ensemble), hay để họ phản biện nhau trước khi chốt phương án (debate).
+> - **Vì sao quan trọng:** Đây là nhóm pattern giúp giảm hallucination và tăng độ tin cậy khi chất lượng là ưu tiên hàng đầu.
 
 ### 13.1 MapReduce Pattern for Code Generation
+
+MapReduce là mẫu "chia để trị": **MAP** tách task lớn thành các sub-task độc lập cho nhiều agent xử lý song song, **REDUCE** gộp kết quả thành output cuối. Trong code, `parallel_code_generation` là ví dụ sinh code cho nhiều module cùng lúc rồi gộp lại. Cách đọc: nếu task của bạn tách được thành phần độc lập — map-reduce hợp; các phần phụ thuộc chéo nhau — không hợp. Ẩn dụ: giống nấu tiệc — nhiều đầu bếp làm nhiều món song song rồi đặt lên cùng một bàn.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2135,6 +2243,8 @@ class MapReduceCodeGenerator:
 
 ### 13.2 Debate Pattern — Multi-Agent Discussion
 
+Debate pattern cho nhiều agent "tranh luận" để đi đến quyết định tin cậy hơn: vòng 1 mỗi agent nêu lập trường, vòng 2 phản biện đối thủ, vòng 3 chốt lại, rồi một **judge agent** chấm điểm ai thuyết phục nhất. Cách đọc: `_judge_decision` cho điểm dựa trên số lập luận và độ dài nội dung — chính là mô phỏng đơn giản của nguyên tắc "bài hùng biện tốt sẽ thắng". Ẩn dụ: giống hội đồng phản biện trước khi chốt một khoản vay — nghe hết các bên rồi mới quyết định.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2244,6 +2354,8 @@ class DebateProtocol:
 
 ### 13.3 Critique-Revision Pattern
 
+Pattern này mô phỏng đúng quy trình "viết - chấm - sửa" lặp lại: **Writer** viết code, **Critic** nhận xét, **Writer** sửa theo feedback, lặp cho đến khi điểm chất lượng đạt ngưỡng (`quality_threshold`) hoặc hết số vòng. Cách đọc: vòng lặp `iterate` chính là cơ chế học từ phản hồi — vòng nào điểm cao hơn sẽ được giữ lại. Ẩn dụ: giống nộp bản thảo cho editor chấm rồi sửa lại — vài lần sửa sẽ cho ra bản tốt hơn bản thô đầu tiên.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2338,6 +2450,8 @@ class CritiqueRevisionLoop:
 
 ### 13.4 Ensemble Pattern — Multiple Agents, Best Output
 
+Ensemble pattern chạy **nhiều agent cùng lúc làm cùng một task**, mỗi agent đưa ra một kết quả; một judge chấm điểm tất cả và chọn output tốt nhất. Nó giống "ensemble" trong machine learning — gộp nhiều ý kiến khác nhau để giảm rủi ro. Cách đọc: chú ý `_generate_recommendation` — nếu các agent đồng thuận (variance thấp) thì kết quả đáng tin; bất đồng mạnh thì phải rà kỹ. Ẩn dụ: giống làm nhiều bản nháp trước khi chốt bản cuối — ai làm hay nhất thì lấy.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2429,9 +2543,15 @@ class EnsemblePattern:
 
 ## 14. Multi-Agent Testing Strategies
 
-> **Khái niệm**: Multi-Agent Testing Strategies (Chiến lược kiểm thử đa agent) là các phương pháp kiểm chứng hệ thống nhiều agent — test tương tác, mô phỏng lỗi giao tiếp, kiểm thử hội tụ — đảm bảo hệ thống hoạt động chính xác và ổn định trong đa dạng tình huống.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Multi-Agent Testing Strategies (Chiến lược kiểm thử đa agent) là các phương pháp kiểm chứng hệ thống nhiều agent — test routing, test message, test từng agent, test tương tác, chaos test — để đảm bảo hệ thống chạy đúng và ổn định.
+> - **Ẩn dụ/so sánh:** Giống kiểm tra dây chuyền sản xuất: test từng máy (agent), test cả dây chuyền, kể cả cố tình làm hỏng một máy để xem hệ thống có dừng không.
+> - **Vì sao quan trọng:** Hệ thống nhiều agent hay "không lỗi đơn lẻ nhưng lỗi tổ hợp" — cần test ở nhiều tầng khác nhau.
 
 ### 14.1 Testing Multi-Agent Systems
+
+Hình tam giác này cho thấy test multi-agent cần làm ở **nhiều tầng**, từ dưới lên: test routing (giao đúng agent chưa), test message (protocol chuẩn chưa), test từng agent, test tương tác giữa các agent, và cuối cùng **chaos test** — cố tình làm hỏng một agent xem hệ thống có sống sót không. Cách đọc: tầng dưới là nền móng, làm tốt rồi mới lên tầng trên. Ẩn dụ: giống kiểm tra tòa nhà — kiểm từng viên gạch, rồi thử cả kết cấu trước khi cho chịu động đất.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -2465,6 +2585,8 @@ class EnsemblePattern:
 ```
 
 ### 14.2 Test Implementation
+
+Code này cài đặt sẵn các bài test làm ví dụ: `test_routing_accuracy` kiểm tra task có vào đúng agent không, `test_agent_failure_recovery` cho một agent "chết" xem hệ thống có vẫn chạy, `test_token_budget_enforcement` kiểm tra giới hạn token, `test_conflict_resolution` kiểm tra khóa file và hòa giải. Cách dùng: bạn có thể mở rộng chính bộ test này cho hệ thống của mình. Ẩn dụ: giống bộ bài kiểm tra lái xe trước khi cho ra đường — cứ điểm nào FAIL là chưa đủ điều kiện.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2641,9 +2763,15 @@ class MultiAgentTestSuite:
 
 ## 15. Cost-Benefit Analysis
 
-> **Khái niệm**: Cost-Benefit Analysis (Phân tích chi phí-lợi ích) là đánh giá kinh tế khi dùng multi-agent — so sánh token cost với độ cải thiện chất lượng — giúp quyết định thời điểm multi-agent thực sự đáng giá so với single-agent.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Cost-Benefit Analysis (Phân tích chi phí-lợi ích) là so sánh giữa token cost tăng thêm của multi-agent với mức cải thiện chất lượng, để biết khi nào multi-agent thực sự đáng giá so với single-agent.
+> - **Ẩn dụ/so sánh:** Giống cân nhắc thuê đội ngũ chuyên gia: đắt hơn, nhưng nếu chất lượng sản phẩm tăng đủ nhiều thì vẫn lời.
+> - **Vì sao quan trọng:** Multi-agent không phải lúc nào cũng tốt hơn — phân tích này giúp bạn chi tiền đúng chỗ.
 
 ### 15.1 When Multi-Agent Is Worth It
+
+Bảng quyết định "đáng hay không" cho từng loại task: so sánh mức độ hợp với single vs multi, phần trăm cải thiện chất lượng, hệ số chi phí và kết luận cuối (SINGLE / MULTI / DEPENDS). Cách đọc: nhìn cột `Cost` và `Quality` — task nào quality tăng cao mà cost chỉ tăng nhẹ thì là ứng viên tốt cho multi-agent. Ẩn dụ: giống bảng quyết định thuê ngoài — việc đơn giản tự làm, việc khó mới thuê chuyên gia.
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -2673,6 +2801,8 @@ class MultiAgentTestSuite:
 ```
 
 ### 15.2 Token Cost Comparison
+
+Code này viết một bộ tính toán ROI cho multi-agent bằng Python: mỗi `CostEstimate` chứa token của single vs multi plus phần trăm cải thiện chất lượng, từ đó tự tính `cost_ratio`, `roi` và đưa ra khuyến nghị `RECOMMEND` / `CONSIDER` / `AVOID`. Cách chạy: đoạn `print()` cuối cùng sẽ in bảng so sánh cho từng loại task. Ẩn dụ: giống máy tính bỏ túi quyết định chi tiêu — nhập số vào là ra ngay nên hay không nên.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>

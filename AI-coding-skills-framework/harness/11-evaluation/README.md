@@ -94,7 +94,7 @@ Evaluation = What You Measure → What You Improve → What You Ship
 
 **Analogies**: Evaluation giống hệ thống kiểm soát chất lượng trong nhà máy — không chỉ kiểm tra sản phẩm có hỏng không (Level 1), mà còn kiểm tra finish có đẹp không (Level 3), vật liệu có an toàn không (Level 4), và khách hàng có hài lòng không (Level 5).
 
-**Nếu bỏ qua**: Ship code không biết quality ra sao, không biết regression khi nào出现, không biết model nào tốt hơn model nào, và cuối cùng technical debt tích tụ đến mức refactor tốn 10× chi phí.
+**Nếu bỏ qua**: Ship code không biết quality ra sao, không biết regression khi nào xuất hiện, không biết model nào tốt hơn model nào, và cuối cùng technical debt tích tụ đến mức refactor tốn 10× chi phí.
 
 ## Tổng Quan
 
@@ -142,9 +142,15 @@ Evaluation = What You Measure → What You Improve → What You Ship
 
 ## 1. Evaluation Dimensions
 
-> **Khái niệm**: Evaluation Dimensions (Các chiều đánh giá) là tập hợp các khía cạnh đo lường chất lượng AI Agent — correctness, efficiency, robustness, adaptation — biến chất lượng trừu tượng thành số liệu cụ thể để so sánh và cải thiện.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Evaluation Dimensions là các "khía cạnh" riêng biệt để đo chất lượng AI agent — correctness (độ đúng), efficiency (độ nhanh), safety (độ an toàn), reliability (độ ổn định) và nhiều nữa. Mỗi khía cạnh là một chiếc cân riêng, gom lại cho bạn bức tranh toàn diện thay vì chỉ một con số duy nhất.
+> **Ẩn dụ/so sánh:** Giống phiếu điểm ở trường — không chỉ có điểm toán, mà còn điểm văn, điểm anh, điểm hạnh kiểm. Chấm nhiều môn mới thấy được học sinh giỏi nét nào, yếu chỗ nào.
+> **Vì sao quan trọng:** Chất lượng AI rất trừu tượng, cần tách thành các chiều đo rõ ràng thì mới biết phải cải thiện phần nào.
 
 ### 1.1 Các Chiều Đánh Giá
+
+Bảng dưới đây tổng hợp **9 chiều đánh giá** mà bạn nên xem xét khi chấm AI agent — từ độ đúng (correctness) đến chi phí (cost-effectiveness). Hãy đọc như một "bảng kiểm tra sức khỏe": mỗi dòng là một câu hỏi bạn cần trả lời cho agent của mình.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -190,6 +196,8 @@ Evaluation = What You Measure → What You Improve → What You Ship
 ```
 
 ### 1.2 Evaluation Rubric
+
+Đoạn code này định nghĩa **rubric chấm điểm** — bộ tiêu chuẩn nói rõ thế nào là điểm 5, điểm 3, điểm 1 cho từng chiều đánh giá. Giống tiêu chí chấm bài thi: có mô tả rõ ràng thì chấm mới công bằng và thống nhất giữa các lần. Bạn có thể chạy thử để thấy một kết quả được cộng điểm trọng số (weighted) thành tổng điểm 0-100.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -325,6 +333,8 @@ STANDARD_RUBRIC = [
 
 ### 1.3 Weight Configuration — Tùy Theo Use Case
 
+Code ở đây cho thấy cùng một bộ chiều đánh giá, nhưng **trọng số đổi theo mục tiêu** — giống phòng thi đại học điểm lệch môn tự nhiên, trường nghề lại nặng tay nghề. Nơi cần sự an toàn thì nâng trọng số `safety`, nơi cần ra sản phẩm nhanh thì nâng `completeness`. Bạn tùy chỉnh `WEIGHT_CONFIGS` sao cho khớp use case của mình.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -375,9 +385,15 @@ WEIGHT_CONFIGS = {
 
 ## 2. Quality Metrics
 
-> **Khái niệm**: Quality Metrics (Chỉ số chất lượng) là các thước đo định lượng cho output của AI Agent — accuracy, completeness, adherence, style — giúp đánh giá khách quan mức độ đáp ứng yêu cầu của agent.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Quality Metrics là các thước đo định lượng dùng để chấm chất lượng output của AI agent — accuracy, completeness, adherence, style — biến đánh giá cảm tính thành con số khách quan, so sánh được.
+> **Ẩn dụ/so sánh:** Như thang điểm chấm món ăn: hương vị (correctness), trình bày (style), đủ khẩu phần (completeness). Điểm rõ ràng giúp người nấu biết món nào cần cải thiện.
+> **Vì sao quan trọng:** Không có con số cụ thể thì "trông có vẻ ổn" sẽ thay thế đánh giá thật, và bạn không thể theo dõi tiến bộ theo thời gian.
 
 ### 2.1 Code Quality Metrics
+
+Lớp `CodeQualityAnalyzer` tự động chấm chất lượng code — độ phức tạp (cyclomatic complexity), khả năng bảo trì (maintainability index), cách đặt tên, mức độ có docstring — rồi gộp thành điểm tổng 0-100. Như một "giáo viên chấm bài tự động": nhận code đầu vào, trả bảng điểm kèm từng chỉ số cụ thể thay vì chỉ nói "code này ổn".
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -512,6 +528,8 @@ class CodeQualityAnalyzer:
 
 ### 2.2 AI Agent Quality Metrics
 
+Phần này đo **cả quá trình generate của AI agent**, không chỉ kết quả: tỷ lệ đúng ngay lần đầu, số lần retry, token tiêu thụ, tỷ lệ không làm vỡ chức năng cũ. Một agent tốt thường đúng sớm, ít retry và ít tốn token — như nhân viên biết việc, không cần hỏi sếp nhiều lần.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -599,6 +617,8 @@ class AgentQualityMetrics:
 
 ### 2.3 Metrics Dashboard
 
+Bảng điều khiển mẫu gộp mọi metrics vào một màn hình duy nhất: mỗi chiều một thanh phần trăm, cuối cùng là COMPOSITE SCORE. Cách đọc rất đơn giản — thanh dài là tốt, thanh ngắn là chỗ cần cải thiện. Dashboard kiểu này giúp cả đội "nhìn là biết" agent đang khỏe hay yếu ở đâu.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                AI AGENT QUALITY DASHBOARD                         │
@@ -632,9 +652,15 @@ class AgentQualityMetrics:
 
 ## 3. Performance Benchmarks
 
-> **Khái niệm**: Performance Benchmarks (Chuẩn đo hiệu năng) là các bài kiểm chuẩn hóa — SWE-bench, HumanEval, LiveCodeBench — dùng bộ câu hỏi cố định để đo lường năng lực agent, cho phép so sánh giữa các mô hình và phiên bản.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Performance Benchmarks là những bài kiểm chuẩn hóa — SWE-bench, HumanEval, LiveCodeBench — dùng bộ câu hỏi cố định để đo năng lực agent, cho phép so sánh công bằng giữa các model và phiên bản.
+> **Ẩn dụ/so sánh:** Giống kỳ thi tuyển sinh chung: mọi thí sinh cùng một đề, cùng thang điểm, để trường dễ nhận xét học sinh nào giỏi hơn. Ai cũng tự ra đề riêng thì không bao giờ so được.
+> **Vì sao quan trọng:** Thiếu bộ đề chung thì mỗi người tự chấm kiểu riêng, không thể biết model A thực sự có hơn model B hay không.
 
 ### 3.1 Benchmark Framework
+
+`BenchmarkSuite` là "sân thi đấu" cho agent: bạn thêm các task vào, chạy agent trên từng task, rồi thống kê success rate, token dùng, thời gian — thậm chí so sánh hai lần chạy với nhau. Như sân bóng có trọng tài bấm giờ và ghi biên bản: mọi pha bóng đều được đo, không có chuyện "tôi cảm giác mình chơi tốt".
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -779,6 +805,8 @@ class BenchmarkSuite:
 
 ### 3.2 Standard Benchmark Tasks
 
+Danh sách này là **bộ đề mẫu** chia theo độ khó từ trivial đến complex: viết hello world, đảo chuỗi, sửa lỗi off-by-one, refactor class. Mỗi task đi kèm validator để chấm tự động. Dùng như bộ đề ôn thi: bắt đầu dễ để kiểm tra agent có chạy được không, rồi tăng dần độ khó để đo năng lực thực sự.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -865,6 +893,8 @@ BENCHMARK_TASKS = {
 
 ### 3.3 Benchmark Comparison Table
 
+Bảng so sánh điểm của các model trên các benchmark phổ biến năm 2026. Đọc theo cột: một model đạt 92% trên HumanEval nhưng chỉ 53% trên SWE-bench là chuyện bình thường — vì mỗi benchmark đo năng lực khác nhau (viết hàm đơn lẻ khác với sửa bug trong repo thật). Nhớ dòng chú thích cuối: điểm số thay đổi theo phiên bản model và cách viết prompt.
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │           BENCHMARK SCORES COMPARISON (2026)                       │
@@ -893,9 +923,15 @@ BENCHMARK_TASKS = {
 
 ## 4. Evaluation Framework
 
-> **Khái niệm**: Evaluation Framework (Khung đánh giá) là cấu trúc tổ chức quy trình đánh giá — thiết kế test case, chạy thử, thu thập kết quả, phân tích — giúp đánh giá lặp lại nhất quán và hành động được.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Evaluation Framework là "bộ khung" tổ chức cả quy trình đánh giá — thiết kế test case, chạy thử, thu thập kết quả, phân tích — để việc đánh giá lặp lại được nhất quán và dễ hành động.
+> **Ẩn dụ/so sánh:** Như dây chuyền kiểm tra chất lượng trong nhà máy: sản phẩm lần lượt qua bàn cân, trạm kiểm an toàn, trạm đóng gói — mỗi trạm một việc, quy trình lặp lại y hệt mỗi lần.
+> **Vì sao quan trọng:** Không có khung chuẩn thì mỗi lần đánh giá lại làm kiểu khác nhau, kết quả không đáng tin để so sánh.
 
 ### 4.1 Auto-Evaluation Pipeline
+
+`EvaluationPipeline` biến quá trình đánh giá thành **cỗ máy chạy tự động**: bạn thêm các check như lint, test, security vào pipeline, chạy trên code rồi gom điểm theo trọng số và xuất tổng hợp. Mỗi check như một người kiểm tra viên trong dây chuyền, mỗi người chấm một tiêu chí; con số cuối là kết luận chung của cả đội kiểm tra.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1016,6 +1052,8 @@ def check_complexity(code: str, context: Dict) -> float:
 
 ### 4.2 LLM-as-Judge Evaluation
 
+Đây là cách **dùng một LLM mạnh (GPT-4, Claude) làm "giám khảo"** để chấm code của một LLM khác. Giống nhờ senior engineer có kinh nghiệm đọc code, chấm điểm và nêu lý do — xử lý tốt các thứ mơ hồ như readability, design mà máy chấm tự động khó làm. Nhưng hãy nhớ: giám khảo cũng có lúc chủ quan và hallucinate, nên dùng phối hợp với test tự động, đừng tin tuyệt đối.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -1029,7 +1067,7 @@ class LLMJudge:
     
     Ưu điểm:
     - Có thể đánh giá nuanced qualities (readability, design)
-    - Không cần写了 test cases cho mọi edge case
+    - Không cần viết test cases cho mọi edge case
     - Có thể hiểu intent và context
     
     Nhược điểm:
@@ -1126,6 +1164,8 @@ Output as JSON:
 ```
 
 ### 4.3 Regression Testing Framework
+
+Regression testing trả lời câu hỏi: **sau khi đổi prompt hoặc harness, agent có quên cách làm đúng không?** Cách làm: lưu "bài giải mẫu" (golden answer) cho từng task, chạy lại rồi so với baseline; điểm tụt quá 10% là báo REGRESSION. Giống ông thầy giữ bài kiểm tra cũ của học sinh, lâu lâu cho làm lại để chắc chắn học sinh không "học trước quên sau".
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1245,9 +1285,15 @@ class RegressionTestSuite:
 
 ## 5. Continuous Improvement
 
-> **Khái niệm**: Continuous Improvement (Cải tiến liên tục) là vòng lặp đánh giá-phân tích-điều chỉnh — dùng kết quả đo lường để cải thiện prompt, tooling, knowledge — giúp agent ngày càng tốt hơn theo thời gian.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Continuous Improvement là vòng lặp "đo → phân tích → chỉnh sửa → kiểm tra lại", dùng kết quả đánh giá để cải thiện prompt, tooling và kiến thức cho agent.
+> **Ẩn dụ/so sánh:** Như việc tập gym: đo cân nặng (measure), xem vì sao chưa giảm (analyze), đổi bài tập (improve), rồi cân lại để biết có hiệu quả không (verify) — lặp đi lặp lại mỗi tuần.
+> **Vì sao quan trọng:** AI agent chỉ tốt hơn qua từng bước chỉnh sửa có đo lường; thiếu vòng lặp này nó sẽ đứng yên mãi ở mức hiện tại.
 
 ### 5.1 Improvement Loop
+
+Sơ đồ trên là **vòng lặp cải tiến 5 bước**: Đo (measure) → Phân tích (analyze) → Xác định vấn đề (identify) → Sửa (improve) → Kiểm tra lại (verify) rồi quay lại từ đầu. Hãy đọc như công thức chạy một vòng "bảo dưỡng" cho agent; mỗi tuần hoặc mỗi sprint lặp một lần.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1374,6 +1420,8 @@ class ImprovementTracker:
 
 ### 5.2 A/B Testing Framework
 
+`ABTestFramework` so sánh **hai phiên bản** — ví dụ prompt A và prompt B — trên cùng một bộ benchmark để biết bản nào tốt hơn. Như thử hai công thức pha cà phê cho khách thử theo nhóm rồi đếm ly nào được khen nhiều hơn; quyết định dựa trên dữ liệu, không dựa trên "cảm giác".
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -1442,9 +1490,15 @@ class ABTestFramework:
 
 ## 6. Reporting & Dashboards
 
-> **Khái niệm**: Reporting & Dashboards (Báo cáo và bảng điều khiển) là cách trình bày trực quan kết quả đánh giá — metric theo thời gian, so sánh phiên bản, phát hiện suy giảm — giúp đội ngũ quan sát chất lượng agent một cách liên tục.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Reporting & Dashboards là cách trình bày trực quan kết quả đánh giá — metrics theo thời gian, so sánh phiên bản, phát hiện suy giảm — để cả đội "nhìn một cái là hiểu" sức khỏe của agent.
+> **Ẩn dụ/so sánh:** Như đồng hồ tốc độ trên xe: bạn không cần bấm giờ từng mét, chỉ cần nhìn kim là biết đang chạy nhanh hay chậm, cần đạp ga hay rà phanh.
+> **Vì sao quan trọng:** Kết quả đánh giá nằm im trong file log chẳng giúp ai ra quyết định; phải hiển thị rõ thì đội mới phản ứng kịp khi chất lượng tụt dốc.
 
 ### 6.1 Evaluation Report Generator
+
+`EvaluationReporter` tự tạo báo cáo từ kết quả đánh giá ở nhiều định dạng: Markdown để đăng lên PR, JSON cho máy đọc, và dữ liệu cho dashboard trực quan. Như chiếc máy in biên bản cuối ngày của nhà máy: chỉ cần nạp số liệu, nó in ra bảng tổng kết sẵn sàng gửi cho đội ngũ.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1595,11 +1649,15 @@ class EvaluationReporter:
 
 ## 7. Case Studies
 
-> **Khái niệm**: Case Studies (Nghiên cứu điển hình) là các ví dụ áp dụng evaluation framework vào dự án thực — web app, CLI tool, API service — minh họa cách thiết lập metric, chạy đánh giá và dùng kết quả để cải thiện.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Case Studies là những ví dụ đánh giá ngoài đời thật — SWE-bench, HumanEval, pipeline sản xuất — cho thấy cách người ta thiết lập metrics, chấm agent cụ thể và rút ra bài học cải thiện.
+> **Ẩn dụ/so sánh:** Như đọc báo cáo sau trận bóng: xem đội này phối hợp ra sao, ghi bàn kiểu gì, thua ở khâu nào — để rút kinh nghiệm đưa vào trận sau thay vì chỉ dừng ở tỉ số.
+> **Vì sao quan trọng:** Lý thuyết khô khan sẽ dễ hiểu hơn rất nhiều khi nhìn nó hoạt động trong bối cảnh thật.
 
 ### 7.1 SWE-bench — Benchmarking AI Code Agents
 
-**Bối cảnh**: SWE-bench là benchmark tiêu chuẩn đánh giá khả năng sửa lỗi real-world của AI agents trên các GitHub repositories thực tế.
+**Bối cảnh**: SWE-bench là benchmark tiêu chuẩn đánh giá khả năng sửa lỗi real-world của AI agents trên các GitHub repositories thực tế. Nói đơn giản, nó lấy các bug thật từ những dự án mã nguồn mở, đưa cho agent sửa, rồi chạy lại đúng bộ test của dự án đó để xem agent có "đóng" được issue hay không — như trả bài bằng đúng đề thi thật thay vì câu hỏi tự chế.
 
 **Kết quả thực tế**:
 
@@ -1631,6 +1689,8 @@ class EvaluationReporter:
 
 ### 7.2 HumanEval — Classic Code Generation
 
+Bảng này theo dõi sự tiến bộ của các model trên HumanEval — benchmark kinh điển của OpenAI với các bài viết hàm Python đơn lẻ — từ 2023 đến 2026. Cột Improvement cho thấy model tăng bao nhiêu phần trăm. Điểm đáng chú ý: các model lớn đã chạm trần khoảng 90%, nên giới nghiên cứu phải chuyển sang benchmark khó hơn như SWE-bench — hãy đọc kỹ chú thích ⚠️ ở cuối bảng.
+
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │                 HUMANEVAL EVOLUTION                             │
@@ -1651,6 +1711,8 @@ class EvaluationReporter:
 ```
 
 ### 7.3 Real-World Evaluation Pipeline — Production Case
+
+Đây là ví dụ **một đội 20 dev dùng pipeline đánh giá hàng ngày trong sản xuất**: chạy benchmark vào ban đêm, kiểm tra regression, sinh report và cảnh báo tức thì nếu chất lượng tụt. Đọc như "bản thiết kế mẫu" cho pipeline của riêng bạn — học cách team thật tổ chức giám sát liên tục chứ không chỉ đánh giá một lần.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1746,9 +1808,15 @@ class ProductionEvaluator:
 
 ## 8. Evaluation Tooling
 
-> **Khái niệm**: Evaluation Tooling (Công cụ đánh giá) là bộ công cụ và khung kiểm thử hỗ trợ quy trình evaluation — test case generator, runner, report builder — giúp đánh giá tự động, lặp lại và có độ tin cậy cao.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Evaluation Tooling là bộ công cụ hỗ trợ quy trình đánh giá — benchmark suites, framework chấm điểm, code quality tools, security scanners — giúp đánh giá tự động, lặp lại và đáng tin cậy.
+> **Ẩn dụ/so sánh:** Như bộ dụng cụ sửa xe đầy đủ: mỗi loại chìa khóa, máy đo, máy chẩn đoán phục vụ một việc. Không có dụng cụ thì thợ phải mò bằng tay, vừa lâu vừa dễ sai.
+> **Vì sao quan trọng:** Xây evaluation từ tay trắng rất tốn kém; tận dụng công cụ có sẵn để dồn sức vào việc chính là đo lường và cải thiện.
 
 ### 8.1 Popular Evaluation Tools
+
+Sơ đồ này chia hệ sinh thái công cụ evaluation thành 4 nhóm: benchmark suites (bộ đề), evaluation frameworks (bộ khung chấm điểm), code quality tools (quét chất lượng code) và security scanners (quét lỗ hổng bảo mật). Chọn công cụ theo đúng vai trò từng nhóm — bạn không cần dùng hết, chỉ lấy cái phù hợp với giai đoạn mình đang ở.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1786,6 +1854,8 @@ class ProductionEvaluator:
 ```
 
 ### 8.2 PromptFoo Configuration Example
+
+Cấu hình YAML này giúp bạn chạy PromptFoo — công cụ test prompt phổ biến — trên agent coding: khai báo provider (model nào), prompt nào, và các assertion (điều kiện output phải thỏa). Giống viết "hợp đồng kiểm tra": máy sẽ tự chấm xem model có đạt từng điều kiện đề ra hay không (ví dụ `contains` hoặc `llm-rubric`).
 
 <details>
 <summary><b>8.2 PromptFoo Configuration Example (Click to expand/collapse)</b></summary>
@@ -1856,9 +1926,15 @@ metrics:
 
 ## 9. Best Practices
 
-> **Khái niệm**: Best Practices (Thực hành tốt nhất) là tập hợp nguyên tắc đánh giá được chứng minh hiệu quả — test case chất lượng, tránh data leakage, cập nhật thường xuyên — giúp đo lường agent chính xác và đáng tin cậy.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Best Practices là tập hợp các nguyên tắc đánh giá đã được chứng minh hiệu quả — test case chất lượng, tránh data leakage, cập nhật thường xuyên — giúp đo lường agent chính xác và đáng tin.
+> **Ẩn dụ/so sánh:** Như quy tắc an toàn trong bếp chuyên nghiệp: tay rửa sạch, dao để riêng, kiểm tra hạn dùng — áp dụng đều đặn để tránh tai nạn và món ăn luôn đạt chuẩn.
+> **Vì sao quan trọng:** Hầu hết sai lầm trong evaluation đều có người gặp trước; học theo kinh nghiệm để không tự đạp vào vết xe đổ.
 
 ### 9.1 DO và DON'T
+
+Đây là "bảng điều luật" gọn nhất để không đánh giá sai: **10 điều NÊN làm** (chẳng hạn tự động hóa mọi thứ, theo dõi baseline) và **8 điều KHÔNG nên làm** (chẳng hạn chỉ dùng một metric duy nhất). Hãy dùng như checklist khi xây hệ thống evaluation.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1924,6 +2000,8 @@ metrics:
 
 ### 9.2 Evaluation Strategy
 
+Kim tự tháp này cho bạn **tần suất và độ đắt đỏ của từng tầng kiểm tra**: tầng dưới rẻ và chạy liên tục (static analysis mỗi lần gõ phím), tầng trên đắt hơn và chạy thưa hơn (E2E test mỗi tuần). Ý tưởng: dùng tầng nhanh và rẻ để bắt lỗi sớm với khối lượng lớn, để tầng chậm và đắt chỉ xử lý phần tinh túy còn lại.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │              EVALUATION STRATEGY PYRAMID                         │
@@ -1959,9 +2037,15 @@ metrics:
 
 ## 10. Case Studies Thực Tế
 
-> **Khái niệm**: Case Studies Thực Tế (Nghiên cứu điển hình thực tế) là các ví dụ evaluation triển khai trong sản xuất — SWE-bench, HumanEval — minh họa cách thiết kế benchmark, chấm điểm agent cụ thể và rút ra bài học cải thiện.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Case Studies Thực Tế là những ví dụ evaluation đã triển khai ngoài sản xuất — SWE-bench, Aider, LiveCodeBench, Anthropic — minh họa cách thiết kế benchmark, chấm điểm agent cụ thể và rút ra bài học cải thiện.
+> **Ẩn dụ/so sánh:** Như xem phim tài liệu về cách các công ty lớn vận hành: không chỉ lý thuyết suông, mà nhìn trực tiếp họ ra quyết định, sai chỗ nào, hay chỗ nào để áp dụng cho mình.
+> **Vì sao quan trọng:** Mỗi case study là một bài học đã được người khác trả phí; học từ đó giúp bạn chọn đúng benchmark và tránh lặp lại sai lầm.
 
 ### 10.1 Princeton NLP SWE-bench: Benchmarking Real-World Code
+
+Case study này phân tích SWE-bench — benchmark sửa bug thật từ 2294 GitHub issues. Bảng leaderboard cho thấy tỷ lệ resolve, token và chi phí của từng hệ thống; điểm đáng chú ý là **chi phí chênh nhau tới 10 lần giữa các hệ thống có chất lượng tương đương**. Phần EVALUATION METHODOLOGY mô tả quy trình chấm 5 bước mà bạn có thể áp dụng lại cho benchmark của riêng mình.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -2001,6 +2085,8 @@ metrics:
 
 ### 10.2 Aider: LLM Leaderboard for Coding
 
+Case study này là bảng xếp hạng của dự án Aider, chấm LLM qua cách chúng sửa file theo edit-format và chất lượng diff. Điểm mấu chốt nằm ở **phần COST-EFFECTIVENESS**: DeepSeek V3 đạt 92% chất lượng của GPT-4o nhưng chỉ tốn 11% chi phí — minh họa rằng model rẻ có thể là lựa chọn tối ưu cho task thường.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                 AIDER LLM LEADERBOARD                             │
@@ -2031,6 +2117,8 @@ metrics:
 ```
 
 ### 10.3 LiveCodeBench: Dynamic Evaluation
+
+LiveCodeBench giải quyết điểm yếu của benchmark tĩnh: model có thể đã "học lậu" dữ liệu cũ hoặc bộ đề dần lỗi thời. Vì vậy đề thi được **cập nhật hàng tuần bằng bài mới từ các nền tảng thi đấu lập trình**, kèm phát hiện contamination. Sơ đồ pipeline Scrape → Dedupe → Validate → Run LLM là quy trình "sản xuất đề thi" liên tục.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -2067,6 +2155,8 @@ metrics:
 ```
 
 ### 10.4 Anthropic's Evaluation Methodology
+
+Anthropic đánh giá theo **4 tầng**, từ máy (automated benchmarks) đến người (human evaluation) rồi đến thực tế (real user feedback, A/B testing) — vì không tầng nào đơn lẻ kể trọn câu chuyện. Chuẩn họ dùng nhiều là **Acceptance Rate** (tỷ lệ dev chấp nhận gợi ý của AI). Đây là mô hình "đánh giá nhiều nguồn" đáng bắt chước thay vì chỉ dựa một con số.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -2570,6 +2660,7 @@ Workflow:
 5. Output the final patch in unified diff format
 
 Be concise. Use tools efficiently.`;
+```
 
 </details>
 
@@ -2597,9 +2688,15 @@ Be concise. Use tools efficiently.`;
 
 ## 11. TypeScript Interfaces cho Evaluation
 
-> **Khái niệm**: TypeScript Interfaces (Giao diện TypeScript) là tập hợp định nghĩa kiểu cho evaluation — metric, test case, report, configuration — giúp chuẩn hóa và kiểm tra dữ liệu đánh giá bằng ngôn ngữ có kiểu tĩnh.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** TypeScript Interfaces là các "bản vẽ kiểu dữ liệu" cho evaluation — metric, test case, report, configuration — giúp chuẩn hóa hình dạng dữ liệu đánh giá và bắt lỗi sai ngay từ lúc code (compile time).
+> **Ẩn dụ/so sánh:** Như phiếu nhập hàng có sẵn các ô: tên, số lượng, đơn giá. Người nhập chỉ điền đúng ô, không thể sáng tạo kiểu dữ liệu khác — công đoạn kiểm đếm sau đó mới chính xác được.
+> **Vì sao quan trọng:** Dữ liệu evaluation nhiều loại, dễ lẫn lộn; kiểu tĩnh giúp hệ thống không âm thầm tạo ra dữ liệu sai lệch.
 
 ### 11.1 Core Evaluation Types
+
+Khối TypeScript này là **từ điển kiểu dữ liệu của cả hệ thống evaluation**: BenchmarkConfig, EvaluationResult, QualityMetrics, ABTestConfig và nhiều kiểu khác. Đọc để biết mỗi dữ liệu phải có hình dạng ra sao — chẳng hạn TaskResult buộc có status, score, duration, tokensUsed. Dùng như bản hợp đồng giữa các module: ai cũng đúng format, không ai tự bịa cấu trúc riêng.
 
 <details>
 <summary><b>11.1 Core Evaluation Types (Click to expand/collapse)</b></summary>
@@ -2855,9 +2952,15 @@ interface HarnessQualityMetrics {
 
 ## 12. Design Principles cho Evaluation
 
-> **Khái niệm**: Design Principles (Nguyên tắc thiết kế) là bộ nguyên tắc cốt lõi khi xây dựng hệ thống evaluation — thống nhất, có thể tái sử dụng, dễ giám sát, phản hồi nhanh — đảm bảo đánh giá bền vững và có ý nghĩa lâu dài.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Design Principles là bộ nguyên tắc cốt lõi khi xây hệ thống evaluation — mỗi phần đảm nhiệm một việc, mở rộng được, đo được, phản hồi nhanh — để hệ thống bền vững lâu dài, không vỡ khi quy mô lớn lên.
+> **Ẩn dụ/so sánh:** Như bản thiết kế ngôi nhà: móng vững, phòng nào chức năng đó, muốn đúc thêm tầng vẫn được mà không phải đập đi xây lại. Xây theo cảm hứng thì sớm muộn cũng phải sửa lớn.
+> **Vì sao quan trọng:** Hệ thống evaluation thiếu nguyên tắc sẽ nhanh chóng thành mớ code khó bảo trì và cho kết quả không tin cậy.
 
 ### 12.1 SOLID cho Evaluation Systems
+
+Sơ đồ này áp dụng 5 nguyên tắc SOLID kinh điển vào hệ thống evaluation: mỗi evaluator chỉ đo một thứ (Single Responsibility), thêm metric mới không cần sửa code cũ (Open/Closed). Đọc như "quy tắc xây nhà cho code": tuân thủ thì hệ thống dễ bảo trì và mở rộng trong nhiều năm.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -2893,6 +2996,8 @@ interface HarnessQualityMetrics {
 ```
 
 ### 12.2 Evaluation Design Principles
+
+Đây là **10 điều răn** khi thiết kế evaluation, từ "đo thứ quan trọng, không đo thứ dễ đo" đến "đánh giá chính bộ đánh giá". Đọc nhanh như đọc hiến chương: mỗi điều là một cột mốc giúp hệ thống của bạn không đi lệch đường.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -2945,9 +3050,15 @@ interface HarnessQualityMetrics {
 
 ## 13. Testing Evaluation Harness
 
-> **Khái niệm**: Testing Evaluation Harness (Khung kiểm thử đánh giá) là khung kiểm chứng chính hệ thống evaluation — test tính hợp lệ của metric, độ tin cậy của test case, hiệu quả của runner — đảm bảo bản thân phép đo hoạt động đúng trước khi dùng.
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Testing Evaluation Harness là việc "test lại chính bộ test" — kiểm tra metric tính đúng không, benchmark lặp lại có ổn định không, cost tracking có chính xác không — trước khi dùng nó để chấm agent.
+> **Ẩn dụ/so sánh:** Như kiểm định cái cân trước khi cân hàng: lái buôn phải chắc chắn cái cân đúng, nếu cân sai thì mọi phiếu hàng sau đó đều sai theo.
+> **Vì sao quan trọng:** Cái cân sai còn nguy hiểm hơn không có cân — nó khiến bạn tin vào những con số dối trá.
 
 ### 13.1 Evaluation Test Harness
+
+Đây là bộ test **kiểm tra chính hệ thống đánh giá**: metric có tính đúng không, benchmark có lặp lại giống nhau không, cost tracking có chính xác không, regression có được phát hiện không. Cách dùng: viết các trường hợp kiểm thử như `test_metric_accuracy` bên dưới, đăng ký vào harness rồi chạy `run_all()` để nhận báo cáo pass/fail. Nếu phần này không pass thì mọi con số bạn đo đều chưa đáng tin.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -3191,7 +3302,15 @@ harness.register(EvalHarnessTest(
 
 ## 14. Future Trends trong Evaluation
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Future Trends là những hướng phát triển đang định hình cách đánh giá AI trong 2024-2026 — tự động hóa, đánh giá real-time, tối ưu chi phí, benchmark chuyên ngành — giúp bạn chuẩn bị hệ thống trước, không bị tụt lại.
+> **Ẩn dụ/so sánh:** Như người trồng trọt nghe dự báo thời tiết: biết sắp hạn, sắp mưa bão để chủ động canh tác thay vì bị động chờ trời đổi.
+> **Vì sao quan trọng:** Evaluation đang dịch chuyển nhanh; ai xây hệ thống theo lối cũ sẽ phải đập đi làm lại rất tốn kém.
+
 ### 14.1 AI Evaluation Trends (2024-2026)
+
+Bảng này tóm tắt **6 xu hướng lớn** định hình cách đánh giá AI từ 2024 đến 2026: tự động hóa khâu đánh giá (meta-evaluation), đánh giá real-time, tối ưu chi phí, kết hợp con người với AI, benchmark chuyên ngành, và biến evaluation thành code trong CI/CD. Mỗi mục nhỏ là một gợi ý bạn có thể thử đưa vào hệ thống của mình.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐

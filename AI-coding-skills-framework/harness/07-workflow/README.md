@@ -78,6 +78,12 @@ Mỗi bước phải có **state management**, **error recovery**, và **observa
 
 ## Tổng Quan
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Workflow là cách sắp xếp các bước thực hiện của AI Agent thành một kế hoạch rõ ràng — bước nào trước, bước nào sau, lỗi xử lý ra sao — để một tác vụ phức tạp được hoàn thành đúng trình tự và an toàn.
+> - **Ẩn dụ/so sánh:** Giống bếp nhà hàng: đầu bếp (agent) có nguyên liệu tốt vẫn cần thực đơn và quy trình trực (workflow) để ra món đúng giờ, đúng chất lượng mỗi lần.
+> - **Vì sao quan trọng:** Không có workflow, agent làm việc theo cảm hứng — vừa chậm, vừa khó lặp lại kết quả, và hỏng giữa chừng là phải làm lại từ đầu.
+
 **Workflow** là quá trình **thiết kế và tổ chức các bước thực hiện** để hoàn thành một tác vụ coding phức tạp. Trong Harness Engineering, Workflow Engine là **"trung tâm điều phối"** — quản lý toàn bộ luồng từ trigger → plan → execute → validate → deploy, với observability, error recovery, và state management.
 
 ```
@@ -139,9 +145,15 @@ Mỗi bước phải có **state management**, **error recovery**, và **observa
 
 ## 1. Workflow Patterns
 
-> **Khái niệm**: Workflow Patterns (Các mô hình luồng công việc) là các chiến lược tổ chức và điều phối chuỗi hoạt động của AI Agent — tuần tự (sequential), song song (parallel), rẽ nhánh có điều kiện (branching) — nhằm đạt mục tiêu nhiệm vụ một cách có kiểm soát.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Workflow Patterns là các "khuôn mẫu" tổ chức chuỗi hoạt động của AI Agent — chạy tuần tự (sequential), chạy song song (parallel), rẽ nhánh theo điều kiện (conditional branching) — nhằm đạt mục tiêu nhiệm vụ một cách có kiểm soát.
+> - **Ẩn dụ/so sánh:** Giống đường đi trong thành phố: một con đường thẳng (sequential), nhiều làn chạy đồng thời (parallel), hay giao lộ rẽ hướng tuỳ biển báo (conditional branching).
+> - **Vì sao quan trọng:** Chọn đúng pattern quyết định tốc độ, độ phức tạp và khả năng chịu lỗi của cả workflow.
 
 ### 1.1 Sequential Workflow (Tuần Tự)
+
+Giống nấu một món ăn theo công thức: làm xong bước 1 mới sang bước 2, không được bỏ qua, không lộn thứ tự. Đây là pattern đơn giản nhất — dễ viết, dễ debug, nhưng hơi chậm vì mọi bước nối đuôi nhau. Dùng khi bước sau bắt buộc phải phụ thuộc vào kết quả bước trước. Diagram dưới đây minh hoạ luồng 5 bước Parse → Analyze → Build → Test → Deploy:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -272,6 +284,8 @@ class SequentialWorkflow:
 
 ### 1.2 Parallel Workflow (Song Song)
 
+Giống nấu bữa tiệc với nhiều trợ lý: cùng lúc người rửa rau, người nấu cơm, người chiên thịt — xong tất cả mới gom lại dọn bàn. Pattern này chạy nhanh vì nhiều bước cùng lúc, nhưng phần khó nằm ở chỗ gộp (fan-in) kết quả về. Dùng khi các bước độc lập với nhau, không cần chờ nhau:
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                    PARALLEL WORKFLOW (Song Song)                  │
@@ -400,6 +414,8 @@ class ParallelWorkflow:
 </details>
 
 ### 1.3 DAG Workflow (Directed Acyclic Graph)
+
+Giống lịch thi đấu giải thể thao: trận bán kết phải chờ đủ hai trận tứ kết, nhưng hai trận tứ kết lại diễn ra song song. DAG là pattern linh hoạt nhất — mỗi node chỉ chạy sau khi các node nó phụ thuộc (dependency) hoàn thành, hết "tầng" này rồi mới sang "tầng" kia, và tuyệt đối không có vòng lặp. Ví dụ dưới đây: A và B chạy song song → C chờ A, D chờ B → E chờ C, F chờ D:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -581,6 +597,8 @@ class DAGWorkflow:
 
 ### 1.4 Event-Driven Workflow
 
+Giống trung tâm báo cháy: chuông reo (event) ở đâu thì đội ứng trực (handler) phản hồi ở đó, và mỗi phản hồi có thể kích ra một báo động mới. Khác với các pattern trên, luồng không được định sẵn từ đầu — workflow phản ứng theo từng sự kiện nảy sinh, nên rất linh hoạt với hệ thống bất định:
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                    EVENT-DRIVEN WORKFLOW                          │
@@ -723,9 +741,15 @@ class EventDrivenWorkflow:
 
 ## 2. Pipeline Design
 
-> **Khái niệm**: Pipeline Design (Thiết kế đường ống) là kiến trúc chia tác vụ xử lý thành nhiều giai đoạn (stages) nối tiếp nhau, hỗ trợ branching, fan-out/fan-in, mỗi giai đoạn nhận input từ giai đoạn trước và chuyển output cho giai đoạn sau.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Pipeline Design là cách chia một tác vụ lớn thành nhiều giai đoạn (stages) nối tiếp nhau; mỗi giai đoạn nhận dữ liệu từ giai đoạn trước, xử lý rồi chuyển tiếp cho giai đoạn sau, kèm khả năng rẽ nhánh (branching) và fan-out/fan-in.
+> - **Ẩn dụ/so sánh:** Giống dây chuyền nhà máy bia: nghiền → nấu → lọc → lên men → đóng chai; mỗi công đoạn nhận đầu ra của công đoạn trước, và có ngã rẽ nếu khách đặt loại bia khác.
+> - **Vì sao quan trọng:** Pipeline giúp xử lý dữ liệu lớn gọn gàng, kiểm tra được từng khâu và dễ đổi mới khi nghiệp vụ thay đổi.
 
 ### 2.1 Data Pipeline với Branching
+
+Đây là "dây chuyền làm việc" cho dữ liệu: mỗi khâu là một stage (transform, filter, branch, fan_out, validator, sink), dữ liệu chảy qua từng khâu như sản phẩm qua từng công đoạn. Điểm đặc biệt là branching — một khâu kiểm tra điều kiện rồi rẽ dữ liệu sang hai nhánh khác nhau, như băng chuyền có chốt chuyển hướng hàng. Code bên dưới cho thấy cách ráp và chạy một pipeline đầy đủ:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -949,9 +973,15 @@ class PipelineMetrics:
 
 ## 3. State Machine
 
-> **Khái niệm**: State Machine (Máy trạng thái) là mô hình biểu diễn quá trình làm việc của Agent qua tập hợp các trạng thái (states) và chuyển trạng thái (transitions) có điều kiện, giúp kiểm soát luồng thực thi và trạng thái bất hợp lệ.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** State Machine là "máy trạng thái" — mô hình ghi lại Agent đang ở trạng thái nào (đang đọc code, đang viết code, đang test) và chỉ cho phép chuyển sang trạng thái tiếp theo khi thoả điều kiện nhất định.
+> - **Ẩn dụ/so sánh:** Giống đèn giao thông ba màu: xe chỉ được đi khi đèn xanh, chuỗi xanh → vàng → đỏ luôn đúng tuần tự và không bao giờ vọt thẳng từ đỏ sang xanh.
+> - **Vì sao quan trọng:** Nó ngăn Agent nhảy loạn giữa các bước, giữ cho luồng thực thi lúc nào cũng hợp lệ và có thể dự đoán được.
 
 ### 3.1 Hierarchical State Machine
+
+Đây là bản "nâng cấp" của state machine: ngoài chuyển trạng thái có điều kiện, nó còn hỗ trợ trạng thái cha/con (hierarchical), guard chặn chuyển bất hợp lệ, timeout tự động và giới hạn số lần lặp — đủ an toàn để điều khiển cả một AI coding agent. Code dưới đây mô phỏng agent đi qua chuỗi trạng thái IDLE → THINKING → PLANNING → READING_CODE → WRITING_CODE → RUNNING_TESTS → DONE:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1122,9 +1152,15 @@ class HierarchicalStateMachine:
 
 ## 4. Error Recovery
 
-> **Khái niệm**: Error Recovery (Khôi phục lỗi) là tập hợp các chiến lược xử lý lỗi trong workflow — retry với exponential backoff, fallback sang phương án khác, circuit breaker — nhằm đảm bảo độ tin cậy và khôi phục nhanh khi thực thi thất bại.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Error Recovery là bộ chiến lược xử lý khi workflow gặp lỗi — thử lại với thời gian chờ tăng dần (retry/backoff), fallback sang phương án khác, hoặc cắt mạch bảo vệ (circuit breaker) — để hệ thống chạy ổn định thay vì sập cả tiến trình.
+> - **Ẩn dụ/so sánh:** Giống gọi điện thoại khi máy bận: thử lại sau 1 phút (retry), chưa được thì chờ lâu hơn (backoff), hoặc quay sang gọi người thứ hai (fallback).
+> - **Vì sao quan trọng:** Lỗi chắc chắn sẽ xảy ra; có chiến lược khôi phục thì workflow không bị chết đứng giữa chừng.
 
 ### 4.1 Retry Strategies
+
+Giống nhấn "gửi lại" email khi mạng chập chờn — nhưng làm có khoa học: thử lại với khoảng chờ tăng dần (1s → 2s → 4s) để không dồn tải lên service, và thêm jitter (độ nhiễu ngẫu nhiên) để các client không cùng lúc "dồn đàn" như bầy trâu tháo chạy (thundering herd). Code dưới đây là decorator retry dùng cho cả hàm đồng bộ lẫn async:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1209,6 +1245,8 @@ def async_retry(
 </details>
 
 ### 4.2 Circuit Breaker Pattern
+
+Giống cầu chì điện trong nhà: dòng lỗi quá dày thì cầu chì đứt, ngắt luôn dòng điện để bảo vệ toàn hệ thống. Ở đây, khi một service lỗi liên tục vượt ngưỡng, mạch chuyển từ CLOSED (đóng, vẫn gọi) sang OPEN (mở, chặn gọi); sau một khoảng thời gian hồi phục, nó thử lại ở trạng thái HALF_OPEN để xem service đã khoẻ chưa:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1314,6 +1352,8 @@ class CircuitOpenError(Exception):
 
 ### 4.3 Saga Pattern
 
+Giống làm thủ tục đặt tour trọn gói: nếu hỏng giữa chừng ở bước "đặt vé máy bay" thì phải huỷ ngược lại các bước đã thành công — trả tiền phòng, trả tiền bảo hiểm. Saga dùng cho nghiệp vụ trải qua nhiều services: mỗi bước đều có một compensation (bước bù) để cuộn ngược khi có bước nào đó fail:
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -1409,9 +1449,15 @@ class SagaOrchestrator:
 
 ## 5. Observability
 
-> **Khái niệm**: Observability (Khả năng quan sát) là cơ chế theo dõi, ghi log và truy vết toàn bộ workflow — metrics, traces, logs — giúp phát hiện điểm nghẽn, lỗi và tối ưu hiệu năng hệ thống Agent.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Observability là khả năng "nhìn thấy bên trong" workflow bằng ba loại dữ liệu — logs (nhật ký sự kiện), metrics (số đo), traces (dấu vết của từng request) — để biết chính xác chuyện gì xảy ra ở từng bước.
+> - **Ẩn dụ/so sánh:** Giống camera hành trình + đồng hồ công tơ mét + bản đồ GPS của một chiếc taxi: biết xe đang đi đâu, chạy nhanh chậm thế nào, và đang bị kẹt ở đoạn nào.
+> - **Vì sao quan trọng:** Không quan sát được thì khi workflow chậm hay sai, bạn không thể tìm ra nguyên nhân và phải mò từng bước một để debug.
 
 ### 5.1 Distributed Tracing
+
+Giống "lệnh truy vết" xuyên suốt hành trình: mỗi yêu cầu được gán một trace_id duy nhất, đi qua bao nhiêu service thì mỗi bước đều ghi lại thành spans (span cha, span con) — nhờ đó bạn dựng lại toàn bộ hành trình của một request và tìm ra chính xác khâu nào chậm hay lỗi:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1548,6 +1594,8 @@ class Tracer:
 
 ### 5.2 Structured Logging + Metrics
 
+Giống nhiệt kế + sổ ghi chép của máy móc: một bên (structured logging) ghi lại từng sự kiện dưới dạng JSON có cấu trúc để dễ lọc tìm, một bên (metrics) đếm và thống kê số liệu — số lần chạy, tỷ lệ thành công, độ trễ p50/p95/p99. Code dưới đây gồm hai lớp WorkflowLogger và MetricsCollector:
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -1644,7 +1692,11 @@ class MetricsCollector:
 
 ## 6. Workflow Orchestration Engine
 
-> **Khái niệm**: Workflow Orchestration Engine (Bộ điều phối workflow) là thành phần trung tâm chịu trách nhiệm khởi tạo, điều phối, giám sát và hủy bỏ các workflow — quản lý scheduling, task state, retry và dependency giữa các bước.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Workflow Orchestration Engine là "trái tim" của hệ thống — thành phần trung tâm chịu trách nhiệm khởi tạo, điều phối, giám sát và hủy bỏ workflow, đồng thời quản lý scheduling, trạng thái từng bước, retry và dependency giữa các bước.
+> - **Ẩn dụ/so sánh:** Giống đài kiểm soát không lưu tại sân bay: điều phối từng chuyến bay (tác vụ) cất hạ cánh đúng đường băng, đúng thứ tự, và biết chính xác máy bay nào đang ở đâu.
+> - **Vì sao quan trọng:** Đây là nơi gom toàn bộ kiến thức của các phần trước — patterns, pipeline, state machine, error recovery, observability — thành một engine dùng được trong thực tế.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1805,7 +1857,11 @@ class WorkflowOrchestrator:
 
 ## 7. Workflow Testing
 
-> **Khái niệm**: Workflow Testing (Kiểm thử workflow) là quy trình xây dựng unit test, integration test và end-to-end test để xác minh tính đúng đắn của tuần tự bước, xử lý lỗi, retry và kết quả tổng thể của toàn bộ luồng công việc.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Workflow Testing là quy trình kiểm thử workflow trước khi chạy thật — unit test cho từng bước, integration test cho cả chuỗi, end-to-end test cho toàn bộ luồng — để chắc chắn các bước nối nhau đúng và lỗi được xử lý như mong đợi.
+> - **Ẩn dụ/so sánh:** Giống chạy thử dây chuyền sản xuất bằng hàng giả: chỉ cần một khâu kẹt là biết ngay chỗ nào hỏng, mà không tốn tiền hàng thật.
+> - **Vì sao quan trọng:** Workflow càng phức tạp thì lỗi nối các bước càng khó tìm; kiểm thử đàng hoàng giúp phát hiện lỗi trước khi nó làm hỏng hệ thống thật.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1975,9 +2031,15 @@ if __name__ == "__main__":
 
 ## 8. Harness Integration
 
-> **Khái niệm**: Harness Integration (Tích hợp Harness) là lớp kết nối Workflow module với toàn bộ Harness Framework — Memory, Guardrails, Tool Execution, Feedback — thông qua các interface thống nhất (TypeScript).
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Harness Integration là lớp kết nối Workflow module với toàn bộ Harness Framework — Memory, Guardrails, Tool Execution, Feedback — thông qua các interface thống nhất để các module trao đổi với nhau bằng một "ngôn ngữ" chung.
+> - **Ẩn dụ/so sánh:** Giống ổ cắm điện chuẩn quốc tế: bất kỳ thiết bị (module) nào cắm vào cũng vừa khớp và hoạt động, miễn là tuân theo chuẩn interface.
+> - **Vì sao quan trọng:** Không có interface chuẩn, mỗi module tự bịa cách gọi riêng — tích hợp thành mớ dây nhợ rối và khó bảo trì.
 
 ### 8.1 TypeScript Interfaces
+
+Đây là "hợp đồng" giữa Workflow module và phần còn lại của Harness framework — khai báo các method chuẩn như createWorkflow, execute, pause, resume, cancel, getTrace, getMetrics để ai cũng biết engine cung cấp gì và dùng như thế nào:
 
 <details>
 <summary><b>8.1 TypeScript Interfaces (Click to expand/collapse)</b></summary>
@@ -2117,9 +2179,15 @@ class HarnessWorkflowEngine implements WorkflowEngine {
 
 ## 9. Case Studies
 
-> **Khái niệm**: Case Studies Thực Tế là các phân tích chi tiết về kiến trúc workflow đang được triển khai thực tế trong những hệ thống tiên tiến (GitHub Actions, Temporal, Claude Code) để rút ra bài học thiết kế áp dụng được.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Case Studies là những phân tích thực tế về cách các hệ thống lớn (GitHub Actions, Apache Airflow, Temporal, DeepSeek Harness) thiết kế workflow, để rút ra bài học áp dụng vào dự án của bạn.
+> - **Ẩn dụ/so sánh:** Giống xem phim tài liệu rồi rút kinh nghiệm: thay vì tự lăn vào vết xe đổ, bạn học ngay từ cách người đi trước đã giải quyết vấn đề.
+> - **Vì sao quan trọng:** Lý thuyết suông khó hình dung; học từ hệ thống thật giúp bạn biết pattern nào hiệu quả trong điều kiện sản xuất.
 
 ### 9.1. GitHub Actions — Event-Driven CI/CD
+
+Ví dụ gần gũi với hầu hết developer: một file YAML mô tả CI/CD chạy khi có push hoặc pull request. Bạn sẽ thấy ngay event-driven trigger (on:) kết hợp dependency giữa các job — deploy phải chờ build, build phải chờ lint và test:
 
 <details>
 <summary><b>9.1. GitHub Actions — Event-Driven CI/CD (Click to expand/collapse)</b></summary>
@@ -2162,6 +2230,8 @@ jobs:
 
 ### 9.2. Apache Airflow — Data Pipeline Orchestration
 
+Airflow nổi tiếng với cách khai báo pipeline bằng DAG trong Python chỉ vài dòng: khai báo các task (extract, transform, load, validate) rồi dùng toán tử >> để nối thứ tự. Cách này khiến toàn bộ quy trình hiện rõ như một bản đồ và dễ đổi thứ tự:
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2185,6 +2255,8 @@ with DAG('data_pipeline', schedule_interval='@daily') as dag:
 
 ### 9.3. Temporal — Durable Workflow Execution
 
+Điểm mấu chốt của Temporal: workflow phải "sống sót" ngay cả khi server crash — trạng thái được lưu bền vững (durable) và tự động retry, kèm compensation. Ví dụ dưới đây là flow đặt hàng theo kiểu Saga: giữ hàng → thu tiền → gửi hàng; nếu bước gửi hàng fail thì huỷ ngược lại:
+
 ```
 Temporal pattern: Saga with compensating transactions
 
@@ -2205,6 +2277,8 @@ Compensation (reverse):
 ### 9.4. DeepSeek Harness — Cordis Micro-Kernel Plugin Architecture
 
 **Bối cảnh**: DeepSeek Harness sử dụng **Cordis** — một micro-kernel plugin engine được thiết kế theo triết lý **"Agent = Model + Harness"** và **"Everything is a plugin"**. Cordis cung cấp lightweight kernel (~2KB gzipped) quản lý toàn bộ lifecycle của agent qua plugin system, với dependency injection qua Context service registry.
+
+Nói dễ hiểu: kernel giống một hệ điều hành tí hon, các plugin giống các app cài vào đó — app chỉ cần khai báo "tôi cần dịch vụ gì" (consumes) và "tôi cung cấp dịch vụ gì" (provides), hệ điều hành lo phần kết nối giúp chúng chạy đúng thứ tự.
 
 <details>
 <summary><b>TypeScript Architecture (Click to expand/collapse)</b></summary>
@@ -2909,7 +2983,11 @@ interface TrajectoryQuery {
 
 ## 10. Design Principles
 
-> **Khái niệm**: Design Principles (Nguyên tắc thiết kế) là tập hợp các chỉ dẫn kiến trúc phần mềm (bao gồm nguyên lý SOLID) áp dụng riêng cho hệ thống xây dựng và điều phối agent workflows.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Design Principles là bộ chỉ dẫn kiến trúc (gồm nguyên lý SOLID) áp dụng riêng cho workflow — giúp bạn quyết định cách chia bước, tổ chức dependency và đặt biên giới trách nhiệm trong hệ thống.
+> - **Ẩn dụ/so sánh:** Giống luật xây nhà: không ai cấm xây, nhưng tuân theo quy chuẩn thì nhà an toàn, dễ sửa và không phải đập đi xây lại.
+> - **Vì sao quan trọng:** Nguyên tắc tốt khiến workflow dễ mở rộng, dễ test và ít nợ kỹ thuật khi hệ thống lớn dần.
 
 ### 10.1 SOLID Cho Workflows
 
@@ -2934,6 +3012,8 @@ interface TrajectoryQuery {
 - Không hardcode step implementations
 
 ### 10.2 6 Design Principles
+
+Sáu nguyên tắc dưới đây là "kim chỉ nam" khi thiết kế bất kỳ workflow nào — từ việc chạy lại an toàn (idempotency) đến lưu trạng thái ra ngoài bộ nhớ (state externalization) để có thể resume từ checkpoint:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -2970,7 +3050,11 @@ interface TrajectoryQuery {
 
 ## 11. Best Practices
 
-> **Khái niệm**: Best Practices (Thực hành tốt nhất) là các quy tắc nên làm (DO), không nên làm (DON'T) và chiến lược tối ưu được đúc kết từ kinh nghiệm thực tiễn khi thiết kế hệ thống workflow cho AI Agent.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Best Practices là danh sách việc nên làm (DO) và không nên làm (DON'T) được đúc kết từ kinh nghiệm thực tiễn khi xây dựng workflow cho AI Agent.
+> - **Ẩn dụ/so sánh:** Giống checklist của phi công trước khi cất cánh: ai cũng thuộc lòng, nhưng cứ ghi ra để kiểm tra tuần tự mới chắc ăn, tránh quên việc nhỏ gây hậu quả lớn.
+> - **Vì sao quan trọng:** Đây là "bản đồ tránh bẫy" — làm đúng thì ít đau đầu, làm sai thì tự chuốc lỗi khó debug.
 
 ### 11.1 DO ✅
 
@@ -3000,7 +3084,11 @@ interface TrajectoryQuery {
 
 ## 12. Tương Lai
 
-> **Khái niệm**: Tương Lai phản ánh các xu hướng công nghệ nổi bật trong workflow orchestration và agent pipelines giai đoạn 2026-2028, bao gồm tự động hóa orchestration, adaptive workflows và multi-agent coordination.
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Phần Tương Lai phác thảo các xu hướng workflow orchestration và agent pipelines giai đoạn 2026-2028 — workflow tự sinh bởi AI, serverless engines, chạy đa nền tảng, và workflows thích ứng theo thời gian thực.
+> - **Ẩn dụ/so sánh:** Giống xem dự báo thời tiết tuần tới: không chắc 100%, nhưng đủ định hướng để bạn chọn kiến trúc không lỗi thời sau hai năm nữa.
+> - **Vì sao quan trọng:** Nắm xu hướng giúp bạn đầu tư đúng công nghệ, tránh xây thứ sắp bị thay thế.
 
 ### 12.1 Xu Hướng 2026-2028
 

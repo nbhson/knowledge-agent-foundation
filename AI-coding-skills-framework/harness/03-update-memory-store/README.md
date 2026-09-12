@@ -80,6 +80,14 @@ Update Memory = Learn → Consolidate → Preserve → Evolve
 
 ## Tổng Quan
 
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Write-back là chiều "viết ngược" — bên cạnh đọc (retrieve) kiến thức, hệ thống còn ghi lại những gì mới học được (sự kiện, fact, feedback) vào memory store, rồi mới đến consolidation và tạo báo cáo.
+> 
+> **Ẩn dụ/so sánh:** Giống thủ thư — retrieve là ra kệ lấy sách, còn write-back là viết thẻ danh mục cho cuốn sách mới mua về.
+> 
+> **Vì sao quan trọng:** Nếu chỉ "đọc" mà không "ghi", AI trả lời bằng kiến thức cũ và mỗi phiên trò chuyện lại bắt đầu từ con số 0.
+
 Sau khi retrieve và xử lý thông tin, hệ thống cần **ghi ngược lại** vào memory store. Đây là quá trình **write-back** — cập nhật knowledge base, memory systems, và tạo reports.
 
 ```
@@ -106,6 +114,14 @@ Sau khi retrieve và xử lý thông tin, hệ thống cần **ghi ngược lạ
 ```
 
 ## Tại Sao Update Memory & Knowledge Store Quan Trọng?
+
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Update memory là việc "làm mới" bộ não của AI — ghi sự kiện mới, gộp kiến thức trùng lặp (consolidation), và loại bỏ thông tin lỗi thời sao cho kiến thức luôn đúng ở thời điểm hiện tại.
+> 
+> **Ẩn dụ/so sánh:** Giống hồ sơ bệnh án — bác sĩ không chỉ đọc hồ sơ cũ mà phải cập nhật kết quả xét nghiệm mới, nếu không chẩn đoán sẽ sai lệch.
+> 
+> **Vì sao quan trọng:** Bộ nhớ không được cập nhật sẽ làm AI trả lời kiến thức cũ, lặp lại lỗi đã rồi, và đánh mất niềm tin của người dùng.
 
 > *"Bộ não con người không chỉ là nơi lưu trữ – nó là hệ thống liên tục tổ chức lại, kết nối, và làm mới thông tin. Memory system của AI cũng vậy."*
 
@@ -246,7 +262,17 @@ Kết quả: Giảm **68% duplicate questions** giữa các sessions.
 
 ## 1. Write-back Memory
 
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Write-back Memory là bước ghi lại những gì hệ thống vừa học được — sự kiện (episodic), fact (semantic), feedback — vào memory store sau khi xử lý cuộc trò chuyện.
+> 
+> **Ẩn dụ/so sánh:** Giống việc ghi chú ngay sau cuộc họp — nếu không ghi, vài giờ sau bạn quên gần hết nội dung.
+> 
+> **Vì sao quan trọng:** Nếu chỉ retrieve mà không write-back, AI không bao giờ "khôn hơn" qua mỗi lần trò chuyện và luôn lặp lại câu hỏi cũ.
+
 ### 1.1 Khi Nào Cần Write-back?
+
+Không phải cứ có tin mới là ghi — hãy write-back khi nó **thay đổi trạng thái** của user, của hệ thống, hoặc tạo ra bài học. Ba tình huống dưới đây nên đọc như ba kịch bản: dòng đầu là điều xảy ra trong cuộc trò chuyện, các dòng `→` là những việc hệ thống cần làm theo.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -280,6 +306,8 @@ Kết quả: Giảm **68% duplicate questions** giữa các sessions.
 ```
 
 ### 1.2 Write-back Implementation
+
+Lớp `MemoryWriter` bên dưới là "cây bút" của hệ thống: `write_episodic` ghi sự kiện, `write_fact` ghi fact, `update_fact` sửa fact, `write_user_profile` cập nhật thông tin user. Không cần hiểu từng dòng — chỉ cần để ý điểm chung: **hàm nào cũng ghi vào `event_log`** để sau này truy vết được ai đã ghi gì, lúc nào.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -542,7 +570,17 @@ class MemoryWriter:
 
 ## 2. Memory Consolidation
 
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Consolidation là quá trình "dọn dẹp kho" — gộp các fact trùng lặp, thay fact cũ bằng fact mới, và giải quyết các fact mâu thuẫn để kiến thức gọn gàng và chính xác.
+> 
+> **Ẩn dụ/so sánh:** Giống dọn tủ quần áo định kỳ — cất bớt áo trùng, bỏ áo rách, sắp lại gọn gàng để lần sau tìm nhanh.
+> 
+> **Vì sao quan trọng:** Kiến thức tích lũy không kiểm soát tạo ra nhiễu (noise), khiến retrieval chậm và dễ trả lời sai.
+
 ### 2.1 Consolidation Là Gì?
+
+Khối ASCII dưới đây so sánh memory **TRƯỚC** và **SAU** khi consolidation. Phần trên là 5 fact rời rạc về BHYT (trùng lặp, cũ mới lẫn lộn); phần dưới là kết quả sau khi dọn — chỉ còn 2 fact rõ ràng. Ý tưởng cốt lõi nằm ở dòng cuối: **Consolidation = Merge + Dedupe + Update + Summarize**.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -566,6 +604,8 @@ class MemoryWriter:
 ```
 
 ### 2.2 Implementation
+
+Class `MemoryConsolidator` thực hiện 4 bước dọn dẹp: gộp fact giống nhau (`consolidate_facts`), loại fact quá cũ (`temporal_consolidation`), tóm tắt thông tin về một entity (`summarize_entities`), và phát hiện fact mâu thuẫn (`conflict_resolution`). Mỗi hàm trả về các con số thống kê (merged/deleted/removed) — bạn chỉ cần đọc kết quả trả về để biết đã dọn được những gì.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -743,7 +783,17 @@ class MemoryConsolidator:
 
 ## 3. Report Generation
 
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Report Generation là tạo ra các báo cáo có cấu trúc — tóm tắt cuộc trò chuyện, tổng quan knowledge base, phân tích nhiều nguồn — từ dữ liệu hội thoại và memory store.
+> 
+> **Ẩn dụ/so sánh:** Giống trợ lý viết biên bản cuộc họp — biến lời nói rời rạc thành văn bản ngắn gọn, có mục rõ ràng để ai đọc cũng hiểu.
+> 
+> **Vì sao quan trọng:** Báo cáo là "cầu nối" chuyển thông tin thô thành kiến thức tái sử dụng được cho session sau hoặc cho cả đội.
+
 ### 3.1 Report Types
+
+4 loại báo cáo cơ bản mà hệ thống có thể tạo ra. Đọc mỗi khối theo 3 dòng: **Input** (lấy dữ liệu gì) → **Output** (tạo ra gì) → **Use** (dùng để làm gì). Ví dụ "Conversation Summary" lấy chat history để tạo bản tóm tắt bàn giao cho phiên làm việc kế tiếp.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -773,6 +823,8 @@ class MemoryConsolidator:
 ```
 
 ### 3.2 Implementation
+
+Class `ReportGenerator` hiện thực 3 loại báo cáo: `conversation_summary` (tóm tắt hội thoại), `knowledge_report` (tổng quan knowledge base) và `analysis_report` (phân tích nhiều nguồn kèm citations). Các hàm này gọi LLM để viết báo cáo rồi ép kết quả về JSON — nếu LLM trả sai định dạng, code có nhánh fallback trả về dữ liệu mặc định thay vì gây lỗi.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -903,7 +955,17 @@ Output JSON:
 
 ## 4. KB Maintenance
 
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** KB (Knowledge Base) Maintenance là các thao tác quản lý "kho kiến thức": thêm kiến thức mới, sửa kiến thức sai, xóa kiến thức lỗi thời, và kiểm tra chất lượng kho.
+> 
+> **Ẩn dụ/so sánh:** Giống bảo trì thư viện — mua sách mới, in lại trang sai, gỡ sách hỏng, và rà soát danh mục định kỳ.
+> 
+> **Vì sao quan trọng:** Knowledge base không được bảo trì sẽ dần chứa thông tin sai và trùng lặp, kéo theo toàn bộ hệ thống trả lời kém tin cậy.
+
 ### 4.1 Knowledge Base Operations
+
+Class `KBMaintainer` là "người quản lý kho kiến thức" với 4 thao tác chính: `add_knowledge` (thêm), `update_knowledge` (sửa), `delete_knowledge` (xóa theo chủ đề hoặc chi tiết), và `validate_knowledge` (rà soát tìm fact mâu thuẫn, entity bị mồ côi). Điểm đáng chú ý: mọi thao tác đều ghi vào `changelog` — giống nhật ký lịch sử để biết đã đụng vào kiến thức nào.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1070,7 +1132,17 @@ class KBMaintainer:
 
 ## 5. Event Sourcing Pattern
 
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Event Sourcing là cách lưu trữ "mọi thứ đã xảy ra" — thay vì chỉ ghi trạng thái hiện tại, ta lưu toàn bộ danh sách sự kiện; còn trạng thái hiện tại thì "phát lại" (replay) từ các sự kiện đó.
+> 
+> **Ẩn dụ/so sánh:** Giống camera hành trình của một chuyến xe — bạn nhớ từng khúc đường đã qua nên có thể tua lại, hoặc rẽ branch ở bất kỳ điểm nào, chứ không chỉ biết mỗi đích đến.
+> 
+> **Vì sao quan trọng:** Có đủ lịch sử bạn mới có audit trail, có rollback, và truy vết chính xác lỗi xảy ra từ đâu.
+
 ### 5.1 Concept
+
+Phần này giới thiệu ý tưởng gốc của event sourcing. Khối ASCII cho thấy cách lưu theo "nhật ký sự kiện" — mỗi dòng là một sự kiện có đánh dấu thời gian (`@ t=...`). Ba siêu năng lực nằm ở giữa khối: **Current State = Replay all events** (trạng thái hiện tại được dựng lại bằng cách phát lại mọi sự kiện), **Time Travel** (phát lại tới thời điểm T), và **Audit Trail** (giữ đầy đủ lịch sử thay đổi).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1101,6 +1173,8 @@ class KBMaintainer:
 ```
 
 ### 5.2 Implementation
+
+Class `EventSourcedMemory` hiện thực ý tưởng trên bằng code. Hãy chú ý `record_event` — mọi thay đổi đều đi qua hàm này, được lưu vào danh sách `events`, rồi cập nhật `state` bằng `_apply_event`. Hai hàm thú vị nhất: `get_state_at(event_id)` cho phép "time travel" về trạng thái tại một sự kiện nào đó, và `undo_last()` hủy sự kiện cuối bằng cách dựng lại toàn bộ state từ đầu.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1202,6 +1276,14 @@ class EventSourcedMemory:
 ---
 
 ## 6. Memory Store Case Studies
+
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Đây là tuyển tập các case study từ sản phẩm thực tế — Claude Code, Mem0, OpenMemory, DeepSeek Harness — để xem các đội ngũ production giải quyết write-back và memory consolidation như thế nào.
+> 
+> **Ẩn dụ/so sánh:** Giống đọc review nhà hàng trước khi mở quán riêng — học từ người đi trước để tránh những sai lầm tốn kém.
+> 
+> **Vì sao quan trọng:** Lý thuyết dễ nói, khó làm; case study cho bạn biết pattern nào thực sự hoạt động khi chạy ở quy mô thật.
 
 Các case studies sau đây cho thấy cách các hệ thống production quản lý write-back và memory consolidation.
 
@@ -1717,6 +1799,8 @@ Return as JSON array:
 ---
 
 ### 6.3. OpenMemory — MCP-Based Memory Server
+
+Case study này đóng vai một memory server theo chuẩn MCP (Model Context Protocol) — tức các thao tác bộ nhớ được "phơi ra" dưới dạng tool mà LLM có thể gọi trực tiếp: `create_memory`, `search_memory`, `update_memory`, `delete_memory`, `list_memories`, `consolidate_memories`. Đọc giống như danh mục của một API: mỗi hàm là một thao tác chuẩn, giúp bất kỳ agent nào cũng dùng được bộ nhớ mà không cần biết cách lưu trữ bên trong.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2290,7 +2374,17 @@ interface FailurePattern {
 
 ## 7. Advanced Memory Patterns
 
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Các pattern nâng cao giúp memory system chạy tốt khi vào production: write-behind cache (ghi nhanh rồi flush xuống ổ sau), consolidation pipeline (dọn dẹp tự động định kỳ), và versioned memory (nhớ theo phiên bản như Git).
+> 
+> **Ẩn dụ/so sánh:** Nếu các mục trước là "học viết", mục này là "học thói quen làm việc chuyên nghiệp" — có tổ chức, có lịch trình, có sao lưu.
+> 
+> **Vì sao quan trọng:** Khi đưa vào thực tế, ghi và dọn thủ công không đủ — cần cơ chế tự động, vừa nhanh vừa an toàn.
+
 ### 7.1. Write-Behind Cache Pattern
+
+Pattern này trả lời câu hỏi: "ghi xuống đĩa chậm quá thì làm sao cho nhanh?". Giải pháp: ghi vào cache trong bộ nhớ tức thì (trả lời người dùng ngay), còn việc ghi xuống kho lâu bền thì chạy ngầm theo batch — ví von như ghi biên lai trước, cuối ngày mới nhập sổ cái. Nói cách khác, đây là **sự đánh đổi: chấp nhận một chút rủi ro mất dữ liệu nếu chương trình sập, để đổi lấy tốc độ phản hồi nhanh hơn rất nhiều khi lượng ghi lớn.**
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2408,6 +2502,8 @@ class WriteBehindCache:
 </details>
 
 ### 7.2. Memory Consolidation Pipeline
+
+Khác với consolidation thủ công ở mục 2, đây là "dây chuyền dọn dẹp tự động" chạy định kỳ theo 5 giai đoạn: deduplicate → resolve conflicts → temporal decay → archive memory cũ → xóa memory có confidence thấp. Mỗi giai đoạn là một hàm `_stage_*`, và `run_full_consolidation` chạy cả dây chuyền rồi trả về report thống kê — đọc báo cáo này là biết ngay mỗi giai đoạn đã dọn được bao nhiêu mục.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2631,6 +2727,8 @@ class MemoryConsolidationPipeline:
 
 ### 7.3. Versioned Memory (Git-like Memory)
 
+Pattern này mượn đúng ý tưởng Git áp dụng cho bộ nhớ: mỗi lần `set` một giá trị là tạo một **version** mới kèm snapshot toàn bộ state. Nhờ đó bạn có `diff` (so sánh 2 thời điểm), `rollback` (quay lại version cũ như git revert), và `log` (xem lịch sử thay đổi). Nói dân dã: bộ nhớ biết mình "từng được sửa thế nào", nên sửa sai là kéo lại được.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2742,6 +2840,14 @@ class VersionedMemory:
 
 ## 8. Best Practices & Anti-Patterns
 
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Danh sách các việc NÊN làm (best practices) và KHÔNG nên làm (anti-patterns) khi xây dựng update memory, gom từ kinh nghiệm của nhiều hệ thống production.
+> 
+> **Ẩn dụ/so sánh:** Giống bảng điều luật giao thông — không cần nhớ lý do chi tiết, chỉ cần biết "đèn xanh đi, đèn đỏ dừng" để không gặp tai nạn.
+> 
+> **Vì sao quan trọng:** Giúp bạn tránh những lỗi đắt giá mà nhiều đội đã vấp phải, tiết kiệm thời gian fix bug về sau.
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │              MEMORY UPDATE DO's                                   │
@@ -2814,6 +2920,14 @@ class VersionedMemory:
 
 ## 9. Performance Metrics
 
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Lớp đo lường các chỉ số sức khỏe của memory store: latency ghi/đọc, tỉ lệ dedup, số conflict, thời gian mỗi lần consolidation.
+> 
+> **Ẩn dụ/so sánh:** Giống đồng hồ táp-lô trên xe — không cần nhìn suốt đường đi, nhưng khi nghi ngờ có vấn đề thì phải biết đọc.
+> 
+> **Vì sao quan trọng:** Không đo lường thì không biết memory system đang dần xuống cấp hay đang hoạt động tốt.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2877,7 +2991,17 @@ class MemoryStoreMetrics:
 
 ## 10. Labs Thực Hành
 
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Các bài lab chạy được bằng Python để bạn tự tay trải nghiệm write-back, consolidation, versioned memory và metrics.
+> 
+> **Ẩn dụ/so sánh:** Giống bài tập thể dục — đọc kỹ thuật không bằng tự tập cho đến khi thuộc động tác.
+> 
+> **Vì sao quan trọng:** Học bằng tay giúp nhớ lâu gấp nhiều lần so với chỉ đọc lý thuyết.
+
 ### Lab 1: Write-back Memory
+
+Trong bài này bạn dùng `MemoryWriter` để ghi một episodic memory, hai fact về BHYT, cập nhật profile user, rồi gọi `get_stats()` xem hệ thống đã "nhớ" được bao nhiêu thứ.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2915,6 +3039,8 @@ print(writer.get_stats())
 
 ### Lab 2: Consolidation
 
+Thực hành dọn dẹp với `MemoryConsolidator`: tạo 3 fact về BHYT (hai cái gần như trùng nhau, một cái là bản cập nhật mới hơn), chạy `generate_memory_report` và xem `conflict_resolution` phát hiện được mâu thuẫn nào.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2941,6 +3067,8 @@ for c in conflicts:
 </details>
 
 ### Lab 3: Versioned Memory
+
+Mô phỏng một fact về mức đóng BHYT thay đổi qua 3 phiên bản, xem lịch sử bằng `vm.log()`, so sánh hai thời điểm bằng `vm.diff(0, 2)` và cuối cùng thử quay lại bản đầu với `vm.rollback(0)`.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2972,6 +3100,8 @@ print(f"Rolled back to: {state['rolled_back_to']}")
 
 ### Lab 4: Metrics
 
+Mô phỏng 100 thao tác ghi/đọc với số liệu ngẫu nhiên và 2 lần consolidation, rồi in ra báo cáo `metrics.report()` để xem hệ thống được đo lường như thế nào.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -2997,6 +3127,14 @@ print(metrics.report())
 ---
 
 ## 11. Tài Liệu Tham Khảo
+
+> **📌 Khái Niệm Cơ Bản**
+> 
+> **Khái niệm:** Nguồn đọc thêm gồm papers khoa học, framework và công cụ, cùng blogs từ những đội thực sự xây dựng memory system cho production.
+> 
+> **Ẩn dụ/so sánh:** Giống danh sách "đọc trước khi thi" — nếu muốn đào sâu hơn, đây là nơi nên bắt đầu.
+> 
+> **Vì sao quan trọng:** Lĩnh vực này thay đổi rất nhanh — tài liệu tham khảo giúp bạn tự cập nhật và kiểm chứng kiến thức.
 
 ### Papers & Research
 

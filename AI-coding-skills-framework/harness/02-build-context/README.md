@@ -84,6 +84,14 @@ Build Context là nghệ thuật **tổ chức thông tin đúng cách, đúng l
 
 ## Tổng Quan
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Build Context là quá trình tổ chức, chọn lọc và quản lý thông tin (tài liệu retrieve được, lịch sử chat, kết quả tool...) rồi sắp xếp chúng thành prompt sẵn sàng đưa cho LLM.
+>
+> **Ẩn dụ/so sánh:** Giống một đầu bếp giỏi: nguyên liệu thì nhiều, nhưng món ngon chỉ cần vài nguyên liệu chính được nêm nếm và bày biện hợp lý — không phải đổ cả chợ vào nồi.
+>
+> **Vì sao quan trọng:** Cùng một lượng kiến thức, cách tổ chức khác nhau làm thay đổi rất lớn chất lượng câu trả lời.
+
 **Build Context** là quá trình **tổ chức và quản lý thông tin** để đưa vào prompt của LLM. Context tốt giúp model hiểu rõ hơn, trả lời chính xác hơn, và tránh hallucination.
 
 ```mermaid
@@ -142,6 +150,14 @@ flowchart LR
 ```
 
 ## Tại Sao Build Context Quan Trọng?
+
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Build Context là quá trình chuyển thông tin retrieve được thành ngữ cảnh tối ưu cho LLM — gồm phân bổ token, nén bớt, xếp thứ tự ưu tiên và định dạng prompt.
+>
+> **Ẩn dụ/so sánh:** Giống một giáo viên chuẩn bị giáo án: dạy cả 200 trang giáo trình thì học sinh không nuốt nổi, nhưng chọn đúng vài trang trọng tâm thì học sinh hiểu ngay.
+>
+> **Vì sao quan trọng:** Model chỉ thông minh bằng lượng thông tin được đưa vào đúng cách — không tổ chức context tốt thì retrieve hay đến mấy cũng trả lời kém.
 
 > **"It's not about how much you know — it's about how much you can put in front of the model at the right time."**
 > — Andrej Karpathy, 2025
@@ -286,6 +302,14 @@ Build Context là nghệ thuật **tổ chức thông tin đúng cách, đúng l
 
 ## Nội Dung
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Bảng mục lục khái quát toàn bộ module — từ quản lý context window, chiến lược xây dựng context, nén, prompt, đến các case study thực tế và lab thực hành.
+>
+> **Ẩn dụ/so sánh:** Giống thực đơn của nhà hàng: đọc nhanh để biết có những "món" nào, rồi bấm vào từng món để xem chi tiết.
+>
+> **Vì sao quan trọng:** Giúp bạn định hướng nhanh phần nào cần đọc trước, phần nào chỉ cần đọc khi gặp bài toán tương ứng.
+
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
 | 1 | [Context Window Management](#1-context-window-management) | Quản lý kích thước context window |
@@ -299,9 +323,19 @@ Build Context là nghệ thuật **tổ chức thông tin đúng cách, đúng l
 
 ## 1. Context Window Management
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Học cách quản lý "sức chứa" của model — context window — và cách phân bổ chỗ trống đó cho từng thành phần như system prompt, tài liệu retrieve, lịch sử chat và câu hỏi.
+>
+> **Ẩn dụ/so sánh:** Context window giống sức chứa của một chiếc khay: có giới hạn ô, phải sắp xếp ai ở chỗ nào cho hợp lý, và biết món nào phải bỏ khi khay đầy.
+>
+> **Vì sao quan trọng:** Phân bổ token sai là nguyên nhân số một khiến model thiếu thông tin hoặc trả lời kém, dù thông tin đã có đủ.
+
 ### 1.1 Context Window Là Gì?
 
 Context window là **bộ nhớ tạm thời** của LLM — tất cả token mà model có thể "nhìn thấy" tại một thời điểm. Quản lý nó hiệu quả là kỹ năng quan trọng nhất.
+
+Nói nôm na: context window giống cái bàn làm việc của model — bàn càng rộng thì đặt được càng nhiều giấy tờ, nhưng giấy tờ quá nhiều lại khiến khó tìm đúng tờ mình cần.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -531,6 +565,8 @@ Available:                            124,000 tokens
 
 **"Lost in the Middle" Problem** mô tả hiện tượng: **LLM tập trung chú ý vào thông tin ở ĐẦU và CUỐI context window, nhưng bỏ qua (hoặc ghi nhớ kém) thông tin nằm ở GIỮA.**
 
+Giống như học sinh thường nhớ nhất lời giảng ở đầu giờ và cuối giờ, còn phần giữa tiết học thì dễ bị bỏ lơ — LLM cũng có xu hướng "quên" những gì nằm giữa context.
+
 **Ý nghĩa / Tại sao quan trọng:**
 - Nghiên cứu Google (2024): accuracy giảm **từ 76% xuống 20%** khi thông tin quan trọng nằm giữa context.
 - Ảnh hưởng trực tiếp đến RAG: nếu document quan trọng bị xếp vào giữa context → model có thể bỏ qua, dẫn đến trả lời thiếu hoặc sai.
@@ -569,6 +605,14 @@ Available:                            124,000 tokens
 ---
 
 ## 2. Context Construction Strategies
+
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Các chiến lược quyết định cách biến thông tin retrieve được thành context — nhét hết, lọc bớt, nén, sắp xếp có cấu trúc, hay tự động chọn theo từng câu hỏi.
+>
+> **Ẩn dụ/so sánh:** Như đóng gói chuyến đi: nhét cả tủ đồ vào vali thì nặng nề; chọn vài bộ đồ thiết yếu thì nhẹ và đủ dùng; cuộn nén quần áo thì gọn gàng hơn.
+>
+> **Vì sao quan trọng:** Chọn đúng chiến lược giúp model tập trung vào thông tin cần thiết, cắt giảm chi phí token và giảm nhiễu.
 
 > **Đọc nhanh:** 2.1, 2.2, 2.3 nhìn context construction ở **3 góc độ KHÁC NHAU** của cùng một vấn đề — chúng không phải là 3 bộ phân loại cạnh tranh, mà bổ sung cho nhau:
 >
@@ -1154,9 +1198,19 @@ Query "BHYT đóng bao nhiêu?"
 
 ## 3. Context Compression & Summarization
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Làm giảm kích thước context bằng cách tóm tắt, chọn lọc hoặc bỏ phần thừa — giữ ý chính trong khi tiết kiệm token.
+>
+> **Ẩn dụ/so sánh:** Giống nén quần áo bằng túi hút chân không: vẫn đủ đồ cần dùng nhưng vali gọn lại gấp đôi.
+>
+> **Vì sao quan trọng:** Token có giới hạn và tốn tiền — không nén thì không thể nhét nổi toàn bộ tài liệu vào prompt.
+
 ### 3.1 Tại Sao Cần Compression?
 
 **Compression (Nén context)** là quá trình **giảm kích thước context** bằng cách loại bỏ thông tin dư thừa, tóm tắt, hoặc chỉ giữ lại phần quan trọng — với mục tiêu giữ nguyên ý nghĩa cốt lõi trong khi giảm số token.
+
+Dễ hình dung: bàn ăn (context) chỉ đủ chỗ cho vài món — bạn phải chọn món chính và gom gọn lại, thay vì dọn cả mớ nguyên liệu lên.
 
 **Tại sao cần:**
 - Context window có hạn (ví dụ 128K tokens) nhưng tài liệu retrieve được thường vượt xa ngân sách — ví dụ 10 documents × 2K tokens = 20K tokens nhưng budget chỉ 8K.
@@ -1576,9 +1630,19 @@ class SmartContextManager {
 
 ## 4. Prompt Engineering for Context
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Nghệ thuật soạn prompt và context để "hướng dẫn" LLM hành xử đúng — thêm ràng buộc, yêu cầu suy luận từng bước, ép định dạng output và chống hallucination.
+>
+> **Ẩn dụ/so sánh:** Giống viết đề bài rõ ràng cho học sinh: đề mơ hồ thì bài làm lan man; đề có yêu cầu chi tiết thì học sinh trả lời đúng ý người chấm.
+>
+> **Vì sao quan trọng:** Cùng một context, prompt được thiết kế tốt cải thiện độ chính xác rõ rệt mà không tốn thêm token hay chi phí.
+
 ### 4.1 Prompt Templates
 
 **Prompt Templates** là các **khuôn mẫu (template) có sẵn cho prompt** — định sẵn cấu trúc, cách sắp xếp context, system message và hướng dẫn trả lời — để bạn không phải viết lại prompt mỗi lần.
+
+Coi template như một mẫu đơn xin việc: khung có sẵn, chỉ cần điền nội dung cụ thể, đảm bảo ai điền cũng có độ đầy đủ như nhau.
 
 **Ý nghĩa:**
 - Đảm bảo **nhất quán**: cùng một cấu trúc prompt cho mọi query → kết quả ổn định, dễ đoán.
@@ -1853,9 +1917,19 @@ prompt = builder.build_with_guardrails(
 
 ## 5. Hierarchical Context
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Tổ chức context thành nhiều tầng với mức ưu tiên khác nhau — từ tầng bất biến (system, nhân cách) đến tầng dễ xóa nhất (chi tiết cụ thể) — để biết cắt bỏ gì trước khi hết chỗ.
+>
+> **Ẩn dụ/so sánh:** Giống tủ quần áo có ngăn: đồ quan trọng dùng hằng ngày để ngăn dễ lấy nhất; khi tủ chật thì dọn ngăn ít quan trọng trước, không bao giờ vứt đồ cốt lõi.
+>
+> **Vì sao quan trọng:** Context sắp đầy là chuyện chắc chắn xảy ra — phân cấp rõ ràng giúp xóa đúng thứ dễ bỏ mà vẫn giữ được "nhân cách" và nhiệm vụ của model.
+
 ### 5.1 Cấu Trúc Phân Cấp
 
 **Hierarchical Context (Context phân cấp)** là cách **tổ chức context thành nhiều tầng (level) với mức ưu tiên khác nhau** — từ thông tin bất biến (luôn có) đến thông tin tạm thời (dễ bị xóa nhất).
+
+Nói đơn giản: giống tủ lạnh — ngăn nào dễ lấy nhất thì để đồ quan trọng dùng hằng ngày; khi tủ chật, bỏ ngăn ít quan trọng trước, không bao giờ ném bỏ đồ cốt lõi.
 
 **Ý nghĩa:**
 - Không phải thông tin nào cũng quan trọng như nhau → cần phân cấp để **biết xóa gì trước khi context đầy**.
@@ -1905,6 +1979,8 @@ prompt = builder.build_with_guardrails(
 ```
 
 ### 5.2 Implementation
+
+Code dưới đây đi kèm class `HierarchicalContext` chạy được: bạn khai báo 5 tầng (global, session, recent, retrieved, focused), nhét dữ liệu vào từng tầng bằng các hàm `set_*`, rồi gọi `build_prompt()` để tự động ghép prompt theo thứ tự ưu tiên. Khi vượt ngân sách token, nó tự xóa tầng ưu tiên thấp trước — kịch bản đúng như lý thuyết trong 5.1.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2045,9 +2121,19 @@ ctx.report()
 
 ## 6. Streaming Context
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Cập nhật context trong khi người dùng còn đang gõ — xử lý từng phần nhỏ của câu hỏi thay vì chờ gõ xong mới bắt đầu.
+>
+> **Ẩn dụ/so sánh:** Như Google tìm kiếm hiện đại: bạn gõ đến đâu, gợi ý hiện ra đến đó, để kết quả xuất hiện gần như tức thời.
+>
+> **Vì sao quan trọng:** Giúp ứng dụng phản hồi nhanh hơn, trải nghiệm người dùng mượt mà như đang trò chuyện thật.
+
 ### 6.1 Khái Niệm
 
 **Streaming Context** là kỹ thuật **cập nhật context liên tục trong khi người dùng đang nhập liệu** — thay vì chờ người dùng gõ xong câu hỏi rồi mới build context một lần, hệ thống xử lý từng phần nhỏ (chunk) của câu hỏi.
+
+Tưởng tượng bạn search Google: ngay khi gõ nửa chữ đầu, kết quả gợi ý đã xuất hiện — streaming context làm điều tương tự cho chatbot.
 
 **Ý nghĩa:**
 - **Phản hồi nhanh hơn**: người dùng chỉ cần gõ "BHYT" là hệ thống đã bắt đầu retrieve tài liệu BHYT, rút ngắn thời gian chờ đợi.
@@ -2086,6 +2172,8 @@ ctx.report()
 ```
 
 ### 6.2 Implementation
+
+Ví dụ này triển khai ý tưởng "build context trong khi người dùng đang gõ": class `StreamingContextManager` gom dần các ký tự nhập vào, chờ một khoảng ngắn sau khi ngừng gõ (debounce) rồi mới build prompt; còn `StreamingRAG` hướng dẫn stream từng token phản hồi từ Ollama. Bạn chỉ cần đọc hiểu luồng, không phải chạy ngay.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2218,6 +2306,14 @@ class StreamingRAG:
 ---
 
 ## 7. Context Engineering Case Studies
+
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Phần này "mổ xẻ" cách các sản phẩm AI thực tế (Claude Code, Cursor, RAG pipeline production) xây dựng hệ thống context — tường tận từ kiến trúc đến code.
+>
+> **Ẩn dụ/so sánh:** Giống xem hậu trường một nhà hàng đạt sao Michelin: nhìn cách họ sắp xếp nguyên liệu để học được cách bày bàn bữa ăn của chính mình.
+>
+> **Vì sao quan trọng:** Học từ hệ thống đã vận hành ở quy mô lớn giúp bạn tránh làm lại từ đầu những sai lầm mà họ đã giải quyết.
 
 Các case studies sau đây cho thấy cách các công ty hàng đầu xây dựng hệ thống context management trong thực tế.
 
@@ -2594,6 +2690,8 @@ class CursorContextStrategy {
 
 ### 7.3. Production RAG Pipeline — Context Engineering At Scale
 
+Ví dụ TypeScript này mô phỏng pipeline build context cho hệ thống RAG phục vụ hàng nghìn người dùng: phân loại câu hỏi, retrieve nhiều nguồn song song, gộp kết quả bằng Reciprocal Rank Fusion, rồi phân bổ token theo loại câu hỏi. Mỗi giai đoạn đều có ngân sách thời gian riêng để tổng latency dưới 500ms.
+
 <details>
 <summary><b>7.3. Production RAG Pipeline — Context Engineering At Scale (Click to expand/collapse)</b></summary>
 
@@ -2718,6 +2816,14 @@ class ProductionRAGContext {
 ---
 
 ## 8. Advanced Context Patterns
+
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Các mẫu (patterns) nâng cao để xây dựng context: định tuyến câu hỏi (routing), gộp kết quả nhiều truy vấn (RAG fusion), lưu cache context, và quản lý hội thoại nhiều lượt.
+>
+> **Ẩn dụ/so sánh:** Giống tổng đài viên thông minh: phân loại người gọi đến đúng bộ phận (routing), hỏi thêm vài cách khác nhau cho chắc chắn (fusion), ghi biên bản để lần sau không hỏi lại (cache, multi-turn).
+>
+> **Vì sao quan trọng:** Đây là những kỹ thuật tạo ra khác biệt lớn giữa prototype và hệ thống RAG sản xuất thực thụ.
 
 ### 8.1. Context Routing
 
@@ -3176,6 +3282,14 @@ class MultiTurnContextManager:
 
 ## 9. Best Practices & Anti-Patterns
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Tập hợp các nguyên tắc nên làm (best practices) và các lỗi kinh điển cần tránh (anti-patterns) khi xây dựng context.
+>
+> **Ẩn dụ/so sánh:** Giống cuốn cẩm nang lái xe: liệt kê thói quen an toàn nên có và thói quen nguy hiểm phổ biến để bạn tự kiểm tra "tay lái" của mình.
+>
+> **Vì sao quan trọng:** Đọc phần này giúp bạn soi lại hệ thống của mình — thấy lỗi nào đang mắc là sửa ngay trước khi phát sinh chi phí lớn.
+
 ### 9.1. Context Building Best Practices
 
 **Context Building Best Practices** là **tập hợp các nguyên tắc thực hành tốt nhất** khi xây dựng context — những việc nên làm (DO) và không nên làm (DON'T) đúc kết từ kinh nghiệm thực tế và nghiên cứu.
@@ -3372,6 +3486,14 @@ response = llm.generate(context)  # ✅ Validated context
 
 ## 10. Context Validation & Testing
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Quy trình kiểm tra chất lượng context TRƯỚC KHI gửi cho LLM — xem có vượt token budget không, đủ các thành phần bắt buộc không, độ liên quan và độ tươi của dữ liệu ra sao.
+>
+> **Ẩn dụ/so sánh:** Giống nhân viên kiểm phẩm ở xưởng sản xuất: kiểm từng lô hàng trước khi xuất xưởng — hàng lỗi phát hiện tại chỗ chứ không đợi khách trả về.
+>
+> **Vì sao quan trọng:** Context lỗi khiến LLM trả lời kém hoặc lỗi giữa chừng — kiểm tra sớm giúp tiết kiệm chi phí và giữ trải nghiệm người dùng tốt.
+
 **Context Validation & Testing** là quá trình **kiểm tra chất lượng context TRƯỚC KHI gửi đến LLM** — đảm bảo context không vượt token budget, chứa đúng thành phần bắt buộc (system, query), có độ liên quan đủ cao, không bị stale và có cấu trúc rõ ràng.
 
 **Ý nghĩa:**
@@ -3505,6 +3627,8 @@ class ContextValidator:
 
 ### Integration Testing
 
+Đoạn test dưới đây chạy như một phần của CI/CD để đảm bảo hệ thống build context không bị hỏng khi sửa code: kiểm tra context luôn nằm trong token budget, tài liệu liên quan được đưa vào, và cache hoạt động đúng. Nếu một test đỏ, bạn biết ngay chỗ nào cần sửa trước khi deploy.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -3580,6 +3704,14 @@ class TestContextQuality:
 ---
 
 ## 11. Performance Metrics & Optimization
+
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Đo lường chất lượng hệ thống build context bằng các chỉ số (latency, token usage, relevance, cache hit rate...) và tối ưu chi phí dựa trên những con số đó.
+>
+> **Ẩn dụ/so sánh:** Giống bảng đồng hồ tiêu thụ trên xe: nhìn đồng hồ mới biết xe đang hao xăng hay tiết kiệm, từ đó điều chỉnh cách lái.
+>
+> **Vì sao quan trọng:** "Không đo được thì không cải thiện được" — số liệu là thước đo duy nhất cho biết tối ưu nào đang thực sự hiệu quả.
 
 ### 11.1. Context Quality Metrics
 
@@ -3732,6 +3864,14 @@ print(metrics.report())
 ---
 
 ## 12. Complete Production Pipeline
+
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Một pipeline hoàn chỉnh nối tất cả kỹ thuật đã học thành một luồng chạy được: cache → routing → retrieval → fusion → assembly → compression → validation → metrics.
+>
+> **Ẩn dụ/so sánh:** Giống dây chuyền lắp ráp ô tô: mỗi trạm làm một việc, theo đúng thứ tự — sản phẩm cuối ra lò là context sẵn sàng cho LLM.
+>
+> **Vì sao quan trọng:** Đây là "bản mẫu" chạy được để bạn dựa vào đó xây dựng hệ thống production của riêng mình.
 
 **Complete Production Pipeline** là **một pipeline context engineering hoàn chỉnh tích hợp TẤT CẢ các kỹ thuật** đã học: routing → multi-source retrieval → fusion → assembly → compression → validation → caching → metrics.
 
@@ -3886,7 +4026,17 @@ class ProductionContextPipeline:
 
 ## 13. Labs Thực Hành
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** 5 bài lab thực hành cầm tay chỉ việc — chạy thử code để tự mình "thấy" cách budget, RAG fusion, cache, validation và routing hoạt động.
+>
+> **Ẩn dụ/so sánh:** Giống bài thực nghiệm trong lớp hóa lý: đọc lý thuyết chưa đủ, phải tự tay làm thí nghiệm mới nhớ và hiểu sâu.
+>
+> **Vì sao quan trọng:** Thực hành biến kiến thức đọc được thành kỹ năng áp dụng được — làm rồi mới thật sự "ngấm".
+
 ### Lab 1: Context Budget Demo
+
+Lab này chạy class `ContextBudget` với ba kịch bản (câu hỏi đơn giản, RAG phức tạp, hội thoại dài) để bạn tận mắt thấy ngân sách token được chia lại như thế nào theo từng loại câu hỏi.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -3913,6 +4063,8 @@ for name, total in scenarios:
 </details>
 
 ### Lab 2: RAG Fusion Demo
+
+Lab này so sánh hai cách tìm tài liệu: dùng một câu hỏi duy nhất so với sinh nhiều biến thể câu hỏi rồi gộp kết quả (RAG Fusion). Chạy xong bạn sẽ thấy cách thứ hai tìm được nhiều tài liệu liên quan hơn rõ rệt.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -3958,6 +4110,8 @@ print(f"New from Fusion: {len(fused_ids - single_ids)} docs")
 
 ### Lab 3: Context Cache Performance
 
+Lab này đo lợi ích của cache: chạy lại cùng một câu hỏi nhiều lần để xem lượt trúng cache (hit) nhanh hơn lượt trượt (miss) bao nhiêu, đồng thời xem tỷ lệ hit rate đạt được.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -3999,6 +4153,8 @@ print(cache.stats())
 </details>
 
 ### Lab 4: Context Validation
+
+Lab này demo `ContextValidator`: đưa vào một context hợp lệ và một context lỗi (thiếu section system/query, tài liệu kém liên quan) để xem validator phát hiện và báo lỗi từng loại như thế nào.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -4050,6 +4206,8 @@ for issue in result["issues"]:
 
 ### Lab 5: Context Routing
 
+Lab này chạy `ContextRouter` với 5 câu hỏi mẫu (factual, analytical, code, creative, conversational) để xem router phân loại từng câu và chọn chiến lược xây dựng context khác nhau ra sao.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
@@ -4083,6 +4241,14 @@ for q in test_queries:
 ---
 
 ## 14. Tài Liệu Tham Khảo
+
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Danh sách các bài báo khoa học, framework, blog và khóa học liên quan để đào sâu thêm từng chủ đề trong module.
+>
+> **Ẩn dụ/so sánh:** Giống giá sách thư viện được phân loại theo kệ: muốn tìm hiểu sâu về RAG thì vào kệ RAG, muốn học framework thì sang giá công cụ.
+>
+> **Vì sao quan trọng:** Khi gặp bài toán phức tạp vượt ngoài module này, bạn biết chính xác nên đọc tiếp ở đâu.
 
 ### Papers & Research
 
@@ -4133,6 +4299,14 @@ for q in test_queries:
 ---
 
 ## 15. Tóm Tắt Nhanh (Quick Summary)
+
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Bản tóm tắt siêu ngắn toàn bộ module — 10 ý chính và 7 nguyên tắc vàng, kèm link đến từng section chi tiết.
+>
+> **Ẩn dụ/so sánh:** Giống mục "tin tức trong 60 giây" cuối bản tin: đọc là nắm được lõi ngay, muốn rõ hơn thì tìm sâu ở từng bài tương ứng.
+>
+> **Vì sao quan trọng:** Phù hợp để ôn nhanh trước khi làm lab, phỏng vấn, hoặc nhắc lại kiến thức sau một thời gian quên.
 
 > Bài viết này là bản tóm tắt nhanh toàn bộ tài liệu, kèm link tới từng section để dễ theo dõi chi tiết.
 

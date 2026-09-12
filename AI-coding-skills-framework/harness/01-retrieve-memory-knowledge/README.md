@@ -402,7 +402,7 @@ Bạn đang dùng: nomic-embed-text (768 dims, 274MB) — phù hợp cho local u
 
 ### 1.4 Chunking Strategies — Chi Tiết
 
-Chunking là quá trình **chia nhỏ documents** thành các đoạn (chunks) trước khi embedding. Chunking tốt直接影响 chất lượng search.
+Chunking là quá trình **chia nhỏ documents** thành các đoạn (chunks) trước khi embedding. Chunking tốt ảnh hưởng trực tiếp đến chất lượng search.
 
 #### Strategy 1: Fixed-Size Chunking
 

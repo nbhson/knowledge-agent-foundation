@@ -1,5 +1,11 @@
 # 🧩 02. Bảy Production Patterns
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Một "production pattern" là **một template vòng lặp đã được chứng minh** — bộ khung có sẵn gồm scheduler, skills, state, cách kiểm chứng và cách bàn giao cho human. Thay vì nghĩ ra loop từ đầu, bạn chọn một pattern phù hợp rồi dùng `loop init` scaffold ra.
+> **Ẩn dụ/so sánh:** Giống **các món trong thực đơn nhà hàng** — bạn không phải phát minh lại cách nấu; đầu bếp (loop-engineering repo) đã thử, đã phục vụ khách thật và ghi rõ "món này cay (high cost), món này an toàn cho người mới (L1)". Việc của bạn là chọn món hợp khẩu vị.
+> **Vì sao quan trọng:** Các pattern này được "dogfooded" trên repo thật — tức là từng chi tiết (cadence, token cost, failure mode) là kinh nghiệm đã mua bằng tiền thật, không phải lý thuyết. Bạn tái sử dụng bài học, tránh 7 lần vấp giống người trước.
+
 > Đây là **7 pattern loop** đã được chứng minh có thể chạy trong môi trường thật. Mỗi pattern trả lời: giải quyết vấn đề gì, cadence nào, skills/state nào, cách kiểm chứng, cách bàn giao cho human, và tool-specific notes.
 
 ## Bảng Tổng Hợp
@@ -15,6 +21,8 @@
 | [Issue Triage](issue-triage.md) | 2h–1d | **L1** propose-only | Low |
 
 ## Pattern Picker — Chọn Loop Nào?
+
+> **Đọc sao cho dễ:** Bảng dưới đây là **máy trả lời tự động** - bạn chỉ cần trả lời một câu "thứ đang đau nhức ngay lúc này là gì?" rồi làm theo nhánh. Nếu đau 2 thứ cùng lúc, đọc tiếp `Overlap Rules` để biết loop nào được chạy chung.
 
 ```
 What hurts right now?

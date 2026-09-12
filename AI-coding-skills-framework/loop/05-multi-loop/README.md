@@ -1,5 +1,11 @@
 # 🔗 05. Multi-Loop Coordination
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Multi-loop coordination là **luật giao thông cho nhiều loops chạy chung một repo** — phân quyền sở hữu branch, tách state file, xếp hạng ưu tiên khi xung đột, và cơ chế phát hiện va chạm (collision detection). Mục tiêu: nhiều loops chạy song song mà không "đánh nhau".
+> **Ẩn dụ/so sánh:** Giống **một ngã tư không có đèn đỏ** — nếu mỗi người lái tự quyết, ai cũng nghĩ mình được ưu tiên, kẹt xe và tai nạn xảy ra. Đèn đỏ (lock), biển báo (state files), và xếp hạng ưu tiên (priority) giúp mọi xe đi qua an toàn. Một repo có nhiều loops không hề xấu — chỉ nguy hiểm khi **không có ranh giới**.
+> **Vì sao quan trọng:** Khi bạn có 2+ loops (Daily Triage + CI Sweeper chẳng hạn), nếu không phối hợp chúng sẽ sửa cùng file, cùng PR hoặc mất nhau dữ liệu. Phần này ngăn điều đó trước khi bạn phải học bằng sai lầm.
+
 > Chạy nhiều hơn một loop trong repo là bình thường. Chạy chúng **không ranh giới** là cách các loops chiến đấu với nhau. Phần này hướng dẫn phối hợp an toàn.
 
 ---
@@ -31,6 +37,8 @@ Linear / GitHub Projects hoạt động tương đương — loop phải **đọ
 
 ## 3. Priority Khi Loops Xung Đột
 
+> **Đọc sao cho dễ:** Khi hai loops muốn làm cùng một thứ, kẻ nào "cháy" hơn sẽ thắng — CI đỏ (loop 1) ngăn mọi thứ khác vì repo không ai merge được. Đọc hàng trên xuống như thang ưu tiên: Xung đột thì loop xếp trên thắng, loop xếp dưới tự nhường.
+
 | Priority | Loop | Lý do |
 |----------|------|-------|
 | 1 | CI Sweeper | Red main chặn mọi thứ |
@@ -57,6 +65,8 @@ Document trong root `LOOP.md`:
 ---
 
 ## 5. Collision Detection
+
+> **Đọc sao cho dễ:** Collision detection là "**nhìn trước khi băng qua đường**" — mọi loop ghi `acting_on` (đang làm gì) lên state; trước khi bắt tay vào việc, loop **đọc** các state khác để chắc không ai đang làm điều đó. Tool `loop-worktree lock/unlock` biến việc này thành khoá cơ học (advisory lock) thay vì tin vào kỷ luật tự giác.
 
 Mỗi action loop nên ghi `acting_on: branch-or-pr-id` trong state file. Trước khi spawn một fix:
 

@@ -1,10 +1,18 @@
 # 🛠️ 04. Operating Loops trong Production
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Operating là "vận hành" — khi loop đã chạy thật trong production, công việc của bạn chuyển từ thiết kế sang **giám sát và điều khiển**: theo dõi token cost, đọc run log, xem metrics, và quyết định khi nào giảm tốc / tạm dừng / giết một loop.
+> **Ẩn dụ/so sánh:** Giống **phi công trên buồng lái** — máy bay (loop) đã cất cánh rồi; việc của bạn không phải sửa động cơ giữa chừng, mà là đọc đồng hồ (metrics), kiểm tra nhiên liệu (token budget), và quyết định có hạ cánh sớm (kill) khi có cảnh báo.
+> **Vì sao quan trọng:** Loop đầu tiên của bạn sẽ đốt tiền token — đó là chuyện bình thường. Phần này dạy bạn **ước lượng trước khi chạy** (tránh sốc bill), **ghi log để debug** ("tại sao nó làm vậy?"), và **dừng đúng lúc** trước khi thiệt hại thành thảm họa.
+
 > Chạy một loop là công việc operations. Phần này bao gồm: **Token Budget**, **Logging**, **Metrics**, và **khi nào pause hoặc kill** một loop.
 
 ---
 
 ## 1. Token & Cost Budgeting
+
+> **Đọc sao cho dễ:** Câu hỏi ở đây là "**loop này sẽ tốn bao nhiêu tiền mỗi ngày?**" — giống tính tiền xăng trước một chuyến đi xa. Bạn dùng `loop cost` để ước lượng, rồi đặt **giới hạn (budget)** và **điểm dừng (kill switch)** nếu vượt quá. Quy tắc nhớ: cadence càng nhanh, sub-agent càng nhiều, chi phí càng cao gấp bội.
 
 **Ước lượng trước khi schedule:**
 
@@ -49,6 +57,8 @@ Encode trong skill hoặc scheduler prompt: *"If no high-priority items, exit im
 
 ## 2. Logging Mỗi Run
 
+> **Đọc sao cho dễ:** Log là "**hộp đen**" của loop — mỗi lần chạy ghi một dòng trả lời: chạy bao lâu? tìm được gì? làm gì? tốn bao nhiêu? Sau này khi thắc mắc "vì sao nó không xử lý X", bạn mở log ra là có câu trả lời. Chuẩn là **append-only**: chỉ thêm, không sửa, không xoá.
+
 Minimum log entry (append vào `loop-run-log.md` hoặc structured JSON):
 
 ```json
@@ -75,6 +85,8 @@ Run log: 2026-06-09 08:15 | 4 findings | 1 worktree opened | 0 escalations
 
 ## 3. Metrics Dashboard
 
+> **Đọc sao cho dễ:** Metrics là "**bảng cân này của loop**" — mỗi tuần bạn nhìn vào và hỏi: loop có thực sự giúp ích không, hay chỉ tốn tiền làm nhiễu? Điền các cột trống trong bảng dưới (runs, findings, escalations, false positives) cho từng pattern để thấy xu hướng, chứ không phải cảm giác.
+
 Theo dõi hàng tuần (spreadsheet hoặc Notion):
 
 | Metric | PR Babysitter | Daily Triage | CI Sweeper |
@@ -92,6 +104,8 @@ Pattern-specific success metrics nằm trong từng [pattern](../02-patterns/).
 ---
 
 ## 4. Khi Nào Slow Down / Pause / Kill
+
+> **Đọc sao cho dễ:** Đây là "**thang đo dầu phanh**" — 3 mức ứng với mức độ nghiêm trọng: **Slow down** (giảm ga vì hết nhiên liệu chút nữa), **Pause** (tạm dừng vì đang có nguy hiểm ngay trước mặt), **Kill** (dừng hẳn vì con đường này không còn đáng đi). Câu hỏi mỗi lần gặp sự cố: đang ở mức nào?
 
 ### Slow Down
 

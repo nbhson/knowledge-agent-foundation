@@ -1,10 +1,18 @@
 # 🧰 07. Tools & Ecosystem
 
+> **📌 Khái Niệm Cơ Bản**
+>
+> **Khái niệm:** Đây là **bộ dụng cụ CLI** và ecosystem đi kèm loop-engineering — các lệnh `npx @cobusgreyling/loop-*` phủ từng giai đoạn: tạo mới (`init`), chấm điểm (`audit`), ước chi phí (`cost`), phát hiện lệch state (`sync`), cô lập thay đổi (`worktree`), và cưỡng chế an toàn (`gate`).
+> **Ẩn dụ/so sánh:** Giống **hộp đồ nghề thợ điện** — bạn không cần hiểu cấu tạo trong của từng cây tua vít; bạn chỉ cần biết cây nào dùng cho việc gì: cây vặn ốc nối dây (init), đồng hồ đo điện (cost), kìm răng cưa khóa lại (gate). Mỗi tool một việc, dùng kết hợp được.
+> **Vì sao quan trọng:** Các tool này là **phần cơ giới hoá** của loop engineering — chúng cưỡng chế những thứ mà kỷ luật con người dễ lơi (nối lock, chặn denylist), và cho bạn "Loop Ready score" đo được thay vì cảm giác "chắc ổn".
+
 > Loops không cần code thủ công từ đầu — có một hệ CLI open-source (`@cobusgreyling/loop-*`) hỗ trợ từng giai đoạn. Phần này giới thiệu từng tool và ecosystem xung quanh.
 
 ---
 
 ## 1. Front Door — `loop init / doctor / status`
+
+> **Đọc sao cho dễ:** `init` = "trang bị cho repo của bạn bộ khung loop" (skills, state, budget); `doctor` = "khám sức khỏe" cho biết 3 việc kế tiếp nên làm. Bắt đầu mọi dự án loop từ đây — đừng tự dựng tay.
 
 ```bash
 # Front door (khuyên dùng) — một binary cho init + doctor + status
@@ -23,6 +31,8 @@ npx @cobusgreyling/loop init . --with-foundry
 ---
 
 ## 2. loop-audit — Loop Readiness Score
+
+> **Đọc sao cho dễ:** `audit` = "chấm điểm bài kiểm tra vận hành" — cho bạn một con số 0–100 thể hiện mức sẵn sàng production. Giống điểm tín nhiệm tín dụng: thấp thì khoan để loop tự chạy, cao lên dần khi bạn scaffold đúng.
 
 ```bash
 npx @cobusgreyling/loop audit . --suggest
@@ -63,6 +73,8 @@ Stateful memory manager + circuit breaker cho long runs. Quản lý context khô
 ---
 
 ## 6. loop-worktree — Cô Lập Thay Đổi
+
+> **Đọc sao cho dễ:** `worktree` = "phòng thực hành riêng" cho mỗi lần thử fix — agent sửa trong phòng riêng, hỏng thì bỏ phòng đó, không đụng tới code chính. Kèm `lock/unlock` để các loops không vào cùng phòng cùng lúc.
 
 ```bash
 npx @cobusgreyling/loop-worktree create --run-id <id> --pattern <p>

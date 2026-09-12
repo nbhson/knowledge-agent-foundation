@@ -73,6 +73,7 @@ Bắt đầu từ **Phase 1** (Core Skills) và tiến dần đến **Phase 6** 
 AI/
 ├── AI_AGENT_FRAMEWORK.md                   ← TRANG CHỦ
 ├── HARNESS_ENGINEERING.md                  ← KIẾN TRÚC HARNESS
+├── GRAPH_ENGINEERING.md                    ← KIẾN TRÚC GRAPH
 │
 ├── harness/                                ← HARNESS (7 Components)
 │  │
@@ -91,8 +92,19 @@ AI/
 │  ├── 10-automation/                        ← TỰ ĐỘNG HÓA
 │  └── 11-evaluation/                        ← ĐÁNH GIÁ
 │
-└── loop/                                    ← LOOP ENGINEERING
-   └── 12-loop-engineering/                  ← VÒNG LẶP CẢI THIỆN
+├── loop/                                    ← LOOP ENGINEERING
+│  └── 12-loop-engineering/                  ← VÒNG LẶP CẢI THIỆN
+│
+└── graph/                                   ← GRAPH ENGINEERING (Knowledge Substrate)
+   ├── 01-foundations/                       ← NỀN TẢNG GRAPH
+   ├── 02-knowledge-graph/                   ← XÂY DỰNG KG
+   ├── 03-graph-storage/                     ← LƯU TRỮ & TRUY VẤN
+   ├── 04-graph-embeddings/                  ← EMBEDDINGS
+   ├── 05-graph-rag/                         ← GRAPH RAG
+   ├── 06-graph-reasoning/                   ← SUY LUẬN
+   ├── 07-gnn/                               ← GRAPH NEURAL NETWORKS
+   ├── 08-graph-workflow/                    ← WORKFLOW & VẬN HÀNH
+   └── 09-evaluation/                        ← ĐÁNH GIÁ
 ```
 
 ## Lộ Trình Học
@@ -156,6 +168,8 @@ AI/
 | LLM | `gemma3:12b` | Local via Ollama |
 | Embedding | `nomic-embed-text` (768D) | Local via Ollama |
 | Vector Store | FAISS / ChromaDB | Local |
+| Graph Store | Neo4j / Kuzu / NetworkX | Local (Docker hoặc embedded) |
+| GNN | PyG / DGL | Local (Python) |
 | BM25 | Custom Python | Local |
 | MCP Server | GitHub MCP, Custom tools | Local |
 
@@ -285,6 +299,34 @@ AI/
 | 11.5 | [Continuous Improvement](harness/11-evaluation/README.md#5-continuous-improvement) | Trend analysis, suggestions |
 | 11.6 | [Reporting & Dashboards](harness/11-evaluation/README.md#6-reporting--dashboards) | Markdown/JSON reports |
 
+### Part XII: Loop Engineering
+> Làm sao thiết kế vòng lặp tự duy trì cho AI agents?
+
+| # | Topic | Mô tả |
+|---|-------|-------|
+| 12.1 | [Concepts](loop/01-concepts/README.md) | 5 building blocks + memory, anatomy, L1-L3, taxonomy |
+| 12.2 | [Patterns](loop/02-patterns/README.md) | 7 production patterns (daily-triage, pr-babysitter, ci-sweeper...) |
+| 12.3 | [Safety](loop/03-safety/README.md) | Loop Design Checklist, denylist, human gates |
+| 12.4 | [Operating](loop/04-operating/README.md) | Budget, logging, metrics, pause/kill |
+| 12.5 | [Multi-Loop](loop/05-multi-loop/README.md) | Phối hợp khi chạy nhiều loops |
+| 12.6 | [Anti-Patterns](loop/06-anti-patterns/README.md) | 10 anti-patterns + failure mode catalog |
+| 12.7 | [Tools](loop/07-tools/README.md) | loop-init, loop-audit, loop-cost, ecosystem |
+
+### Part XIII: Graph Engineering
+> Làm sao xây dựng hệ thống tri thức dạng đồ thị cho AI agents?
+
+| # | Topic | Mô tả |
+|---|-------|-------|
+| 13.1 | [Foundations](graph/01-foundations/README.md) | Graph theory, types, representations, metrics |
+| 13.2 | [Knowledge Graph](graph/02-knowledge-graph/README.md) | Entity/relation extraction, ontology, deduplication |
+| 13.3 | [Graph Storage](graph/03-graph-storage/README.md) | Neo4j, Cypher, indexing, transactions |
+| 13.4 | [Graph Embeddings](graph/04-graph-embeddings/README.md) | Node2Vec, GraphSAGE, hybrid vector+graph search |
+| 13.5 | [GraphRAG](graph/05-graph-rag/README.md) | Subgraph retrieval, community summaries, Microsoft pattern |
+| 13.6 | [Graph Reasoning](graph/06-graph-reasoning/README.md) | Traversal, path finding, inference rules, temporal reasoning |
+| 13.7 | [GNN](graph/07-gnn/README.md) | GNN, link prediction, KG completion, R-GCN |
+| 13.8 | [Graph Workflow](graph/08-graph-workflow/README.md) | Pipeline ETL, incremental updates, versioning, orchestration |
+| 13.9 | [Evaluation](graph/09-evaluation/README.md) | Coverage, hallucination, path precision, benchmarks |
+
 ---
 
 ## 🧠 Hiểu Framework Này
@@ -311,6 +353,27 @@ Tài liệu của bạn (PDF, docs, DB)
    ══════════════════════════════
         ↓
       Câu trả lời
+```
+
+### Flow minh họa: GraphRAG cần gì?
+
+```
+Tài liệu của bạn (PDF, docs, DB)
+        ↓
+   [Graph 02] Knowledge Graph — trích entities/relations (LLM)
+        ↓
+   [Graph 03] Graph Storage — lưu vào Neo4j/Kuzu (Cypher)
+        ↓
+   [Graph 05] GraphRAG — subgraph retrieval + community summaries
+        ↓
+   [Harness 02] Build Context — gộp graph context + vector context
+        ↓
+   ══════════════════════════════
+   ║   AI MODEL (Ollama/GPT)   ║  ← PHẦN CẦN MODEL
+   ║   Đọc graph context + trả lời có citation path ║
+   ══════════════════════════════
+        ↓
+      Câu trả lời + đường dẫn chứng minh (path)
 ```
 
 ### Phân biệt rõ: Phần nào cần model?

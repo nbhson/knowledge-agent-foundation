@@ -1,0 +1,3254 @@
+# 🔧 VI. Decide Tools / MCP Calls
+
+> ## 📑 Table of Contents
+>
+> - [Overview](#overview)
+> - [Contents](#contents)
+> - [1. Tool Selection Patterns](#1-tool-selection-patterns)
+>   - [1.1 Tool Registry](#11-tool-registry)
+>   - [1.2 Example Tools — Extended Set](#12-example-tools--extended-set)
+> - [2. Intent Classification](#2-intent-classification)
+>   - [2.1 Multi-Strategy Intent Classifier](#21-multi-strategy-intent-classifier)
+> - [3. MCP Protocol](#3-mcp-protocol)
+>   - [3.1 MCP Architecture Deep Dive](#31-mcp-architecture-deep-dive)
+>   - [3.2 MCP Client Implementation](#32-mcp-client-implementation)
+> - [4. Tool Executor](#4-tool-executor)
+> - [5. Function Calling](#5-function-calling)
+> - [6. Tool Decision Pipeline](#6-tool-decision-pipeline)
+> - [7. Tool Composition](#7-tool-composition)
+> - [8. Permission System](#8-permission-system)
+> - [9. Rate Limiting](#9-rate-limiting)
+> - [10. Harness Integration](#10-harness-integration)
+>   - [10.1 TypeScript Interfaces](#101-typescript-interfaces)
+> - [11. Case Studies](#11-case-studies)
+>   - [11.1. SWE-agent — Tool-Use for Software Engineering](#111-swe-agent--tool-use-for-software-engineering)
+>   - [11.2. Claude Code — Hierarchical Tool Access](#112-claude-code--hierarchical-tool-access)
+>   - [11.3. Cursor IDE — Context-Aware Tool Selection](#113-cursor-ide--context-aware-tool-selection)
+> - [12. Design Principles](#12-design-principles)
+>   - [12.1 SOLID for Tools](#121-solid-for-tools)
+> - [13. Best Practices](#13-best-practices)
+>   - [13.1 DO ✅](#131-do-)
+>   - [13.2 DON'T ❌](#132-dont-)
+> - [14. Testing](#14-testing)
+> - [15. Advanced Patterns](#15-advanced-patterns)
+>   - [15.1 Tool Learning](#151-tool-learning)
+> - [16. Future](#16-future)
+>   - [16.1 Trends 2026-2028](#161-trends-2026-2028)
+> - [Reference Materials](#reference-materials)
+>   - [Papers & Research](#papers-&-research)
+>   - [Frameworks & Tools](#frameworks-&-tools)
+>
+---
+
+### Opening Story
+
+Imagine walking into a **car repair workshop** with hundreds of tools: wrenches, screwdrivers, drills, welders... A skilled mechanic knows exactly which tool each job needs. But a newcomer? He will **use a drill to remove a bolt** — or worse, **swat the engine with a hammer**.
+
+**That is precisely the problem of an AI Agent without Tool Decision Intelligence.**
+
+An LLM can "know" how to call tools, but when there are **50+ tools** in the arsenal, picking the wrong tool or passing wrong parameters leads to: wasted tokens, wrong results, or worse — **unintended side effects** such as deleting an important file, sending an email with the wrong content, or performing an irreversible action.
+
+**The solution**: Structured Tool Decision — a clear process from **intent analysis → tool selection → parameter validation → execution → result verification**.
+
+### Why Is Tool Decision Important?
+
+> *"An agent with 50 tools that picks the wrong tool = a mechanic with 50 hammers who uses a hammer to break glass."*
+
+#### 3 Scientific Evidences
+
+| # | Study | Key Finding |
+|---|-------|-------------|
+| 1 | **Anthropic MCP Research (2025)** | Agents using structured tool selection reduce **failed tool calls by 60%** compared to an unstructured approach |
+| 2 | **LangChain Benchmark (2025)** | Tool selection accuracy increased from **65% to 92%** when using intent classification before tool routing |
+| 3 | **Princeton SWE-agent (2024)** | Limiting to 50 search results + tool validation increased **success rate by 64%** |
+
+#### Core philosophy:
+
+```
+Tool Selection = Intent Classification → Tool Matching → Parameter Validation → Execution → Result Validation
+```
+
+**Analogies**: Tool decision is like a doctor prescribing medicine — diagnose the right illness (intent), pick the right drug (tool), at the right dose (parameters), and monitor side effects (result validation).
+
+**If you skip it**: The agent calls the wrong tool → wasted tokens, wrong results, or worse — unintended side effects (file deletion, wrong emails, etc.).
+
+## Overview
+
+> **📌 Core Concept**
+>
+> **Definition:** Tool Decision is the process of deciding when to call which tool and with what parameters — from task analysis and tool selection, through the API call, to result handling.
+>
+> **Metaphor:** This module is the "hands and feet" of the agent: every plan only becomes a real action when it passes through here, like a robot arm receiving commands from the brain (the LLM) and executing them under safety control.
+>
+> **Why it matters:** Choosing the right tool, at the right time, with the right parameters determines whether the agent completes the job or breaks it.
+
+An AI Agent needs to know **when to use which tool** and **how to call that tool**. This is the decision process: Analyze the task → Pick a tool → Call the API → Handle the result.
+
+In Harness Engineering, Tool Decision is the **"hands and feet"** — where planning is converted into real actions. Every tool call must pass through guardrails, validation, and logging.
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                 DECIDE TOOLS / MCP CALLS                          │
+│                                                                  │
+│  User Query                                                      │
+│       │                                                          │
+│       ▼                                                          │
+│  ┌────────────────┐                                             │
+│  │  INTENT        │  Analyze user intent                       │
+│  │  CLASSIFIER    │  "search" / "calculate" / "code" / ...     │
+│  └───────┬────────┘                                             │
+│          ▼                                                       │
+│  ┌────────────────┐                                             │
+│  │  TOOL          │  Pick the suitable tool from the list      │
+│  │  SELECTOR      │  "vector_search" / "calculator" / ...      │
+│  └───────┬────────┘                                             │
+│          ▼                                                       │
+│  ┌────────────────┐                                             │
+│  │  PARAMETER     │  Extract & validate parameters             │
+│  │  EXTRACTOR     │  query="BHYT", top_k=5, ...                │
+│  └───────┬────────┘                                             │
+│          ▼                                                       │
+│  ┌────────────────┐                                             │
+│  │  GUARDRAILS    │  Validate permission, safety, rate limit   │
+│  │  CHECK         │                                             │
+│  └───────┬────────┘                                             │
+│          ▼                                                       │
+│  ┌────────────────┐                                             │
+│  │  TOOL          │  Call the tool (function call / MCP)       │
+│  │  EXECUTOR      │  Handle errors, timeout, retry             │
+│  └───────┬────────┘                                             │
+│          ▼                                                       │
+│  ┌────────────────┐                                             │
+│  │  RESULT        │  Parse result → Format → Reply             │
+│  │  PROCESSOR     │                                             │
+│  └────────────────┘                                             │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  HARNESS INTEGRATION                                       │  │
+│  │  Memory ←→ Guardrails ←→ Feedback ←→ Permissions          │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+## Contents
+
+| # | Topic | Description |
+|---|-------|-------------|
+| 1 | [Tool Selection Patterns](#1-tool-selection-patterns) | Registry, search, categories |
+| 2 | [Intent Classification](#2-intent-classification) | Rule-based & LLM-based |
+| 3 | [MCP Protocol](#3-mcp-protocol) | Model Context Protocol in detail |
+| 4 | [Tool Executor](#4-tool-executor) | Error handling, retries, logging |
+| 5 | [Function Calling](#5-function-calling) | OpenAI style + parallel calls |
+| 6 | [Tool Decision Pipeline](#6-tool-decision-pipeline) | End-to-end pipeline |
+| 7 | [Tool Composition](#7-tool-composition) | Chain & parallel tool calls |
+| 8 | [Permission System](#8-permission-system) | RBAC for tools |
+| 9 | [Rate Limiting](#9-rate-limiting) | Token/usage quotas |
+| 10 | [Harness Integration](#10-harness-integration) | TypeScript interfaces |
+| 11 | [Case Studies](#11-case-studies) | SWE-agent, Claude Code, Cursor |
+| 12 | [Design Principles](#12-design-principles) | SOLID for tools |
+| 13 | [Best Practices](#13-best-practices) | DO/DON'T in detail |
+| 14 | [Testing](#14-testing) | Unit & integration tests |
+| 15 | [Advanced Patterns](#15-advanced-patterns) | Tool learning, dynamic tools |
+| 16 | [Future](#16-future) | Trends 2026-2028 |
+
+---
+
+## 1. Tool Selection Patterns
+
+> **📌 Core Concept**
+>
+> **Definition:** Tool Selection Patterns are the ways an AI Agent decides which tool to pick from a large set (tool registry, search, categories) to complete a specific task.
+>
+> **Metaphor:** Like a mechanic standing in front of a toolbox with hundreds of items: a skilled one doesn't need to read the manual for each wrench and still knows exactly which item to use for each bolt.
+>
+> **Why it matters:** Picking the right tool from the start saves tokens, avoids side effects, and increases the task completion rate.
+
+### 1.1 Tool Registry
+
+This section is the "phone book" of all tools in the system. `ToolDefinition` is the declaration record for a single tool (name, description, parameters, permissions, rate limit, timeout, cost); `ToolRegistry` is the storage that lets you register, search, filter by category, detect deprecated tools, and track metrics (success rate, latency). How to read it: look at the `ToolDefinition` record first, then read the `ToolRegistry` methods to see what the registry can do.
+
+*Analogy:* Like a medicine cabinet with clear labels — each tool is a bottle labeled with its purpose (description), dosage (parameters), and expiration date (deprecation date); the registry is the cabinet manager who knows exactly which bottle is in which shelf.
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+from typing import Any, Callable, Dict, List, Optional, Set
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+import json
+import hashlib
+import time
+
+@dataclass
+class ToolDefinition:
+    """
+    Production-grade tool definition with full metadata
+    """
+    name: str
+    description: str
+    parameters: Dict[str, Dict]  # {param_name: {"type": ..., "description": ...}}
+    function: Callable = None
+    category: str = "general"
+    examples: List[Dict] = field(default_factory=list)
+    
+    # Harness metadata
+    version: str = "1.0.0"
+    author: str = "system"
+    tags: List[str] = field(default_factory=list)
+    requires_auth: bool = False
+    requires_permission: str = "standard"  # standard, elevated, admin
+    rate_limit_per_minute: int = 60
+    timeout_seconds: int = 30
+    max_retries: int = 3
+    cost_per_call: float = 0.0  # Token cost estimate
+    deprecation_date: Optional[str] = None
+    replacement_tool: Optional[str] = None
+    
+    # Performance metrics
+    avg_latency_ms: float = 0.0
+    success_rate: float = 1.0
+    total_calls: int = 0
+    
+    def to_dict(self) -> Dict:
+        return {
+            "name": self.name,
+            "description": self.description,
+            "parameters": self.parameters,
+            "category": self.category,
+            "version": self.version,
+            "tags": self.tags,
+            "requires_auth": self.requires_auth,
+            "requires_permission": self.requires_permission,
+            "rate_limit_per_minute": self.rate_limit_per_minute,
+            "timeout_seconds": self.timeout_seconds,
+            "avg_latency_ms": self.avg_latency_ms,
+            "success_rate": self.success_rate,
+            "total_calls": self.total_calls,
+        }
+    
+    def is_deprecated(self) -> bool:
+        if self.deprecation_date:
+            return datetime.now().isoformat() > self.deprecation_date
+        return False
+    
+    def update_metrics(self, latency_ms: float, success: bool):
+        """Update running metrics"""
+        self.total_calls += 1
+        # Exponential moving average
+        alpha = 0.1
+        self.avg_latency_ms = alpha * latency_ms + (1 - alpha) * self.avg_latency_ms
+        self.success_rate = alpha * (1.0 if success else 0.0) + (1 - alpha) * self.success_rate
+
+
+class ToolRegistry:
+    """
+    Central registry for all available tools
+    
+    Supports: Registration, search, category filtering,
+    versioning, deprecation, metrics tracking
+    """
+    
+    def __init__(self):
+        self.tools: Dict[str, ToolDefinition] = {}
+        self.categories: Dict[str, List[str]] = {}
+        self.usage_log: List[Dict] = []
+        self._aliases: Dict[str, str] = {}
+    
+    def register(self, tool: ToolDefinition):
+        """Register a new tool"""
+        if tool.name in self.tools:
+            existing = self.tools[tool.name]
+            if existing.version != tool.version:
+                print(f"Warning: Updating tool '{tool.name}' from v{existing.version} to v{tool.version}")
+        
+        self.tools[tool.name] = tool
+        if tool.category not in self.categories:
+            self.categories[tool.category] = []
+        if tool.name not in self.categories[tool.category]:
+            self.categories[tool.category].append(tool.name)
+    
+    def unregister(self, name: str) -> bool:
+        """Remove a tool from registry"""
+        if name in self.tools:
+            tool = self.tools.pop(name)
+            if tool.category in self.categories:
+                self.categories[tool.category] = [
+                    n for n in self.categories[tool.category] if n != name
+                ]
+            return True
+        return False
+    
+    def add_alias(self, alias: str, tool_name: str):
+        """Add an alias for a tool"""
+        self._aliases[alias] = tool_name
+    
+    def resolve_alias(self, name: str) -> str:
+        """Resolve alias to actual tool name"""
+        return self._aliases.get(name, name)
+    
+    def get_tool(self, name: str) -> Optional[ToolDefinition]:
+        resolved = self.resolve_alias(name)
+        return self.tools.get(resolved)
+    
+    def list_tools(self, category=None, include_deprecated=False) -> List[ToolDefinition]:
+        if category:
+            names = self.categories.get(category, [])
+            tools = [self.tools[n] for n in names if n in self.tools]
+        else:
+            tools = list(self.tools.values())
+        
+        if not include_deprecated:
+            tools = [t for t in tools if not t.is_deprecated()]
+        
+        return tools
+    
+    def search(self, query: str, use_embedding: bool = False, embed_func=None) -> List[ToolDefinition]:
+        """
+        Search tools by keyword or semantic similarity
+        """
+        query_lower = query.lower()
+        results = []
+        
+        for tool in self.tools.values():
+            # Keyword matching
+            name_match = query_lower in tool.name.lower()
+            desc_match = query_lower in tool.description.lower()
+            tag_match = any(query_lower in tag.lower() for tag in tool.tags)
+            category_match = query_lower in tool.category.lower()
+            
+            if name_match or desc_match or tag_match or category_match:
+                results.append(tool)
+        
+        # Semantic search if enabled
+        if use_embedding and embed_func and not results:
+            results = self._semantic_search(query, embed_func)
+        
+        # Sort by relevance (success rate * inverse latency)
+        results.sort(
+            key=lambda t: t.success_rate / max(t.avg_latency_ms, 1),
+            reverse=True,
+        )
+        
+        return results
+    
+    def _semantic_search(self, query: str, embed_func) -> List[ToolDefinition]:
+        """Find tools by semantic similarity"""
+        query_emb = embed_func(query)
+        scored = []
+        
+        for tool in self.tools.values():
+            tool_emb = embed_func(f"{tool.name}: {tool.description}")
+            sim = self._cosine_sim(query_emb, tool_emb)
+            if sim > 0.5:  # Threshold
+                scored.append((sim, tool))
+        
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [tool for _, tool in scored[:5]]
+    
+    def _cosine_sim(self, a, b):
+        import numpy as np
+        a, b = np.array(a), np.array(b)
+        norm_a, norm_b = np.linalg.norm(a), np.linalg.norm(b)
+        if norm_a == 0 or norm_b == 0:
+            return 0.0
+        return float(np.dot(a, b) / (norm_a * norm_b))
+    
+    def to_openai_format(self, include_deprecated=False) -> List[Dict]:
+        """Export tools in OpenAI function calling format"""
+        tools = self.list_tools(include_deprecated=include_deprecated)
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": t.name,
+                    "description": t.description,
+                    "parameters": {
+                        "type": "object",
+                        "properties": t.parameters,
+                        "required": [
+                            k for k, v in t.parameters.items() 
+                            if v.get("required", False)
+                        ],
+                    },
+                }
+            }
+            for t in tools
+        ]
+    
+    def to_mcp_format(self) -> List[Dict]:
+        """Export tools in MCP format"""
+        return [
+            {
+                "name": t.name,
+                "description": t.description,
+                "inputSchema": {
+                    "type": "object",
+                    "properties": t.parameters,
+                },
+            }
+            for t in self.tools.values()
+        ]
+    
+    def get_deprecated_tools(self) -> List[ToolDefinition]:
+        """Get all deprecated tools"""
+        return [t for t in self.tools.values() if t.is_deprecated()]
+    
+    def get_tool_stats(self) -> Dict:
+        """Get aggregate stats for all tools"""
+        tools = list(self.tools.values())
+        total_calls = sum(t.total_calls for t in tools)
+        avg_success = sum(t.success_rate for t in tools) / len(tools) if tools else 0
+        
+        return {
+            "total_tools": len(tools),
+            "total_categories": len(self.categories),
+            "total_calls": total_calls,
+            "avg_success_rate": avg_success,
+            "deprecated": len([t for t in tools if t.is_deprecated()]),
+            "by_category": {
+                cat: len(names) for cat, names in self.categories.items()
+            },
+        }
+```
+
+</details>
+
+### 1.2 Example Tools — Extended Set
+
+This section shows how to quickly build a default toolset: the `create_default_tools()` function registers each `ToolDefinition` into the `ToolRegistry` with name, description, parameters, category, and tags. While reading, note that some sensitive tools are marked `requires_permission="elevated"` (`sql_query`, `execute_python`, `write_file`), meaning they need higher privileges to run. This is the shared list of tools used by the following sections (intent classifier, executor, tests).
+
+*Analogy:* Like a pre-packed toolbox for a newcomer: you don't need to buy each item separately, just open the case and you have the basics for most jobs.
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+def create_default_tools():
+    """Create comprehensive default toolset"""
+    registry = ToolRegistry()
+    
+    # ─── Search Tools ───
+    registry.register(ToolDefinition(
+        name="vector_search",
+        description="Semantic search in the vector database",
+        parameters={
+            "query": {"type": "string", "description": "The query", "required": True},
+            "top_k": {"type": "integer", "description": "Number of results to return", "default": 5},
+            "collection": {"type": "string", "description": "Collection name"},
+            "filters": {"type": "object", "description": "Metadata filters"},
+        },
+        category="search",
+        tags=["semantic", "vector", "embedding"],
+        examples=[
+            {"query": "Health insurance for employees", "top_k": 3},
+        ],
+    ))
+    
+    registry.register(ToolDefinition(
+        name="web_search",
+        description="Search the internet",
+        parameters={
+            "query": {"type": "string", "description": "Search keyword", "required": True},
+            "num_results": {"type": "integer", "default": 5},
+            "region": {"type": "string", "default": "vn"},
+        },
+        category="search",
+        tags=["internet", "realtime", "web"],
+    ))
+    
+    registry.register(ToolDefinition(
+        name="sql_query",
+        description="Execute SQL query on the database",
+        parameters={
+            "query": {"type": "string", "description": "SQL query", "required": True},
+            "database": {"type": "string", "default": "main"},
+            "readonly": {"type": "boolean", "default": True},
+        },
+        category="search",
+        requires_permission="elevated",
+        tags=["database", "sql", "structured"],
+    ))
+    
+    # ─── Computation Tools ───
+    registry.register(ToolDefinition(
+        name="calculator",
+        description="Safe mathematical calculation",
+        parameters={
+            "expression": {"type": "string", "description": "Math expression", "required": True},
+        },
+        category="computation",
+        tags=["math", "arithmetic"],
+    ))
+    
+    registry.register(ToolDefinition(
+        name="execute_python",
+        description="Execute Python code in a sandbox",
+        parameters={
+            "code": {"type": "string", "description": "Python code", "required": True},
+            "timeout": {"type": "integer", "default": 30},
+        },
+        category="computation",
+        requires_permission="elevated",
+        tags=["python", "code", "sandbox"],
+    ))
+    
+    registry.register(ToolDefinition(
+        name="data_analysis",
+        description="Analyze data with pandas/numpy",
+        parameters={
+            "data": {"type": "string", "description": "Data path or CSV string", "required": True},
+            "analysis_type": {"type": "string", "enum": ["summary", "correlation", "distribution", "trend"]},
+            "columns": {"type": "array", "items": {"type": "string"}},
+        },
+        category="computation",
+        tags=["analytics", "pandas", "statistics"],
+    ))
+    
+    # ─── Code Tools ───
+    registry.register(ToolDefinition(
+        name="read_file",
+        description="Read file content",
+        parameters={
+            "path": {"type": "string", "description": "File path", "required": True},
+            "encoding": {"type": "string", "default": "utf-8"},
+            "max_lines": {"type": "integer", "description": "Max lines to read"},
+        },
+        category="file",
+        tags=["read", "file", "filesystem"],
+    ))
+    
+    registry.register(ToolDefinition(
+        name="write_file",
+        description="Write content to a file",
+        parameters={
+            "path": {"type": "string", "description": "File path", "required": True},
+            "content": {"type": "string", "description": "Content", "required": True},
+            "mode": {"type": "string", "enum": ["overwrite", "append"], "default": "overwrite"},
+        },
+        category="file",
+        requires_permission="elevated",
+        tags=["write", "file", "filesystem"],
+    ))
+    
+    registry.register(ToolDefinition(
+        name="search_code",
+        description="Search code in the codebase",
+        parameters={
+            "query": {"type": "string", "description": "Regex or text pattern", "required": True},
+            "path": {"type": "string", "default": "."},
+            "file_pattern": {"type": "string", "description": "glob pattern"},
+        },
+        category="code",
+        tags=["code", "search", "regex"],
+    ))
+    
+    registry.register(ToolDefinition(
+        name="run_tests",
+        description="Run the test suite",
+        parameters={
+            "test_path": {"type": "string", "description": "Path to test file/directory"},
+            "framework": {"type": "string", "enum": ["pytest", "unittest", "jest", "vitest"]},
+            "verbose": {"type": "boolean", "default": True},
+        },
+        category="code",
+        tags=["testing", "ci", "quality"],
+    ))
+    
+    # ─── Knowledge Tools ───
+    registry.register(ToolDefinition(
+        name="query_knowledge_graph",
+        description="Query the knowledge graph",
+        parameters={
+            "entity": {"type": "string", "description": "Entity name", "required": True},
+            "relation": {"type": "string", "description": "Relation type"},
+            "max_hops": {"type": "integer", "default": 1},
+        },
+        category="knowledge",
+        tags=["kg", "graph", "entity"],
+    ))
+    
+    registry.register(ToolDefinition(
+        name="lookup_definition",
+        description="Look up a term definition",
+        parameters={
+            "term": {"type": "string", "description": "Term to look up", "required": True},
+            "domain": {"type": "string", "description": "Domain"},
+        },
+        category="knowledge",
+        tags=["definition", "glossary", "reference"],
+    ))
+    
+    # ─── Memory Tools ───
+    registry.register(ToolDefinition(
+        name="recall_memory",
+        description="Recall information from memory",
+        parameters={
+            "query": {"type": "string", "description": "The query", "required": True},
+            "memory_type": {"type": "string", "enum": ["episodic", "semantic", "all"]},
+            "limit": {"type": "integer", "default": 5},
+        },
+        category="memory",
+        tags=["recall", "memory", "history"],
+    ))
+    
+    registry.register(ToolDefinition(
+        name="store_memory",
+        description="Store information in memory",
+        parameters={
+            "content": {"type": "string", "description": "Content to store", "required": True},
+            "memory_type": {"type": "string", "enum": ["episodic", "semantic"]},
+            "importance": {"type": "string", "enum": ["low", "medium", "high"]},
+            "tags": {"type": "array", "items": {"type": "string"}},
+        },
+        category="memory",
+        tags=["store", "memory", "persistence"],
+    ))
+    
+    # ─── Communication Tools ───
+    registry.register(ToolDefinition(
+        name="send_notification",
+        description="Send a notification to the user",
+        parameters={
+            "message": {"type": "string", "description": "Notification content", "required": True},
+            "channel": {"type": "string", "enum": ["email", "slack", "in_app"], "default": "in_app"},
+            "priority": {"type": "string", "enum": ["low", "normal", "high"], "default": "normal"},
+        },
+        category="communication",
+        tags=["notify", "alert", "message"],
+    ))
+    
+    # ─── Version Control Tools ───
+    registry.register(ToolDefinition(
+        name="git_status",
+        description="View git repository status",
+        parameters={
+            "path": {"type": "string", "default": "."},
+        },
+        category="devops",
+        tags=["git", "status", "vcs"],
+    ))
+    
+    registry.register(ToolDefinition(
+        name="git_diff",
+        description="View the diff of git changes",
+        parameters={
+            "ref": {"type": "string", "description": "Branch/commit to diff against"},
+            "path": {"type": "string"},
+        },
+        category="devops",
+        tags=["git", "diff", "changes"],
+    ))
+    
+    return registry
+```
+
+</details>
+---
+
+## 2. Intent Classification
+
+> **📌 Core Concept**
+>
+> **Definition:** Intent Classification is the process of guessing what the user wants to do from their question (search, compute, write code, remember, etc.), then mapping it to the right group of tools — combining rule-based (fast, cheap) with embedding/LLM-based (more accurate, more expensive) to balance quality and cost.
+>
+> **Metaphor:** Like a hotel receptionist listening to the guest's first sentence to guess whether they need a room booking, a car, or the time, then handing them off to the right department.
+>
+> **Why it matters:** A wrong intent leads to the wrong tool call, wasted tokens, and meaningless results; correct classification is the mandatory stepping stone before tool selection.
+
+### 2.1 Multi-Strategy Intent Classifier
+
+This section is a three-tier intent classifier to read and reuse. Tier 1 is rule-based: scan keywords like "search", "compute", "read" in the question. Tier 2 is LLM-based: ask the model to analyze the intent. Tier 3 is auto: prefer rules when confidence is high (0.7 or above), and only call the LLM when in doubt. The `classify_multi_intent()` function also splits a single sentence containing multiple intents, e.g. "Read the file and run the tests" into two intents [read, test].
+
+*Analogy:* Like a front desk that has a script book (rules) to answer common questions quickly; it only needs to call the manager (the LLM) when it meets a difficult question.
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+class IntentClassifier:
+    """
+    Multi-strategy intent classification:
+    1. Rule-based (fast, no LLM needed)
+    2. Embedding-based (moderate accuracy)
+    3. LLM-based (highest accuracy, most expensive)
+    
+    Auto-selects strategy based on confidence threshold
+    """
+    
+    INTENT_RULES = {
+        "search": {
+            "keywords": ["find", "search", "lookup", "google"],
+            "tools": ["vector_search", "web_search", "query_knowledge_graph"],
+            "priority": 1,
+        },
+        "calculate": {
+            "keywords": ["calculate", "compute", "math", "how much", "percent", "sum", "average"],
+            "tools": ["calculator", "execute_python", "data_analysis"],
+            "priority": 2,
+        },
+        "code": {
+            "keywords": ["code", "write code", "program", "function", "script", "implement", "refactor"],
+            "tools": ["execute_python", "write_file", "search_code"],
+            "priority": 1,
+        },
+        "read": {
+            "keywords": ["read", "open", "show", "display", "cat"],
+            "tools": ["read_file", "git_status"],
+            "priority": 2,
+        },
+        "write": {
+            "keywords": ["write", "save", "create file"],
+            "tools": ["write_file", "store_memory"],
+            "priority": 2,
+        },
+        "remember": {
+            "keywords": ["remember", "note", "don't forget"],
+            "tools": ["store_memory"],
+            "priority": 3,
+        },
+        "recall": {
+            "keywords": ["recall", "earlier", "mentioned", "history", "previous"],
+            "tools": ["recall_memory"],
+            "priority": 3,
+        },
+        "knowledge": {
+            "keywords": ["what do you know", "knowledge", "facts", "information about", "define", "what is"],
+            "tools": ["query_knowledge_graph", "vector_search", "lookup_definition"],
+            "priority": 2,
+        },
+        "test": {
+            "keywords": ["test", "run test", "verify", "validate", "check"],
+            "tools": ["run_tests"],
+            "priority": 2,
+        },
+        "git": {
+            "keywords": ["git", "commit", "branch", "diff", "merge", "push", "pull"],
+            "tools": ["git_status", "git_diff"],
+            "priority": 2,
+        },
+    }
+    
+    def __init__(self, llm_func=None):
+        self.llm = llm_func
+        self.classification_history = []
+    
+    def classify_rule_based(self, query: str) -> Dict:
+        """Fast rule-based classification"""
+        query_lower = query.lower()
+        scores = {}
+        
+        for intent, config in self.INTENT_RULES.items():
+            score = sum(1 for kw in config["keywords"] if kw in query_lower)
+            # Boost by priority
+            if score > 0:
+                score = score * (4 - config.get("priority", 2))
+                scores[intent] = score
+        
+        if not scores:
+            return {"intent": "chat", "tools": [], "confidence": 0.5, "method": "rule"}
+        
+        best_intent = max(scores, key=scores.get)
+        confidence = min(scores[best_intent] / 5, 1.0)
+        
+        return {
+            "intent": best_intent,
+            "tools": self.INTENT_RULES[best_intent]["tools"],
+            "confidence": confidence,
+            "method": "rule",
+            "all_scores": scores,
+        }
+    
+    def classify_llm_based(self, query: str) -> Dict:
+        """LLM-based classification (more accurate, more expensive)"""
+        intents_desc = "\n".join([
+            f"- {intent}: keywords={config['keywords'][:3]}..., tools={config['tools']}"
+            for intent, config in self.INTENT_RULES.items()
+        ])
+        
+        prompt = f"""Analyze the user's intent and pick the most suitable tool.
+
+User query: "{query}"
+
+Possible intents:
+{intents_desc}
+
+Output JSON:
+{{
+  "intent": "...",
+  "tools": ["tool1", "tool2"],
+  "confidence": 0.0-1.0,
+  "reasoning": "Why this intent was chosen",
+  "parameters_hint": {{"param": "suggested value"}}
+}}"""
+        
+        response = self.llm(prompt)
+        try:
+            result = json.loads(response)
+            result["method"] = "llm"
+            return result
+        except json.JSONDecodeError:
+            return self.classify_rule_based(query)  # Fallback
+    
+    def classify(self, query: str, strategy: str = "auto") -> Dict:
+        """
+        Classify with auto-strategy selection
+        
+        Strategies:
+        - "auto": Rule first, LLM if confidence < threshold
+        - "rule": Rule-based only
+        - "llm": LLM-based only
+        - "ensemble": Combine both
+        """
+        
+        if strategy == "rule" or strategy == "auto":
+            rule_result = self.classify_rule_based(query)
+            
+            if strategy == "rule":
+                return rule_result
+            
+            # Auto: use LLM if rule confidence is low
+            if rule_result["confidence"] >= 0.7:
+                return rule_result
+            
+            if self.llm:
+                llm_result = self.classify_llm_based(query)
+                
+                # Take the higher confidence result
+                if llm_result.get("confidence", 0) > rule_result["confidence"]:
+                    return llm_result
+            
+            return rule_result
+        
+        elif strategy == "llm":
+            if self.llm:
+                return self.classify_llm_based(query)
+            return self.classify_rule_based(query)
+        
+        elif strategy == "ensemble":
+            rule_result = self.classify_rule_based(query)
+            llm_result = None
+            
+            if self.llm:
+                llm_result = self.classify_llm_based(query)
+            
+            if llm_result and rule_result["intent"] == llm_result.get("intent"):
+                # Agreement → high confidence
+                return {
+                    "intent": rule_result["intent"],
+                    "tools": rule_result["tools"],
+                    "confidence": 0.95,
+                    "method": "ensemble",
+                }
+            elif llm_result:
+                # Disagreement → use LLM
+                llm_result["method"] = "ensemble_override"
+                return llm_result
+            
+            return rule_result
+        
+        return self.classify_rule_based(query)
+    
+    def classify_multi_intent(self, query: str) -> List[Dict]:
+        """
+        Detect multiple intents in a single query
+        E.g., "Find the README file and run tests" → [read, test]
+        """
+        # Split by conjunction words
+        import re
+        parts = re.split(r'\s+(and|;|then|after that)\s+', query)
+        
+        intents = []
+        for part in parts:
+            part = part.strip()
+            if part.lower() in ['and', ';', 'then', 'after that']:
+                continue
+            if len(part) > 3:  # Skip very short parts
+                intent = self.classify(part)
+                intents.append(intent)
+        
+        return intents if intents else [self.classify(query)]
+```
+
+</details>
+
+---
+
+## 3. MCP Protocol
+
+> **📌 Core Concept**
+>
+> **Definition:** The MCP Protocol (Model Context Protocol) is a standard JSON-RPC 2.0-based protocol that lets any LLM discover (tools/list) and call (tools/call) tools provided by external MCP servers, along with resources and prompts — unified across all providers.
+>
+> **Metaphor:** Like the USB-C charging port: previously each device had its own cable type, now there is one shared standard for all devices. MCP is the "universal plug" that lets AI attach tools from any service without writing a separate integration for each type.
+>
+> **Why it matters:** It solves the integration problem of adding adapters one pair at a time (one adapter per LLM-tool pair); a standard protocol lets the tool ecosystem grow many times faster.
+
+### 3.1 MCP Architecture Deep Dive
+
+How to read this diagram? There are three clear layers. The top layer is the HOST (the client, where the LLM runs: Claude Desktop, GPT apps, your own agent); the bottom layer is the SERVERS (GitHub, Database, File, Web Search, Slack, etc.) that provide tools. In between is the JSON-RPC connection over stdio/SSE/HTTP — like a standard switchboard. The operating flow: the LLM asks the server "what tools do you have" (tools/list), then calls a specific tool (tools/call). The last strip of the diagram lists all protocol features: capabilities negotiation, resource access, prompt templates, sampling, and logging.
+
+*Analogy:* Like a taxi dispatch center: the operator (host) calls the drivers (servers) according to the switchboard standard (protocol), and whoever is free takes the job — instead of having to know each driver individually.
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                  MCP (MODEL CONTEXT PROTOCOL)                     │
+│                                                                  │
+│  MCP is the standard protocol for LLMs to talk to external tools│
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                    HOST (Client)                          │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐              │   │
+│  │  │ Claude   │  │ GPT-4    │  │ Custom   │              │   │
+│  │  │ Desktop  │  │ App      │  │ Agent    │              │   │
+│  │  └────┬─────┘  └────┬─────┘  └────┬─────┘              │   │
+│  │       └──────────────┼──────────────┘                    │   │
+│  │                      ▼                                    │   │
+│  │              MCP Client SDK                              │   │
+│  └──────────────────────┬───────────────────────────────────┘   │
+│                         │ JSON-RPC 2.0                           │
+│                         │ (stdio/SSE/HTTP)                       │
+│  ┌──────────────────────┴───────────────────────────────────┐   │
+│  │                    SERVERS                                │   │
+│  │                                                          │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │   │
+│  │  │  GitHub     │  │  Database   │  │  File       │     │   │
+│  │  │  Server     │  │  Server     │  │  Server     │     │   │
+│  │  │  ─────────  │  │  ─────────  │  │  ─────────  │     │   │
+│  │  │  - search   │  │  - query    │  │  - read     │     │   │
+│  │  │  - create   │  │  - insert   │  │  - write    │     │   │
+│  │  │  - update   │  │  - update   │  │  - delete   │     │   │
+│  │  │  - delete   │  │  - schema   │  │  - list     │     │   │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘     │   │
+│  │                                                          │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │   │
+│  │  │  Web Search │  │  Slack      │  │  Custom     │     │   │
+│  │  │  Server     │  │  Server     │  │  API Server │     │   │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘     │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│  Protocol Features:                                              │
+│  ├── Capabilities negotiation                                   │
+│  ├── Tool discovery (tools/list)                                │
+│  ├── Tool execution (tools/call)                                │
+│  ├── Resource access (resources/read)                           │
+│  ├── Prompt templates (prompts/list, prompts/get)              │
+│  ├── Sampling (sampling/createMessage)                          │
+│  └── Logging (logging/setLevel)                                │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### 3.2 MCP Client Implementation
+
+This section gives you a complete MCP client to try out: `connect()` connects to a server with capability negotiation, `list_tools()` fetches the tool list and caches it, `call_tool()` calls a tool with a timeout and error handling, `read_resource()` reads a resource. The `format_tools_for_llm()` function converts MCP tools into the exact format of each provider (OpenAI's `type: function` or Anthropic's). The `MultiServerMCPManager` class at the end manages multiple servers: it gathers tools into one shared namespace and automatically fails over to another server when the primary one errors. The key point to remember: caching, timeouts, routing, and fallback are the four must-haves of a production MCP client.
+
+*Analogy:* Like a switchboard operator: knows which phone number can answer which request; when one line is busy, automatically transfers to the backup number (failover).
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+import asyncio
+from typing import Any, Dict, List, Optional
+
+class MCPClient:
+    """
+    Production MCP Client for calling MCP tools
+    
+    Supports: Tool listing, tool calling, resource access,
+    prompt templates, sampling, error handling
+    """
+    
+    def __init__(self, server_name: str, transport: str = "stdio", config: Dict = None):
+        self.server_name = server_name
+        self.transport = transport
+        self.config = config or {}
+        self._tools_cache: List[Dict] = []
+        self._resources_cache: List[Dict] = []
+        self._prompts_cache: List[Dict] = []
+        self._connected = False
+        self._request_id = 0
+        self._server_capabilities = {}
+        self._latencies = []
+    
+    async def connect(self) -> bool:
+        """Connect to MCP server with capability negotiation"""
+        try:
+            # In real implementation:
+            # 1. Start server subprocess
+            # 2. Send initialize request
+            # 3. Receive capabilities
+            
+            self._server_capabilities = {
+                "tools": {"listChanged": True},
+                "resources": {"subscribe": True},
+                "prompts": {},
+                "logging": {},
+            }
+            
+            self._connected = True
+            return True
+            
+        except Exception as e:
+            print(f"Failed to connect to {self.server_name}: {e}")
+            return False
+    
+    async def disconnect(self):
+        """Gracefully disconnect"""
+        self._connected = False
+        self._tools_cache = []
+    
+    async def list_tools(self) -> List[Dict]:
+        """List available tools from MCP server"""
+        if not self._connected:
+            await self.connect()
+        
+        # Cache tools
+        self._tools_cache = await self._send_request("tools/list", {})
+        return self._tools_cache
+    
+    async def call_tool(self, tool_name: str, arguments: Dict, 
+                        timeout: float = 30.0) -> Dict:
+        """Call a tool on MCP server with timeout and error handling"""
+        if not self._connected:
+            await self.connect()
+        
+        start_time = time.time()
+        
+        try:
+            response = await asyncio.wait_for(
+                self._send_request("tools/call", {
+                    "name": tool_name,
+                    "arguments": arguments,
+                }),
+                timeout=timeout,
+            )
+            
+            elapsed_ms = (time.time() - start_time) * 1000
+            self._latencies.append(elapsed_ms)
+            
+            return {
+                "success": True,
+                "content": response.get("content", []),
+                "isError": response.get("isError", False),
+                "latency_ms": elapsed_ms,
+                "server": self.server_name,
+            }
+            
+        except asyncio.TimeoutError:
+            return {
+                "success": False,
+                "error": f"Timeout after {timeout}s",
+                "content": [],
+                "server": self.server_name,
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "content": [],
+                "server": self.server_name,
+            }
+    
+    async def read_resource(self, uri: str) -> Dict:
+        """Read a resource from MCP server"""
+        if not self._connected:
+            await self.connect()
+        
+        return await self._send_request("resources/read", {"uri": uri})
+    
+    async def list_resources(self) -> List[Dict]:
+        """List available resources"""
+        if not self._connected:
+            await self.connect()
+        
+        self._resources_cache = await self._send_request("resources/list", {})
+        return self._resources_cache
+    
+    async def get_prompt(self, name: str, arguments: Dict = None) -> Dict:
+        """Get a prompt template from server"""
+        return await self._send_request("prompts/get", {
+            "name": name,
+            "arguments": arguments or {},
+        })
+    
+    async def _send_request(self, method: str, params: Dict) -> Dict:
+        """Send JSON-RPC request to MCP server"""
+        self._request_id += 1
+        
+        request = {
+            "jsonrpc": "2.0",
+            "id": self._request_id,
+            "method": method,
+            "params": params,
+        }
+        
+        # In production: send via subprocess stdin/stdout or HTTP
+        # For now, simulate response
+        return {}
+    
+    def format_tools_for_llm(self, provider: str = "openai") -> List[Dict]:
+        """Format MCP tools for specific LLM provider"""
+        if provider == "openai":
+            return [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": t["name"],
+                        "description": t.get("description", ""),
+                        "parameters": t.get("inputSchema", {}),
+                    }
+                }
+                for t in self._tools_cache
+            ]
+        elif provider == "anthropic":
+            return [
+                {
+                    "name": t["name"],
+                    "description": t.get("description", ""),
+                    "input_schema": t.get("inputSchema", {}),
+                }
+                for t in self._tools_cache
+            ]
+        
+        return self._tools_cache
+    
+    def get_latency_stats(self) -> Dict:
+        """Get latency statistics"""
+        if not self._latencies:
+            return {"avg_ms": 0, "p50_ms": 0, "p95_ms": 0, "p99_ms": 0, "count": 0}
+        
+        sorted_lat = sorted(self._latencies)
+        n = len(sorted_lat)
+        
+        return {
+            "avg_ms": sum(sorted_lat) / n,
+            "p50_ms": sorted_lat[n // 2],
+            "p95_ms": sorted_lat[int(n * 0.95)],
+            "p99_ms": sorted_lat[int(n * 0.99)],
+            "min_ms": sorted_lat[0],
+            "max_ms": sorted_lat[-1],
+            "count": n,
+        }
+
+
+class MultiServerMCPManager:
+    """
+    Manage connections to multiple MCP servers
+    
+    Features:
+    - Auto-discovery
+    - Load balancing
+    - Failover
+    - Unified tool namespace
+    """
+    
+    def __init__(self):
+        self.servers: Dict[str, MCPClient] = {}
+        self._tool_to_server: Dict[str, str] = {}
+    
+    async def add_server(self, name: str, server: MCPClient):
+        """Add and connect to a server"""
+        await server.connect()
+        self.servers[name] = server
+        
+        # Index tools
+        tools = await server.list_tools()
+        for tool in tools:
+            self._tool_to_server[tool["name"]] = name
+    
+    async def remove_server(self, name: str):
+        """Disconnect and remove a server"""
+        if name in self.servers:
+            await self.servers[name].disconnect()
+            del self.servers[name]
+            
+            # Rebuild index
+            self._tool_to_server = {
+                tool: srv for tool, srv in self._tool_to_server.items()
+                if srv != name
+            }
+    
+    def get_all_tools(self) -> List[Dict]:
+        """Get tools from all servers, unified namespace"""
+        all_tools = []
+        for server_name, server in self.servers.items():
+            for tool in server._tools_cache:
+                tool_copy = dict(tool)
+                tool_copy["_server"] = server_name
+                all_tools.append(tool_copy)
+        return all_tools
+    
+    async def call_tool(self, tool_name: str, arguments: Dict) -> Dict:
+        """Call tool, routing to correct server"""
+        server_name = self._tool_to_server.get(tool_name)
+        
+        if not server_name:
+            return {
+                "success": False,
+                "error": f"No server found for tool '{tool_name}'",
+            }
+        
+        server = self.servers.get(server_name)
+        if not server:
+            return {
+                "success": False,
+                "error": f"Server '{server_name}' not available",
+            }
+        
+        result = await server.call_tool(tool_name, arguments)
+        
+        # If failed, try failover to other servers
+        if not result.get("success"):
+            for other_name, other_server in self.servers.items():
+                if other_name != server_name:
+                    tools = [t["name"] for t in other_server._tools_cache]
+                    if tool_name in tools:
+                        return await other_server.call_tool(tool_name, arguments)
+        
+        return result
+    
+    def get_server_stats(self) -> Dict:
+        """Get stats for all servers"""
+        stats = {}
+        for name, server in self.servers.items():
+            stats[name] = {
+                "tools_count": len(server._tools_cache),
+                "connected": server._connected,
+                "latency": server.get_latency_stats(),
+            }
+        return stats
+```
+
+</details>
+---
+
+## 4. Tool Executor
+
+> **📌 Core Concept**
+>
+> **Definition:** The Tool Executor is the component responsible for calling tools safely: validating parameters, checking permissions and rate limits, running with a timeout, retrying with exponential backoff, and logging every call — sitting between the tool-selection decision and the returned result.
+>
+> **Metaphor:** Like a waiter with a checklist before taking an order: is the dish on the menu (does the tool exist), do we have enough ingredients (parameters), will the kitchen accept it (permissions, rate limit), and only then hand it to the kitchen and follow up until the dish comes out (timeout, retry).
+>
+> **Why it matters:** Most agent errors live in failed tool calls; the executor is where all of them are handled consistently, observably, and without breaking the task when something goes wrong.
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+import time
+from typing import Any, Dict, Optional, Callable
+from datetime import datetime
+
+class ToolExecutor:
+    """
+    Execute tools with comprehensive error handling:
+    - Parameter validation
+    - Retry with exponential backoff
+    - Timeout handling
+    - Rate limiting
+    - Permission checking
+    - Cost tracking
+    - Execution logging
+    """
+    
+    def __init__(self, registry: ToolRegistry, 
+                 permission_checker=None,
+                 rate_limiter=None):
+        self.registry = registry
+        self.permission_checker = permission_checker
+        self.rate_limiter = rate_limiter
+        self.execution_log: List[Dict] = []
+        self._call_counts: Dict[str, int] = {}
+    
+    def execute(self, tool_name: str, parameters: Dict, 
+                user_id: str = None,
+                timeout: float = None) -> Dict:
+        """
+        Execute a tool with full guardrails
+        """
+        start_time = time.time()
+        
+        # 1. Resolve tool
+        tool = self.registry.get_tool(tool_name)
+        if not tool:
+            return self._error_result(tool_name, "Tool not found", start_time)
+        
+        # 2. Check deprecation
+        if tool.is_deprecated():
+            replacement = tool.replacement_tool or "unknown"
+            return self._error_result(
+                tool_name, 
+                f"Tool deprecated. Use '{replacement}' instead.",
+                start_time,
+            )
+        
+        # 3. Validate parameters
+        validation = self._validate_params(tool, parameters)
+        if not validation["valid"]:
+            return self._error_result(
+                tool_name,
+                f"Invalid parameters: {validation['errors']}",
+                start_time,
+            )
+        
+        # 4. Check permissions
+        if self.permission_checker and user_id:
+            perm_check = self.permission_checker(user_id, tool.requires_permission)
+            if not perm_check.get("allowed"):
+                return self._error_result(
+                    tool_name,
+                    f"Permission denied: {perm_check.get('reason', 'insufficient permissions')}",
+                    start_time,
+                )
+        
+        # 5. Check rate limit
+        if self.rate_limiter:
+            rate_check = self.rate_limiter(tool_name)
+            if not rate_check.get("allowed"):
+                return self._error_result(
+                    tool_name,
+                    f"Rate limit exceeded: {rate_check.get('retry_after', 60)}s",
+                    start_time,
+                )
+        
+        # 6. Execute with retries
+        max_retries = tool.max_retries
+        effective_timeout = timeout or tool.timeout_seconds
+        last_error = None
+        
+        for attempt in range(max_retries):
+            try:
+                # Set timeout per-attempt
+                if tool.function:
+                    result = tool.function(**parameters)
+                else:
+                    result = f"Tool '{tool_name}' has no function implementation"
+                
+                elapsed_ms = (time.time() - start_time) * 1000
+                
+                # Update metrics
+                tool.update_metrics(elapsed_ms, success=True)
+                
+                # Log success
+                log_entry = {
+                    "tool": tool_name,
+                    "params": parameters,
+                    "success": True,
+                    "attempt": attempt + 1,
+                    "elapsed_ms": round(elapsed_ms, 2),
+                    "user_id": user_id,
+                    "timestamp": datetime.now().isoformat(),
+                }
+                self.execution_log.append(log_entry)
+                self._call_counts[tool_name] = self._call_counts.get(tool_name, 0) + 1
+                
+                return {
+                    "success": True,
+                    "result": result,
+                    "attempts": attempt + 1,
+                    "elapsed_ms": elapsed_ms,
+                    "tool": tool_name,
+                    "cost": tool.cost_per_call,
+                }
+                
+            except TimeoutError:
+                last_error = f"Timeout after {effective_timeout}s"
+            except Exception as e:
+                last_error = str(e)
+            
+            # Exponential backoff before retry
+            if attempt < max_retries - 1:
+                backoff = 0.5 * (2 ** attempt)
+                time.sleep(min(backoff, 5.0))
+        
+        # All retries failed
+        tool.update_metrics(
+            (time.time() - start_time) * 1000, 
+            success=False,
+        )
+        
+        return self._error_result(
+            tool_name,
+            f"Failed after {max_retries} attempts: {last_error}",
+            start_time,
+        )
+    
+    def execute_batch(self, calls: List[Dict], parallel: bool = False) -> List[Dict]:
+        """
+        Execute multiple tool calls
+        
+        calls: [{"tool": "name", "params": {...}, "user_id": "..."}]
+        parallel: If True, execute without waiting (simulated)
+        """
+        results = []
+        
+        for call in calls:
+            result = self.execute(
+                call["tool"],
+                call.get("params", {}),
+                user_id=call.get("user_id"),
+            )
+            results.append({
+                "tool": call["tool"],
+                **result,
+            })
+        
+        return results
+    
+    def execute_chain(self, steps: List[Dict]) -> Dict:
+        """
+        Execute tools in chain, passing results as inputs
+        
+        steps: [
+            {"tool": "search", "params": {"query": "..."}, "output_key": "search_result"},
+            {"tool": "analyze", "params": {"data": "$search_result"}, "output_key": "analysis"},
+        ]
+        """
+        results = {}
+        
+        for i, step in enumerate(steps):
+            # Substitute variables
+            params = {}
+            for key, value in step.get("params", {}).items():
+                if isinstance(value, str) and value.startswith("$"):
+                    var_name = value[1:]
+                    params[key] = results.get(var_name, value)
+                else:
+                    params[key] = value
+            
+            result = self.execute(step["tool"], params)
+            
+            if not result["success"]:
+                return {
+                    "success": False,
+                    "error": f"Chain failed at step {i+1}: {result.get('error')}",
+                    "completed_steps": i,
+                    "results": results,
+                }
+            
+            # Store result with output key
+            output_key = step.get("output_key", f"step_{i+1}")
+            results[output_key] = result["result"]
+        
+        return {
+            "success": True,
+            "results": results,
+            "steps_completed": len(steps),
+        }
+    
+    def _validate_params(self, tool: ToolDefinition, params: Dict) -> Dict:
+        """Validate parameters against tool definition"""
+        errors = []
+        warnings = []
+        
+        # Check required params
+        for param_name, param_def in tool.parameters.items():
+            if param_def.get("required", False) and param_name not in params:
+                errors.append(f"Missing required param: {param_name}")
+        
+        # Check types (basic)
+        for param_name, value in params.items():
+            if param_name in tool.parameters:
+                expected_type = tool.parameters[param_name].get("type")
+                if expected_type == "string" and not isinstance(value, str):
+                    warnings.append(f"Param '{param_name}' expected string, got {type(value).__name__}")
+                elif expected_type == "integer" and not isinstance(value, int):
+                    warnings.append(f"Param '{param_name}' expected integer, got {type(value).__name__}")
+        
+        return {
+            "valid": len(errors) == 0,
+            "errors": errors,
+            "warnings": warnings,
+        }
+    
+    def _error_result(self, tool_name: str, error: str, start_time: float) -> Dict:
+        """Create error result and log it"""
+        elapsed_ms = (time.time() - start_time) * 1000
+        
+        self.execution_log.append({
+            "tool": tool_name,
+            "success": False,
+            "error": error,
+            "elapsed_ms": round(elapsed_ms, 2),
+            "timestamp": datetime.now().isoformat(),
+        })
+        
+        return {
+            "success": False,
+            "error": error,
+            "result": None,
+            "elapsed_ms": elapsed_ms,
+            "tool": tool_name,
+        }
+    
+    def get_stats(self) -> Dict:
+        """Get comprehensive execution statistics"""
+        total = len(self.execution_log)
+        successful = sum(1 for log in self.execution_log if log["success"])
+        failed = total - successful
+        
+        tool_counts = {}
+        tool_errors = {}
+        total_cost = 0.0
+        
+        for log in self.execution_log:
+            tool = log.get("tool", "unknown")
+            tool_counts[tool] = tool_counts.get(tool, 0) + 1
+            
+            if not log["success"]:
+                tool_errors[tool] = tool_errors.get(tool, 0) + 1
+        
+        # Calculate total cost
+        for tool_name, count in self._call_counts.items():
+            tool = self.registry.get_tool(tool_name)
+            if tool:
+                total_cost += tool.cost_per_call * count
+        
+        return {
+            "total_calls": total,
+            "successful": successful,
+            "failed": failed,
+            "success_rate": successful / total if total > 0 else 0,
+            "tool_usage": tool_counts,
+            "tool_errors": tool_errors,
+            "total_cost": total_cost,
+            "avg_latency_ms": (
+                sum(log.get("elapsed_ms", 0) for log in self.execution_log) / total
+                if total > 0 else 0
+            ),
+        }
+```
+
+</details>
+
+---
+
+## 5. Function Calling
+
+> **📌 Core Concept**
+>
+> **Definition:** Function Calling is the mechanism that lets an LLM return not only text but also structured calls following a declared schema — e.g. calling `calculator` with `{"expression": "2+3"}` — while also supporting parallel calls to invoke multiple tools in a single turn, improving efficiency and reducing latency.
+>
+> **Metaphor:** Like a doctor writing a prescription instead of telling a story: the model "writes the prescription" (a tool call with JSON arguments) for the pharmacist (executor) to dispense the exact medicine at the exact dose, instead of brewing the medicine on its own.
+>
+> **Why it matters:** This is the standard communication language between the LLM and the code runtime — the foundation of every modern agent and the way an LLM manipulates the outside world.
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+class FunctionCallingAgent:
+    """
+    Agent using OpenAI-style function calling
+    
+    Supports: Multi-turn tool calls, parallel calls, forced tool use,
+    chained tool calls, automatic retry on malformed calls
+    """
+    
+    def __init__(self, llm_func, tool_registry):
+        self.llm = llm_func
+        self.registry = tool_registry
+        self.executor = ToolExecutor(tool_registry)
+        self.conversation_history = []
+    
+    def run(self, user_message: str, max_rounds: int = 10, 
+            auto_retry: bool = True) -> Dict:
+        """
+        Execute agent loop with function calling
+        """
+        messages = self.conversation_history + [
+            {"role": "user", "content": user_message}
+        ]
+        tools = self.registry.to_openai_format()
+        
+        total_tool_calls = 0
+        tool_usage = {}
+        
+        for round_num in range(max_rounds):
+            # Call LLM
+            response = self._call_llm(messages, tools)
+            
+            # Check for tool calls
+            if not response.get("tool_calls"):
+                final_answer = response.get("content", "")
+                self.conversation_history = messages + [
+                    {"role": "assistant", "content": final_answer}
+                ]
+                return {
+                    "answer": final_answer,
+                    "rounds": round_num + 1,
+                    "total_tool_calls": total_tool_calls,
+                    "tool_usage": tool_usage,
+                }
+            
+            # Add assistant message with tool calls
+            messages.append({
+                "role": "assistant",
+                "content": response.get("content"),
+                "tool_calls": response["tool_calls"],
+            })
+            
+            # Execute each tool call
+            for tc in response["tool_calls"]:
+                func_name = tc["function"]["name"]
+                total_tool_calls += 1
+                tool_usage[func_name] = tool_usage.get(func_name, 0) + 1
+                
+                try:
+                    func_args = json.loads(tc["function"]["arguments"])
+                except json.JSONDecodeError as e:
+                    if auto_retry:
+                        # Ask LLM to fix malformed arguments
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tc["id"],
+                            "content": json.dumps({
+                                "error": f"Invalid JSON arguments: {e}",
+                                "hint": "Please provide valid JSON arguments",
+                            }),
+                        })
+                        continue
+                    func_args = {}
+                
+                # Execute tool
+                result = self.executor.execute(func_name, func_args)
+                
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc["id"],
+                    "content": json.dumps(result, ensure_ascii=False, default=str),
+                })
+        
+        return {
+            "answer": "Max rounds reached without final answer",
+            "rounds": max_rounds,
+            "total_tool_calls": total_tool_calls,
+            "tool_usage": tool_usage,
+        }
+    
+    def forced_tool_call(self, user_message: str, tool_name: str) -> Dict:
+        """
+        Force LLM to use a specific tool
+        Useful when intent is clear from pre-classification
+        """
+        tool = self.registry.get_tool(tool_name)
+        if not tool:
+            return {"error": f"Tool '{tool_name}' not found"}
+        
+        messages = [{"role": "user", "content": user_message}]
+        tools = self.registry.to_openai_format()
+        
+        # Force specific tool
+        response = self._call_llm(
+            messages, 
+            tools,
+            tool_choice={"type": "function", "function": {"name": tool_name}}
+        )
+        
+        if response.get("tool_calls"):
+            tc = response["tool_calls"][0]
+            try:
+                func_args = json.loads(tc["function"]["arguments"])
+            except json.JSONDecodeError:
+                func_args = {}
+            
+            result = self.executor.execute(tool_name, func_args)
+            
+            return {
+                "tool": tool_name,
+                "args": func_args,
+                "result": result,
+            }
+        
+        return {"error": "LLM did not call the forced tool"}
+    
+    def parallel_tool_calls(self, user_message: str) -> Dict:
+        """
+        Enable parallel tool calling
+        LLM can call multiple tools simultaneously
+        """
+        messages = [{"role": "user", "content": user_message}]
+        tools = self.registry.to_openai_format()
+        
+        response = self._call_llm(messages, tools)
+        
+        if response.get("tool_calls"):
+            # Execute all in parallel (simulated with batch)
+            calls = []
+            for tc in response["tool_calls"]:
+                try:
+                    func_args = json.loads(tc["function"]["arguments"])
+                except json.JSONDecodeError:
+                    func_args = {}
+                calls.append({
+                    "tool": tc["function"]["name"],
+                    "params": func_args,
+                })
+            
+            results = self.executor.execute_batch(calls)
+            
+            return {
+                "parallel_results": results,
+                "tools_called": len(results),
+                "all_success": all(r["success"] for r in results),
+            }
+        
+        return {"answer": response.get("content", "")}
+    
+    def _call_llm(self, messages, tools, tool_choice=None):
+        """Call LLM with function calling support"""
+        if self.llm:
+            kwargs = {"messages": messages, "tools": tools}
+            if tool_choice:
+                kwargs["tool_choice"] = tool_choice
+            return self.llm(**kwargs)
+        return {"content": "No LLM configured"}
+```
+
+</details>
+
+---
+
+## 6. Tool Decision Pipeline
+
+> **📌 Core Concept**
+>
+> **Definition:** The Tool Decision Pipeline is the end-to-end process from receiving the user query → intent classification → tool matching → parameter extraction and validation → execution → result validation, ensuring every step is controlled and logged.
+>
+> **Metaphor:** Like a factory assembly line: the first station sorts the raw material (intent classification), the middle stations pick the machine and load the material (tool matching + parameters), and the final station inspects the product before it leaves the plant (result validation).
+>
+> **Why it matters:** Fitting the whole tool decision into a single pipeline makes it easy to add guardrails, easier to debug, and easier to extend without breaking other parts.
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+class ToolDecisionPipeline:
+    """
+    Complete pipeline: Query → Intent → Tool Selection → Execution → Response
+    
+    Features:
+    - Multi-strategy classification
+    - Parameter extraction
+    - Guardrails integration
+    - Fallback handling
+    - Performance tracking
+    """
+    
+    def __init__(self, registry: ToolRegistry, llm_func=None):
+        self.registry = registry
+        self.classifier = IntentClassifier(llm_func)
+        self.executor = ToolExecutor(registry)
+        self.llm = llm_func
+    
+    def process(self, query: str, user_id: str = None, 
+                context: Dict = None) -> Dict:
+        """Full pipeline"""
+        
+        # Step 1: Classify intent
+        intent = self.classifier.classify(query)
+        
+        selected_tools = intent.get("tools", [])
+        
+        if not selected_tools:
+            return {
+                "tool_used": None,
+                "result": "No tool needed — direct response",
+                "intent": intent,
+                "pipeline_steps": ["classify"],
+            }
+        
+        # Step 2: Try each potential tool
+        for tool_name in selected_tools:
+            tool = self.registry.get_tool(tool_name)
+            if not tool:
+                continue
+            
+            # Step 3: Extract parameters
+            params = self._extract_params(query, tool, context)
+            
+            # Step 4: Execute
+            result = self.executor.execute(
+                tool_name, params, user_id=user_id
+            )
+            
+            if result["success"]:
+                return {
+                    "tool_used": tool_name,
+                    "result": result["result"],
+                    "intent": intent,
+                    "params": params,
+                    "pipeline_steps": ["classify", "select", "extract", "execute"],
+                    "elapsed_ms": result.get("elapsed_ms"),
+                }
+        
+        return {
+            "tool_used": None,
+            "result": "No tool could process this query",
+            "intent": intent,
+            "pipeline_steps": ["classify", "select", "execute_failed"],
+        }
+    
+    def process_multi(self, query: str) -> Dict:
+        """
+        Process query that may require multiple tools
+        """
+        # Detect multi-intent
+        intents = self.classifier.classify_multi_intent(query)
+        
+        results = []
+        for intent in intents:
+            for tool_name in intent.get("tools", []):
+                tool = self.registry.get_tool(tool_name)
+                if not tool:
+                    continue
+                
+                params = self._extract_params(query, tool)
+                result = self.executor.execute(tool_name, params)
+                
+                if result["success"]:
+                    results.append({
+                        "tool": tool_name,
+                        "result": result["result"],
+                        "params": params,
+                    })
+                    break  # Move to next intent
+        
+        return {
+            "tools_used": [r["tool"] for r in results],
+            "results": results,
+            "total_intents": len(intents),
+            "total_success": len(results),
+        }
+    
+    def _extract_params(self, query: str, tool: ToolDefinition, 
+                        context: Dict = None) -> Dict:
+        """Extract tool parameters from query"""
+        if self.llm:
+            params_desc = json.dumps(tool.parameters, indent=2, ensure_ascii=False)
+            context_text = json.dumps(context, indent=2, ensure_ascii=False) if context else "None"
+            
+            prompt = f"""Extract the parameters for the tool from the query.
+
+Query: "{query}"
+Context: {context_text}
+Tool: {tool.name}
+Description: {tool.description}
+Parameters schema: {params_desc}
+
+Output JSON (parameters only, correct types):"""
+            
+            response = self.llm(prompt)
+            try:
+                return json.loads(response)
+            except json.JSONDecodeError:
+                pass
+        
+        # Fallback: put query as first string param
+        first_param = list(tool.parameters.keys())[0] if tool.parameters else None
+        if first_param:
+            return {first_param: query}
+        return {}
+```
+
+</details>
+
+---
+
+## 7. Tool Composition
+
+> **📌 Core Concept**
+>
+> **Definition:** Tool Composition is the technique of combining multiple tool calls — sequential (chain), parallel, conditional, or fan-out/fan-in (pipeline) — to solve complex tasks that a single tool cannot handle.
+>
+> **Metaphor:** Like cooking a dish: several kitchen tools (chopping, boiling, stir-frying) must run in the right order, some steps run in parallel (boiling vegetables while making the sauce), and some steps branch based on a check.
+>
+> **Why it matters:** Most real tasks need two or more tools; knowing how to compose them into a workflow is the jump from an agent that calls tools individually to one that completes whole processes.
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+class ToolComposer:
+    """
+    Compose multiple tools into workflows
+    
+    Patterns:
+    - Chain: A → B → C (sequential)
+    - Parallel: A + B + C (simultaneous)
+    - Conditional: if A > threshold then B else C
+    - Pipeline: A → fan-out → B, C, D → fan-in → E
+    """
+    
+    def __init__(self, executor: ToolExecutor):
+        self.executor = executor
+    
+    def chain(self, steps: List[Dict], shared_context: Dict = None) -> Dict:
+        """
+        Execute tools in chain
+        Each tool's output becomes next tool's input
+        """
+        context = shared_context or {}
+        
+        for i, step in enumerate(steps):
+            tool_name = step["tool"]
+            input_mapping = step.get("input_mapping", {})
+            
+            # Map inputs from context
+            params = {}
+            for param_name, source_key in input_mapping.items():
+                params[param_name] = context.get(source_key, source_key)
+            
+            # Merge with static params
+            params.update(step.get("params", {}))
+            
+            result = self.executor.execute(tool_name, params)
+            
+            if not result["success"]:
+                return {
+                    "success": False,
+                    "error": f"Chain broke at step {i+1} ({tool_name}): {result.get('error')}",
+                    "partial_results": context,
+                }
+            
+            # Store result in context
+            output_key = step.get("output_key", f"step_{i+1}_result")
+            context[output_key] = result["result"]
+        
+        return {"success": True, "results": context}
+    
+    def parallel(self, tasks: List[Dict]) -> Dict:
+        """
+        Execute tools in parallel
+        All tools run simultaneously, results collected
+        """
+        results = self.executor.execute_batch(tasks)
+        
+        return {
+            "success": all(r["success"] for r in results),
+            "results": results,
+            "total": len(results),
+            "succeeded": sum(1 for r in results if r["success"]),
+            "failed": sum(1 for r in results if not r["success"]),
+        }
+    
+    def conditional(self, condition_tool: str, condition_params: Dict,
+                    condition_check: Callable,
+                    true_branch: List[Dict], 
+                    false_branch: List[Dict] = None) -> Dict:
+        """
+        Execute tool conditionally
+        
+        1. Execute condition_tool
+        2. Check result with condition_check function
+        3. Execute true_branch or false_branch
+        """
+        # Execute condition
+        condition_result = self.executor.execute(condition_tool, condition_params)
+        
+        if not condition_result["success"]:
+            return {"success": False, "error": "Condition tool failed"}
+        
+        # Evaluate condition
+        branch = true_branch if condition_check(condition_result["result"]) else (false_branch or [])
+        
+        # Execute branch
+        if branch:
+            return self.chain(branch, {"condition_result": condition_result["result"]})
+        
+        return {"success": True, "results": {"condition_result": condition_result["result"]}}
+    
+    def pipeline(self, stages: List[Dict]) -> Dict:
+        """
+        Fan-out / Fan-in pipeline
+        
+        Stage format:
+        {
+            "name": "stage_name",
+            "tools": [{"tool": "name", "params": {...}}],
+            "aggregator": "merge" | "first" | "all"
+        }
+        """
+        results = {}
+        
+        for stage in stages:
+            stage_name = stage["name"]
+            tools = stage["tools"]
+            aggregator = stage.get("aggregator", "merge")
+            
+            # Fan-out: execute all tools
+            stage_results = self.executor.execute_batch(tools)
+            
+            # Fan-in: aggregate results
+            if aggregator == "merge":
+                results[stage_name] = [
+                    r["result"] for r in stage_results if r["success"]
+                ]
+            elif aggregator == "first":
+                for r in stage_results:
+                    if r["success"]:
+                        results[stage_name] = r["result"]
+                        break
+            elif aggregator == "all":
+                results[stage_name] = all(r["success"] for r in stage_results)
+        
+        return {"success": True, "results": results}
+```
+
+</details>
+---
+
+## 8. Permission System
+
+> **📌 Core Concept**
+>
+> **Definition:** The Permission System is an RBAC (Role-Based Access Control) mechanism that controls which user may call which tool, based on role (guest/user/power_user/admin) and permission level (public/standard/elevated/admin), with an audit log for every allow/deny decision.
+>
+> **Metaphor:** Like company access cards: visitors can only enter the lobby, employees enter the office, and only managers reach the server room — every card swipe leaves a trace (audit log).
+>
+> **Why it matters:** Tools like `write_file` or `execute_python` can cause irreversible damage; a permission system is the barrier that stops unintended agent side effects.
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+class ToolPermissionChecker:
+    """
+    Role-Based Access Control (RBAC) for tools
+    
+    Permission levels:
+    - public: Anyone can use
+    - standard: Authenticated users
+    - elevated: Users with elevated privileges
+    - admin: System admin only
+    """
+    
+    ROLE_PERMISSIONS = {
+        "guest": ["public"],
+        "user": ["public", "standard"],
+        "power_user": ["public", "standard", "elevated"],
+        "admin": ["public", "standard", "elevated", "admin"],
+    }
+    
+    def __init__(self):
+        self.user_roles: Dict[str, str] = {}
+        self.custom_permissions: Dict[str, List[str]] = {}
+        self.audit_log: List[Dict] = []
+    
+    def set_user_role(self, user_id: str, role: str):
+        """Set role for a user"""
+        if role not in self.ROLE_PERMISSIONS:
+            raise ValueError(f"Invalid role: {role}. Valid: {list(self.ROLE_PERMISSIONS.keys())}")
+        self.user_roles[user_id] = role
+    
+    def grant_permission(self, user_id: str, permission: str):
+        """Grant additional permission to user"""
+        if user_id not in self.custom_permissions:
+            self.custom_permissions[user_id] = []
+        if permission not in self.custom_permissions[user_id]:
+            self.custom_permissions[user_id].append(permission)
+    
+    def check(self, user_id: str, required_permission: str) -> Dict:
+        """Check if user has required permission"""
+        role = self.user_roles.get(user_id, "guest")
+        role_perms = self.ROLE_PERMISSIONS.get(role, ["public"])
+        custom_perms = self.custom_permissions.get(user_id, [])
+        
+        all_perms = set(role_perms + custom_perms)
+        allowed = required_permission in all_perms
+        
+        # Log audit trail
+        self.audit_log.append({
+            "user_id": user_id,
+            "required_permission": required_permission,
+            "user_role": role,
+            "allowed": allowed,
+            "timestamp": datetime.now().isoformat(),
+        })
+        
+        if allowed:
+            return {"allowed": True}
+        else:
+            return {
+                "allowed": False,
+                "reason": f"Role '{role}' does not have '{required_permission}' permission",
+                "required": required_permission,
+                "current_permissions": list(all_perms),
+            }
+```
+
+</details>
+
+---
+
+## 9. Rate Limiting
+
+> **📌 Core Concept**
+>
+> **Definition:** Rate Limiting is the mechanism that caps how many tool calls can happen in a time window (e.g. at most 60 calls per minute), using strategies such as fixed window, sliding window, or token bucket to control the token budget, block abuse, and keep the system stable.
+>
+> **Metaphor:** Like a pressure-reducing valve on a water tank: water still flows, but with a cap — preventing one pipe from draining the whole supply (abuse) and avoiding a burst pipe (overload).
+>
+> **Why it matters:** When an agent loop makes hundreds of tool calls in a minute, the rate limit is the life preserver that protects both the cost and the health of the system.
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+class RateLimiter:
+    """
+    Rate limiting for tool calls
+    
+    Strategies:
+    - Fixed window: X calls per minute
+    - Sliding window: X calls in last 60 seconds
+    - Token bucket: Burst + sustained rate
+    """
+    
+    def __init__(self, strategy: str = "sliding_window"):
+        self.strategy = strategy
+        self._call_records: Dict[str, List[float]] = {}
+        self._burst_limits: Dict[str, int] = {}
+        self._token_buckets: Dict[str, Dict] = {}
+    
+    def set_limit(self, tool_name: str, max_calls: int, window_seconds: int = 60):
+        """Set rate limit for a tool"""
+        self._burst_limits[tool_name] = max_calls
+    
+    def check(self, tool_name: str) -> Dict:
+        """Check if call is allowed"""
+        now = time.time()
+        
+        if tool_name not in self._call_records:
+            self._call_records[tool_name] = []
+        
+        records = self._call_records[tool_name]
+        limit = self._burst_limits.get(tool_name, 60)
+        window = 60  # 1 minute
+        
+        if self.strategy == "sliding_window":
+            # Remove old records
+            records = [t for t in records if now - t < window]
+            self._call_records[tool_name] = records
+            
+            if len(records) >= limit:
+                oldest = records[0]
+                retry_after = window - (now - oldest)
+                return {
+                    "allowed": False,
+                    "retry_after": round(retry_after, 1),
+                    "current_rate": len(records),
+                    "limit": limit,
+                }
+            
+            records.append(now)
+            return {
+                "allowed": True,
+                "current_rate": len(records),
+                "limit": limit,
+                "remaining": limit - len(records),
+            }
+        
+        return {"allowed": True}
+    
+    def get_usage(self) -> Dict:
+        """Get current usage for all tools"""
+        usage = {}
+        for tool_name, records in self._call_records.items():
+            now = time.time()
+            recent = [t for t in records if now - t < 60]
+            usage[tool_name] = {
+                "calls_last_minute": len(recent),
+                "limit": self._burst_limits.get(tool_name, 60),
+            }
+        return usage
+```
+
+</details>
+
+---
+
+## 10. Harness Integration
+
+> **📌 Core Concept**
+>
+> **Definition:** Harness Integration is the layer that connects the Tool Decision module to the whole Harness Framework — Memory, Guardrails, Feedback, Permissions — through unified TypeScript interfaces.
+>
+> **Metaphor:** Like the standard connector on a multi-purpose vacuum cleaner: every attachment (brush, nozzle, hose) plugs into the same port — the TypeScript interface is that standard connector that lets harness modules snap together.
+>
+> **Why it matters:** A module is only valuable when it can plug into a real harness; unified interfaces make it fast to connect, easy to test each module in isolation, and safe when other modules change.
+
+### 10.1 TypeScript Interfaces
+
+This section is the TypeScript contract that defines what a tool decision system must look like for the harness to use it: register/get/list/search tools, `classifyIntent`, `executeTool`/`executeChain`/`executeParallel`, plus `checkPermission`/`checkRateLimit` and `getStats`. How to read it: the `interface` part describes the required data shape, and the `HarnessToolDecisionSystem` class is a reference implementation showing the order of a real tool call: check permission → check rate limit → execute → record metrics. If you write your own module, satisfying the interface is all the harness needs to use it.
+
+*Analogy:* Like an office lease: the interface is the set of mandatory clauses, and the class is the concrete implementation each party writes on its own.
+
+<details>
+<summary><b>10.1 TypeScript Interfaces (Click to expand/collapse)</b></summary>
+
+```typescript
+// Tool Decision System — Full Harness Integration
+interface ToolDecisionSystem {
+  // Tool management
+  registerTool: (tool: ToolDefinition) => void;
+  getTool: (name: string) => ToolDefinition | null;
+  listTools: (category?: string) => ToolDefinition[];
+  searchTools: (query: string) => ToolDefinition[];
+  
+  // Classification
+  classifyIntent: (query: string) => IntentResult;
+  
+  // Execution
+  executeTool: (name: string, params: Record<string, any>, userId?: string) => ToolResult;
+  executeChain: (steps: ToolChainStep[]) => ChainResult;
+  executeParallel: (calls: ToolCall[]) => ParallelResult;
+  
+  // Guardrails
+  checkPermission: (userId: string, permission: string) => boolean;
+  checkRateLimit: (toolName: string) => boolean;
+  
+  // Metrics
+  getStats: () => ToolStats;
+}
+
+interface ToolDefinition {
+  name: string;
+  description: string;
+  parameters: Record<string, ParameterDef>;
+  category: string;
+  version: string;
+  requiresAuth: boolean;
+  requiresPermission: string;
+  rateLimitPerMinute: number;
+  timeoutSeconds: number;
+  maxRetries: number;
+  costPerCall: number;
+}
+
+interface ToolResult {
+  success: boolean;
+  result?: any;
+  error?: string;
+  attempts: number;
+  elapsedMs: number;
+  cost: number;
+}
+
+interface IntentResult {
+  intent: string;
+  tools: string[];
+  confidence: number;
+  method: string;
+}
+
+// Complete Harness Tool Decision System
+class HarnessToolDecisionSystem implements ToolDecisionSystem {
+  private registry: ToolRegistry;
+  private classifier: IntentClassifier;
+  private executor: ToolExecutor;
+  private permissionChecker: ToolPermissionChecker;
+  private rateLimiter: RateLimiter;
+  private metricsCollector: MetricsCollector;
+  
+  constructor(config: HarnessConfig) {
+    this.registry = new ToolRegistry();
+    this.classifier = new IntentClassifier(config.llm);
+    this.executor = new ToolExecutor(this.registry);
+    this.permissionChecker = new ToolPermissionChecker();
+    this.rateLimiter = new RateLimiter();
+    this.metricsCollector = config.metrics;
+  }
+  
+  async executeTool(name: string, params: Record<string, any>, userId?: string): Promise<ToolResult> {
+    // 1. Check permission
+    const tool = this.registry.getTool(name);
+    if (tool && userId) {
+      const permCheck = this.permissionChecker.check(userId, tool.requiresPermission);
+      if (!permCheck.allowed) {
+        return { success: false, error: permCheck.reason, attempts: 0, elapsedMs: 0, cost: 0 };
+      }
+    }
+    
+    // 2. Check rate limit
+    const rateCheck = this.rateLimiter.check(name);
+    if (!rateCheck.allowed) {
+      return { success: false, error: `Rate limited. Retry after ${rateCheck.retryAfter}s`, attempts: 0, elapsedMs: 0, cost: 0 };
+    }
+    
+    // 3. Execute with tracking
+    const result = this.executor.execute(name, params, userId);
+    
+    // 4. Report metrics
+    this.metricsCollector.track('tool_executed', {
+      tool: name,
+      success: result.success,
+      latency_ms: result.elapsed_ms,
+    });
+    
+    return result;
+  }
+  
+  // ... other interface implementations
+}
+```
+
+</details>
+
+---
+
+## 11. Case Studies
+
+> **📌 Core Concept**
+>
+> **Definition:** Real-World Case Studies are detailed analyses of tool-use architectures actually running in leading AI products (SWE-agent, Claude Code, Cursor IDE, DeepSeek Harness) from which you can extract immediately applicable design lessons.
+>
+> **Metaphor:** Like reading a famous chef's case study: not to copy the recipe verbatim, but to see the principles (sequence, safety, context) and adapt them to your own cooking.
+>
+> **Why it matters:** These products have been optimized with real money and real user data; learning from them keeps you from reinventing a broken wheel.
+
+### 11.1. SWE-agent — Tool-Use for Software Engineering
+
+**Tool strategy**: Simple, focused tools with clear descriptions.
+
+```
+Tools: read_file, search_code, edit_file, run_command
+
+Key insight: "Read before edit" — SWE-agent always reads files first
+to understand context before making changes.
+```
+
+**Result**: 20.5% success rate on SWE-bench (+64% over baseline)
+
+### 11.2. Claude Code — Hierarchical Tool Access
+
+**Tool strategy**: Layered permissions, tool composition.
+
+```
+Layer 1 (always available): read_file, search_code
+Layer 2 (standard): write_file, run_tests
+Layer 3 (elevated): execute_command, delete_file
+Layer 4 (admin): push_code, deploy
+```
+
+### 11.3. Cursor IDE — Context-Aware Tool Selection
+
+**Tool strategy**: Select tools based on editor context.
+
+<details>
+<summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
+
+```typescript
+// Cursor dynamically selects tools based on:
+// 1. Current file type
+// 2. Selected code
+// 3. Editor mode (insert vs replace)
+// 4. Git status
+
+const toolsForContext = {
+  python: ["execute_python", "lint", "format"],
+  typescript: ["run_tests", "type_check", "lint"],
+  markdown: ["spell_check", "format"],
+};
+```
+
+</details>
+
+---
+
+### 11.4. DeepSeek Harness — Code Mode SDK (`@deepseek-ai/dsh`)
+
+**Context**: DeepSeek Harness provides **Code Mode** — a runtime mode optimized for single-turn coding tasks. It uses the `@deepseek-ai/dsh` SDK to execute code inside a Node.js `vm` sandbox with batched tool operations, cutting **70-90% of latency and token costs** compared to a multi-turn agent loop.
+
+<details>
+<summary><b>TypeScript Architecture (Click to expand/collapse)</b></summary>
+
+```typescript
+/**
+ * DeepSeek Harness - Code Mode SDK
+ * 
+ * Core philosophy: "Batch everything, execute once"
+ * Single-turn script execution instead of multi-turn agent loop.
+ * 
+ * Package: @deepseek-ai/dsh
+ * Runtime: Node.js vm sandbox (isolated, no network)
+ */
+
+// ═══════════════════════════════════════════════
+// 1. CODE MODE SDK INTERFACE
+// ═══════════════════════════════════════════════
+
+interface CodeModeConfig {
+  /** Maximum execution time in milliseconds */
+  timeoutMs: number;
+  
+  /** Allow network access (default: false for isolation) */
+  allowNetwork: boolean;
+  
+  /** Allowed built-in modules */
+  allowedModules: string[];
+  
+  /** Custom globals injected into sandbox */
+  globals: Record<string, any>;
+  
+  /** Tool batching configuration */
+  batching: {
+    /** Batch multiple tool calls into single execution */
+    enabled: boolean;
+    /** Max tools per batch */
+    maxBatchSize: number;
+    /** Max wait time for batching (ms) */
+    maxWaitMs: number;
+  };
+  
+  /** Memory limit (MB) */
+  memoryLimitMb: number;
+}
+
+interface ToolBatch {
+  calls: ToolCall[];
+  sessionId: string;
+  timestamp: number;
+}
+
+interface ToolCall {
+  id: string;
+  name: string;
+  args: Record<string, any>;
+  /** For batched execution: resolve all at once */
+  resolve: (result: any) => void;
+  reject: (error: Error) => void;
+}
+
+// ═══════════════════════════════════════════════
+// 2. SANDBOX EXECUTOR (vm-based isolation)
+// ═══════════════════════════════════════════════
+
+class CodeModeSandbox {
+  private vm: import('vm').Context;
+  private config: CodeModeConfig;
+  private toolRegistry: Map<string, ToolFunction>;
+  private batchQueue: ToolCall[] = [];
+  private batchTimer: NodeJS.Timeout | null = null;
+  
+  constructor(config: Partial<CodeModeConfig> = {}) {
+    this.config = {
+      timeoutMs: 30000,
+      allowNetwork: false,
+      allowedModules: ['fs', 'path', 'crypto', 'util'],
+      globals: {},
+      batching: { enabled: true, maxBatchSize: 10, maxWaitMs: 50 },
+      memoryLimitMb: 128,
+      ...config
+    };
+    
+    this.toolRegistry = new Map();
+    this.setupSandbox();
+  }
+  
+  private setupSandbox(): void {
+    // Create isolated vm context
+    const sandboxGlobals = {
+      console: this.createSafeConsole(),
+      setTimeout,
+      clearTimeout,
+      setInterval,
+      clearInterval,
+      ...this.config.globals
+    };
+    
+    // Add allowed modules
+    for (const mod of this.config.allowedModules) {
+      try {
+        sandboxGlobals[mod] = require(mod);
+      } catch {
+        // Module not available
+      }
+    }
+    
+    // Inject tool caller
+    sandboxGlobals.callTool = this.createToolCaller();
+    sandboxGlobals.batchTools = this.createBatchCaller();
+    
+    this.vm = import('vm').createContext(sandboxGlobals);
+  }
+  
+  private createSafeConsole() {
+    return {
+      log: (...args: any[]) => { /* captured */ },
+      error: (...args: any[]) => { /* captured */ },
+      warn: (...args: any[]) => { /* captured */ },
+    };
+  }
+  
+  private createToolCaller() {
+    return async (name: string, args: Record<string, any>) => {
+      const tool = this.toolRegistry.get(name);
+      if (!tool) throw new Error(`Tool not found: ${name}`);
+      return await tool(args);
+    };
+  }
+  
+  private createBatchCaller() {
+    return (calls: Array<{name: string, args: Record<string, any>}>) => {
+      return this.executeBatch(calls);
+    };
+  }
+  
+  registerTool(name: string, fn: ToolFunction): void {
+    this.toolRegistry.set(name, fn);
+  }
+  
+  // ═══════════════════════════════════════════════
+  // 3. BATCHED EXECUTION (Core optimization)
+  // ═══════════════════════════════════════════════
+  
+  async executeScript(script: string): Promise<ExecutionResult> {
+    const startTime = Date.now();
+    const scriptId = `script_${startTime}_${Math.random().toString(36).slice(2)}`;
+    
+    // Wrap script with error handling and result capture
+    const wrappedScript = `
+      (async () => {
+        try {
+          const result = await (async () => {
+            ${script}
+          })();
+          return { success: true, result, scriptId: "${scriptId}" };
+        } catch (error) {
+          return { success: false, error: error.message, stack: error.stack, scriptId: "${scriptId}" };
+        }
+      })()
+    `;
+    
+    try {
+      const result = await import('vm').runInContext(wrappedScript, this.vm, {
+        timeout: this.config.timeoutMs,
+        displayErrors: true
+      });
+      
+      // Flush any pending batch
+      await this.flushBatch();
+      
+      return {
+        success: result.success,
+        result: result.success ? result.result : undefined,
+        error: result.success ? undefined : result.error,
+        durationMs: Date.now() - startTime,
+        scriptId
+      };
+      
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message,
+        durationMs: Date.now() - startTime,
+        scriptId
+      };
+    }
+  }
+  
+  private async executeBatch(calls: Array<{name: string, args: any}>): Promise<any[]> {
+    if (!this.config.batching.enabled) {
+      // Sequential fallback
+      return Promise.all(calls.map(c => this.callTool(c.name, c.args)));
+    }
+    
+    // Queue for batching
+    const promises = calls.map(call => new Promise((resolve, reject) => {
+      this.batchQueue.push({
+        id: uuid(),
+        name: call.name,
+        args: call.args,
+        resolve,
+        reject
+      });
+    }));
+    
+    // Schedule flush
+    if (this.batchTimer) clearTimeout(this.batchTimer);
+    this.batchTimer = setTimeout(() => this.flushBatch(), this.config.batching.maxWaitMs);
+    
+    // Flush immediately if batch full
+    if (this.batchQueue.length >= this.config.batching.maxBatchSize) {
+      await this.flushBatch();
+    }
+    
+    return Promise.all(promises);
+  }
+  
+  private async flushBatch(): Promise<void> {
+    if (this.batchQueue.length === 0) return;
+    
+    const batch = this.batchQueue.splice(0, this.config.batching.maxBatchSize);
+    if (this.batchTimer) {
+      clearTimeout(this.batchTimer);
+      this.batchTimer = null;
+    }
+    
+    // Execute all tools in parallel
+    const results = await Promise.allSettled(
+      batch.map(async call => {
+        const tool = this.toolRegistry.get(call.name);
+        if (!tool) throw new Error(`Tool not found: ${call.name}`);
+        return await tool(call.args);
+      })
+    );
+    
+    // Resolve/reject promises
+    for (let i = 0; i < batch.length; i++) {
+      const call = batch[i];
+      const result = results[i];
+      if (result.status === 'fulfilled') {
+        call.resolve(result.value);
+      } else {
+        call.reject(result.reason);
+      }
+    }
+  }
+  
+  async callTool(name: string, args: Record<string, any>): Promise<any> {
+    const tool = this.toolRegistry.get(name);
+    if (!tool) throw new Error(`Tool not found: ${name}`);
+    return await tool(args);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// 4. HIGH-LEVEL SDK API (@deepseek-ai/dsh)
+// ═══════════════════════════════════════════════
+
+class DeepSeekHarnessSDK {
+  private sandbox: CodeModeSandbox;
+  private sessionId: string;
+  
+  constructor(config?: Partial<CodeModeConfig>) {
+    this.sandbox = new CodeModeSandbox(config);
+    this.sessionId = `session_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    this.registerDefaultTools();
+  }
+  
+  private registerDefaultTools(): void {
+    // File operations
+    this.sandbox.registerTool('read_file', async ({path, encoding = 'utf-8'}) => {
+      return await fs.promises.readFile(path, encoding);
+    });
+    
+    this.sandbox.registerTool('write_file', async ({path, content, mode = 'overwrite'}) => {
+      if (mode === 'append') {
+        await fs.promises.appendFile(path, content);
+      } else {
+        await fs.promises.writeFile(path, content);
+      }
+      return { success: true, path };
+    });
+    
+    this.sandbox.registerTool('list_files', async ({path = '.', recursive = false}) => {
+      const files = await glob('**/*', { cwd: path, nodir: !recursive });
+      return files;
+    });
+    
+    // Code execution
+    this.sandbox.registerTool('execute_command', async ({command, cwd, timeout = 30000}) => {
+      const { execFile } = require('child_process');
+      return new Promise((resolve, reject) => {
+        const proc = execFile(command, { cwd, timeout }, (err, stdout, stderr) => {
+          if (err) reject(err);
+          else resolve({ stdout, stderr, code: 0 });
+        });
+      });
+    });
+    
+    // Search
+    this.sandbox.registerTool('search_code', async ({query, path = '.', filePattern}) => {
+      // Use ripgrep or similar
+      const results = await ripgrep(query, { path, filePattern });
+      return results;
+    });
+    
+    // LLM call (for code generation within script)
+    this.sandbox.registerTool('llm_complete', async ({prompt, model = 'deepseek-coder'}) => {
+      const response = await callLLM(prompt, model);
+      return response;
+    });
+  }
+  
+  /**
+   * Main entry point: Execute a coding task in single turn
+   * 
+   * Example:
+   * ```typescript
+   * const sdk = new DeepSeekHarnessSDK();
+   * const result = await sdk.execute(`
+   *   const files = await list_files({path: './src'});
+   *   const content = await read_file({path: files[0]});
+   *   const fixed = await llm_complete({prompt: \`Fix bugs in: \${content}\`});
+   *   await write_file({path: files[0], content: fixed});
+   * `);
+   * ```
+   */
+  async execute(script: string): Promise<ExecutionResult> {
+    return await this.sandbox.executeScript(script);
+  }
+  
+  /**
+   * Execute with pre-defined tools (for structured tasks)
+   */
+  async executeWithTools(
+    script: string, 
+    tools: Record<string, ToolFunction>
+  ): Promise<ExecutionResult> {
+    for (const [name, fn] of Object.entries(tools)) {
+      this.sandbox.registerTool(name, fn);
+    }
+    return await this.execute(script);
+  }
+  
+  /**
+   * Get session metrics
+   */
+  getMetrics(): SessionMetrics {
+    return {
+      sessionId: this.sessionId,
+      toolsRegistered: this.sandbox.toolRegistry.size,
+      // ... more metrics
+    };
+  }
+}
+
+// ═══════════════════════════════════════════════
+// 5. USAGE EXAMPLES
+// ═══════════════════════════════════════════════
+
+/**
+ * Example 1: Refactor a TypeScript file
+ */
+async function exampleRefactor() {
+  const sdk = new DeepSeekHarnessSDK({
+    timeoutMs: 60000,
+    allowedModules: ['fs', 'path', 'typescript'],
+    batching: { enabled: true, maxBatchSize: 20, maxWaitMs: 100 }
+  });
+  
+  const result = await sdk.execute(`
+    // 1. Find all TS files
+    const files = await list_files({path: './src', recursive: true});
+    const tsFiles = files.filter(f => f.endsWith('.ts'));
+    
+    // 2. Read all files in parallel (BATCHED!)
+    const contents = await batchTools(
+      tsFiles.map(f => ({name: 'read_file', args: {path: f}}))
+    );
+    
+    // 3. Analyze with LLM (single call)
+    const analysis = await llm_complete({
+      prompt: \`Analyze these files for code smells:\n\${contents.map((c,i) => \`// \${tsFiles[i]}\n\${c}\`).join('\n\n')}\`
+    });
+    
+    // 4. Apply fixes (batched writes)
+    const fixes = JSON.parse(analysis);
+    await batchTools(
+      fixes.map(f => ({name: 'write_file', args: {path: f.path, content: f.fixedCode}}))
+    );
+    
+    return { fixed: fixes.length, files: tsFiles.length };
+  `);
+  
+  console.log(result); // { success: true, result: { fixed: 5, files: 12 }, durationMs: 2340 }
+}
+
+/**
+ * Example 2: Run tests and fix failures
+ */
+async function exampleTestFix() {
+  const sdk = new DeepSeekHarnessSDK();
+  
+  const result = await sdk.execute(`
+    // Run tests
+    const testResult = await execute_command({
+      command: 'npm test',
+      cwd: '.'
+    });
+    
+    if (testResult.code !== 0) {
+      // Parse failures
+      const failures = parseTestFailures(testResult.stdout);
+      
+      // For each failure, read file and fix
+      for (const fail of failures) {
+        const content = await read_file({path: fail.file});
+        const fixed = await llm_complete({
+          prompt: \`Fix this test failure:\nFile: \${fail.file}\nError: \${fail.error}\nCode:\n\${content}\`
+        });
+        await write_file({path: fail.file, content: fixed});
+      }
+      
+      // Re-run tests
+      const retry = await execute_command({command: 'npm test'});
+      return { fixed: failures.length, passed: retry.code === 0 };
+    }
+    
+    return { fixed: 0, passed: true };
+  `);
+  
+  return result;
+}
+
+/**
+ * Example 3: Code generation from spec
+ */
+async function exampleCodeGen() {
+  const sdk = new DeepSeekHarnessSDK({
+    globals: { SPEC: loadSpec('./spec.yaml') }
+  });
+  
+  return await sdk.execute(`
+    // Generate API routes from OpenAPI spec
+    const routes = generateRoutes(SPEC);
+    
+    // Write all files in one batch
+    await batchTools(
+      routes.map(r => ({name: 'write_file', args: r}))
+    );
+    
+    // Run linter
+    await execute_command({command: 'npm run lint'});
+    
+    return { generated: routes.length };
+  `);
+}
+
+interface ToolFunction {
+  (args: Record<string, any>): Promise<any>;
+}
+
+interface ExecutionResult {
+  success: boolean;
+  result?: any;
+  error?: string;
+  durationMs: number;
+  scriptId: string;
+}
+
+interface SessionMetrics {
+  sessionId: string;
+  toolsRegistered: number;
+  totalExecutions: number;
+  totalDurationMs: number;
+  avgDurationMs: number;
+  batchedCalls: number;
+  estimatedTokenSavings: number;
+}
+
+function uuid(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+```
+
+</details>
+
+**Key Innovations**:
+
+1. ✅ **Single-turn Execution** — The entire task runs in one script, no multi-turn LLM loop needed
+2. ✅ **Batched Tool Calls** — `batchTools([...])` groups many tool calls into a single execution, cutting **70-90% of latency**
+3. ✅ **VM Sandbox Isolation** — Node.js `vm` context, no network, no filesystem outside allowed paths
+4. ✅ **Deterministic Replay** — Same script + same input = same output. Easy to debug, test, and run in CI/CD
+5. ✅ **Token Cost Reduction** — No need to send tool results back to the LLM to decide the next step. The LLM is called only once (or zero times for pure code)
+6. ✅ **Parallel by Default** — `batchTools` runs all tools in parallel automatically
+
+**Code Mode vs Standard Mode**:
+
+| Aspect | Standard Mode | Code Mode (`@deepseek-ai/dsh`) |
+|--------|---------------|-------------------------------|
+| **Turns** | Multi-turn (5-20+) | Single-turn (1) |
+| **Latency** | High (sequential LLM calls) | Low (batched, parallel) |
+| **Token Cost** | High (full context each turn) | **70-90% less** |
+| **Tools** | All tools | `bash`, `editor`, `llm_complete` only |
+| **Isolation** | Process-level | VM sandbox (stronger) |
+| **Determinism** | Non-deterministic | Deterministic (script-based) |
+| **Use Case** | Open-ended tasks | Well-defined coding tasks |
+
+**File Reference**: For implementation details, see [`code-mode-sdk.md`](code-mode-sdk.md)
+
+---
+
+## 12. Design Principles
+
+> **📌 Core Concept**
+>
+> **Definition:** Design Principles are the set of software architecture guidelines — specifically applying the SOLID principles to a tool management and orchestration system.
+>
+> **Metaphor:** Like urban planning setting standards before issuing building permits: you don't need to know the details of every house, but everyone must follow the same code so the city doesn't become a mess.
+>
+> **Why it matters:** The tool ecosystem grows new tools every day; designing with SOLID lets you add new tools without breaking old ones.
+
+### 12.1 SOLID for Tools
+
+**1. Single Responsibility**
+- Each tool = one clear job
+- Don't combine search + write in one tool
+
+**2. Open/Closed**
+- Open for adding new tools (register)
+- Closed for modifying existing tools
+
+**3. Liskov Substitution**
+- All tools implement the same interface
+- Any tool can be swapped for another
+
+**4. Interface Segregation**
+- Tool definitions separated from execution
+- Permission checker separated from executor
+
+**5. Dependency Inversion**
+- Tools depend on the ToolRegistry abstraction
+- Don't hardcode tool implementations
+---
+
+## 13. Best Practices
+
+> **📌 Core Concept**
+>
+> **Definition:** Best Practices are the collection of do's, don'ts, and optimization strategies distilled from hands-on experience building tool decision systems.
+>
+> **Metaphor:** Like a workplace safety handbook: it spells out the correct procedure (DO) and the warnings (DON'T) so newcomers don't have to learn the hard way by causing a breakdown.
+>
+> **Why it matters:** Most failures in tool systems come from avoidable mistakes; this list lets you inherit those lessons without paying the price yourself.
+
+### 13.1 DO ✅
+
+- **Validate parameters before execution**: Prevent errors
+- **Use exponential backoff for retries**: Don't hammer failing services
+- **Log all tool calls**: For debugging and optimization
+- **Set timeouts**: Prevent hanging calls
+- **Implement permission checks**: Security first
+- **Track cost per call**: Budget management
+- **Provide clear tool descriptions**: LLM needs to understand tools
+- **Support both rule-based and LLM-based intent**: Best of both worlds
+- **Cache tool lists**: Don't re-fetch on every call
+- **Use fallback tools**: If primary fails, try alternative
+
+### 13.2 DON'T ❌
+
+- **Don't skip parameter validation**: Invalid params = crashes
+- **Don't ignore rate limits**: API bans are real
+- **Don't hardcode tool paths**: Use registry
+- **Don't forget error handling**: Every tool call can fail
+- **Don't use vague tool descriptions**: LLM can't guess
+- **Don't allow unlimited retries**: Set max retries
+- **Don't execute dangerous tools without permission**: Always check auth
+- **Don't ignore deprecated tools**: Gracefully migrate users
+
+---
+
+## 14. Testing
+
+> **📌 Core Concept**
+>
+> **Definition:** Testing is the process of building unit tests and integration tests to evaluate the accuracy of each component — tool selection, intent classification, executor, permission, rate limiter — and of the pipeline as a whole.
+>
+> **Metaphor:** Like a dress rehearsal before showtime: each actor lines their own part (unit test), and the whole cast runs the script straight through (integration test) to catch errors before the real stage (production).
+>
+> **Why it matters:** A failed tool call is the most expensive error once you're live; testing early catches bugs at a point where the cost of fixing them is nearly zero.
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+import unittest
+
+class TestToolRegistry(unittest.TestCase):
+    def setUp(self):
+        self.registry = create_default_tools()
+    
+    def test_register_and_get(self):
+        tool = self.registry.get_tool("calculator")
+        self.assertIsNotNone(tool)
+        self.assertEqual(tool.name, "calculator")
+    
+    def test_search(self):
+        results = self.registry.search("find")
+        self.assertGreater(len(results), 0)
+    
+    def test_category_filter(self):
+        tools = self.registry.list_tools(category="search")
+        for tool in tools:
+            self.assertEqual(tool.category, "search")
+    
+    def test_deprecation(self):
+        tool = self.registry.get_tool("calculator")
+        self.assertFalse(tool.is_deprecated())
+
+class TestIntentClassifier(unittest.TestCase):
+    def setUp(self):
+        self.classifier = IntentClassifier()
+    
+    def test_search_intent(self):
+        result = self.classifier.classify("Find information about health insurance")
+        self.assertEqual(result["intent"], "search")
+        self.assertGreater(len(result["tools"]), 0)
+    
+    def test_calculate_intent(self):
+        result = self.classifier.classify("Calculate 15% of 5000000")
+        self.assertEqual(result["intent"], "calculate")
+    
+    def test_chat_fallback(self):
+        result = self.classifier.classify("Hello!")
+        self.assertEqual(result["intent"], "chat")
+    
+    def test_multi_intent(self):
+        intents = self.classifier.classify_multi_intent("Read the file and run the tests")
+        self.assertGreaterEqual(len(intents), 2)
+
+class TestToolExecutor(unittest.TestCase):
+    def setUp(self):
+        self.registry = create_default_tools()
+        self.executor = ToolExecutor(self.registry)
+    
+    def test_successful_execution(self):
+        result = self.executor.execute("calculator", {"expression": "2+3"})
+        self.assertTrue(result["success"])
+    
+    def test_missing_tool(self):
+        result = self.executor.execute("nonexistent", {})
+        self.assertFalse(result["success"])
+        self.assertIn("not found", result["error"])
+    
+    def test_missing_required_param(self):
+        result = self.executor.execute("vector_search", {})
+        self.assertFalse(result["success"])
+        self.assertIn("Invalid parameters", result["error"])
+    
+    def test_stats(self):
+        self.executor.execute("calculator", {"expression": "1+1"})
+        self.executor.execute("calculator", {"expression": "2+2"})
+        stats = self.executor.get_stats()
+        self.assertEqual(stats["total_calls"], 2)
+        self.assertEqual(stats["successful"], 2)
+
+class TestPermissionSystem(unittest.TestCase):
+    def setUp(self):
+        self.checker = ToolPermissionChecker()
+        self.checker.set_user_role("user1", "user")
+        self.checker.set_user_role("admin1", "admin")
+    
+    def test_standard_permission(self):
+        result = self.checker.check("user1", "standard")
+        self.assertTrue(result["allowed"])
+    
+    def test_elevated_denied(self):
+        result = self.checker.check("user1", "elevated")
+        self.assertFalse(result["allowed"])
+    
+    def test_admin_has_all(self):
+        result = self.checker.check("admin1", "admin")
+        self.assertTrue(result["allowed"])
+    
+    def test_custom_grant(self):
+        self.checker.grant_permission("user1", "elevated")
+        result = self.checker.check("user1", "elevated")
+        self.assertTrue(result["allowed"])
+
+class TestRateLimiter(unittest.TestCase):
+    def setUp(self):
+        self.limiter = RateLimiter(strategy="sliding_window")
+        self.limiter.set_limit("api_call", max_calls=3, window_seconds=60)
+    
+    def test_within_limit(self):
+        for _ in range(3):
+            result = self.limiter.check("api_call")
+            self.assertTrue(result["allowed"])
+    
+    def test_exceeds_limit(self):
+        for _ in range(3):
+            self.limiter.check("api_call")
+        result = self.limiter.check("api_call")
+        self.assertFalse(result["allowed"])
+        self.assertIn("retry_after", result)
+
+class TestToolComposer(unittest.TestCase):
+    def setUp(self):
+        self.registry = create_default_tools()
+        self.executor = ToolExecutor(self.registry)
+        self.composer = ToolComposer(self.executor)
+    
+    def test_chain(self):
+        steps = [
+            {"tool": "calculator", "params": {"expression": "2+3"}, "output_key": "result"},
+        ]
+        result = self.composer.chain(steps)
+        self.assertTrue(result["success"])
+
+if __name__ == "__main__":
+    unittest.main()
+```
+
+</details>
+
+---
+
+## 15. Advanced Patterns
+
+> **📌 Core Concept**
+>
+> **Definition:** Advanced Patterns cover deeper techniques such as Tool Learning — the ability of an agent to learn how to use new tools at runtime — along with dynamic tool registration.
+>
+> **Metaphor:** Like a new sales employee: the first days they have to check the manual for everything, but after a few months they instinctively know which item sells fast and which step loses customers — the system absorbs the lessons over time instead of waiting for someone to fix the code.
+>
+> **Why it matters:** The longer a system runs, the more finely tuned it becomes — higher success rates and lower latency without manual intervention.
+
+### 15.1 Tool Learning
+
+What does this section give you? `ToolLearner` records every time the agent calls a tool: the task type, which tool, whether it succeeded, and the latency (the `record` function). When a tool needs to be picked for a task, `recommend()` ranks the candidates by success rate minus a latency penalty; a tool that has never been used gets a neutral score of 0.5. Simple idea, but it is the foundation of self-optimizing agents: the system learns from its own history instead of hand-patched code.
+
+*Analogy:* Like a ride-hailing app that remembers which drivers are punctual and fast, so it prioritizes booking with them next time.
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+class ToolLearner:
+    """
+    Agent learns which tools work best for which tasks
+    
+    Based on execution history, learns:
+    - Tool preference per task type
+    - Parameter patterns
+    - Failure modes
+    """
+    
+    def __init__(self):
+        self.history: List[Dict] = []
+        self.tool_scores: Dict[str, Dict] = {}
+    
+    def record(self, task_type: str, tool_name: str, 
+               params: Dict, success: bool, latency_ms: float):
+        """Record a tool usage"""
+        self.history.append({
+            "task_type": task_type,
+            "tool": tool_name,
+            "params": params,
+            "success": success,
+            "latency_ms": latency_ms,
+            "timestamp": datetime.now().isoformat(),
+        })
+        
+        # Update scores
+        key = f"{task_type}:{tool_name}"
+        if key not in self.tool_scores:
+            self.tool_scores[key] = {"success_count": 0, "total_count": 0, "avg_latency": 0}
+        
+        score = self.tool_scores[key]
+        score["total_count"] += 1
+        if success:
+            score["success_count"] += 1
+        score["avg_latency"] = (
+            0.1 * latency_ms + 0.9 * score["avg_latency"]
+        )
+    
+    def recommend(self, task_type: str, available_tools: List[str]) -> List[str]:
+        """Recommend tools for a task type based on history"""
+        scored = []
+        
+        for tool in available_tools:
+            key = f"{task_type}:{tool}"
+            score = self.tool_scores.get(key, {"success_count": 0, "total_count": 0})
+            
+            if score["total_count"] > 0:
+                success_rate = score["success_count"] / score["total_count"]
+                # Penalize high latency
+                latency_penalty = min(score["avg_latency"] / 1000, 1)
+                final_score = success_rate * (1 - latency_penalty)
+            else:
+                final_score = 0.5  # Unknown = medium score
+            
+            scored.append((final_score, tool))
+        
+        scored.sort(reverse=True)
+        return [tool for _, tool in scored]
+```
+
+</details>
+
+---
+
+## 16. Future
+
+> **📌 Core Concept**
+>
+> **Definition:** The Future reflects the prominent technology trends in tool decision and MCP for 2026-2028: protocol standardization, automatic tool discovery and wrapper generation for unfamiliar tools, plus multi-agent tool sharing.
+>
+> **Metaphor:** Like a weather forecast before a long trip: not 100% certain, but it helps you pack (design your architecture) in the right direction from today.
+>
+> **Why it matters:** Architecture decisions made today determine whether the system can keep up with the next 2-3 years of trends or has to be rebuilt from the ground up.
+
+### 16.1 Trends 2026-2028
+
+**1. Auto Tool Discovery**
+- Agents discover tools from MCP servers automatically
+- Auto-generated wrappers for unknown tools
+- Semantic tool matching
+
+**2. Tool Composition AI**
+- Agents compose tools into workflows automatically
+- Learned tool chains from execution history
+- Self-optimizing pipelines
+
+**3. Cross-Platform Tools**
+- Tool portability across agents
+- Standardized tool marketplace
+- Universal tool interface
+
+**4. Predictive Tool Use**
+- Predict which tools will be needed
+- Pre-warm connections
+- Pre-fetch data
+
+**5. Tool Security**
+- Zero-trust tool execution
+- Sandboxed tool environments
+- Audit trail for all operations
+
+---
+
+## Reference Materials
+
+### Papers & Research
+
+1. **Toolformer: Language Models Can Teach Themselves to Use Tools**
+   - Schick et al., 2023
+   - https://arxiv.org/abs/2302.04761
+
+2. **Gorilla: Large Language Model Connected with Massive APIs**
+   - Patil et al., 2023
+   - https://arxiv.org/abs/2305.15334
+
+3. **API-Bank: A Comprehensive Benchmark for Tool-Augmented LLMs**
+   - Li et al., 2023
+   - https://arxiv.org/abs/2304.08354
+
+4. **NexusRaven: Function Calling for LLMs**
+   - Nexusflow, 2023
+   - https://arxiv.org/abs/2312.15933
+
+### Frameworks & Tools
+
+1. **MCP (Model Context Protocol)** - https://modelcontextprotocol.io
+2. **OpenAI Function Calling** - https://platform.openai.com/docs
+3. **Anthropic Tool Use** - https://docs.anthropic.com
+4. **LangChain Tools** - https://langchain.com
+5. **Semantic Kernel** - https://learn.microsoft.com/semantic-kernel
+
+---
+
+*Document: VI. Decide Tools / MCP Calls — HARNESS ENGINEERING EDITION*
+*Last updated: 19/07/2026*
+*Author: AI Knowledge Repository*

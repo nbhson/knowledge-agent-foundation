@@ -39,7 +39,7 @@ Trước MCP, mỗi AI app phải tự viết integration cho từng tool: một
 │                                                            │
 │  harness/06-decide-tools-mcp → quyết định dùng MCP nào     │
 │  harness/06 tool registry   → đăng ký tools từ MCP servers│
-│  MCP_SETUP.md (repo root)    → cấu hình GitHub MCP server  │
+│  MCP_SETUP.md (instruction/)    → cấu hình GitHub MCP server  │
 │  mcp-ecosystem/ (đây)       → tổng quan protocol + build  │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -138,7 +138,7 @@ Bước 5: Build MCP server riêng cho tool nội bộ (03-patterns)
 | Bạn muốn... | Đọc |
 |-------------|-----|
 | Quyết định dùng tool nào | [harness/06-decide-tools-mcp](../../harness/06-decide-tools-mcp/) |
-| Cấu hình GitHub MCP server | [MCP_SETUP.md](../../../MCP_SETUP.md) |
+| Cấu hình GitHub MCP server | [MCP_SETUP.md](../../../../instruction/MCP_SETUP.md) |
 | Tools registry & guardrails | [tools/guardrails](../guardrails/) |
 | Vector DB qua MCP | [tools/vector-db](../vector-db/) |
 | Xây harness bằng MCP tools | [tools/langchain](../langchain/) |
@@ -179,7 +179,7 @@ registry.register(ToolDefinition(
 
 ### Liên Kết Sang Nhánh Khác
 
-- [MCP_SETUP.md](../../../MCP_SETUP.md) — Cấu hình GitHub MCP server (repo root)
+- [MCP_SETUP.md](../../../../instruction/MCP_SETUP.md) — Cấu hình GitHub MCP server (instruction/)
 - [harness/06-decide-tools-mcp](../../harness/06-decide-tools-mcp/) — Tool decision & registry
 - [tools/guardrails](../guardrails/) — An toàn tool calls từ MCP
 - [tools/vector-db](../vector-db/) — Kết nối vector DB như MCP resource

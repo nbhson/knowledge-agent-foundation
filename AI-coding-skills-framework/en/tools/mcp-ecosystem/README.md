@@ -39,7 +39,7 @@ Before MCP, every AI app had to write its own integration for each tool: one ada
 │                                                              │
 │  harness/06-decide-tools-mcp → decides which MCP to use      │
 │  harness/06 tool registry   → register tools from MCP servers│
-│  MCP_SETUP.md (repo root)    → GitHub MCP server config      │
+│  MCP_SETUP.md (instruction/)    → GitHub MCP server config      │
 │  mcp-ecosystem/ (here)       → protocol overview + build     │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -138,7 +138,7 @@ Step 5: Build your own MCP server for an internal tool (03-patterns)
 | If you want to... | Read |
 |-------------------|------|
 | Decide which tool to use | [harness/06-decide-tools-mcp](../../harness/06-decide-tools-mcp/) |
-| Configure the GitHub MCP server | [MCP_SETUP.md](../../../MCP_SETUP.md) |
+| Configure the GitHub MCP server | [MCP_SETUP.md](../../../../instruction/MCP_SETUP.md) |
 | Tools registry & guardrails | [tools/guardrails](../guardrails/) |
 | Vector DBs over MCP | [tools/vector-db](../vector-db/) |
 | Build a harness with MCP tools | [tools/langchain](../langchain/) |
@@ -179,7 +179,7 @@ registry.register(ToolDefinition(
 
 ### Links to Other Branches
 
-- [MCP_SETUP.md](../../../MCP_SETUP.md) — GitHub MCP server configuration (repo root)
+- [MCP_SETUP.md](../../../../instruction/MCP_SETUP.md) — GitHub MCP server configuration (instruction/)
 - [harness/06-decide-tools-mcp](../../harness/06-decide-tools-mcp/) — Tool decision & registry
 - [tools/guardrails](../guardrails/) — Safe tool calls from MCP
 - [tools/vector-db](../vector-db/) — Connecting a vector DB as an MCP resource

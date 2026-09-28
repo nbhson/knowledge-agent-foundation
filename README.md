@@ -1,4 +1,4 @@
-# .ai-tools — Agentic Workspace Configuration
+# instruction — Agentic Workspace Configuration
 
 Bộ cấu hình workspace cho AI Agent (Cline, Copilot, Cursor...) khi làm việc với dự án.
 
@@ -9,7 +9,7 @@ Bộ cấu hình workspace cho AI Agent (Cline, Copilot, Cursor...) khi làm vi�
 > **Hai phần này HOÀN TOÀN RIÊNG BIỆT nhưng có mối liên hệ logic.**
 
 ```
-AI Coding Skills Framework          .ai-tools/                  Status
+AI Coding Skills Framework          instruction/                  Status
 (Kiến thức & Nguyên lý)            (Cấu hình & Triển khai)
 ─────────────────────────────────────────────────────────────────────────
 Module 01 (Retrieve Memory)   ───►  knowledge/                  ⚠️ PARTIAL
@@ -25,7 +25,7 @@ Module 10 (Automation)        ───►  hooks/ + rules/             ⚠️ P
 Module 11 (Evaluation)        ───►  reports/, report-templates/ ✅ DONE
 ```
 
-| Thuộc tính | AI Coding Skills Framework | .ai-tools/ |
+| Thuộc tính | AI Coding Skills Framework | instruction/ |
 |------------|---------------------------|------------|
 | **Mục đích** | Tài liệu học tập — giáo trình lý thuyết | Bộ cấu hình thực tế — files điều khiển AI agent |
 | **Nội dung** | 11 module: Retrieve, Context, Prompt, Workflow, Multi-Agent, Evaluation... | Skills, Rules, Workflows, Knowledge, Hooks, Templates |
@@ -37,7 +37,7 @@ Module 11 (Evaluation)        ───►  reports/, report-templates/ ✅ DONE
 
 #### ✅ Đã có tương ứng (đủ)
 
-| Module | Framework | .ai-tools/ | Ghi chú |
+| Module | Framework | instruction/ | Ghi chú |
 |--------|-----------|------------|---------|
 | **04 - Plan & Decompose** | Task decomposition, planning algorithms | `workflows/feature-delivery.md`, `workflows/bug-fix.md` | Workflow đã có các bước: Discovery → Plan → Approval → Implement |
 | **06 - Tools/MCP** | Tool selection, MCP protocol, intent classification | `skills/SKILL.md` files | Mỗi SKILL.md định nghĩa kỹ năng cụ thể cho AI agent |
@@ -46,7 +46,7 @@ Module 11 (Evaluation)        ───►  reports/, report-templates/ ✅ DONE
 
 #### ⚠️ Có một phần (partial)
 
-| Module | Framework | .ai-tools/ hiện tại | Thiếu |
+| Module | Framework | instruction/ hiện tại | Thiếu |
 |--------|-----------|---------------------|-------|
 | **01 - Retrieve Memory** | Vector search, BM25, hybrid search, knowledge graph | `knowledge/*.md` — static markdown files | ❌ Không có vector DB, embedding search, BM25 index. Chỉ có **static knowledge docs** |
 | **02 - Build Context** | Context window management, compression, templates | `knowledge/` được load khi start + `AGENTS.md` có context flow | ❌ Không có context compression, sliding window, token budget management |
@@ -56,7 +56,7 @@ Module 11 (Evaluation)        ───►  reports/, report-templates/ ✅ DONE
 
 #### ❌ Chưa có (missing)
 
-| Module | Framework | Hiện trạng trong .ai-tools/ |
+| Module | Framework | Hiện trạng trong instruction/ |
 |--------|-----------|-----------------------------|
 | **03 - Update Memory Store** | Write-back memory, memory consolidation, event sourcing | **Hoàn toàn chưa có.** Không có cơ chế lưu trữ lại kiến thức mới, merge/dedupe facts, hay event sourcing |
 | **09 - Multi-Agent** | Agent roles, communication, orchestration, shared memory | **Hoàn toàn chưa có.** Không có multi-agent config, agent-to-agent communication, shared memory |
@@ -64,7 +64,7 @@ Module 11 (Evaluation)        ───►  reports/, report-templates/ ✅ DONE
 ### Tại sao thiếu?
 
 ```
-AI Coding Skills Framework .ai-tools/
+AI Coding Skills Framework instruction/
 (Kiến thức)                 (Triển khai thực tế)
                             
 Retrieve Memory  ──?──►     knowledge/*.md = static docs
@@ -80,19 +80,19 @@ Multi-Agent      ──?──►     ❌ Không có gì
                             ❌ Không có: agent definitions, communication protocol
 ```
 
-**Lý do:** Hiện tại .ai-tools/ tập trung vào **workflow orchestration** (cách AI agent thực hiện task) và **coding rules** (quy tắc coding). Nó **chưa address** phần:
+**Lý do:** Hiện tại instruction/ tập trung vào **workflow orchestration** (cách AI agent thực hiện task) và **coding rules** (quy tắc coding). Nó **chưa address** phần:
 - **Memory management** (lưu/truy xuất/xử lý knowledge động)
 - **Context optimization** (quản lý context window hiệu quả)
 - **Multi-agent coordination** (phối hợp nhiều agents)
 
-Đây là những phần cần **triển khai thêm** nếu muốn .ai-tools/ cover đầy đủ 11 modules của Framework.
+Đây là những phần cần **triển khai thêm** nếu muốn instruction/ cover đầy đủ 11 modules của Framework.
 
 ---
 
 ## 📁 Cấu trúc thư mục
 
 ```
-.ai-tools/
+instruction/
 ├── README.md                          ← TRANG CHỦ (file này)
 │
 ├── .agents/                           ← Cấu hình cho Cline / general agents
@@ -302,10 +302,11 @@ Developer Request
 
 | Resource | Path |
 |----------|------|
-| AI Coding Skills Framework | `../AI Coding Skills Framework/AI_AGENT_FRAMEWORK.md` |
-| Orchestration Workflow | `.agents/AGENTS.md` |
-| GitHub Copilot Config | `.github/copilot-instructions.md` |
+| AI Coding Skills Framework | `AI-coding-skills-framework/en/AI_AGENT_FRAMEWORK.md` (EN) · `AI-coding-skills-framework/vi/AI_AGENT_FRAMEWORK.md` (VI) |
+| Orchestration Workflow | `instruction/.agents/AGENTS.md` |
+| GitHub Copilot Config | `instruction/.github/copilot-instructions.md` |
+| MCP Server Setup | `instruction/MCP_SETUP.md` |
 
 ---
 
-> **Ghi chú:** Thư mục `.ai-tools/` được thiết kế để copy vào bất kỳ dự án nào cần AI agent hỗ trợ. Chỉ cần customize `knowledge/`, `rules/`, và `workflows/` cho phù hợp với dự án của bạn.
+> **Ghi chú:** Thư mục `instruction/` được thiết kế để copy vào bất kỳ dự án nào cần AI agent hỗ trợ. Chỉ cần customize `knowledge/`, `rules/`, và `workflows/` cho phù hợp với dự án của bạn.

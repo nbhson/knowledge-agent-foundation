@@ -302,7 +302,7 @@ loop-cli/      → loop gate + worktree isolation cho automation (harness/10)
 | Thành phần | Vai trò | Liên kết |
 |-----------|---------|----------|
 | **MCP Protocol** | Chuẩn kết nối AI ↔ tools/data | [mcp-ecosystem/](mcp-ecosystem/) · https://modelcontextprotocol.io |
-| **GitHub MCP Server** | GitHub integration (cấu hình sẵn trong repo) | [MCP_SETUP.md](../../../MCP_SETUP.md) |
+| **GitHub MCP Server** | GitHub integration (cấu hình sẵn trong repo) | [MCP_SETUP.md](../../../instruction/MCP_SETUP.md) |
 
 #### 🛡️ Security & 📊 Quality
 
@@ -321,7 +321,7 @@ loop-cli/      → loop gate + worktree isolation cho automation (harness/10)
 - [harness/09-multi-agent](../harness/09-multi-agent/) — Multi-agent (autogen, crewai)
 - [harness/11-evaluation](../harness/11-evaluation/) — Đo lường hiệu quả (evaluation, observability)
 - [loop/](../loop/) — Vòng lặp tự duy trì (loop-cli)
-- [MCP_SETUP.md](../../../MCP_SETUP.md) — MCP ecosystem (harness/06, repo root)
+- [MCP_SETUP.md](../../../instruction/MCP_SETUP.md) — MCP ecosystem (harness/06, instruction/)
 
 ---
 

@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "quick_mode": {
+    "enabled": false,
+    "deprecated": true,
+    "description": "DEPRECATED legacy opt-in quick mode (kept for backward compat). Applies ONLY with `quick:` prefix.",
+    "authoritative_ref": ".github/hooks/phase-2-planning.hook.md#approval-gate-scope",
+    "note": "Single source of truth for trivial vs non-trivial is the threshold table in phase-2-planning.hook.md. Do NOT duplicate rules here — this block is a pointer only and must not diverge."
+  },
+  "guard_hooks": {
+    "description": "Non-phase triggers registered under hooks (phase-load-guidance, phase-guard-apply-rules, phase-guard-plan-approval, phase-recovery, post-merge-sync). They enforce the 5-phase order defined in CHARTER.md and are not separate workflow phases."
+  },
+  "workflow_phase_config": {
+    "description": "Defines which phases each workflow type executes. Code-delivery workflows run all 5 phases. Analysis-only workflows (Jira Ticket Review, Code Review) skip Phases 2-4.",
+    "workflows": {
+      "jira-ticket-review": {
+        "skip_phases": [
+          "phase-2-planning",
+          "phase-3-execution-formatting",
+          "phase-4-validation-pr"
+        ],
+        "note": "Analysis-only workflow. Only Phase 1 (understand) and Phase 5 (report) apply. No planning, execution, or validation needed."
+      },
+      "code-review": {
+        "skip_phases": [
+          "phase-2-planning",
+          "phase-3-execution-formatting",
+          "phase-4-validation-pr"
+        ],
+        "note": "Review-only workflow. Only Phase 1 (understand context) and Phase 5 (report) apply. No planning, execution, or PR validation needed."
+      },
+      "bug-fix": {
+        "skip_phases": [],
+        "note": "Full 5-phase code-delivery workflow."
+      },
+      "feature-delivery": {
+        "skip_phases": [],
+        "note": "Full 5-phase code-delivery workflow."
+      },
+      "refactor": {
+        "skip_phases": [],
+        "note": "Full 5-phase code-delivery workflow."
+      },
+      "unit-test": {
+        "skip_phases": [],
+        "note": "Full 5-phase code-delivery workflow (Phase 3 writes test code)."
+      }
+    }
+  },
+  "hooks": {
+    "sessionStart": [
+      {
+        "id": "phase-load-guidance",
+        "enabled": true,
+        "hookFile": ".github/hooks/README.md",
+        "description": "Load the hook index and phase-appropriate guidance before work begins."
+      },
+      {
+        "id": "phase-1-understanding",
+        "enabled": true,
+        "hookFile": ".github/hooks/phase-1-understanding.hook.md",
+        "description": "Load workflow guidance, investigate context, and apply stack rules before planning."
+      }
+    ],
+    "sessionEnd": [
+      {
+        "id": "phase-4-validation-pr",
+        "enabled": true,
+        "hookFile": ".github/hooks/phase-4-validation-pr.hook.md",
+        "description": "Run build and tests, and prepare PR output."
+      },
+      {
+        "id": "phase-5-report-generation",
+        "enabled": true,
+        "hookFile": ".github/hooks/phase-5-report-generation.hook.md",
+        "description": "Generate final report and archive to .github/reports/."
+      },
+      {
+        "id": "post-merge-sync",
+        "enabled": true,
+        "hookFile": ".github/hooks/post-merge.hook.md",
+        "description": "Sync Jira ticket to Done and close sprint items after PR merge."
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "id": "phase-2-planning",
+        "enabled": true,
+        "hookFile": ".github/hooks/phase-2-planning.hook.md",
+        "description": "Create a draft plan and enforce approval gate for non-trivial requests."
+      },
+      {
+        "id": "phase-3-execution-formatting",
+        "enabled": true,
+        "hookFile": ".github/hooks/phase-3-execution-formatting.hook.md",
+        "description": "Execute approved plan, update tests, and run lint/format checks."
+      }
+    ],
+    "preToolUse": [
+      {
+        "id": "phase-guard-apply-rules",
+        "enabled": true,
+        "hookFile": ".github/hooks/phase-1-understanding.hook.md",
+        "description": "Before read/search/context tools, verify guidance loading and rule application are complete."
+      },
+      {
+        "id": "phase-guard-plan-approval",
+        "enabled": true,
+        "hookFile": ".github/hooks/phase-2-planning.hook.md",
+        "description": "Before code-edit tools, verify a draft plan has been presented; for non-trivial requests, ensure explicit developer approval."
+      }
+    ],
+    "postToolUse": [
+      {
+        "id": "phase-3-execution-formatting",
+        "enabled": true,
+        "hookFile": ".github/hooks/phase-3-execution-formatting.hook.md",
+        "description": "After implementation steps, run lint/format checks."
+      }
+    ],
+    "errorOccurred": [
+      {
+        "id": "phase-recovery",
+        "enabled": true,
+        "hookFile": ".github/hooks/README.md",
+        "description": "On errors, return to phase index, re-align phase order, and resume from the failing phase."
+      }
+    ]
+  }
+}

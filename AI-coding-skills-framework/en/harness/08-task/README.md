@@ -1835,6 +1835,62 @@ class TokenBudgetManager:
 
 ---
 
+## 11. Harness Integration (TS)
+
+Links tasks to the execution spine: every `TaskNode` carries `trajectoryId`, `idempotencyKey`, `permissions`, `budget`. The engine emits events the workflow/observability layers consume.
+
+<details>
+<summary>TypeScript Code — Task Engine (Click to expand/collapse)</summary>
+
+```typescript
+export type TaskStatus = "pending"|"planning"|"in_progress"|"waiting_approval"|"testing"|"review"|"done"|"failed"|"cancelled";
+export interface TaskNode { id: string; title: string; trajectoryId: string; idempotencyKey: string;
+  permissions: "read"|"write"|"elevated"; budgetTokens: number; timeoutMs: number; maxRetries: number;
+  deps: string[]; status: TaskStatus; resultRef?: string; }
+export interface TaskEngine { submit(t: Omit<TaskNode,"trajectoryId"|"idempotencyKey"|"status">): TaskNode;
+  transition(id: string, to: TaskStatus, note?: string): void; on(evt: string, fn: (e: any) => void): void; }
+export function makeTaskEngine(): TaskEngine {
+  const tasks = new Map<string, TaskNode>(); const ls: Record<string, Function[]> = {};
+  const emit = (e: string, d: any) => (ls[e] ?? []).forEach(f => f(d));
+  const VALID: Record<string, TaskStatus[]> = { pending: ["planning","cancelled"], planning: ["in_progress","cancelled"],
+    in_progress: ["testing","waiting_approval","failed","done"], waiting_approval: ["in_progress","cancelled"],
+    testing: ["review","in_progress","failed"], review: ["done","in_progress","failed"] };
+  return {
+    submit(t) { const n: TaskNode = { ...t, trajectoryId: `traj_${Date.now().toString(36)}_${t.id}`, idempotencyKey: `${t.id}:${t.title.length}`, status: "pending" };
+      tasks.set(n.id, n); emit("task.created", n); return n; },
+    transition(id, to, note) { const cur = tasks.get(id)!; if (!VALID[cur.status]?.includes(to)) throw new Error(`invalid ${cur.status}→${to}`);
+      cur.status = to; emit("task.transition", { id, to, note, trajectoryId: cur.trajectoryId }); },
+    on(e, f) { (ls[e] ??= []).push(f); },
+  };
+}
+```
+
+</details>
+
+Rules: `elevated` tasks require approval; `trajectoryId` joins prompt/tool/workflow logs; `idempotencyKey` dedupes retries.
+
+## 12. Execution Semantics
+
+Per-task: `timeoutMs` (default 60s, abort + mark `failed:timeout`), `maxRetries` with exponential backoff + jitter (retry only idempotent or checkpointed tasks), `cancel()` sets `cancelled` and aborts signal — children depending on it become `blocked`. Failure pipeline: `failed → classify(transient|perm|budget) → transient: retry | perm: park + emit task.failed | budget: compact + re-estimate → continue DAG`. Never auto-retry non-idempotent writes.
+
+## 13. Concurrency
+
+Scheduler: topological batches (ready = deps all `done`), semaphore cap (4–8) + token-budget gate (skip batch if `sum(budgetTokens) > remaining`). `race([primary, fallback])` for latency-sensitive reads; `join(all)` for fan-in merges. Resource limits: max tasks/run (e.g. 50), max tokens/session, per-task queue depth 1. Deadlock guard: fail if a batch makes no progress in 2 rounds (missing dep/cycle).
+
+## 14. Case Studies
+
+1. **Auth refactor (12 files, 4 layers):** classified MODIFICATION/COMPLEX → layer decomposition (db→svc→api→ui→test). Batch 1 (db) blocked svc/api; budget gate deferred UI docs to session 2. One `write_file:elevated` paused on approval with diff preview; idempotency key prevented double migration on retry after timeout. Result: 1 retry, 0 double-writes.
+2. **Flaky E2E triage (30 tests):** map-reduce — 30 parallel `run_tests` shards (sem=6) with 90s timeouts each, `race(unit-shard, cached-baseline)` to skip green paths. 3 transient failures retried via idempotency cache; 1 perm failure parked as `failed` without blocking the merge report. Join aggregated pass/fail + trajectory links.
+
+## 15. Hands-On Lab
+
+**Exercise (30 min):** implement `schedule + execute` for 6 tasks (A→B, A→C, B+D→E, C→F) with budgets `[2k,3k,3k,5k,2k,2k]`, session cap 10k, `D: elevated`, `E: timeout 5s`.
+1. Write topological batches; show which batch pauses for approval and which defers on budget.
+2. Inject failure: E times out once — apply idempotency-key retry, log `trajectoryId` + `transition` events.
+3. Add `race()` for C (cache vs live) and `join()` for E/F. Deliverable: batch table + event log + 1 paragraph on what moved to session 2 and why.
+
+---
+
 ## Best Practices
 
 > ## 📌 Basic Concept

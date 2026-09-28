@@ -3357,6 +3357,91 @@ Bảng này tóm tắt **6 xu hướng lớn** định hình cách đánh giá A
 
 ---
 
+## 15. Trajectory, Contamination, Cost-per-Quality & Hiệu Chuẩn Với Con Người
+
+Pass/fail che giấu agent đã làm việc *như thế nào*. Section này bổ sung chấm trajectory (hiệu quả, độ chính xác, khả năng phục hồi), vệ sinh harness chống rò rỉ, định tuyến $/pass-task, và hiệu chuẩn judge LLM với con người. Ẩn dụ: như chấm tay đua rally — về đích quan trọng, nhưng rẽ nhầm (step), đi đường vòng (tool call), sự cố rồi gượng lại (recovery), và việc tay đua có tập trước trên đường đua đó không (contamination) cũng quan trọng.
+
+> **Ghi chú dedup:** §7 và §10 đều kể lại SWE-bench end-to-end. Quy ước: §7 = *định nghĩa benchmark* (SWE-bench/HumanEval đo gì); §10 = *kết quả case-study* (ai đạt bao nhiêu). §15 này chỉ bổ sung *phương pháp* (metric trajectory, isolation, chi phí, hiệu chuẩn).
+
+### 15.1 Chấm Trajectory — Hiệu Quả Step, Độ Chính Xác, Khả Năng Phục Hồi
+
+| Metric | Định Nghĩa | Mục Tiêu |
+|---|---|---|
+| `pass` | Task được giải (test + kiểm tra ẩn) | cổng chính |
+| `steps_used / steps_p50` | Hiệu quả step = số step tham chiếu p50 ÷ số step thực tế (trần 1.0) | ≥ 0.7 |
+| `tool_precision` | Số tool call hữu ích ÷ tổng tool call | ≥ 0.6 |
+| `recovery_rate` | Số lỗi tự sửa không cần người ÷ tổng đợt lỗi | ≥ 0.5 |
+| `wasted_edits` | Số lần ghi file bị hoàn tác trong cùng run ÷ tổng lần ghi | ≤ 0.2 |
+| `trajectory_score` | `0.5·pass + 0.2·efficiency + 0.15·precision + 0.15·recovery` | cổng CI ≥ 0.65 |
+
+Chấm trajectory, không chỉ kết quả: log mọi span `(thought, tool, args, result, cost)`; phạt vòng lặp retry brute-force pass do may mắn.
+
+### 15.2 Vệ Sinh Contamination & Isolation
+
+- **Rò rỉ (Leakage):** cách ly mọi task có lời giải/văn bản issue xuất hiện trong training cutoff; gắn thẻ `leak_risk: high` và loại khỏi con số chính (báo cáo riêng).
+- **Seed:** cố định `seed` + `temperature=0` cho bộ regression; eval không đơn định chạy 3 lần và báo cáo mean ± std.
+- **Cách ly flaky:** test lỗi <5% trong 50 run tự vào làn `flaky/`; không bao giờ chặn promotion, nhưng mở tracking issue.
+- **Cô lập (Isolation):** container/FS mới cho mỗi task, không cache chung giữa các task, chặn mạng trừ mirror trong allow-list; hash dataset + ghi commit SHA vào báo cáo.
+
+### 15.3 Cost-per-Quality — Metric Định Tuyến $/Pass-Task
+
+`$/pass-task = total_eval_cost ÷ tasks_passed`. Theo dõi theo từng model/route; task dễ đi model rẻ, chỉ leo thang khi lỗi (cascade). Báo cáo bảng Pareto:
+
+| Route | Pass % | $/1k task | $/pass-task | Kết Luận |
+|---|---|---|---|---|
+| small-only | 52% | $18 | $0.035 | baseline rẻ |
+| small→large cascade | 71% | $46 | $0.065 | ✅ tradeoff tốt nhất |
+| large-only | 74% | $210 | $0.284 | chỉ khi chất lượng là tối quan trọng |
+
+Chỉ nâng cấp model khi đạt *cả hai*: Δpass ≥ +2pp *và* Δ$/pass-task ≤ +10%.
+
+### 15.4 Hiệu Chuẩn Với Con Người — Judge-so-với-Người Có Đồng Thuận Không
+
+- Lấy mẫu 100–200 task/quý để người chấm mù lại; tính κ của Cohen và tỉ lệ đồng thuận theo từng chiều (correctness/style/safety).
+- Yêu cầu κ ≥ 0.7 trước khi judge được gác cổng promotion; thấp hơn → chỉnh rubric + few-shot, không bao giờ hạ chuẩn.
+- **Kiểm tra bias:** bias độ dài (dài hơn ≠ hay hơn), tự thiên vị (judge chấm họ nhà mình cao hơn), bias vị trí (đảo thứ tự A/B); báo cáo độ lệch bias kèm điểm số.
+
+<details>
+<summary>Python Code — Trajectory Scorer (Click to expand/collapse)</summary>
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class Trajectory:
+    passed: bool; steps: int; ref_steps_p50: int
+    useful_calls: int; total_calls: int; recovered: int; error_episodes: int
+
+def trajectory_score(t: Trajectory) -> dict:
+    efficiency = min(1.0, t.ref_steps_p50 / max(t.steps, 1))
+    precision = t.useful_calls / max(t.total_calls, 1)
+    recovery = t.recovered / max(t.error_episodes, 1) if t.error_episodes else 1.0
+    score = 0.5 * float(t.passed) + 0.2 * efficiency + 0.15 * precision + 0.15 * recovery
+    return {"score": round(score, 3), "efficiency": round(efficiency, 3),
+            "precision": round(precision, 3), "recovery": round(recovery, 3)}
+
+def cost_per_pass_task(total_cost_usd: float, passed: int) -> float:
+    return total_cost_usd / max(passed, 1)
+
+print(trajectory_score(Trajectory(True, 42, 12, 8, 30, 1, 3)))   # pass nhưng lãng phí
+print(trajectory_score(Trajectory(True, 14, 12, 10, 14, 2, 2)))   # run lành mạnh
+print(f"$/pass-task: ${cost_per_pass_task(46.0, 710):.4f}")
+```
+
+</details>
+
+### 15.5 Checklist
+
+- [ ] Log đầy đủ trajectory + tính efficiency/precision/recovery
+- [ ] Gác cổng bằng `trajectory_score`, không chỉ pass%
+- [ ] Cách ly rò rỉ + ghim seed + chạy lại 3 lần cho eval ngẫu nhiên
+- [ ] Làn flaky tách khỏi bộ blocking
+- [ ] Báo cáo $/pass-task theo route + chính sách cascade
+- [ ] Hiệu chuẩn với người hằng quý (κ ≥ 0.7) + kiểm tra bias độ dài/tự thiên vị/vị trí
+- [ ] Hash dataset + SHA môi trường trong mọi báo cáo
+
+---
+
 ## Tài Liệu Tham Khảo
 
 ### Papers & Research

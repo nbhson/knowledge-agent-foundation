@@ -2868,6 +2868,95 @@ for est in COST_ESTIMATES:
 
 ---
 
+## 16. Fault Tolerance, Messaging & Isolation
+
+At production scale agents crash, hang, double-write, and leak secrets. This section adds the missing hardening: failure detection + reassignment, explicit messaging guarantees, memory consistency rules, and per-agent sandboxing. Analogy: like a kitchen crew — if a chef collapses someone takes over his ticket (reassignment), orders have sequence numbers (ordering), only one chef plates a dish (write conflicts), and cleaners can't enter the safe (secret containment).
+
+### 16.1 Fault Tolerance — Crash / Timeout / Hang Detection
+
+```
+HEARTBEAT: every 5s agent → supervisor {agent_id, task_id, state}
+TIMEOUT RULES:
+ • crash = heartbeat missing > 15s → mark DEAD
+ • timeout = task exceeds deadline (e.g. 300s) → mark TIMED_OUT
+ • hang = heartbeat alive but no progress log > 60s → SUSPECT
+REASSIGNMENT:
+ 1. freeze task lease (fencing token++) → old agent writes rejected
+ 2. requeue task with attempt++ and prior transcript attached
+ 3. if attempts > 3 → escalate to human / fail closed
+QUORUM (judges/voters): 2f+1 agents tolerate f faults; require majority (e.g. 2/3)
+```
+
+Rules: every task has `lease_id + deadline + max_attempts`; supervisor is stateless + backed by queue (Redis/BullMQ); prefer idempotent workers so reassignment is safe to retry.
+
+### 16.2 Messaging Guarantees — Ordering, Delivery, Payload Caps
+
+| Guarantee | Default choice | Rule |
+|---|---|---|
+| Ordering | Per-task FIFO (sequence no.) | Orchestrator rejects out-of-order `seq`; agents buffer + request resend |
+| Delivery | At-least-once + idempotency keys | Every message has `msg_id`; handler dedups on `msg_id` |
+| At-most-once | Only for non-retryable side effects (send email, push) — gate via outbox + fencing token | Never retry without guard |
+| Payload caps | 64 KB headers + 512 KB body; larger → artifact ref (path + hash) | Drop + log oversized messages |
+| Timeouts | Request/reply 30s default; streaming progress 5s heartbeat | Missing reply → retry with backoff, then reassign (§16.1) |
+
+### 16.3 Memory Consistency — Shared vs Private, Write Conflicts
+
+- **Private by default:** each agent has scratchpad; only publishes diffs/facts to shared blackboard.
+- **Shared via versioned keys:** `blackboard.write(key, value, expectedVersion)` — CAS semantics; on version mismatch re-read + merge, never blind-overwrite.
+- **Single-writer per artifact:** orchestrator assigns file/section ownership (e.g. only `coder` writes `auth.ts`); reviewers emit comments, not edits.
+- **Per-agent isolation:** namespace keys `agent_id/task_id/*`; cross-agent reads go through allow-listed projections (no raw prompt/secret bleed).
+
+### 16.4 Per-Agent Sandboxing + Secret Containment
+
+- Least-privilege tools per role: `reviewer` gets read-only FS + no shell; `coder` gets sandboxed shell (no net) unless explicitly granted.
+- Secrets never in messages: agents receive short-lived scoped tokens (5–15 min) via env injection; supervisor redacts `sk-*, ghp_*, AWS_*` from logs/transcripts.
+- Egress policy: deny-by-default; allow-list domains per agent; all tool I/O audited with `agent_id + lease_id`.
+
+<details>
+<summary>TypeScript Code — Heartbeat + Reassignment (Click to expand/collapse)</summary>
+
+```typescript
+type AgentState = "IDLE" | "RUNNING" | "SUSPECT" | "DEAD";
+interface TaskLease { taskId: string; leaseId: number; deadlineMs: number; attempts: number; }
+
+const HEARTBEAT_TTL_MS = 15_000, PROGRESS_STALL_MS = 60_000, MAX_ATTEMPTS = 3;
+const heartbeats = new Map<string, { ts: number; progressTs: number; state: AgentState }>();
+
+export function heartbeat(agentId: string, progressed: boolean): void {
+  const h = heartbeats.get(agentId) ?? { ts: 0, progressTs: Date.now(), state: "IDLE" as AgentState };
+  h.ts = Date.now(); if (progressed) h.progressTs = h.ts;
+  h.state = "RUNNING"; heartbeats.set(agentId, h);
+}
+
+export async function supervise(agentId: string, lease: TaskLease,
+  requeue: (l: TaskLease) => Promise<void>, escalate: (l: TaskLease) => Promise<void>): Promise<void> {
+  const h = heartbeats.get(agentId); const now = Date.now();
+  if (!h || now - h.ts > HEARTBEAT_TTL_MS) return handleFault(agentId, lease, "DEAD", requeue, escalate);
+  if (now > lease.deadlineMs) return handleFault(agentId, lease, "TIMED_OUT", requeue, escalate);
+  if (now - h.progressTs > PROGRESS_STALL_MS) return handleFault(agentId, lease, "SUSPECT", requeue, escalate);
+}
+
+async function handleFault(agentId: string, lease: TaskLease, reason: string,
+  requeue: (l: TaskLease) => Promise<void>, escalate: (l: TaskLease) => Promise<void>) {
+  console.warn(`[supervisor] ${agentId} fault=${reason} task=${lease.taskId} attempt=${lease.attempts}`);
+  heartbeats.set(agentId, { ts: 0, progressTs: 0, state: "DEAD" });
+  const next: TaskLease = { ...lease, leaseId: lease.leaseId + 1, attempts: lease.attempts + 1,
+    deadlineMs: Date.now() + 300_000 };
+  if (next.attempts > MAX_ATTEMPTS) return escalate(next);
+  return requeue(next); // attach prior transcript at call site for continuity
+}
+```
+
+</details>
+
+### 16.5 Checklist + Real-World Example
+
+**Checklist:** [ ] heartbeat + deadline + stall detector wired [ ] fencing token on requeue [ ] max_attempts + escalate path [ ] per-task FIFO + `msg_id` dedup [ ] payload caps + artifact refs [ ] CAS writes + single-writer ownership [ ] per-role tool allow-list + scoped short-lived secrets + redaction.
+
+**Real-world:** Claude Code subagents run isolated with bounded tool grants; on subagent stall the orchestrator kills the process, bumps the task lease, and respawns with condensed transcript — reviewers vote 2-of-3 (quorum) so one crashed voter never blocks merge.
+
+---
+
 ## References
 
 ### Frameworks

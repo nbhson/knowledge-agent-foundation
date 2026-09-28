@@ -3119,6 +3119,71 @@ Sáu nguyên tắc dưới đây là "kim chỉ nam" khi thiết kế bất kỳ
 
 ---
 
+## 13. Độ Bền Production: Checkpoint-Resume, Idempotency, Backpressure, Approvals
+
+### 13.1 Định Nghĩa
+
+| Thuật Ngữ | Định Nghĩa |
+|------|------------|
+| Durable execution | Mỗi step hoàn thành đều được checkpoint (event log + snapshot); khởi động lại sẽ tiếp tục từ checkpoint cuối cùng, không bao giờ chạy lại từ đầu |
+| Idempotency key | `stepId + inputHash (+ attempt ceiling)`; thực thi lại với cùng key trả về kết quả đã lưu, không gây tác dụng phụ kép |
+| Backpressure | Hàng đợi giới hạn + semaphore (`maxParallel`), deadline của mỗi run được lan truyền qua `AbortSignal`/ctx; giảm tải hoặc hoãn lại thay vì OOM |
+| Approval node | Step có trạng thái `WAITING_APPROVAL`; engine tạm dừng, lưu trạng thái, tiếp tục khi được phê duyệt/từ chối/hết thời gian |
+
+### 13.2 Checkpoint-Resume (Tiếp Tục Sau Khi Khởi Động Lại)
+
+Write-ahead log: `append({seq, stepId, inputHash, status, outputRef})` + snapshot nguyên tử mỗi N step. Khi khởi động: `load snapshot → replay log tail → skip completed (idempotent) → resume pending`. Snapshot lưu vào JSON/SQLite cục bộ; output >64KB đưa vào artifact store theo ref. Giữ `runId` ổn định qua các lần khởi động lại.
+
+### 13.3 Idempotency + Backpressure + Deadline Theo Từng Step
+
+Idempotency store: `Map<idempotencyKey, resultRef>` có TTL; thao tác ghi (mutation) bắt buộc có key, thao tác đọc thì không. Backpressure: `Semaphore(maxParallel=4–8)` toàn cục, mỗi step giới hạn độ dài hàng đợi (ví dụ 100); `enqueue` ném `BackpressureError` khi đầy — bên gọi retry với jitter. Deadline: một `deadlineAt` duy nhất cho mỗi run; mỗi step nhận `remaining = deadlineAt - now()` (trừ buffer); lan truyền qua `AbortSignal.timeout(remaining)`. Không bao giờ âm thầm nới deadline.
+
+### 13.4 Node Phê Duyệt / Tạm Dừng-Tiếp Tục Của Con Người
+
+<details>
+<summary>TypeScript Code — Durable Engine (Click to expand/collapse)</summary>
+
+```typescript
+import * as fs from "node:fs";
+type Step = { id: string; run: (ctx: Ctx) => Promise<any>; needsApproval?: boolean; idem?: boolean };
+type Ctx = { signal: AbortSignal; idemKey: string; artifacts: Map<string, any> };
+const idemStore = new Map<string, any>();
+function sem(max: number) { let n = max; const q: (() => void)[] = []; return async (fn: () => Promise<any>) => { if (n <= 0) await new Promise<void>(r => q.push(r)); n--; try { return await fn(); } finally { n++; q.shift()?.(); } }; }
+const gate = sem(4); // song song tối đa
+export class DurableEngine {
+  constructor(private log = "./checkpoints.jsonl", private approvals = new Map<string, "ok" | "no">()) {}
+  ckpt(e: object) { fs.appendFileSync(this.log, JSON.stringify(e) + "\n"); }
+  done(key: string) { try { return JSON.parse(fs.readFileSync(this.log, "utf8").split("\n").filter(Boolean).map(l => JSON.parse(l)).filter((e: any) => e.key === key && e.status === "ok").pop()?.val ?? "null"); } catch { return undefined; } }
+  async run(runId: string, steps: Step[], inputs: any, deadlineMs = 120_000) {
+    const deadlineAt = Date.now() + deadlineMs;
+    for (const s of steps) {
+      const key = `${runId}:${s.id}:${JSON.stringify(inputs).length}:${s.id}`;
+      const cached = s.idem !== false ? (idemStore.get(key) ?? this.done(key)) : undefined;
+      if (cached !== undefined) { inputs = cached; continue; }
+      if (s.needsApproval && this.approvals.get(key) !== "ok") { this.ckpt({ runId, key, status: "waiting_approval", at: Date.now() }); throw new Error(`PAUSED:${s.id}: awaiting approval`); }
+      const remain = deadlineAt - Date.now() - 500; if (remain <= 0) throw new Error("deadline exceeded");
+      const out = await gate(async () => s.run({ signal: AbortSignal.timeout(remain), idemKey: key, artifacts: new Map() }));
+      idemStore.set(key, out); this.ckpt({ runId, key, status: "ok", val: JSON.stringify(out).slice(0, 64_000), at: Date.now() });
+      inputs = out;
+    }
+    return inputs;
+  }
+}
+```
+
+</details>
+
+Resume: gọi lại `run()` với cùng `runId`; các key đã xong trúng `done()`/store nên được bỏ qua. Pause: bắt `PAUSED:*`, lưu trạng thái UI, phê duyệt rồi chạy lại.
+
+### 13.5 Checklist
+
+- [ ] Checkpoint sau mỗi step (log + snapshot); kiểm thử khởi động lại đạt (kill -9 giữa run)?
+- [ ] Mọi step ghi dữ liệu đều dùng idempotency key; chạy kép không gây tác dụng phụ?
+- [ ] Đã đặt `maxParallel` + giới hạn hàng đợi; deadline lan truyền tới signal của mọi step?
+- [ ] Node phê duyệt lưu trạng thái `WAITING_APPROVAL`; các nhánh approve/reject/timeout đều tiếp tục đúng?
+
+---
+
 ## Tài Liệu Tham Khảo
 
 ### Papers & Research

@@ -3219,6 +3219,77 @@ class ToolLearner:
 
 ---
 
+## 17. Production Hardening: Sandboxing, MCP, Approvals, Memoization
+
+### 17.1 Definitions
+
+| Term | Definition |
+|------|------------|
+| Sandbox | Untrusted tool/code runs in Docker/microVM/gVisor with FS allowlist, no net (default), timeout+kill, no secret env |
+| MCP production client | Auth (OAuth/key rotation), `protocolVersion` pin + capability cache with TTL, `tools/list` ETag, result size caps + truncation |
+| Dangerous-op gate | Write/exec/network/publish requires explicit approval record (who, what, diff, expiry) |
+| Memoization | Identical `(tool, args_hash)` within TTL returns cached result; streaming yields partial chunks with cap |
+
+### 17.2 Real Sandboxing
+
+Default-deny: `workdir` jail only, read-only root except `/work/tmp`, `network: none` unless tool declares `net: [allowlist]`. Always `timeout + SIGKILL process group`. Never inject `AWS_/GH_/OPENAI_` env; pass scoped temp creds only. Prefer `gVisor (runsc)` or `microVM (Firecracker)` for untrusted code; plain Docker `--pids-limit --memory --cpus --read-only --tmpfs` is minimum.
+
+### 17.3 MCP Production Rules
+
+1. Pin `protocolVersion`; cache `tools/list` 5–15 min; on `426`/unknown-tool invalidate immediately.
+2. Auth: OAuth2 bearer with refresh + least-scope; rotate keys; never log tokens (redact `Bearer`).
+3. Caps: `timeout 30s`, `result ≤128KB`, `args ≤32KB`, schema-validate args pre-send.
+4. Streaming: forward `content` chunks as they arrive, enforce total cap + idle timeout (10s); abort on client cancel.
+
+<details>
+<summary>TypeScript Code — Sandbox + MCP Call (Click to expand/collapse)</summary>
+
+```typescript
+import { spawn } from "node:child_process";
+export interface SandboxOpts { workdir: string; allowWrite: string[]; allowNet: string[]; timeoutMs: number; memory: string; env: Record<string,string>; }
+const SECRET_ENV = /^(AWS_|GH_|GITHUB_|OPENAI_|ANTHROPIC_|SK-)/i;
+export function runSandboxed(cmd: string[], args: string[], o: SandboxOpts): Promise<{ stdout: string; stderr: string; code: number }> {
+  for (const k of Object.keys(o.env)) if (SECRET_ENV.test(k)) throw new Error(`secret env blocked: ${k}`);
+  const docker = ["run", "--rm", "--read-only", `--memory=${o.memory}`, "--pids-limit=64", "--network", o.allowNet.length ? "bridge" : "none",
+    "-v", `${o.workdir}:/work:rw`, "-w", "/work", ...o.allowWrite.flatMap(p => ["-v", `${p}:${p}:rw`]), "sandbox-img:latest", ...cmd, ...args];
+  return new Promise((resolve, reject) => {
+    const p = spawn("docker", docker, { env: { PATH: process.env.PATH } });
+    let out = "", err = ""; const t = setTimeout(() => { try { process.kill(-p.pid!, "SIGKILL"); } catch {} reject(new Error("sandbox timeout kill")); }, o.timeoutMs);
+    p.stdout.on("data", d => { out += d; if (out.length > 256_000) { clearTimeout(t); try { process.kill(-p.pid!, "SIGKILL"); } catch {} reject(new Error("output cap exceeded")); } });
+    p.stderr.on("data", d => err += d);
+    p.on("close", code => { clearTimeout(t); resolve({ stdout: out.slice(0, 256_000), stderr: err.slice(0, 64_000), code: code ?? 1 }); });
+    p.on("error", e => { clearTimeout(t); reject(e); });
+  });
+}
+const memo = new Map<string, { at: number; val: any }>();
+export async function callMcp(url: string, token: string, tool: string, args: object, v = "2025-06-18") {
+  const key = `${tool}:${JSON.stringify(args)}`; const m = memo.get(key);
+  if (m && Date.now() - m.at < 60_000) return { ...m.val, memoHit: true };
+  const r = await fetch(`${url}/tools/call`, { method: "POST", signal: AbortSignal.timeout(30_000),
+    headers: { authorization: `Bearer ${token}`, "mcp-protocol-version": v, "content-type": "application/json" },
+    body: JSON.stringify({ name: tool, arguments: args }) });
+  if (r.status === 426) throw new Error("MCP version mismatch: refresh tools/list + capability cache");
+  const j: any = await r.json(); let text = JSON.stringify(j.content ?? j).slice(0, 128_000);
+  if (JSON.stringify(j).length > 128_000) text += "\n…[truncated: result cap 128k]";
+  const out = { ok: !j.isError, text }; memo.set(key, { at: Date.now(), val: out }); return out;
+}
+```
+
+</details>
+
+### 17.4 Dangerous-Op Approval UX
+
+Tiers: `read` auto, `write/exec` needs diff preview + one-click approve (5-min expiry), `publish/delete/auth-change` needs typed confirm + reason. Approval record: `{tool, argsHash, diffSummary, approver, expiresAt, trajectoryId}`. Deny-by-default on timeout. Show: command, cwd, files touched, net egress, irreversible flag.
+
+### 17.5 Checklist
+
+- [ ] Sandbox: net-off default, FS allowlist, timeout+SIGKILL, output cap, no secret env?
+- [ ] MCP: version pinned, caps cached w/ TTL + invalidate, auth rotated, size/timeout caps?
+- [ ] Dangerous ops gated with diff preview + expiring approval record?
+- [ ] Identical-call memo keyed on canonical args hash with TTL; streaming capped?
+
+---
+
 ## Reference Materials
 
 ### Papers & Research

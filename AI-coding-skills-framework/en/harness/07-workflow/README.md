@@ -3120,6 +3120,71 @@ The six principles below are the "compass" when designing any workflow — from 
 
 ---
 
+## 13. Production Durability: Checkpoint-Resume, Idempotency, Backpressure, Approvals
+
+### 13.1 Definitions
+
+| Term | Definition |
+|------|------------|
+| Durable execution | Every step completion is checkpointed (event log + snapshot); restart resumes from last checkpoint, never from zero |
+| Idempotency key | `stepId + inputHash (+ attempt ceiling)`; re-execution with same key returns stored result, no double side-effect |
+| Backpressure | Bounded queue + semaphore (`maxParallel`), per-run deadline propagated via `AbortSignal`/ctx; shed or defer instead of OOM |
+| Approval node | Step with state `WAITING_APPROVAL`; engine pauses, persists, resumes on approve/reject/timeout |
+
+### 13.2 Checkpoint-Resume (Across Restart)
+
+Write-ahead log: `append({seq, stepId, inputHash, status, outputRef})` + atomic snapshot every N steps. On boot: `load snapshot → replay log tail → skip completed (idempotent) → resume pending`. Snapshot to local JSON/SQLite; outputs >64KB go to artifact store by ref. Keep `runId` stable across restarts.
+
+### 13.3 Per-Step Idempotency + Backpressure + Deadlines
+
+Idempotency store: `Map<idempotencyKey, resultRef>` with TTL; mutations require key, reads don't. Backpressure: global `Semaphore(maxParallel=4–8)`, per-step queue cap (e.g. 100); `enqueue` throws `BackpressureError` when full — caller retries with jitter. Deadline: single `deadlineAt` per run; each step gets `remaining = deadlineAt - now()` (minus buffer); propagate via `AbortSignal.timeout(remaining)`. Never extend deadlines silently.
+
+### 13.4 Human Approval / Pause-Resume Nodes
+
+<details>
+<summary>TypeScript Code — Durable Engine (Click to expand/collapse)</summary>
+
+```typescript
+import * as fs from "node:fs";
+type Step = { id: string; run: (ctx: Ctx) => Promise<any>; needsApproval?: boolean; idem?: boolean };
+type Ctx = { signal: AbortSignal; idemKey: string; artifacts: Map<string, any> };
+const idemStore = new Map<string, any>();
+function sem(max: number) { let n = max; const q: (() => void)[] = []; return async (fn: () => Promise<any>) => { if (n <= 0) await new Promise<void>(r => q.push(r)); n--; try { return await fn(); } finally { n++; q.shift()?.(); } }; }
+const gate = sem(4); // max parallel
+export class DurableEngine {
+  constructor(private log = "./checkpoints.jsonl", private approvals = new Map<string, "ok" | "no">()) {}
+  ckpt(e: object) { fs.appendFileSync(this.log, JSON.stringify(e) + "\n"); }
+  done(key: string) { try { return JSON.parse(fs.readFileSync(this.log, "utf8").split("\n").filter(Boolean).map(l => JSON.parse(l)).filter((e: any) => e.key === key && e.status === "ok").pop()?.val ?? "null"); } catch { return undefined; } }
+  async run(runId: string, steps: Step[], inputs: any, deadlineMs = 120_000) {
+    const deadlineAt = Date.now() + deadlineMs;
+    for (const s of steps) {
+      const key = `${runId}:${s.id}:${JSON.stringify(inputs).length}:${s.id}`;
+      const cached = s.idem !== false ? (idemStore.get(key) ?? this.done(key)) : undefined;
+      if (cached !== undefined) { inputs = cached; continue; }
+      if (s.needsApproval && this.approvals.get(key) !== "ok") { this.ckpt({ runId, key, status: "waiting_approval", at: Date.now() }); throw new Error(`PAUSED:${s.id}: awaiting approval`); }
+      const remain = deadlineAt - Date.now() - 500; if (remain <= 0) throw new Error("deadline exceeded");
+      const out = await gate(async () => s.run({ signal: AbortSignal.timeout(remain), idemKey: key, artifacts: new Map() }));
+      idemStore.set(key, out); this.ckpt({ runId, key, status: "ok", val: JSON.stringify(out).slice(0, 64_000), at: Date.now() });
+      inputs = out;
+    }
+    return inputs;
+  }
+}
+```
+
+</details>
+
+Resume: re-invoke `run()` with same `runId`; completed keys hit `done()`/store and skip. Pause: catch `PAUSED:*`, persist UI state, approve then re-run.
+
+### 13.5 Checklist
+
+- [ ] Checkpoint after every step (log + snapshot); restart test passes (kill -9 mid-run)?
+- [ ] All mutating steps use idempotency keys; double-run is side-effect-free?
+- [ ] `maxParallel` + queue cap set; deadline propagated to every step signal?
+- [ ] Approval nodes persist `WAITING_APPROVAL`; approve/reject/timeout paths resume correctly?
+
+---
+
 ## References
 
 ### Papers & Research

@@ -3068,6 +3068,106 @@ for i, doc in enumerate(hybrid[:3]):
 
 ---
 
+## 8. Production Supplement: Index Ops, Security, Failure & Observability
+
+> Closes the prototype→production gap left by §1–§7.
+
+### 8.1 Definitions
+
+| Term | Definition | Why it matters |
+|------|------------|----------------|
+| Incremental re-index | Re-embed only changed/deleted docs (by content hash + version), not full corpus | Full re-index on 1M docs = hours + $; incremental = seconds |
+| Embedding version / drift | `embed_model:v` stamped per vector; drift = score distribution shift after model upgrade | Mixing `bge-v1` and `bge-v2` vectors silently corrupts cosine ranking |
+| Stale invalidation | TTL + event-driven tombstone for superseded chunks | Prevents serving revoked policy / old API signature |
+| Write-time dedup | Sim-hash / cosine ≥0.97 check at ingest; drop or link duplicate | Stops index bloat and RRF vote-splitting |
+| Tenant isolation | Physical (separate collection) or logical (`tenant_id` filter + ACL check) partition | Prevents cross-tenant leakage, GDPR scope |
+
+### 8.2 Production Index Ops
+
+1. **Incremental re-index:** store `doc_id, content_sha256, embed_version, chunk_ids`. On write: if `sha` unchanged → skip; if changed → delete old `chunk_ids`, embed + upsert new. Nightly sweeper re-embeds only rows where `embed_version != CURRENT`.
+2. **Embedding version/drift:** pin `EMBED_MODEL="nomic-embed-text:v2"`. Never mix versions in one namespace. On upgrade: dual-write to `idx_v2`, shadow-compare hit-rate@5 for 7d, then cutover + backfill. Alert if mean top-1 score drops >0.08.
+3. **Stale invalidation:** every chunk gets `valid_until + supersedes` pointer. Updates write tombstone `{deleted_chunk_ids, reason}`. Retrieval filters `valid_until > now AND NOT tombstoned`.
+4. **Write-time dedup:** normalize → hash exact match → vector near-dup check (top-1 cosine ≥0.97 → merge metadata, skip insert).
+
+### 8.3 Security
+
+- **PII scrub before embed:** regex + NER (email, phone, SSN, API keys) → `[REDACTED:<type>]` *before* embedding and before logging. Never embed raw secrets; store redacted text only.
+- **Tenant isolation:** mandatory `tenant_id` on every upsert/query. Enforce at query layer: `filter={tenant_id: X}` AND post-check `hit.tenant_id == X`. Prefer separate namespaces per tenant for hard delete.
+- **GDPR delete:** `delete_by_tenant + doc_id` must purge vectors, BM25 docs, and logs within SLO (e.g. 24h). Keep deletion receipt.
+
+### 8.4 Failure & Observability
+
+- **Empty / low-score fallback:** if `hits==0` or `top_score < 0.25` → (1) retry with query expansion / BM25-only, (2) if still empty return explicit "no grounding found" + abstain, never hallucinate. Log `fallback_triggered`.
+- **Latency / cost budgets:** `p99_retrieve < 400ms`, `embed_tokens/day` cap. Circuit-break: if vector DB p99 > 800ms for 2min → degrade to BM25-only.
+- **Hit-rate logging:** log per query: `top_scores, hit_count, fallback, latency_ms, embed_version, tenant_hash`. Dashboard: `hit_rate@k, zero-hit %, low-score %, p50/p99 latency`.
+
+<details>
+<summary>Python Code — Retrieve with Fallback + Logging (Click to expand/collapse)</summary>
+
+```python
+import time, hashlib, logging, re
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("retrieval")
+
+CURRENT_EMBED_VERSION = "nomic-embed-text:v2"
+TOP_SCORE_FLOOR, TOP_K = 0.25, 5
+PII = [(re.compile(r"[\w.-]+@[\w.-]+\.\w+"), "[REDACTED:EMAIL]"),
+       (re.compile(r"\b\d{3}-\d{2}-\d{4}\b"), "[REDACTED:SSN]"),
+       (re.compile(r"sk-[A-Za-z0-9]{8,}"), "[REDACTED:KEY]")]
+
+def scrub(text: str) -> str:
+    for rx, rep in PII:
+        text = rx.sub(rep, text)
+    return text
+
+def get_embedding(text: str, version: str = CURRENT_EMBED_VERSION):
+    # stub: call ollama/vLLM; must return (vector, version)
+    return [0.1, 0.2], version
+
+def vector_search(q_emb, tenant_id: str, k=TOP_K): ...
+def bm25_search(query: str, tenant_id: str, k=TOP_K): ...
+
+def retrieve(query: str, tenant_id: str):
+    t0 = time.time()
+    q = scrub(query)
+    q_emb, ver = get_embedding(q)
+    assert ver == CURRENT_EMBED_VERSION, f"drift: {ver}"
+    hits = [h for h in vector_search(q_emb, tenant_id) if h["tenant_id"] == tenant_id]
+    top = max([h["score"] for h in hits], default=0.0)
+    fallback = None
+    if not hits or top < TOP_SCORE_FLOOR:
+        fallback = "bm25-only-retry"
+        hits = [h for h in bm25_search(q, tenant_id) if h["tenant_id"] == tenant_id]
+    logger.info("retrieve tenant=%s hits=%d top=%.3f fallback=%s ms=%d ver=%s",
+        hashlib.sha256(tenant_id.encode()).hexdigest()[:8],
+        len(hits), top, fallback, int((time.time()-t0)*1000), ver)
+    if not hits:
+        return {"answer": None, "abstain": True, "reason": "no grounding found"}
+    return {"hits": hits[:TOP_K], "fallback": fallback, "abstain": False}
+```
+
+</details>
+
+### 8.5 Best-Practice Checklist
+
+| # | Rule | Fail symptom if ignored |
+|---|------|-------------------------|
+| 1 | Content-hash + embed-version on every vector | Silent mixed-version ranking corruption |
+| 2 | Incremental upsert/delete, never blind append | 3x index bloat, stale answers |
+| 3 | Write-time exact + near-dup (≥0.97) check | RRF dominated by duplicates |
+| 4 | Scrub PII before embed + log | Secret persisted in vector DB |
+| 5 | Enforce `tenant_id` filter + post-check | Cross-tenant data leak |
+| 6 | Low-score floor + explicit abstain path | Hallucination on zero grounding |
+| 7 | Log scores/latency/version/fallback per query | Undiagnosable quality regression |
+| 8 | p99 + cost budget with BM25 degrade switch | Cascading latency outage |
+
+### 8.6 Real-World Examples
+
+1. **Enterprise RAG (tenant isolation + invalidation):** per-org namespaces; on repo permission change, affected chunk IDs tombstoned within minutes. Queries always carry `org_id` filter; audit runs cross-tenant probe queries nightly.
+2. **Notion / Confluence Q&A (incremental + drift guard):** doc edit → re-embed only changed blocks via hash diff; embedding upgrade runs shadow index with A/B hit-rate@5 comparison before cutover, rollback on >5% regression.
+
+---
+
 *Document: I. Retrieve Memory & Knowledge*
 *Created: 2026-07-11*
 *Environment: Ollama (gemma3:12b, nomic-embed-text)*

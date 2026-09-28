@@ -2869,6 +2869,95 @@ for est in COST_ESTIMATES:
 
 ---
 
+## 16. Chịu Lỗi, Messaging & Isolation
+
+Ở quy mô production, agent có thể crash, treo, ghi trùng và rò rỉ secret. Section này bổ sung lớp gia cố còn thiếu: phát hiện lỗi + giao lại việc, đảm bảo messaging rõ ràng, quy tắc nhất quán bộ nhớ, và sandbox cho từng agent. Ẩn dụ: như đội bếp — nếu một đầu bếp gục xuống, người khác tiếp quản ticket của anh ta (reassignment), order có số thứ tự (ordering), chỉ một đầu bếp trình bày món ăn (write conflict), và nhân viên vệ sinh không được vào két sắt (secret containment).
+
+### 16.1 Chịu Lỗi — Phát Hiện Crash / Timeout / Treo
+
+```
+HEARTBEAT: every 5s agent → supervisor {agent_id, task_id, state}
+TIMEOUT RULES:
+ • crash = heartbeat missing > 15s → mark DEAD
+ • timeout = task exceeds deadline (e.g. 300s) → mark TIMED_OUT
+ • hang = heartbeat alive but no progress log > 60s → SUSPECT
+REASSIGNMENT:
+ 1. freeze task lease (fencing token++) → old agent writes rejected
+ 2. requeue task with attempt++ and prior transcript attached
+ 3. if attempts > 3 → escalate to human / fail closed
+QUORUM (judges/voters): 2f+1 agents tolerate f faults; require majority (e.g. 2/3)
+```
+
+Quy tắc: mỗi task có `lease_id + deadline + max_attempts`; supervisor phi trạng thái + backed by queue (Redis/BullMQ); ưu tiên worker idempotent để giao lại việc retry an toàn.
+
+### 16.2 Đảm Bảo Messaging — Thứ Tự, Phân Phối, Giới Hạn Payload
+
+| Đảm Bảo | Lựa Chọn Mặc Định | Quy Tắc |
+|---|---|---|
+| Thứ tự (Ordering) | FIFO theo từng task (số thứ tự) | Orchestrator từ chối `seq` sai thứ tự; agent đệm + yêu cầu gửi lại |
+| Phân phối (Delivery) | At-least-once + idempotency key | Mỗi message có `msg_id`; handler khử trùng theo `msg_id` |
+| At-most-once | Chỉ cho tác dụng phụ không retry được (gửi email, push) — chặn qua outbox + fencing token | Không bao giờ retry nếu không có guard |
+| Giới hạn payload (Payload caps) | Header 64 KB + body 512 KB; lớn hơn → artifact ref (path + hash) | Drop + log message quá cỡ |
+| Timeout | Request/reply mặc định 30s; progress streaming heartbeat 5s | Mất reply → retry với backoff, rồi giao lại việc (§16.1) |
+
+### 16.3 Nhất Quán Bộ Nhớ — Dùng Chung hay Riêng, Xung Đột Ghi
+
+- **Riêng tư theo mặc định:** mỗi agent có scratchpad riêng; chỉ công bố diff/fact lên blackboard dùng chung.
+- **Dùng chung qua key có phiên bản:** `blackboard.write(key, value, expectedVersion)` — ngữ nghĩa CAS; khi lệch phiên bản thì đọc lại + merge, không bao giờ ghi đè mù.
+- **Một writer cho mỗi artifact:** orchestrator gán quyền sở hữu file/section (ví dụ chỉ `coder` được ghi `auth.ts`); reviewer chỉ nêu comment, không sửa trực tiếp.
+- **Cô lập theo từng agent:** key theo namespace `agent_id/task_id/*`; đọc chéo giữa các agent đi qua projection trong allow-list (không rò prompt/secret thô).
+
+### 16.4 Sandbox Cho Từng Agent + Giữ Secret
+
+- Tool tối thiểu theo role: `reviewer` chỉ có FS đọc + không shell; `coder` có shell sandbox (không net) trừ khi được cấp rõ.
+- Secret không bao giờ nằm trong message: agent nhận token ngắn hạn theo phạm vi (5–15 phút) qua env injection; supervisor redact `sk-*, ghp_*, AWS_*` khỏi log/transcript.
+- Chính sách egress: chặn theo mặc định; allow-list domain cho từng agent; mọi I/O tool đều audit kèm `agent_id + lease_id`.
+
+<details>
+<summary>TypeScript Code — Heartbeat + Reassignment (Click to expand/collapse)</summary>
+
+```typescript
+type AgentState = "IDLE" | "RUNNING" | "SUSPECT" | "DEAD";
+interface TaskLease { taskId: string; leaseId: number; deadlineMs: number; attempts: number; }
+
+const HEARTBEAT_TTL_MS = 15_000, PROGRESS_STALL_MS = 60_000, MAX_ATTEMPTS = 3;
+const heartbeats = new Map<string, { ts: number; progressTs: number; state: AgentState }>();
+
+export function heartbeat(agentId: string, progressed: boolean): void {
+  const h = heartbeats.get(agentId) ?? { ts: 0, progressTs: Date.now(), state: "IDLE" as AgentState };
+  h.ts = Date.now(); if (progressed) h.progressTs = h.ts;
+  h.state = "RUNNING"; heartbeats.set(agentId, h);
+}
+
+export async function supervise(agentId: string, lease: TaskLease,
+  requeue: (l: TaskLease) => Promise<void>, escalate: (l: TaskLease) => Promise<void>): Promise<void> {
+  const h = heartbeats.get(agentId); const now = Date.now();
+  if (!h || now - h.ts > HEARTBEAT_TTL_MS) return handleFault(agentId, lease, "DEAD", requeue, escalate);
+  if (now > lease.deadlineMs) return handleFault(agentId, lease, "TIMED_OUT", requeue, escalate);
+  if (now - h.progressTs > PROGRESS_STALL_MS) return handleFault(agentId, lease, "SUSPECT", requeue, escalate);
+}
+
+async function handleFault(agentId: string, lease: TaskLease, reason: string,
+  requeue: (l: TaskLease) => Promise<void>, escalate: (l: TaskLease) => Promise<void>) {
+  console.warn(`[supervisor] ${agentId} fault=${reason} task=${lease.taskId} attempt=${lease.attempts}`);
+  heartbeats.set(agentId, { ts: 0, progressTs: 0, state: "DEAD" });
+  const next: TaskLease = { ...lease, leaseId: lease.leaseId + 1, attempts: lease.attempts + 1,
+    deadlineMs: Date.now() + 300_000 };
+  if (next.attempts > MAX_ATTEMPTS) return escalate(next);
+  return requeue(next); // đính kèm transcript trước đó tại nơi gọi để giữ liên tục
+}
+```
+
+</details>
+
+### 16.5 Checklist + Ví Dụ Thực Tế
+
+**Checklist:** [ ] đã nối heartbeat + deadline + detector treo [ ] fencing token khi requeue [ ] max_attempts + đường escalate [ ] FIFO theo từng task + khử trùng `msg_id` [ ] giới hạn payload + artifact ref [ ] ghi CAS + quyền single-writer [ ] allow-list tool theo role + secret ngắn hạn theo phạm vi + redaction.
+
+**Thực tế:** subagent của Claude Code chạy cô lập với quyền tool giới hạn; khi subagent treo, orchestrator kill process, tăng task lease và khởi động lại với transcript rút gọn — reviewer bỏ phiếu 2-of-3 (quorum) nên một voter crash không bao giờ chặn merge.
+
+---
+
 ## Tài Liệu Tham Khảo
 
 ### Frameworks

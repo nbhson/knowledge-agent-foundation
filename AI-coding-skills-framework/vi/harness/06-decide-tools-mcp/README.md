@@ -3221,6 +3221,75 @@ class ToolLearner:
 - Sandboxed tool environments
 - Audit trail for all operations
 
+## 17. Củng Cố Production: Sandboxing, MCP, Approval, Memoization
+
+### 17.1 Định nghĩa
+
+| Thuật ngữ | Định nghĩa |
+|------|------------|
+| Sandbox | Tool/code không tin cậy chạy trong Docker/microVM/gVisor với allowlist FS, mặc định không net, timeout+kill, không chứa secret env |
+| MCP client production | Auth (OAuth/xoay key), ghim `protocolVersion` + cache capability có TTL, `tools/list` ETag, giới hạn kích thước kết quả + cắt ngắn |
+| Cổng op nguy hiểm | Ghi/chạy/mạng/publish cần bản ghi approval tường minh (ai, cái gì, diff, hết hạn) |
+| Memoization | `(tool, args_hash)` giống nhau trong TTL trả kết quả cache; streaming nhả chunk một phần có trần |
+
+### 17.2 Sandboxing Thật
+
+Mặc định từ chối: chỉ jail `workdir`, root chỉ đọc trừ `/work/tmp`, `network: none` trừ khi tool khai báo `net: [allowlist]`. Luôn `timeout + SIGKILL cả process group`. Không bao giờ tiêm env `AWS_/GH_/OPENAI_`; chỉ cấp cred tạm có phạm vi hẹp. Ưu tiên `gVisor (runsc)` hoặc `microVM (Firecracker)` cho code không tin cậy; Docker thường `--pids-limit --memory --cpus --read-only --tmpfs` là mức tối thiểu.
+
+### 17.3 Quy Tắc MCP Trong Production
+
+1. Ghim `protocolVersion`; cache `tools/list` 5–15 phút; gặp `426`/tool lạ thì vô hiệu ngay.
+2. Auth: OAuth2 bearer có refresh + scope tối thiểu; xoay key; không bao giờ log token (redact `Bearer`).
+3. Trần: `timeout 30s`, `kết quả ≤128KB`, `args ≤32KB`, validate args theo schema trước khi gửi.
+4. Streaming: chuyển tiếp chunk `content` khi tới, áp trần tổng + idle timeout (10s); hủy khi client cancel.
+
+<details>
+<summary>TypeScript Code — Sandbox + Gọi MCP (Click to expand/collapse)</summary>
+
+```typescript
+import { spawn } from "node:child_process";
+export interface SandboxOpts { workdir: string; allowWrite: string[]; allowNet: string[]; timeoutMs: number; memory: string; env: Record<string,string>; }
+const SECRET_ENV = /^(AWS_|GH_|GITHUB_|OPENAI_|ANTHROPIC_|SK-)/i;
+export function runSandboxed(cmd: string[], args: string[], o: SandboxOpts): Promise<{ stdout: string; stderr: string; code: number }> {
+  for (const k of Object.keys(o.env)) if (SECRET_ENV.test(k)) throw new Error(`secret env blocked: ${k}`);
+  const docker = ["run", "--rm", "--read-only", `--memory=${o.memory}`, "--pids-limit=64", "--network", o.allowNet.length ? "bridge" : "none",
+    "-v", `${o.workdir}:/work:rw`, "-w", "/work", ...o.allowWrite.flatMap(p => ["-v", `${p}:${p}:rw`]), "sandbox-img:latest", ...cmd, ...args];
+  return new Promise((resolve, reject) => {
+    const p = spawn("docker", docker, { env: { PATH: process.env.PATH } });
+    let out = "", err = ""; const t = setTimeout(() => { try { process.kill(-p.pid!, "SIGKILL"); } catch {} reject(new Error("sandbox timeout kill")); }, o.timeoutMs);
+    p.stdout.on("data", d => { out += d; if (out.length > 256_000) { clearTimeout(t); try { process.kill(-p.pid!, "SIGKILL"); } catch {} reject(new Error("output cap exceeded")); } });
+    p.stderr.on("data", d => err += d);
+    p.on("close", code => { clearTimeout(t); resolve({ stdout: out.slice(0, 256_000), stderr: err.slice(0, 64_000), code: code ?? 1 }); });
+    p.on("error", e => { clearTimeout(t); reject(e); });
+  });
+}
+const memo = new Map<string, { at: number; val: any }>();
+export async function callMcp(url: string, token: string, tool: string, args: object, v = "2025-06-18") {
+  const key = `${tool}:${JSON.stringify(args)}`; const m = memo.get(key);
+  if (m && Date.now() - m.at < 60_000) return { ...m.val, memoHit: true };
+  const r = await fetch(`${url}/tools/call`, { method: "POST", signal: AbortSignal.timeout(30_000),
+    headers: { authorization: `Bearer ${token}`, "mcp-protocol-version": v, "content-type": "application/json" },
+    body: JSON.stringify({ name: tool, arguments: args }) });
+  if (r.status === 426) throw new Error("MCP version mismatch: refresh tools/list + capability cache");
+  const j: any = await r.json(); let text = JSON.stringify(j.content ?? j).slice(0, 128_000);
+  if (JSON.stringify(j).length > 128_000) text += "\n…[truncated: result cap 128k]";
+  const out = { ok: !j.isError, text }; memo.set(key, { at: Date.now(), val: out }); return out;
+}
+```
+
+</details>
+
+### 17.4 UX Approval Cho Op Nguy Hiểm
+
+Phân tầng: `read` tự động, `write/exec` cần xem trước diff + duyệt một click (hết hạn 5 phút), `publish/delete/auth-change` cần gõ xác nhận + lý do. Bản ghi approval: `{tool, argsHash, diffSummary, approver, expiresAt, trajectoryId}`. Timeout thì từ chối mặc định. Hiển thị: lệnh, cwd, file chạm tới, egress mạng, cờ không đảo ngược.
+
+### 17.5 Checklist
+
+- [ ] Sandbox: mặc định tắt net, allowlist FS, timeout+SIGKILL, trần output, không secret env?
+- [ ] MCP: ghim version, cache giới hạn có TTL + vô hiệu, auth xoay vòng, trần kích thước/timeout?
+- [ ] Op nguy hiểm có cổng với xem trước diff + bản ghi approval hết hạn?
+- [ ] Memo cuộc gọi giống nhau theo hash args chuẩn có TTL; streaming có trần?
+
 ---
 
 ## Tài Liệu Tham Khảo

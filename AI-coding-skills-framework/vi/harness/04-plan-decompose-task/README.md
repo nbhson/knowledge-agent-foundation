@@ -2645,6 +2645,99 @@ user = UserProxyAgent(
    → Track tokens, time, success rate
 ```
 
+## 14. Bổ Sung Production: Replanning, Cổng Approval, Idempotency & Chặn Bùng Nổ
+
+> Giúp plan §1–§13 an toàn khi chạy tự động.
+
+### 14.1 Định nghĩa
+
+| Thuật ngữ | Định nghĩa |
+|------|------------|
+| Replanning động | Chọn lúc runtime giữa retry / replan / escalate dựa trên loại lỗi, chi phí đã dùng và độ tin cậy |
+| Cổng approval | Checkpoint human-in-loop trước subtask không thể đảo ngược / bán kính ảnh hưởng lớn |
+| Idempotency key | `plan_id:subtask_id:input_hash` ổn định để retry không áp dụng side effect hai lần |
+| Chặn bùng nổ (explosion guard) | Trần cứng cho độ sâu, fan-out và nhánh ToT × chi phí để chặn planning chạy mất kiểm soát |
+
+### 14.2 Bảng Quyết Định Replanning Động
+
+| Tín hiệu | Retry (giữ plan) | Replan (phân rã mới) | Escalate (con người) |
+|--------|-------------------|----------------------------|------------------|
+| Lỗi tool thoáng qua (timeout, 429), lần thử <3 | ✅ | — | — |
+| Cùng subtask hỏng 3x / lớp lỗi mới | — | ✅ phân rã khác hoặc đổi tool | — |
+| Độ tin cậy plan thấp (<0.4), intent mơ hồ | — | ✅ subtask hỏi-làm-rõ trước | — |
+| Hành động không đảo ngược (deploy, xóa, thanh toán) | — | — | ✅ cổng approval |
+| Đã dùng >80% ngân sách hoặc chạm trần chi phí ToT | — | — (đóng băng) | ✅ kèm tóm tắt |
+| Kết quả con mâu thuẫn / vi phạm policy | — | — | ✅ |
+
+Chính sách: log `attempt, error_class, decision, reason` mỗi lần chuyển; tối đa 3 auto-retry, 2 auto-replan, sau đó phải escalate.
+
+### 14.3 Cổng Approval Human-in-Loop
+
+Chặn subtask gắn `risk ∈ {high, irreversible}`: `db.migrate, prod.deploy, user.delete, external.send`. Payload cổng: `diff plan + bán kính ảnh hưởng + output dry-run + lệnh rollback`. Thực thi tạm dừng có timeout (ví dụ 30 phút → tự động từ chối). Từ chối → đánh dấu `blocked`, kích hoạt replan loại nhánh bị từ chối. Mọi approval được audit-log `(who, when, diff_hash)`.
+
+### 14.4 Idempotency Subtask + Lỗi Một Phần
+
+Key: `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. Executor kiểm tra result-store trước; khi crash, replay trả kết quả cache. Lỗi một phần: đánh dấu node DAG `ok/failed/skipped`; tiếp tục nhánh độc lập, bỏ qua node phụ thuộc vào node hỏng, trả `partial:true + completed[] + failed[]`. Bù side effect đã xong khi abort qua `rollback()` đã đăng ký cho mỗi subtask.
+
+### 14.5 Chặn Bùng Nổ (Độ Sâu / Fan-out / Chi Phí ToT)
+
+- `MAX_DEPTH=4, MAX_FANOUT=5, MAX_SUBTASKS=25`. Lệnh decompose vượt độ sâu trả về task nguyên tử.
+- ToT: `MAX_BRANCHES=3, MAX_ROLLOUTS=9`; mỗi rollout có ngân sách token/thời gian; cắt nhánh điểm <0.3 sau 2 bước.
+- Trần chi phí toàn cục: `MAX_TOKENS_PER_PLAN` (ví dụ 100k) + `MAX_TOOL_CALLS=50`; ở 80% phát subtask cảnh báo, ở 100% đóng băng và escalate kèm tóm tắt `best-so-far`.
+
+<details>
+<summary>Python Code — Subtask Idempotent + Quyết Định Replan (Click to expand/collapse)</summary>
+
+```python
+import hashlib
+MAX_RETRY, MAX_REPLAN = 3, 2
+MAX_DEPTH, MAX_FANOUT, MAX_TOKENS = 4, 5, 100_000
+
+def idem_key(plan: str, sub: str, inputs: dict) -> str:
+    h = hashlib.sha1(repr(sorted(inputs.items())).encode()).hexdigest()[:12]
+    return f"{plan}:{sub}:{h}"
+
+store: dict = {}
+def run_subtask(plan: str, sub: str, inputs: dict, fn, *, risk="low"):
+    k = idem_key(plan, sub, inputs)
+    if k in store: return store[k]  # replay idempotent
+    if risk in ("high", "irreversible") and not approved(plan, sub, inputs):
+        return {"status": "blocked", "reason": "approval-denied"}
+    try:
+        out = fn(inputs); store[k] = {"status": "ok", "out": out}
+    except Exception as e:
+        store[k] = {"status": "failed", "err": str(e), "transient": is_transient(e)}
+    return store[k]
+
+def decide(state: dict) -> str:  # retry | replan | escalate | done
+    if state.get("risk_gate"): return "escalate"
+    if state.get("tokens", 0) > MAX_TOKENS * 0.8: return "escalate"
+    if state.get("replans", 0) >= MAX_REPLAN: return "escalate"
+    if state.get("transient") and state.get("attempts", 0) < MAX_RETRY: return "retry"
+    if state.get("status") == "failed": return "replan"
+    return "done"
+
+def approved(plan, sub, inputs) -> bool:
+    print(f"[GATE] approve {plan}/{sub} {inputs} ? (y/n, timeout -> deny)")
+    return input().strip().lower() == "y"
+
+def is_transient(e: Exception) -> bool:
+    return any(s in str(e).lower() for s in ("timeout", "429", "econnreset"))
+```
+
+</details>
+
+### 14.6 Checklist
+
+| # | Quy tắc |
+|---|------|
+| 1 | Phân loại mọi lỗi → retry / replan / escalate theo bảng; log quyết định + lý do |
+| 2 | Giới hạn retry (3) và replan (2), rồi escalate — không vòng lặp vô hạn |
+| 3 | Chặn mọi subtask không đảo ngược bằng diff + dry-run + rollback + timeout-deny |
+| 4 | Idempotency key trên mọi subtask có side effect; cache kết quả để replay |
+| 5 | Theo dõi trạng thái DAG một phần; bù khi abort; trả `partial` tường minh |
+| 6 | Thực thi `depth ≤4, fan-out ≤5, nhánh ToT ≤3`, trần token/tool toàn cục với cảnh báo 80% |
+
 ---
 
 ## Tài Liệu Tham Khảo

@@ -2862,6 +2862,95 @@ Hình này quét **6 xu hướng automation do AI dẫn dắt**: AI tự sinh CI
 
 ---
 
+## 17. An Toàn Deploy, Secret & Guard Cho Vòng Lặp Tự Động
+
+Automation thiếu an toàn sẽ chuyển lỗi đi với tốc độ máy. Section này lấp khoảng trống: cổng canary với auto-rollback gắn metric, secret backed by vault, guard cứng cho vòng lặp tự động, và task định kỳ idempotent. Ẩn dụ: như chế độ lái tự động có bảo vệ giới hạn bay — nó tự bay được, nhưng giới hạn G, trần nhiên liệu và tự hủy khi động cơ bất thường là yêu cầu bắt buộc.
+
+> **Ghi chú dedup:** §9 "Common Anti-Patterns" và §15 "Anti-Patterns in Detail" trùng lặp ~70%. Quy ước: giữ §9 làm bảng tóm tắt 1 trang; §15 làm playbook chi tiết. Nội dung dưới đây mang tính chuẩn (normative) và liên kết chéo cả hai thay vì diễn đạt lại.
+
+### 17.1 An Toàn Deploy — Cổng Canary + Auto-Rollback Gắn Metric
+
+```
+STAGES: 5% (10m) → 25% (30m) → 50% (30m) → 100%
+PROMOTE GATE (all must pass at each stage):
+ • error_rate_delta < +0.5pp vs baseline  • p95_latency_delta < +10%
+ • smoke tests 100% pass                  • no Sev0/1 alerts firing
+AUTO-ROLLBACK TRIGGERS (any fires → halt + revert):
+ • error_rate > 2% for 3m  • p99_latency > SLO for 5m
+ • smoke/canary job fail   • manual `halt` label on deploy PR
+MECHANISM: blue-green or Argo Rollouts; DB migrations always
+ backward-compatible (expand → migrate → contract)
+```
+
+Quy tắc: rollback tự động và được diễn tập hằng tháng (game day); mỗi deploy phát ra `deploy_id` nối vào metric/log để trigger đối chiếu được.
+
+### 17.2 Quản Lý Secret & Cấu Hình
+
+| Mối Quan Tâm | Tiêu Chuẩn |
+|---|---|
+| Lưu trữ | Chỉ dùng Vault / cloud secret manager; không bao giờ để trong repo, cấu hình chỉ-UI, hay transcript của agent |
+| Phạm vi | Theo môi trường (`dev/staging/prod`) + theo service; agent chỉ nhận cred ngắn hạn, không bao giờ cầm key prod dài hạn |
+| Nạp vào | Env lúc runtime hoặc file mount; `${SECRET:arn…}` do deployer resolve, không phải LLM |
+| Xoay vòng | Tự động 30–90 ngày + ngay khi có sự cố; có phiên bản (`vN`) với cửa sổ hỗ trợ kép |
+| Kiểm tra | Mọi lần đọc đều log (`who/what/when`); che trong log CI bằng masking filter |
+
+### 17.3 Guard Vòng Lặp Tự Động — Giới Hạn Lặp / Chi Phí / Latency SLO
+
+Mỗi vòng lặp tự phục hồi / agent mang `LoopBudget { maxIterations=10, maxCostUSD=5, maxLatencyMs=300_000, maxToolCalls=50 }`. Vòng lặp thoát khi gặp điều đầu tiên: thành công, cạn budget, hoặc confidence đi ngang (3 vòng không cải thiện). Khi cạn → đóng băng + mở incident kèm full trace, không bao giờ retry lặng lẽ. Hiển thị bộ đếm trực tiếp (`iteration/cost/latency`) trong log và tóm tắt CI.
+
+### 17.4 Idempotency Task Định Kỳ + Chính Sách Chồng Lấn
+
+- **Idempotency key:** `task_name + window_start` (ví dụ `nightly-e2e#2026-09-28`); handler kiểm tra dedup store trước khi hành động; tác dụng phụ dùng cùng key.
+- **Chồng lấn (Overlap):** `concurrencyPolicy: Forbid` (bỏ qua nếu lần chạy trước còn đang chạy) cho deploy/migration; `Replace` chỉ cho sync đọc rẻ tiền. Đặt `activeDeadlineSeconds` + `startingDeadlineSeconds` để cron kẹt không dồn đống.
+- **Bắt kịp (Catch-up):** `failedJobsHistoryLimit=3`; window bị lỡ chỉ backfill nếu được đánh dấu rõ `backfill: true`.
+
+<details>
+<summary>YAML + Python — Canary with Metric Rollback (Click to expand/collapse)</summary>
+
+```yaml
+# argo-rollout.yaml — canary + auto-rollback gắn với metric
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata: { name: api }
+spec:
+  replicas: 20
+  strategy:
+    canary:
+      steps: [{ setWeight: 5 }, { pause: { duration: 10m } },
+              { setWeight: 25 }, { pause: { duration: 30m } },
+              { setWeight: 50 }, { pause: { duration: 30m } }]
+      analysis:
+        templates: [{ templateName: error-rate }, { templateName: p99-latency }]
+        args: [{ name: service, value: api }]
+```
+
+```python
+# rollback_decider.py — logic promote/halt cho pipeline gate
+def decide(baseline: dict, canary: dict) -> str:
+    err_delta = canary["error_rate"] - baseline["error_rate"]
+    lat_delta = (canary["p99_ms"] - baseline["p99_ms"]) / max(baseline["p99_ms"], 1)
+    if canary["smoke_failures"] > 0 or canary["sev1_firing"]:
+        return "ROLLBACK: smoke/sev1"
+    if canary["error_rate"] > 0.02 or err_delta > 0.005:
+        return f"ROLLBACK: error_rate={canary['error_rate']:.3f} delta={err_delta:+.3f}"
+    if lat_delta > 0.10:
+        return f"ROLLBACK: p99 +{lat_delta:.0%}"
+    return "PROMOTE"
+```
+
+</details>
+
+### 17.5 Checklist
+
+- [ ] Các stage canary + cổng promote được định nghĩa bằng code
+- [ ] Trigger rollback gắn với metric (không thủ công) + đã diễn tập game-day
+- [ ] Migration tương thích ngược
+- [ ] Secret trong vault, theo phạm vi môi trường, tự xoay vòng, che trong log
+- [ ] Budget vòng lặp (lặp/chi phí/latency/số tool-call) được thực thi + khi cạn sẽ mở incident
+- [ ] Idempotency key cho cron + chồng lấn `Forbid` + trần deadline
+
+---
+
 ## Tài Liệu Tham Khảo
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)

@@ -3357,6 +3357,91 @@ This table summarizes **6 major trends** shaping AI evaluation from 2024 to 2026
 
 ---
 
+## 15. Trajectory, Contamination, Cost-per-Quality & Human Calibration
+
+Pass/fail hides *how* an agent worked. This section adds trajectory scoring (efficiency, precision, recovery), leakage-proof harness hygiene, $/pass-task routing, and calibration of LLM judges against humans. Analogy: like judging a rally driver — finish line matters, but so do wrong turns (steps), detours (tool calls), crashes recovered from (recovery), and whether the track was already practiced on (contamination).
+
+> **Dedup note:** §7 and §10 both narrate SWE-bench end-to-end. Convention: §7 = *benchmark definitions* (what SWE-bench/HumanEval measure); §10 = *case-study results* (who scored what). This §15 adds only *method* (trajectory metrics, isolation, cost, calibration).
+
+### 15.1 Trajectory Eval — Step-Efficiency, Precision, Recovery
+
+| Metric | Definition | Target |
+|---|---|---|
+| `pass` | Task solved (tests + hidden checks) | primary gate |
+| `steps_used / steps_p50` | Step-efficiency = p50 reference steps ÷ actual steps (cap 1.0) | ≥ 0.7 |
+| `tool_precision` | Useful tool calls ÷ total tool calls | ≥ 0.6 |
+| `recovery_rate` | Errors fixed without human ÷ total error episodes | ≥ 0.5 |
+| `wasted_edits` | File writes reverted in same run ÷ total writes | ≤ 0.2 |
+| `trajectory_score` | `0.5·pass + 0.2·efficiency + 0.15·precision + 0.15·recovery` | CI gate ≥ 0.65 |
+
+Score trajectories, not just outcomes: log every `(thought, tool, args, result, cost)` span; penalize brute-force retry loops that pass by luck.
+
+### 15.2 Contamination & Isolation Hygiene
+
+- **Leakage:** quarantine any task whose solution/issue text appears in training cutoff; tag `leak_risk: high` and exclude from headline numbers (report separately).
+- **Seeds:** fix `seed` + `temperature=0` for regression suites; run nondeterministic evals 3× and report mean ± std.
+- **Flaky quarantine:** auto-quarantine tests failing <5% over 50 runs into `flaky/` lane; they never block promotion, but file a tracking issue.
+- **Isolation:** fresh container/FS per task, no shared cache between tasks, network deny except allow-listed mirrors; hash dataset + record commit SHA in report.
+
+### 15.3 Cost-per-Quality — $/Pass-Task Routing Metric
+
+`$/pass-task = total_eval_cost ÷ tasks_passed`. Track per model/route; route easy tasks to cheap model, escalate only on failure (cascade). Report Pareto table:
+
+| Route | Pass % | $/1k tasks | $/pass-task | Verdict |
+|---|---|---|---|---|
+| small-only | 52% | $18 | $0.035 | cheap baseline |
+| small→large cascade | 71% | $46 | $0.065 | ✅ best tradeoff |
+| large-only | 74% | $210 | $0.284 | only when quality-critical |
+
+Gate model upgrades on *both* Δpass ≥ +2pp *and* Δ$/pass-task ≤ +10%.
+
+### 15.4 Human Calibration — Judge-vs-Human Agreement
+
+- Sample 100–200 tasks/quarter for blind human re-grade; compute Cohen's κ and agreement rate per dimension (correctness/style/safety).
+- Require κ ≥ 0.7 before judge gates promotion; below → retune rubric + few-shots, never lower the bar.
+- **Bias checks:** length bias (longer ≠ better), self-preference (judge favoring own family), position bias (shuffle A/B order); report bias deltas alongside scores.
+
+<details>
+<summary>Python Code — Trajectory Scorer (Click to expand/collapse)</summary>
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class Trajectory:
+    passed: bool; steps: int; ref_steps_p50: int
+    useful_calls: int; total_calls: int; recovered: int; error_episodes: int
+
+def trajectory_score(t: Trajectory) -> dict:
+    efficiency = min(1.0, t.ref_steps_p50 / max(t.steps, 1))
+    precision = t.useful_calls / max(t.total_calls, 1)
+    recovery = t.recovered / max(t.error_episodes, 1) if t.error_episodes else 1.0
+    score = 0.5 * float(t.passed) + 0.2 * efficiency + 0.15 * precision + 0.15 * recovery
+    return {"score": round(score, 3), "efficiency": round(efficiency, 3),
+            "precision": round(precision, 3), "recovery": round(recovery, 3)}
+
+def cost_per_pass_task(total_cost_usd: float, passed: int) -> float:
+    return total_cost_usd / max(passed, 1)
+
+print(trajectory_score(Trajectory(True, 42, 12, 8, 30, 1, 3)))   # wasteful pass
+print(trajectory_score(Trajectory(True, 14, 12, 10, 14, 2, 2)))   # healthy run
+print(f"$/pass-task: ${cost_per_pass_task(46.0, 710):.4f}")
+```
+
+</details>
+
+### 15.5 Checklist
+
+- [ ] Log full trajectories + compute efficiency/precision/recovery
+- [ ] Gate on `trajectory_score`, not pass% alone
+- [ ] Leakage quarantine + seed pinning + 3× reruns for stochastic evals
+- [ ] Flaky lane separate from blocking suite
+- [ ] Report $/pass-task per route + cascade policy
+- [ ] Quarterly human calibration (κ ≥ 0.7) + length/self/position bias checks
+- [ ] Dataset hash + env SHA in every report
+
+---
+
 ## References
 
 ### Papers & Research

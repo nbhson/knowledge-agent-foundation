@@ -2863,6 +2863,95 @@ This diagram scans **6 AI-driven automation trends**: AI generating CI/CD on its
 
 ---
 
+## 17. Deploy Safety, Secrets & Autonomous Loop Guards
+
+Automation without safety ships breakage at machine speed. This section closes the gap: canary gates with metric-wired auto-rollback, vault-backed secrets, hard guards on autonomous loops, and idempotent scheduled tasks. Analogy: like an autopilot with envelope protection — it can fly itself, but G-limits, fuel caps, and auto-abort on engine anomaly are non-negotiable.
+
+> **Dedup note:** §9 "Common Anti-Patterns" and §15 "Anti-Patterns in Detail" overlap ~70%. Convention: keep §9 as the 1-page summary table; §15 as the detailed playbook. Material below is normative and cross-links both instead of re-stating.
+
+### 17.1 Deploy Safety — Canary Gates + Metric-Wired Auto-Rollback
+
+```
+STAGES: 5% (10m) → 25% (30m) → 50% (30m) → 100%
+PROMOTE GATE (all must pass at each stage):
+ • error_rate_delta < +0.5pp vs baseline  • p95_latency_delta < +10%
+ • smoke tests 100% pass                  • no Sev0/1 alerts firing
+AUTO-ROLLBACK TRIGGERS (any fires → halt + revert):
+ • error_rate > 2% for 3m  • p99_latency > SLO for 5m
+ • smoke/canary job fail   • manual `halt` label on deploy PR
+MECHANISM: blue-green or Argo Rollouts; DB migrations always
+ backward-compatible (expand → migrate → contract)
+```
+
+Rule: rollback is automatic and tested monthly (game day); every deploy emits `deploy_id` joined to metrics/logs so triggers can correlate.
+
+### 17.2 Secrets & Config Management
+
+| Concern | Standard |
+|---|---|
+| Store | Vault / cloud secret manager only; never in repo, UI-only config, or agent transcripts |
+| Scoping | Per-env (`dev/staging/prod`) + per-service; agents get short-lived leased creds, never long-lived prod keys |
+| Injection | Env-at-runtime or mounted files; `${SECRET:arn…}` resolved by deployer, not by LLM |
+| Rotation | 30–90d automatic + on-incident immediate; versioned (`vN`) with dual-support window |
+| Audit | Every read logged (`who/what/when`); redact in CI logs via masking filter |
+
+### 17.3 Autonomous Loop Guards — Iterations / Cost / Latency SLO
+
+Every self-healing / agent loop carries a `LoopBudget { maxIterations=10, maxCostUSD=5, maxLatencyMs=300_000, maxToolCalls=50 }`. Loop exits on first: success, budget exhausted, or confidence plateau (3 rounds no improvement). On exhaustion → freeze + open incident with full trace, never silent-retry. Surface live counters (`iteration/cost/latency`) in logs and CI summary.
+
+### 17.4 Scheduled-Task Idempotency + Overlap Policy
+
+- **Idempotency key:** `task_name + window_start` (e.g. `nightly-e2e#2026-09-28`); handler checks dedup store before acting; side effects keyed on same key.
+- **Overlap:** `concurrencyPolicy: Forbid` (skip if prior still running) for deploys/migrations; `Replace` only for cheap read-only syncs. Set `activeDeadlineSeconds` + `startingDeadlineSeconds` so stuck cron doesn't pile up.
+- **Catch-up:** `failedJobsHistoryLimit=3`; missed windows backfill only if explicitly marked `backfill: true`.
+
+<details>
+<summary>YAML + Python — Canary with Metric Rollback (Click to expand/collapse)</summary>
+
+```yaml
+# argo-rollout.yaml — canary + metric-wired auto-rollback
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata: { name: api }
+spec:
+  replicas: 20
+  strategy:
+    canary:
+      steps: [{ setWeight: 5 }, { pause: { duration: 10m } },
+              { setWeight: 25 }, { pause: { duration: 30m } },
+              { setWeight: 50 }, { pause: { duration: 30m } }]
+      analysis:
+        templates: [{ templateName: error-rate }, { templateName: p99-latency }]
+        args: [{ name: service, value: api }]
+```
+
+```python
+# rollback_decider.py — promote/halt logic consumed by pipeline gate
+def decide(baseline: dict, canary: dict) -> str:
+    err_delta = canary["error_rate"] - baseline["error_rate"]
+    lat_delta = (canary["p99_ms"] - baseline["p99_ms"]) / max(baseline["p99_ms"], 1)
+    if canary["smoke_failures"] > 0 or canary["sev1_firing"]:
+        return "ROLLBACK: smoke/sev1"
+    if canary["error_rate"] > 0.02 or err_delta > 0.005:
+        return f"ROLLBACK: error_rate={canary['error_rate']:.3f} delta={err_delta:+.3f}"
+    if lat_delta > 0.10:
+        return f"ROLLBACK: p99 +{lat_delta:.0%}"
+    return "PROMOTE"
+```
+
+</details>
+
+### 17.5 Checklist
+
+- [ ] Canary stages + promote gates defined as code
+- [ ] Rollback triggers bound to metrics (not manual) + game-day tested
+- [ ] Backward-compatible migrations
+- [ ] Secrets in vault, env-scoped, auto-rotated, masked in logs
+- [ ] Loop budgets (iterations/cost/latency/tool-calls) enforced + exhaustion opens incident
+- [ ] Cron idempotency keys + `Forbid` overlap + deadline caps
+
+---
+
 ## References
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)

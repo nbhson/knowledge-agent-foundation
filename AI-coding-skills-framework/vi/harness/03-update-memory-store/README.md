@@ -3124,6 +3124,102 @@ print(metrics.report())
 
 </details>
 
+## 12. Bổ Sung Production: Retention, Consolidation, Hợp Đồng Compaction & SLO
+
+> Nối eviction của §02 với persistence của §03: cái gì được bỏ vs cái gì phải giữ.
+
+### 12.1 Định nghĩa
+
+| Thuật ngữ | Định nghĩa |
+|------|------------|
+| Retention / TTL | Hết hạn theo từng lớp memory (`episodic 30d, fact tới khi bị thay thế, session 24h`); hết hạn → archive hoặc xóa cứng |
+| Xóa theo GDPR | Xóa theo phạm vi tenant/user trên primary store, vector index, backup (trong cửa sổ đã công bố) + biên nhận |
+| Trigger consolidation | Điều kiện chạy job merge/dedup/conflict: kích thước, thời gian, tín hiệu (tỷ lệ conflict, feedback) |
+| Hợp đồng compaction↔memory | Ranh giới: §02 được loại mọi thứ trừ những gì §03 đã ghim là durable |
+| SLO đường ghi | p50/p99 + đảm bảo durability cho đường ingest (ví dụ `p99 < 300ms, 0 mất dữ liệu khi đã ack`) |
+
+### 12.2 Retention / Tuân Thủ
+
+- **TTL mặc định:** `session: 24h → xóa; episodic: 30–90d → archive; semantic fact: không TTL nhưng cần valid_until + nguồn; user profile: tới khi có yêu cầu xóa.` Quét hàng giờ; archive sang cold store trước khi xóa.
+- **Cô lập theo tenant:** `tenant_id` làm khóa phân vùng trên mọi bảng/namespace; query luôn có bộ lọc; đọc liên tenant bị chặn ở API + policy DB (RLS). Khóa mã hóa riêng cho mỗi enterprise tenant.
+- **Xóa GDPR/CCPA:** `DELETE /memory?user=X` → tombstone → xóa vector + KG + log (redact) → vacuum backup ≤30d → trả `deletion_receipt{id, scope, ts}`. SLA 24h.
+
+### 12.3 Trigger Consolidation + Giải Quyết Xung Đột
+
+Chạy consolidation khi **bất kỳ**: `unconsolidated_writes > 500`, cron hàng giờ, `conflict_rate > 5%`, feedback tiêu cực về một fact. Pipeline: dedup (cosine ≥0.9 thì gộp) → phát hiện conflict (cùng subject+predicate, object khác nhau) → giải quyết: `last-writer-wins` chỉ khi độ tin cậy nguồn mới ≥ cũ; nếu không thì `highest-trust-wins`; nếu không thì `escalate_to_user`. Giữ cả hai version + cạnh `supersedes` — không bao giờ ghi đè âm thầm.
+
+### 12.4 Hợp Đồng Compaction↔Memory
+
+| §02 được loại (transient) | §03 phải giữ (durable) |
+|---|---|
+| stdout tool thô, chunk retrieval cũ, diff đã thay thế, tán gẫu | Fact đã ghim, quyết định, TODO mở, preference user, block resume |
+| Được bỏ sau khi tóm tắt resume | Phải sống sót sau compaction; nạp lại được qua retrieve |
+
+Quy tắc: compaction phát `resume_block`; write-back **phải** lưu `resume_block + decisions + open items` trước khi loại chúng khỏi context. Khi khôi phục session, §02 hydrate từ §03 bằng query `tenant+task`.
+
+### 12.5 SLO Đường Ghi
+
+- `p50 write < 80ms, p99 < 300ms`; consolidation bất đồng bộ `p99 < 5min`. Kiểm tra dedup trong đường ghi; merge nặng ra ngoài critical path (hàng đợi write-behind).
+- Durability: chỉ ack sau khi ghi WAL + primary; hàng đợi retry với idempotency key `tenant:doc_hash`. Cảnh báo khi `write_error% > 1%`, `queue_lag > 10k`.
+
+<details>
+<summary>TypeScript Code — Memory Có Version với Consolidation (Click to expand/collapse)</summary>
+
+```typescript
+type Fact = { tenant: string; subj: string; pred: string; obj: string; trust: number; ts: number; ttl?: number };
+
+export class MemoryStore {
+  private facts: Fact[] = []; private wal: Fact[] = [];
+  async write(f: Fact, idemKey: string): Promise<"ok" | "dup"> {
+    if (this.wal.some(w => (w as any).idemKey === idemKey)) return "dup";
+    if (Date.now() > (f.ttl ?? Infinity)) throw new Error("expired");
+    (f as any).idemKey = idemKey;
+    this.wal.push(f); // fsync trong production
+    const dup = this.facts.find(e => e.tenant === f.tenant && sim(e, f) >= 0.9);
+    if (dup) { Object.assign(dup, { obj: f.obj, trust: Math.max(dup.trust, f.trust) }); }
+    else this.facts.push(f);
+    return "ok"; // ack sau WAL+primary
+  }
+  consolidate(): { merged: number; conflicts: Fact[][] } {
+    const conflicts: Fact[][] = [];
+    const byKey = new Map<string, Fact[]>();
+    for (const f of this.facts.filter(f => (f.ttl ?? Infinity) > Date.now())) {
+      const k = `${f.tenant}|${f.subj}|${f.pred}`;
+      byKey.set(k, [...(byKey.get(k) ?? []), f]);
+    }
+    let merged = 0;
+    for (const [, g] of byKey) {
+      const objs = new Set(g.map(x => x.obj));
+      if (objs.size > 1) {
+        g.sort((a, b) => b.trust - a.trust || b.ts - a.ts); // highest-trust-wins
+        this.facts = this.facts.filter(x => !g.slice(1).includes(x)); merged += g.length - 1;
+        conflicts.push(g);
+      }
+    }
+    return { merged, conflicts };
+  }
+  gdprDelete(tenant: string): { receipt: string } {
+    this.facts = this.facts.filter(f => f.tenant !== tenant);
+    this.wal = this.wal.filter(f => f.tenant !== tenant);
+    return { receipt: `del:${tenant}:${Date.now()}` };
+  }
+}
+declare function sim(a: Fact, b: Fact): number;
+```
+
+</details>
+
+### 12.6 Checklist
+
+| # | Quy tắc |
+|---|------|
+| 1 | TTL theo lớp + sweeper hàng giờ; archive trước khi xóa cứng |
+| 2 | Phân vùng `tenant_id` + RLS; không tồn tại đường query liên tenant |
+| 3 | Xóa GDPR quét facts + vector + log với biên nhận ≤24h |
+| 4 | Consolidation theo trigger kích thước/thời gian/tín hiệu; giải conflict theo độ tin cậy, không ghi đè âm thầm |
+| 5 | Thực thi hợp đồng compaction↔memory: resume/quyết định được lưu trước khi loại |
+| 6 | Dashboard SLO ghi: p99, error%, queue lag, dedup rate, conflict rate |
+
 ---
 
 ## 11. Tài Liệu Tham Khảo

@@ -3067,6 +3067,104 @@ for i, doc in enumerate(hybrid[:3]):
 
 </details>
 
+## 8. Bổ Sung Production: Vận Hành Index, Bảo Mật, Sự Cố & Khả Năng Quan Sát
+
+> Lấp khoảng trống prototype→production mà §1–§7 còn bỏ ngỏ.
+
+### 8.1 Định nghĩa
+
+| Thuật ngữ | Định nghĩa | Vì sao quan trọng |
+|------|------------|----------------|
+| Re-index tăng dần (incremental re-index) | Chỉ re-embed các doc thay đổi/xóa (theo content hash + version), không re-index toàn bộ corpus | Re-index toàn bộ 1M doc = hàng giờ + tốn tiền; incremental = vài giây |
+| Version / drift của embedding | `embed_model:v` được đóng dấu trên mỗi vector; drift = phân bố điểm số lệch sau khi nâng cấp model | Trộn vector `bge-v1` và `bge-v2` sẽ âm thầm phá hỏng xếp hạng cosine |
+| Vô hiệu hóa dữ liệu cũ (stale invalidation) | TTL + tombstone theo sự kiện cho các chunk đã bị thay thế | Ngăn phục vụ policy đã bị thu hồi / chữ ký API cũ |
+| Khử trùng lặp lúc ghi (write-time dedup) | Kiểm tra Sim-hash / cosine ≥0.97 lúc ingest; loại bỏ hoặc liên kết bản trùng | Ngăn index phình to và RRF bị chia phiếu bầu |
+| Cô lập tenant (tenant isolation) | Phân vùng vật lý (collection riêng) hoặc logic (bộ lọc `tenant_id` + kiểm tra ACL) | Ngăn rò rỉ dữ liệu liên tenant, đáp ứng phạm vi GDPR |
+
+### 8.2 Vận Hành Index Trong Production
+
+1. **Re-index tăng dần:** lưu `doc_id, content_sha256, embed_version, chunk_ids`. Khi ghi: nếu `sha` không đổi → bỏ qua; nếu đổi → xóa `chunk_ids` cũ, embed + upsert mới. Job quét đêm chỉ re-embed các dòng có `embed_version != CURRENT`.
+2. **Version/drift của embedding:** ghim `EMBED_MODEL="nomic-embed-text:v2"`. Không bao giờ trộn nhiều version trong một namespace. Khi nâng cấp: ghi kép (dual-write) sang `idx_v2`, so sánh ngầm hit-rate@5 trong 7 ngày, rồi mới chuyển đổi + backfill. Cảnh báo nếu điểm top-1 trung bình giảm >0.08.
+3. **Vô hiệu hóa dữ liệu cũ:** mỗi chunk có `valid_until + supersedes` trỏ tới bản thay thế. Bản cập nhật ghi tombstone `{deleted_chunk_ids, reason}`. Retrieval lọc `valid_until > now AND NOT tombstoned`.
+4. **Khử trùng lặp lúc ghi:** chuẩn hóa → hash khớp chính xác → kiểm tra gần trùng bằng vector (cosine top-1 ≥0.97 → gộp metadata, bỏ qua insert).
+
+### 8.3 Bảo Mật
+
+- **Tẩy PII trước khi embed:** regex + NER (email, điện thoại, SSN, API key) → `[REDACTED:<type>]` *trước* khi embedding và trước khi log. Không bao giờ embed secret thô; chỉ lưu văn bản đã redact.
+- **Cô lập tenant:** `tenant_id` bắt buộc trên mọi upsert/query. Thực thi ở tầng query: `filter={tenant_id: X}` VÀ kiểm tra sau `hit.tenant_id == X`. Ưu tiên namespace riêng cho mỗi tenant để xóa cứng.
+- **Xóa theo GDPR:** `delete_by_tenant + doc_id` phải xóa vector, doc BM25 và log trong SLO (ví dụ 24h). Giữ lại biên nhận xóa.
+
+### 8.4 Sự Cố & Khả Năng Quan Sát
+
+- **Fallback khi rỗng / điểm thấp:** nếu `hits==0` hoặc `top_score < 0.25` → (1) thử lại với mở rộng query / chỉ BM25, (2) nếu vẫn rỗng trả về "no grounding found" tường minh + từ chối trả lời (abstain), không bao giờ hallucinate. Log `fallback_triggered`.
+- **Ngân sách latency / chi phí:** `p99_retrieve < 400ms`, trần `embed_tokens/day`. Circuit-breaker: nếu vector DB p99 > 800ms trong 2 phút → hạ cấp sang chỉ BM25.
+- **Log hit-rate:** log mỗi query: `top_scores, hit_count, fallback, latency_ms, embed_version, tenant_hash`. Dashboard: `hit_rate@k, zero-hit %, low-score %, p50/p99 latency`.
+
+<details>
+<summary>Python Code — Retrieve với Fallback + Logging (Click to expand/collapse)</summary>
+
+```python
+import time, hashlib, logging, re
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("retrieval")
+
+CURRENT_EMBED_VERSION = "nomic-embed-text:v2"
+TOP_SCORE_FLOOR, TOP_K = 0.25, 5
+PII = [(re.compile(r"[\w.-]+@[\w.-]+\.\w+"), "[REDACTED:EMAIL]"),
+       (re.compile(r"\b\d{3}-\d{2}-\d{4}\b"), "[REDACTED:SSN]"),
+       (re.compile(r"sk-[A-Za-z0-9]{8,}"), "[REDACTED:KEY]")]
+
+def scrub(text: str) -> str:
+    for rx, rep in PII:
+        text = rx.sub(rep, text)
+    return text
+
+def get_embedding(text: str, version: str = CURRENT_EMBED_VERSION):
+    # stub: gọi ollama/vLLM; phải trả về (vector, version)
+    return [0.1, 0.2], version
+
+def vector_search(q_emb, tenant_id: str, k=TOP_K): ...
+def bm25_search(query: str, tenant_id: str, k=TOP_K): ...
+
+def retrieve(query: str, tenant_id: str):
+    t0 = time.time()
+    q = scrub(query)
+    q_emb, ver = get_embedding(q)
+    assert ver == CURRENT_EMBED_VERSION, f"drift: {ver}"
+    hits = [h for h in vector_search(q_emb, tenant_id) if h["tenant_id"] == tenant_id]
+    top = max([h["score"] for h in hits], default=0.0)
+    fallback = None
+    if not hits or top < TOP_SCORE_FLOOR:
+        fallback = "bm25-only-retry"
+        hits = [h for h in bm25_search(q, tenant_id) if h["tenant_id"] == tenant_id]
+    logger.info("retrieve tenant=%s hits=%d top=%.3f fallback=%s ms=%d ver=%s",
+        hashlib.sha256(tenant_id.encode()).hexdigest()[:8],
+        len(hits), top, fallback, int((time.time()-t0)*1000), ver)
+    if not hits:
+        return {"answer": None, "abstain": True, "reason": "no grounding found"}
+    return {"hits": hits[:TOP_K], "fallback": fallback, "abstain": False}
+```
+
+</details>
+
+### 8.5 Checklist Thực Hành Tốt
+
+| # | Quy tắc | Triệu chứng hỏng nếu bỏ qua |
+|---|------|-------------------------|
+| 1 | Content-hash + embed-version trên mọi vector | Trộn version gây hỏng xếp hạng âm thầm |
+| 2 | Upsert/delete tăng dần, không bao giờ append mù | Index phình 3x, trả lời cũ |
+| 3 | Kiểm tra trùng chính xác + gần trùng (≥0.97) lúc ghi | RRF bị bản trùng lấn át |
+| 4 | Tẩy PII trước khi embed + log | Secret bị lưu trong vector DB |
+| 5 | Thực thi bộ lọc `tenant_id` + kiểm tra sau | Rò rỉ dữ liệu liên tenant |
+| 6 | Ngưỡng điểm thấp + luồng abstain tường minh | Hallucinate khi không có grounding |
+| 7 | Log điểm/latency/version/fallback mỗi query | Suy giảm chất lượng không chẩn đoán được |
+| 8 | Ngân sách p99 + chi phí với công tắc hạ cấp BM25 | Sập dây chuyền do latency |
+
+### 8.6 Ví Dụ Thực Tế
+
+1. **RAG doanh nghiệp (cô lập tenant + vô hiệu hóa):** namespace theo từng org; khi đổi quyền repo, các chunk ID ảnh hưởng bị tombstone trong vài phút. Query luôn mang bộ lọc `org_id`; job audit chạy probe query liên tenant mỗi đêm.
+2. **Hỏi đáp Notion / Confluence (tăng dần + chặn drift):** sửa doc → chỉ re-embed block đổi qua hash diff; nâng cấp embedding chạy index ngầm với so sánh A/B hit-rate@5 trước khi chuyển đổi, rollback nếu giảm >5%.
+
 ---
 
 *Tài liệu: I. Retrieve Memory & Knowledge*

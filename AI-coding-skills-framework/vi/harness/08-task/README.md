@@ -1837,6 +1837,62 @@ class TokenBudgetManager:
 
 ---
 
+## 11. Tích Hợp Harness (TS)
+
+Liên kết các task với trục thực thi: mỗi `TaskNode` mang `trajectoryId`, `idempotencyKey`, `permissions`, `budget`. Engine phát ra các event để tầng workflow/observability tiêu thụ.
+
+<details>
+<summary>TypeScript Code — Task Engine (Click to expand/collapse)</summary>
+
+```typescript
+export type TaskStatus = "pending"|"planning"|"in_progress"|"waiting_approval"|"testing"|"review"|"done"|"failed"|"cancelled";
+export interface TaskNode { id: string; title: string; trajectoryId: string; idempotencyKey: string;
+  permissions: "read"|"write"|"elevated"; budgetTokens: number; timeoutMs: number; maxRetries: number;
+  deps: string[]; status: TaskStatus; resultRef?: string; }
+export interface TaskEngine { submit(t: Omit<TaskNode,"trajectoryId"|"idempotencyKey"|"status">): TaskNode;
+  transition(id: string, to: TaskStatus, note?: string): void; on(evt: string, fn: (e: any) => void): void; }
+export function makeTaskEngine(): TaskEngine {
+  const tasks = new Map<string, TaskNode>(); const ls: Record<string, Function[]> = {};
+  const emit = (e: string, d: any) => (ls[e] ?? []).forEach(f => f(d));
+  const VALID: Record<string, TaskStatus[]> = { pending: ["planning","cancelled"], planning: ["in_progress","cancelled"],
+    in_progress: ["testing","waiting_approval","failed","done"], waiting_approval: ["in_progress","cancelled"],
+    testing: ["review","in_progress","failed"], review: ["done","in_progress","failed"] };
+  return {
+    submit(t) { const n: TaskNode = { ...t, trajectoryId: `traj_${Date.now().toString(36)}_${t.id}`, idempotencyKey: `${t.id}:${t.title.length}`, status: "pending" };
+      tasks.set(n.id, n); emit("task.created", n); return n; },
+    transition(id, to, note) { const cur = tasks.get(id)!; if (!VALID[cur.status]?.includes(to)) throw new Error(`invalid ${cur.status}→${to}`);
+      cur.status = to; emit("task.transition", { id, to, note, trajectoryId: cur.trajectoryId }); },
+    on(e, f) { (ls[e] ??= []).push(f); },
+  };
+}
+```
+
+</details>
+
+Quy tắc: task `elevated` yêu cầu phê duyệt; `trajectoryId` nối các log prompt/tool/workflow; `idempotencyKey` khử trùng lặp khi retry.
+
+## 12. Ngữ Nghĩa Thực Thi
+
+Mỗi task: `timeoutMs` (mặc định 60s, abort + đánh dấu `failed:timeout`), `maxRetries` với backoff mũ + jitter (chỉ retry task idempotent hoặc đã checkpoint), `cancel()` đặt `cancelled` và hủy signal — các task con phụ thuộc vào nó chuyển thành `blocked`. Pipeline lỗi: `failed → classify(transient|perm|budget) → transient: retry | perm: park + emit task.failed | budget: compact + re-estimate → continue DAG`. Không bao giờ tự retry thao tác ghi non-idempotent.
+
+## 13. Đồng Thời (Concurrency)
+
+Scheduler: batch theo topo (ready = mọi dep đều `done`), giới hạn semaphore (4–8) + cổng token-budget (bỏ qua batch nếu `sum(budgetTokens) > remaining`). `race([primary, fallback])` cho thao tác đọc nhạy latency; `join(all)` cho hợp nhất fan-in. Giới hạn tài nguyên: tối đa task/run (ví dụ 50), tối đa token/session, độ sâu hàng đợi 1 cho mỗi task. Chống deadlock: fail nếu một batch không tiến triển trong 2 vòng (thiếu dep/vòng lặp).
+
+## 14. Case Studies
+
+1. **Refactor auth (12 file, 4 tầng):** phân loại MODIFICATION/COMPLEX → phân rã theo tầng (db→svc→api→ui→test). Batch 1 (db) chặn svc/api; cổng budget hoãn tài liệu UI sang session 2. Một `write_file:elevated` dừng chờ phê duyệt kèm xem trước diff; idempotency key ngăn migration kép khi retry sau timeout. Kết quả: 1 retry, 0 ghi trùng.
+2. **Phân loại E2E flaky (30 test):** map-reduce — 30 shard `run_tests` song song (sem=6), mỗi shard timeout 90s, `race(unit-shard, cached-baseline)` để bỏ qua nhánh xanh. 3 lỗi transient được retry qua idempotency cache; 1 lỗi perm đánh dấu `failed` mà không chặn báo cáo merge. Join tổng hợp pass/fail + liên kết trajectory.
+
+## 15. Thực Hành (Hands-On Lab)
+
+**Bài tập (30 phút):** cài đặt `schedule + execute` cho 6 task (A→B, A→C, B+D→E, C→F) với budget `[2k,3k,3k,5k,2k,2k]`, trần session 10k, `D: elevated`, `E: timeout 5s`.
+1. Viết các batch topo; chỉ ra batch nào dừng chờ phê duyệt và batch nào hoãn vì budget.
+2. Chèn lỗi: E timeout một lần — áp dụng retry bằng idempotency-key, log event `trajectoryId` + `transition`.
+3. Thêm `race()` cho C (cache so với live) và `join()` cho E/F. Sản phẩm: bảng batch + event log + 1 đoạn văn nêu điều gì chuyển sang session 2 và vì sao.
+
+---
+
 ## Best Practices
 
 > ## 📌 Khái Niệm Cơ Bản

@@ -3123,6 +3123,104 @@ print(metrics.report())
 
 ---
 
+## 12. Production Supplement: Retention, Consolidation, Compaction Contract & SLOs
+
+> Bridges §02 eviction with §03 persistence: what may be dropped vs what must survive.
+
+### 12.1 Definitions
+
+| Term | Definition |
+|------|------------|
+| Retention / TTL | Per-memory-class expiry (`episodic 30d, fact until superseded, session 24h`); expiry → archive or hard delete |
+| GDPR delete | Tenant/user-scoped purge across primary store, vector index, backups (within documented window) + receipt |
+| Consolidation trigger | Condition that runs merge/dedup/conflict job: size, time, signal (conflict rate, feedback) |
+| Compaction↔memory contract | Boundary: §02 may evict anything except what §03 has pinned as durable |
+| Write-path SLO | p50/p99 + durability guarantee for the ingest path (e.g. `p99 < 300ms, 0 data loss on ack`) |
+
+### 12.2 Retention / Compliance
+
+- **TTL defaults:** `session: 24h → drop; episodic: 30–90d → archive; semantic fact: no TTL but needs valid_until + source; user profile: until delete request.` Sweep hourly; archive to cold store before delete.
+- **Per-tenant isolation:** `tenant_id` partition key on every table/namespace; queries always filtered; cross-tenant reads rejected at API + DB policy (RLS). Separate encryption key per enterprise tenant.
+- **GDPR/CCPA delete:** `DELETE /memory?user=X` → tombstone → purge vector + KG + logs (redact) → vacuum backups ≤30d → return `deletion_receipt{id, scope, ts}`. SLA 24h.
+
+### 12.3 Consolidation Triggers + Conflict Resolution
+
+Run consolidation when **any**: `unconsolidated_writes > 500`, hourly cron, `conflict_rate > 5%`, negative feedback on a fact. Pipeline: dedup (cosine ≥0.9 merge) → conflict detect (same subject+predicate, different object) → resolve: `last-writer-wins` only if newer source trust ≥ old; else `highest-trust-wins`; else `escalate_to_user`. Keep both versions + `supersedes` edge — never silent overwrite.
+
+### 12.4 Compaction↔Memory Contract
+
+| §02 may evict (transient) | §03 must persist (durable) |
+|---|---|
+| Raw tool stdout, old retrieval chunks, superseded diffs, chit-chat | Pinned facts, decisions, open TODOs, user preferences, resume block |
+| May drop after resume summary | Must survive compaction; re-injectable via retrieve |
+
+Rule: compaction emits `resume_block`; write-back **must** persist `resume_block + decisions + open items` before dropping them from context. On session restore, §02 hydrates from §03 by `tenant+task` query.
+
+### 12.5 Write-Path SLOs
+
+- `p50 write < 80ms, p99 < 300ms`; async consolidation `p99 < 5min`. Dedup check inside write path; heavy merge off critical path (write-behind queue).
+- Durability: ack only after WAL + primary write; retry queue with idempotency key `tenant:doc_hash`. Alert on `write_error% > 1%`, `queue_lag > 10k`.
+
+<details>
+<summary>TypeScript Code — Versioned Memory with Consolidation (Click to expand/collapse)</summary>
+
+```typescript
+type Fact = { tenant: string; subj: string; pred: string; obj: string; trust: number; ts: number; ttl?: number };
+
+export class MemoryStore {
+  private facts: Fact[] = []; private wal: Fact[] = [];
+  async write(f: Fact, idemKey: string): Promise<"ok" | "dup"> {
+    if (this.wal.some(w => (w as any).idemKey === idemKey)) return "dup";
+    if (Date.now() > (f.ttl ?? Infinity)) throw new Error("expired");
+    (f as any).idemKey = idemKey;
+    this.wal.push(f); // fsync in prod
+    const dup = this.facts.find(e => e.tenant === f.tenant && sim(e, f) >= 0.9);
+    if (dup) { Object.assign(dup, { obj: f.obj, trust: Math.max(dup.trust, f.trust) }); }
+    else this.facts.push(f);
+    return "ok"; // ack after WAL+primary
+  }
+  consolidate(): { merged: number; conflicts: Fact[][] } {
+    const conflicts: Fact[][] = [];
+    const byKey = new Map<string, Fact[]>();
+    for (const f of this.facts.filter(f => (f.ttl ?? Infinity) > Date.now())) {
+      const k = `${f.tenant}|${f.subj}|${f.pred}`;
+      byKey.set(k, [...(byKey.get(k) ?? []), f]);
+    }
+    let merged = 0;
+    for (const [, g] of byKey) {
+      const objs = new Set(g.map(x => x.obj));
+      if (objs.size > 1) {
+        g.sort((a, b) => b.trust - a.trust || b.ts - a.ts); // highest-trust-wins
+        this.facts = this.facts.filter(x => !g.slice(1).includes(x)); merged += g.length - 1;
+        conflicts.push(g);
+      }
+    }
+    return { merged, conflicts };
+  }
+  gdprDelete(tenant: string): { receipt: string } {
+    this.facts = this.facts.filter(f => f.tenant !== tenant);
+    this.wal = this.wal.filter(f => f.tenant !== tenant);
+    return { receipt: `del:${tenant}:${Date.now()}` };
+  }
+}
+declare function sim(a: Fact, b: Fact): number;
+```
+
+</details>
+
+### 12.6 Checklist
+
+| # | Rule |
+|---|------|
+| 1 | TTL per class + hourly sweeper; archive before hard delete |
+| 2 | `tenant_id` partition + RLS; no cross-tenant query path exists |
+| 3 | GDPR delete purges facts + vectors + logs with receipt ≤24h |
+| 4 | Consolidation on size/time/signal triggers; trust-ordered conflict resolution, no silent overwrite |
+| 5 | Enforce compaction↔memory contract: resume/decisions persisted before eviction |
+| 6 | Write SLO dashboard: p99, error%, queue lag, dedup rate, conflict rate |
+
+---
+
 ## 11. Reference Materials
 
 > **📌 Core Concept**

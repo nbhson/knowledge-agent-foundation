@@ -2643,6 +2643,101 @@ user = UserProxyAgent(
 
 ---
 
+## 14. Production Supplement: Replanning, Approval Gates, Idempotency & Explosion Guards
+
+> Makes §1–§13 plans safe to run autonomously.
+
+### 14.1 Definitions
+
+| Term | Definition |
+|------|------------|
+| Dynamic replanning | Choosing at runtime among retry / replan / escalate based on failure class, cost spent, and confidence |
+| Approval gate | Human-in-loop checkpoint before irreversible/high-blast-radius subtasks |
+| Idempotency key | Stable `plan_id:subtask_id:input_hash` so retries never double-apply side effects |
+| Explosion guard | Hard ceiling on depth, fan-out, and ToT branches × cost to bound runaway planning |
+
+### 14.2 Dynamic Replanning Decision Table
+
+| Signal | Retry (same plan) | Replan (new decomposition) | Escalate (human) |
+|--------|-------------------|----------------------------|------------------|
+| Transient tool error (timeout, 429), attempt <3 | ✅ | — | — |
+| Same subtask fails 3x / new error class | — | ✅ decompose differently or swap tool | — |
+| Low plan confidence (<0.4), ambiguous intent | — | ✅ ask-clarify subtask first | — |
+| Irreversible action (deploy, delete, payment) | — | — | ✅ approval gate |
+| Budget >80% spent or ToT cost ceiling hit | — | — (freeze) | ✅ with summary |
+| Conflicting sub-results / policy violation | — | — | ✅ |
+
+Policy: log `attempt, error_class, decision, reason` every transition; cap auto-retries at 3, auto-replans at 2, then must escalate.
+
+### 14.3 Human-in-Loop Approval Gates
+
+Gate subtasks tagged `risk ∈ {high, irreversible}`: `db.migrate, prod.deploy, user.delete, external.send`. Gate payload: `plan diff + blast radius + dry-run output + rollback cmd`. Execution pauses with timeout (e.g. 30min → auto-deny). Deny → mark `blocked`, trigger replan excluding denied branch. All approvals audit-logged `(who, when, diff_hash)`.
+
+### 14.4 Subtask Idempotency + Partial Failure
+
+Key: `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. Executor checks result-store first; on crash, replay returns cached result. Partial failure: mark DAG nodes `ok/failed/skipped`; continue independent branches, skip dependents of failed nodes, return `partial:true + completed[] + failed[]`. Compensate completed side-effects on abort via registered `rollback()` per subtask.
+
+### 14.5 Explosion Guards (Depth / Fan-out / ToT Cost)
+
+- `MAX_DEPTH=4, MAX_FANOUT=5, MAX_SUBTASKS=25`. Decompose calls beyond depth return atomic task.
+- ToT: `MAX_BRANCHES=3, MAX_ROLLOUTS=9`; each rollout has token/time budget; prune branches with score <0.3 after 2 steps.
+- Global cost ceiling: `MAX_TOKENS_PER_PLAN` (e.g. 100k) + `MAX_TOOL_CALLS=50`; at 80% emit warning subtask, at 100% freeze and escalate with `best-so-far` summary.
+
+<details>
+<summary>Python Code — Idempotent Subtask + Replan Decision (Click to expand/collapse)</summary>
+
+```python
+import hashlib
+MAX_RETRY, MAX_REPLAN = 3, 2
+MAX_DEPTH, MAX_FANOUT, MAX_TOKENS = 4, 5, 100_000
+
+def idem_key(plan: str, sub: str, inputs: dict) -> str:
+    h = hashlib.sha1(repr(sorted(inputs.items())).encode()).hexdigest()[:12]
+    return f"{plan}:{sub}:{h}"
+
+store: dict = {}
+def run_subtask(plan: str, sub: str, inputs: dict, fn, *, risk="low"):
+    k = idem_key(plan, sub, inputs)
+    if k in store: return store[k]  # idempotent replay
+    if risk in ("high", "irreversible") and not approved(plan, sub, inputs):
+        return {"status": "blocked", "reason": "approval-denied"}
+    try:
+        out = fn(inputs); store[k] = {"status": "ok", "out": out}
+    except Exception as e:
+        store[k] = {"status": "failed", "err": str(e), "transient": is_transient(e)}
+    return store[k]
+
+def decide(state: dict) -> str:  # retry | replan | escalate | done
+    if state.get("risk_gate"): return "escalate"
+    if state.get("tokens", 0) > MAX_TOKENS * 0.8: return "escalate"
+    if state.get("replans", 0) >= MAX_REPLAN: return "escalate"
+    if state.get("transient") and state.get("attempts", 0) < MAX_RETRY: return "retry"
+    if state.get("status") == "failed": return "replan"
+    return "done"
+
+def approved(plan, sub, inputs) -> bool:
+    print(f"[GATE] approve {plan}/{sub} {inputs} ? (y/n, timeout -> deny)")
+    return input().strip().lower() == "y"
+
+def is_transient(e: Exception) -> bool:
+    return any(s in str(e).lower() for s in ("timeout", "429", "econnreset"))
+```
+
+</details>
+
+### 14.6 Checklist
+
+| # | Rule |
+|---|------|
+| 1 | Classify every failure → retry / replan / escalate via table; log decision + reason |
+| 2 | Cap retries (3) and replans (2), then escalate — no infinite loops |
+| 3 | Gate all irreversible subtasks with diff + dry-run + rollback + timeout-deny |
+| 4 | Idempotency key on every side-effecting subtask; cache results for replay |
+| 5 | Track partial DAG status; compensate on abort; return `partial` explicitly |
+| 6 | Enforce `depth ≤4, fan-out ≤5, ToT branches ≤3`, global token/tool ceiling with 80% warning |
+
+---
+
 ## References
 
 > 📌 **Basic Concept**

@@ -1,4 +1,4 @@
-# 🔐 XV. Approval Gates — Human-in-the-Loop Cho Hành Động Không Đảo Ngược Được
+# 🔐 Harness 15. Approval Gates — Human-in-the-Loop Cho Hành Động Không Đảo Ngược Được
 
 > ## 📑 Mục Lục
 >
@@ -1132,11 +1132,11 @@ sản phẩm của năm năm tới.
 - `12-sandbox-execution/README.md` — trần kỹ thuật mà gate bổ trợ
 - `13-trajectory-observability/` — gate như event, audit + replay (§6 module này tiêu thụ nó)
 - `14-compaction-context/README.md` — approval đang chờ là một phần của pin set (→ 14 §3.2)
-- `08-execute-task/README.md` §11 — idempotency cache làm cho resume an toàn
+- `08-task/README.md` §11 — idempotency cache làm cho resume an toàn
 
 ---
 
-*Tài liệu: XV. Approval Gates — HARNESS ENGINEERING EDITION*
+*Tài liệu: Harness 15. Approval Gates — HARNESS ENGINEERING EDITION*
 *Module cross-cutting · control plane cho hành động không đảo ngược · human-in-the-loop*
 *Cập nhật: 19/07/2026*
 *Tác giả: AI Knowledge Repository*

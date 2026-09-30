@@ -2671,7 +2671,28 @@ Policy: log `attempt, error_class, decision, reason` every transition; cap auto-
 
 ### 14.3 Human-in-Loop Approval Gates
 
-Gate subtasks tagged `risk ∈ {high, irreversible}`: `db.migrate, prod.deploy, user.delete, external.send`. Gate payload: `plan diff + blast radius + dry-run output + rollback cmd`. Execution pauses with timeout (e.g. 30min → auto-deny). Deny → mark `blocked`, trigger replan excluding denied branch. All approvals audit-logged `(who, when, diff_hash)`.
+**The planner's half of the gate.** The risk tier is assigned *here*, at plan time — a subtask
+tagged `risk ∈ {high, irreversible}` is a candidate for a gate, and the tag is what
+`15-approval-gates` keys its verdicts off. The operations this module owns:
+
+1. **Tag, don't gate.** Tag `db.migrate, prod.deploy, user.delete, external.send` as
+   `risk ∈ {high, irreversible}` during decomposition. A subtask with no tag is `low` and
+   never blocks.
+2. **Enumerate blast radius from the policy registry.** Pull the exact set of resources a
+   subtask touches from the sandbox/policy registry in
+   [`12-sandbox-execution` §6](../12-sandbox-execution/README.md) — not from a guess in the plan.
+3. **Deny → replan, not retry.** A deny records a `reason` and triggers a replan that *excludes*
+   the denied branch (see the decision table in §14.2). Retrying the same denied subtask loops forever.
+
+**The gate's other half is owned by [`15-approval-gates`](../15-approval-gates/README.md)**:
+the tier taxonomy and TTLs, the mandatory-evidence payload (`plan diff + blast radius + dry-run
+output + rollback cmd`), timeout-deny (fail closed), the `PAUSED:` checkpoint protocol, the
+two-person rule, and the `approval_request` / `approval_verdict` audit trail. Do not restate
+those constants here — a planner and a gatekeeper that disagree about the expiry window is a
+gate that either hangs or fires unattended.
+
+All approvals are audit-logged `(who, when, diff_hash)` and written to the trajectory store
+(`13-trajectory-observability` §6), so "the human never saw it" is a checkable claim.
 
 ### 14.4 Subtask Idempotency + Partial Failure
 

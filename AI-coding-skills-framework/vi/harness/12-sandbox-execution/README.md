@@ -1,4 +1,4 @@
-# 🔒 XII. Sandbox Execution
+# 🔒 Harness 12. Sandbox Execution
 
 > ## 📑 Mục Lục
 >
@@ -669,7 +669,7 @@ harness. Quy tắc:
 
 ### 5.2 Sandbox Code-Mode
 
-Code-mode (→ `06/code-mode-sdk.md` §5) để LLM viết TypeScript gọi tool, thay vì phát
+Code-mode (→ `06-decide-tools-mcp/code-mode-sdk.md` §5) để LLM viết TypeScript gọi tool, thay vì phát
 một JSON tool call mỗi thao tác. Hai thắng lợi lớn — giảm 70–90% số chặng đi, và
 `Promise.all` trên các lời gọi độc lập — và một rủi ro lớn: chương trình được sinh ra
 là code tùy ý.
@@ -1224,7 +1224,7 @@ trong transparency log, và bộ escape drill liên tục chạy trong productio
 
 ---
 
-*Tài liệu: XII. Sandbox Execution — HARNESS ENGINEERING EDITION*
+*Tài liệu: Harness 12. Sandbox Execution — HARNESS ENGINEERING EDITION*
 *Module cross-cutting · nhà chính thức của khái niệm sandbox*
 *Cập nhật: 19/07/2026*
 *Tác giả: AI Knowledge Repository*

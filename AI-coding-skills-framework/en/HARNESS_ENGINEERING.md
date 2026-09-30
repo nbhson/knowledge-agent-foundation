@@ -45,7 +45,7 @@
     - [Integrate Components With Modules in the Repo](#integrate-components-with-modules-in-the-repo)
       - [Detailed Mapping Table](#detailed-mapping-table)
   - [🔭 Overview: Harness Engineering — AI Coding Skills Framework](#-overview-harness-engineering--ai-coding-skills-framework)
-    - [Overall Architecture: 7 Components → 12 Modules](#overall-architecture-7-components--12-modules)
+    - [Overall Architecture: 7 Components → 15 Modules](#overall-architecture-7-components--15-modules)
     - [6.2. Anthropic Multi-Agent Architecture](#62-anthropic-multi-agent-architecture)
     - [6.3. Claude Code Leak - A Superlative Harness System](#63-claude-code-leak---a-superlative-harness-system)
       - [A. 5-Level Context Management](#a-5-level-context-management)
@@ -1476,14 +1476,14 @@ Each component of the Harness maps directly to modules in the **AI Coding Skills
 
 ## 🔭 Overview: Harness Engineering — AI Coding Skills Framework
 
-### Overall Architecture: 7 Components → 12 Modules
+### Overall Architecture: 7 Components → 15 Modules
 
-The diagram below shows the **entire Harness Engineering system** and how it maps to the **12 modules** in the AI Coding Skills Framework:
+The diagram below shows the **entire Harness Engineering system** and how it maps to the **15 modules** in the AI Coding Skills Framework — modules `01`–`11` are pipeline stages, and `12`–`15` are the cross-cutting control plane they all depend on:
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════════════════╗
 ║         AI CODING SKILLS FRAMEWORK — HARNESS ENGINEERING AT A GLANCE                 ║
-║                  Architecture Overview: 7 Components → 12 Modules                    ║
+║                 Architecture Overview: 7 Components → 15 Modules                    ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 
                          EVOLUTION: THE 3 ERA OF AI ENGINEERING
@@ -1575,7 +1575,7 @@ The diagram below shows the **entire Harness Engineering system** and how it map
  │  │ MCP integration   │  │ Output validation│ │ (retry patterns) │                   │
  │  │ Tool validation   │  │ Security checks │  │ 11-evaluation    │                   │
  │  │                   │  │ Prompt injection│  │ (metrics)        │                   │
- │  │                   │  │ detection       │  │ 12-loop-eng      │                   │
+ │  │                   │  │ detection       │  │ loop/ (top-level)│                   │
  │  └──────────────────┘  └──────────────────┘  └──────────────────┘                   │
  │            │                         │                         │                    │
  │            └─────────────────────────┼─────────────────────────┘                    │
@@ -1590,7 +1590,9 @@ The diagram below shows the **entire Harness Engineering system** and how it map
  │                         │  │ (10-auto)    │ │ (06-tools) │ │                        │
  │                         │  └──────────────┘ └────────────┘ │                        │
  │                         │  ┌──────────────────────────────┐ │                        │
- │                         │  │ Execution Permissions          │ │                        │
+ │                         │  │ Isolation & Execution        │ │                        │
+ │                         │  │ Boundaries  → 12-sandbox     │ │                        │
+ │                         │  │ Approval Gates   → 15        │ │                        │
  │                         │  └──────────────────────────────┘ │                        │
  │                         └──────────────────────────────────┘                        │
  │                                      │                                               │
@@ -1602,54 +1604,76 @@ The diagram below shows the **entire Harness Engineering system** and how it map
  │                         └──────────────────────────────────┘                        │
  └─────────────────────────────────────────────────────────────────────────────────────┘
 
-                        ════════════════════════════════════
+════════════════════════════════════
                         CORE MODULES IN THE FRAMEWORK
 
- ┌─────────────────────────────────────────────────────────────────────────────────┐
- │                                                                                 │
- │  01  ── retrieve-memory-knowledge    (Retrieve & Memory — RAG Pipeline)        │
- │  02  ── build-context                 (Context Management — 5 levels)          │
- │  03  ── update-memory-store           (Memory Update — store new knowledge)    │
- │  04  ── plan-decompose-task           (Planning — break down tasks)            │
- │  05  ── prompt-builder                (Prompt + Guardrails)                    │
- │  06  ── decide-tools-mcp              (Tools + Permissions + MCP)              │
- │  07  ── workflow                      (Workflow + Feedback Loops)              │
- │  08  ── task                          (Task Management)                         │
- │  09  ── multi-agent                   (Agent Orchestration)                     │
- │  10  ── automation                    (Automation + Access Control)             │
- │  11  ── evaluation                    (Evaluation + Metrics + Guardrails)      │
- │  12  ── loop-engineering              (Continuous Improvement Loop)            │
- │                                                                                 │
- └─────────────────────────────────────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────────────────────────────────────┐
+  │  01  ── retrieve-memory-knowledge (Retrieve & Memory — RAG Pipeline)           │
+  │  02  ── build-context             (Context Management — 5 levels)              │
+  │  03  ── update-memory-store       (Memory Update — store new knowledge)        │
+  │  04  ── plan-decompose-task       (Planning — break down tasks)                │
+  │  05  ── prompt-builder            (Prompt + Guardrails)                        │
+  │  06  ── decide-tools-mcp          (Tools + Permissions + MCP)                  │
+  │  07  ── workflow                  (Workflow + Feedback Loops)                  │
+  │  08  ── task                      (Task Management)                            │
+  │  09  ── multi-agent               (Agent Orchestration)                        │
+  │  10  ── automation                (Automation + Access Control)                │
+  │  11  ── evaluation                (Evaluation + Metrics)                       │
+  │  12  ── sandbox-execution         (Sandbox — isolation & execution boundaries) │
+  │  13  ── trajectory-observability  (Trajectory — observability spine)           │
+  │  14  ── compaction-context        (Compaction — context window management)     │
+  │  15  ── approval-gates            (Approval Gates — human-in-the-loop)         │
+  └────────────────────────────────────────────────────────────────────────────────┘
 
- ══════════════════════════════════════════════════════════════════════════════════
+                         ┌──────────────────────────────────────────────┐
+                         │      CROSS-CUTTING CONTROL PLANE (12–15)        │
+                         │      Not a pipeline stage — a substrate that     │
+                         │      every module above must satisfy.           │
+                         │                                              │
+                         │  12 sandbox      → isolation boundaries         │
+                         │  13 trajectory   → observable, replayable       │
+                         │  14 compaction   → bounded context growth      │
+                         │  15 approval     → irreversible ops gated     │
+                         │                                              │
+                         │  Each is authoritative for its own question;   │
+                         │  other modules reference them, never restate.  │
+                         └──────────────────────────────────────────────┘
 
- RELATIONSHIP ANALYSIS:
- - Harness ≈ THE ENTIRE outer frame (including the 7 components)
- - RAG Pipeline (01) ≈ part of the MEMORY component — the "brain" element
- - 12 modules ≈ 12 concrete skills; each module serves 1+ harness components
- - Prompt Engineering (05) ≈ a foundational technique, woven through many components
+  ══════════════════════════════════════════════════════════════════════════════════
 
- PER-MODULE COVERAGE RATIO IN THE HARNESS:
- ┌─────────────────────────────────────────────────────────────────────────┐
- │  01-retrieve-memory     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  85%   │
- │  02-build-context       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  70%   │
- │  03-update-memory       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░  50%   │
- │  04-plan-decompose      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░  55%   │
- │  05-prompt-builder      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  60%   │
- │  06-decide-tools        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  75%   │
- │  07-workflow            ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░  80%   │
- │  08-task                ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░  45%   │
- │  09-multi-agent         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░  65%   │
- │  10-automation          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░  40%   │
- │  11-evaluation          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  70%   │
- │  12-loop-engineering    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  60%   │
- └─────────────────────────────────────────────────────────────────────────┘
+  RELATIONSHIP ANALYSIS:
+  - Harness ≈ THE ENTIRE outer frame (including the 7 components)
+  - RAG Pipeline (01) ≈ part of the MEMORY component — the "brain" element
+  - 15 modules ≈ 15 concrete skills; modules 01–11 are pipeline stages,
+    modules 12–15 are the cross-cutting control plane they all depend on
+  - Prompt Engineering (05) ≈ a foundational technique, woven through many components
+  - The improvement loop is NOT harness/12. It lives in the top-level `loop/`
+    part of the framework; harness/12 is sandbox isolation.
+
+  PER-MODULE COVERAGE RATIO IN THE HARNESS:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  01-retrieve-memory     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  85%   │
+  │  02-build-context       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  70%   │
+  │  03-update-memory       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░  50%   │
+  │  04-plan-decompose      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░  55%   │
+  │  05-prompt-builder      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  60%   │
+  │  06-decide-tools        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  75%   │
+  │  07-workflow            ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░  80%   │
+  │  08-task                ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░  45%   │
+  │  09-multi-agent         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░  65%   │
+  │  10-automation          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░  40%   │
+  │  11-evaluation          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  70%   │
+  │  ── cross-cutting control plane — every stage above depends on these ──      │
+  │  12-sandbox-execution   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  75%   │
+  │  13-trajectory-obser   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  80%   │
+  │  14-compaction-context  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░  65%   │
+  │  15-approval-gates      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░  70%   │
+  └─────────────────────────────────────────────────────────────────────────┘
 
 **In summary:**
 | Aspect | RAG Pipeline (01) | Harness Engineering (whole) |
 |-----------|-------------------|-------------------------------|
-| **Scope** | 1 technique: retrieve + augment | 7 components, 12 modules |
+| **Scope** | 1 technique: retrieve + augment | 7 components, 15 modules |
 | **Role** | Provide knowledge to the LLM | Control everything the AI can do |
 | **Coverage** | ~85% of the Memory component | 100% of the whole system |
 | **Relation** | Part of Memory | The whole that contains RAG |

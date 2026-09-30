@@ -64,6 +64,16 @@ Start with **Phase 1** (Core Skills) and progress to **Phase 6** (Evaluation). E
 | Coordinate multiple agents | [09 - Multi-Agent](#part-ix-multi-agent-systems) |
 | Automate CI/CD, Git | [10 - Automation](#part-x-automation) |
 | Evaluate effectiveness | [11 - Evaluation](#part-xi-evaluation) |
+| Isolate untrusted code execution | [12 - Sandbox Execution](#control-plane-harness-modules-1215) |
+| Debug/replay a run after the fact | [13 - Trajectory & Observability](#control-plane-harness-modules-1215) |
+| Keep the context window bounded | [14 - Compaction & Context](#control-plane-harness-modules-1215) |
+| Gate an irreversible action on a human | [15 - Approval Gates](#control-plane-harness-modules-1215) |
+
+> **Numbering note.** Harness modules are `01`–`15`. The `Part` labels below
+> (`Part I` … `Part XIII`) number *framework parts*, a different namespace —
+> which is why `Part XII` is Loop Engineering and `Part XIII` is Graph
+> Engineering, while harness module `12` is Sandbox Execution. Loop Engineering
+> lives in the top-level `loop/` directory, not in `harness/`.
 
 ---
 
@@ -90,10 +100,19 @@ AI/
 │  ├── 08-task/                              ← TASK MANAGEMENT
 │  ├── 09-multi-agent/                       ← MULTI-AGENT SYSTEMS
 │  ├── 10-automation/                        ← AUTOMATION
-│  └── 11-evaluation/                        ← EVALUATION
+│  ├── 11-evaluation/                        ← EVALUATION
+│  │
+│  │  ── CROSS-CUTTING CONTROL PLANE ──
+│  │  (substrate every module above depends on)
+│  ├── 12-sandbox-execution/                 ← SANDBOX / ISOLATION
+│  ├── 13-trajectory-observability/          ← TRAJECTORY / AUDIT
+│  ├── 14-compaction-context/                ← CONTEXT COMPACTION
+│  └── 15-approval-gates/                    ← HUMAN-IN-THE-LOOP
 │
 ├── loop/                                    ← LOOP ENGINEERING
-│  └── 12-loop-engineering/                  ← IMPROVEMENT LOOP
+│  ├── 01-concepts/  02-patterns/  03-safety/
+│  ├── 04-operating/  05-multi-loop/  06-anti-patterns/
+│  └── 07-tools/                            ← THE IMPROVEMENT LOOP
 │
 └── graph/                                   ← GRAPH ENGINEERING (Knowledge Substrate)
    ├── 01-foundations/                       ← GRAPH FOUNDATIONS
@@ -298,6 +317,23 @@ AI/
 | 11.4 | [Evaluation Framework](harness/11-evaluation/README.md#4-evaluation-framework) | Auto-eval pipeline |
 | 11.5 | [Continuous Improvement](harness/11-evaluation/README.md#5-continuous-improvement) | Trend analysis, suggestions |
 | 11.6 | [Reporting & Dashboards](harness/11-evaluation/README.md#6-reporting--dashboards) | Markdown/JSON reports |
+
+### Control Plane (Harness Modules 12–15)
+> How do you run, observe, bound, and authorize untrusted agent work?
+
+Modules `12`–`15` are **not pipeline stages**. They are the cross-cutting substrate every
+module above depends on. Each is authoritative for its own question; other modules
+reference it rather than restating it.
+
+| # | Topic | Description |
+|---|-------|-------------|
+| 12 | [Sandbox Execution](harness/12-sandbox-execution/README.md) | Isolation tiers, threat model, hardened runner, per-role policy matrix |
+| 13 | [Trajectory & Observability](harness/13-trajectory-observability/README.md) | Append-only `TrajectoryEvent` stream, join keys, retention, redaction |
+| 14 | [Compaction & Context](harness/14-compaction-context/README.md) | Compaction trigger, pin set, pruning, resume block |
+| 15 | [Approval Gates](harness/15-approval-gates/README.md) | Risk tiers, gate payload, timeout-deny, human verdict, audit trail |
+
+> The Roman `Part XII`/`XIII` labels that follow belong to the framework-part namespace
+> (Loop, Graph). They are unrelated to harness module numbering.
 
 ### Part XII: Loop Engineering
 > How do you design self-sustaining loops for AI agents?

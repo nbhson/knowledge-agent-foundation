@@ -42,7 +42,7 @@ Thư mục này tập hợp các công cụ hiện thực hóa **từng componen
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         AI CODING SKILLS FRAMEWORK                   │
 │                                                                     │
-│  harness/      → Kiến thức: 7 components, 12 modules (01–12)       │
+│  harness/      → Kiến thức: 7 components, 15 modules (01–15)       │
 │  loop/         → Vòng lặp: concepts, patterns, safety, operating   │
 │  tools/        → ❯ Công cụ thực thi (binary/CLI/plugins)           │
 └─────────────────────────────────────────────────────────────────────┘

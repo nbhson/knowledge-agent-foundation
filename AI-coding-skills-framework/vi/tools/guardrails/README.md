@@ -33,9 +33,23 @@ LLM không có khái niệm "side effect không mong muốn" — nó chỉ sinh 
 
 ### Quan Hệ Với Harness
 
+> **Thư mục này là catalog sản phẩm, không phải policy của harness.**
+> Mỗi mục bên dưới là một *thư viện cụ thể* mà bạn có thể chọn dùng. Policy **chuẩn về uỷ
+> quyền và cách ly** — risk tier, payload bắt buộc cho cổng, timeout-deny (fail closed),
+> luật hai-người, giao thức `PAUSED:` — thuộc sở hữu của
+> [`harness/15-approval-gates`](../../harness/15-approval-gates/README.md), còn **cơ chế
+> cách ly** thuộc về
+> [`harness/12-sandbox-execution`](../../harness/12-sandbox-execution/README.md).
+> Một thư viện guardrail *kiểm tra*; nó không quyết định cái gì được phép. Nếu bạn đang nghĩ
+> ra một risk tier ở đây, nó thuộc về `15`.
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │  GUARDRAILS MAP VS HARNESS COMPONENTS                      │
+│                                                            │
+│  harness/15-approval-gates    → POLICY chuẩn + giao thức   │
+│                                  PAUSED: (giữ policy)      │
+│  harness/12-sandbox-execution → tier cách ly chuẩn         │
 │                                                            │
 │  Guardrails AI            → harness/06 (tool input/output) │
 │  NeMo Guardrails (NVIDIA) → harness/07 (workflow rails)    │

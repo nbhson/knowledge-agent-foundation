@@ -36,7 +36,7 @@ There's a quiet problem: for every new project you **rewrite the same structure 
 ### Relationship to the Harness
 
 ```
-harness/  ← teaches KNOWLEDGE (7 components, 12 modules)
+harness/  ← teaches KNOWLEDGE (7 components, 15 modules)
 loop/     ← teaches LOOPS (concepts, patterns, safety, operating)
 tools/loop-cli/  ← ❯ TOOLING that materializes both
 

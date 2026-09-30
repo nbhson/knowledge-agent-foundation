@@ -64,6 +64,16 @@ Bắt đầu từ **Phase 1** (Core Skills) và tiến dần đến **Phase 6** 
 | Phối hợp nhiều agents | [09 - Multi-Agent](#part-ix-multi-agent-systems) |
 | Tự động hóa CI/CD, Git | [10 - Automation](#part-x-automation) |
 | Đánh giá hiệu quả | [11 - Evaluation](#part-xi-evaluation) |
+| Cách ly thực thi code không tin cậy | [12 - Sandbox Execution](#mặt-phẳng-kiểm-soát-harness-modules-1215) |
+| Debug/replay một run sau khi xảy ra | [13 - Trajectory & Observability](#mặt-phẳng-kiểm-soát-harness-modules-1215) |
+| Giữ cửa sổ context có giới hạn | [14 - Compaction & Context](#mặt-phẳng-kiểm-soát-harness-modules-1215) |
+| Gate thao tác không đảo ngược cho con người | [15 - Approval Gates](#mặt-phẳng-kiểm-soát-harness-modules-1215) |
+
+> **Ghi chú về đánh số.** Module harness là `01`–`15`. Nhãn `Part` bên dưới
+> (`Part I` … `Part XIII`) đánh số *các phần của framework*, là namespace khác —
+> đó là lý do `Part XII` là Loop Engineering và `Part XIII` là Graph Engineering,
+> trong khi module harness `12` là Sandbox Execution. Loop Engineering nằm ở
+> thư mục `loop/` cấp cao nhất, không nằm trong `harness/`.
 
 ---
 
@@ -90,10 +100,19 @@ AI/
 │  ├── 08-task/                              ← QUẢN LÝ TASK
 │  ├── 09-multi-agent/                       ← HỆ THỐNG ĐA AGENT
 │  ├── 10-automation/                        ← TỰ ĐỘNG HÓA
-│  └── 11-evaluation/                        ← ĐÁNH GIÁ
+│  ├── 11-evaluation/                        ← ĐÁNH GIÁ
+│  │
+│  │  ── MẶT PHẲNG KIỂM SOÁT XUYÊN MODULE ──
+│  │  (nền tảng mà mọi module ở trên phụ thuộc)
+│  ├── 12-sandbox-execution/                 ← SANDBOX / CÁCH LY
+│  ├── 13-trajectory-observability/          ← TRAJECTORY / KIỂM TOÁN
+│  ├── 14-compaction-context/                ← NÉN CONTEXT
+│  └── 15-approval-gates/                    ← HUMAN-IN-THE-LOOP
 │
 ├── loop/                                    ← LOOP ENGINEERING
-│  └── 12-loop-engineering/                  ← VÒNG LẶP CẢI THIỆN
+│  ├── 01-concepts/  02-patterns/  03-safety/
+│  ├── 04-operating/  05-multi-loop/  06-anti-patterns/
+│  └── 07-tools/                            ← VÒNG LẶP CẢI THIỆN
 │
 └── graph/                                   ← GRAPH ENGINEERING (Knowledge Substrate)
    ├── 01-foundations/                       ← NỀN TẢNG GRAPH
@@ -298,6 +317,23 @@ AI/
 | 11.4 | [Evaluation Framework](harness/11-evaluation/README.md#4-evaluation-framework) | Auto-eval pipeline |
 | 11.5 | [Continuous Improvement](harness/11-evaluation/README.md#5-continuous-improvement) | Trend analysis, suggestions |
 | 11.6 | [Reporting & Dashboards](harness/11-evaluation/README.md#6-reporting--dashboards) | Markdown/JSON reports |
+
+### Mặt Phẳng Kiểm Soát (Harness Modules 12–15)
+> Làm sao chạy, quan sát, kiểm soát và uỷ quyền cho công việc agent không tin cậy?
+
+Module `12`–`15` **không phải giai đoạn pipeline**. Chúng là nền tảng xuyên module mà mọi
+module ở trên đều phụ thuộc vào. Mỗi module là chuẩn cho câu hỏi của riêng nó; các module khác
+chỉ trỏ tới chứ không lặp lại.
+
+| # | Chủ đề | Mô tả |
+|---|-------|-------|
+| 12 | [Sandbox Execution](harness/12-sandbox-execution/README.md) | Tier cách ly, threat model, runner harden, ma trận policy theo role |
+| 13 | [Trajectory & Observability](harness/13-trajectory-observability/README.md) | Luồng `TrajectoryEvent` append-only, join key, retention, redaction |
+| 14 | [Compaction & Context](harness/14-compaction-context/README.md) | Trigger nén, pin set, pruning, khối resume |
+| 15 | [Approval Gates](harness/15-approval-gates/README.md) | Risk tier, payload cổng, timeout-deny, phán quyết con người, audit trail |
+
+> Nhãn Roman `Part XII`/`XIII` ở phần dưới thuộc namespace phần của framework (Loop, Graph).
+> Chúng không liên quan gì tới đánh số module harness.
 
 ### Part XII: Loop Engineering
 > Làm sao thiết kế vòng lặp tự duy trì cho AI agents?

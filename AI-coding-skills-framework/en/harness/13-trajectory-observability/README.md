@@ -1,4 +1,4 @@
-# 📈 XIII. Trajectory & Observability
+# 📈 Harness 13. Trajectory & Observability
 
 > ## 📑 Table of Contents
 >
@@ -1132,6 +1132,7 @@ detectible pattern. The flight recorder is how you find the flight that was hija
 
 - `03-update-memory-store/trajectory-fork-replay.md` — the engine implementation (fork/replay/resume)
 - `07-workflow/README.md` §13 — the resume consumer (checkpoint-resume, idempotency)
+- `07-workflow/README.md` §5 — *adjacent, not a duplicate*: per-run distributed tracing (`trace_id`/spans/logs/metrics) for a single workflow. Joins this module on `runId`; a span is not a `TrajectoryEvent`.
 - `08-task/README.md` §11 — the task producer (`parentTaskId` source)
 - `11-evaluation/README.md` §15 — the eval consumer (trajectory eval, human calibration)
 - `12-sandbox-execution/README.md` §9 — the `sandbox` event producer
@@ -1140,7 +1141,7 @@ detectible pattern. The flight recorder is how you find the flight that was hija
 
 ---
 
-*Document: XIII. Trajectory & Observability — HARNESS ENGINEERING EDITION*
+*Document: Harness 13. Trajectory & Observability — HARNESS ENGINEERING EDITION*
 *Cross-cutting module · the spine of harness observability*
 *Last updated: 19/07/2026*
 *Author: AI Knowledge Repository*

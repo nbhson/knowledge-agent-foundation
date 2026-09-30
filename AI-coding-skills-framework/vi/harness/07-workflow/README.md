@@ -1455,6 +1455,19 @@ class SagaOrchestrator:
 > - **Ẩn dụ/so sánh:** Giống camera hành trình + đồng hồ công tơ mét + bản đồ GPS của một chiếc taxi: biết xe đang đi đâu, chạy nhanh chậm thế nào, và đang bị kẹt ở đoạn nào.
 > - **Vì sao quan trọng:** Không quan sát được thì khi workflow chậm hay sai, bạn không thể tìm ra nguyên nhân và phải mò từng bước một để debug.
 
+> **Ghi chú sở hữu — hai tầng khác nhau, đừng gộp làm một.** Mục này là **luyên thông cho một
+> run**: một `trace_id` xuyên qua các bước của *một* lần thực thi, span có cấu trúc cha–con,
+> một logger, và một metrics collector. Đó là bộ công cụ distributed tracing kinh điển, và
+> nó đúng cho câu hỏi "vì sao *run này* chậm".
+>
+> **Hợp đồng event xuyên module** — luồng `TrajectoryEvent` append-only mà mọi module trong
+> harness ghi vào và mọi công cụ debug đọc từ, với join key, fork/replay, retention, và
+> redaction — thuộc sở hữu của
+> [`13-trajectory-observability`](../13-trajectory-observability/README.md). Một `trace_id`
+> không phải là `sessionId`, và một span không phải là một `TrajectoryEvent`; hai thứ nối với
+> nhau qua `runId`. Nếu bạn đang dựng xương sống cho harness, hãy đọc `13`. Nếu bạn chỉ đang
+> lắp đặt một workflow, phần dưới đây là đủ.
+
 ### 5.1 Distributed Tracing
 
 Giống "lệnh truy vết" xuyên suốt hành trình: mỗi yêu cầu được gán một trace_id duy nhất, đi qua bao nhiêu service thì mỗi bước đều ghi lại thành spans (span cha, span con) — nhờ đó bạn dựng lại toàn bộ hành trình của một request và tìm ra chính xác khâu nào chậm hay lỗi:
@@ -3139,6 +3152,20 @@ Write-ahead log: `append({seq, stepId, inputHash, status, outputRef})` + snapsho
 Idempotency store: `Map<idempotencyKey, resultRef>` có TTL; thao tác ghi (mutation) bắt buộc có key, thao tác đọc thì không. Backpressure: `Semaphore(maxParallel=4–8)` toàn cục, mỗi step giới hạn độ dài hàng đợi (ví dụ 100); `enqueue` ném `BackpressureError` khi đầy — bên gọi retry với jitter. Deadline: một `deadlineAt` duy nhất cho mỗi run; mỗi step nhận `remaining = deadlineAt - now()` (trừ buffer); lan truyền qua `AbortSignal.timeout(remaining)`. Không bao giờ âm thầm nới deadline.
 
 ### 13.4 Node Phê Duyệt / Tạm Dừng-Tiếp Tục Của Con Người
+
+**Mục này sở hữu *cơ chế* checkpoint; chính sách cổng thuộc
+[`15-approval-gates`](../15-approval-gates/README.md).** Engine bên dưới cung cấp
+*cơ chế*: một lệnh `PAUSED:` có kiểu được ném sau khi đã ghi checkpoint bền, một write-ahead
+log, một idempotency store, và trạng thái `WAITING_APPROVAL` sống sót qua cái chết của
+process. Nó **không** quyết định bước nào *cần* con người, hay người duyệt được thấy những
+gì. Những thứ đó nằm ở `15`: taxonomy risk tier và TTL, payload bắt buộc có bằng chứng,
+timeout-deny (fail closed), luật hai-người, và audit trail `approval_request` /
+`approval_verdict`. Hợp đồng thứ tự của giao thức — checkpoint trước, ném sau; "duyệt" của
+con người là *truyền phán quyết*, không phải khởi động lại — được viết ra ở `15` §5.2.
+
+Hãy hiểu `needsApproval?: boolean` bên dưới là đường ghép: `07` đưa run sang
+`WAITING_APPROVAL` rồi ném; `15` quyết định ai giải quyết nó và chuyện gì xảy ra khi hết hạn.
+Một `true` ở đây không có nghĩa là "hỏi ai đó", mà là "hỏi Gatekeeper".
 
 <details>
 <summary>TypeScript Code — Durable Engine (Click to expand/collapse)</summary>

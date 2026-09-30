@@ -33,10 +33,20 @@ Without observability, you're **flying at night without lights**. You don't know
 
 ### Relationship to the Harness
 
+> **This directory is a product/tool catalog, not the harness's contract.**
+> Everything below is a *specific vendor or library you could adopt*. The canonical
+> **event contract** — what the harness emits, the `TrajectoryEvent` schema, join keys,
+> retention, redaction — is owned by
+> [`harness/13-trajectory-observability`](../../harness/13-trajectory-observability/README.md).
+> Pick a tool from here; conform to the contract there. If you find yourself defining an
+> event shape here, it belongs in `13` instead.
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  OBSERVABILITY MAP VS HARNESS COMPONENTS                    │
 │                                                             │
+│  harness/13-trajectory-obser → CANONICAL event contract     │
+│                              (owns schema, this is not it)  │
 │  harness/06-decide-tools-mcp → log tool calls + outcomes    │
 │  harness/07-workflow         → trace flow through components│
 │  harness/11-evaluation       → metrics collected            │

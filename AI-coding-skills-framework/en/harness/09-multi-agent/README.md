@@ -2908,9 +2908,24 @@ Rules: every task has `lease_id + deadline + max_attempts`; supervisor is statel
 
 ### 16.4 Per-Agent Sandboxing + Secret Containment
 
-- Least-privilege tools per role: `reviewer` gets read-only FS + no shell; `coder` gets sandboxed shell (no net) unless explicitly granted.
-- Secrets never in messages: agents receive short-lived scoped tokens (5–15 min) via env injection; supervisor redacts `sk-*, ghp_*, AWS_*` from logs/transcripts.
-- Egress policy: deny-by-default; allow-list domains per agent; all tool I/O audited with `agent_id + lease_id`.
+The **isolation mechanism** — isolation tiers, the five mandatory controls, the hardened
+runner, and the per-role policy matrix — is owned by
+[`12-sandbox-execution`](../12-sandbox-execution/README.md) §2–§6. This section only adds the
+two things that are specific to *a team* of agents rather than to a single run:
+
+- **Least-privilege tools per role, resolved through the role matrix.** `reviewer` gets
+  read-only FS + no shell; `coder` gets a sandboxed shell with no net. Rather than restating
+  the grants, look them up: `12` §6's per-role policy matrix is keyed by role name, so
+  multi-agent and single-agent runs resolve the *same* policy for the *same* role. A `reviewer`
+  that can shell out in a swarm but not in a solo run is a privilege-escalation bug.
+- **Secrets are per-agent leases, never per-message.** Agents receive short-lived scoped tokens
+  (5–15 min) via env injection, and the supervisor redacts `sk-*, ghp_*, AWS_*` from logs and
+  transcripts before they are written. Secret *containment* inside the sandbox is `12` §3.5;
+  the multi-agent-specific part is that a secret handed to one agent must never appear in
+  another agent's context through a shared blackboard projection.
+- **Egress policy: deny-by-default, allow-list domains per agent.** All tool I/O is audited with
+  `agent_id + lease_id`, which is what makes the redaction above auditable — a leaked token in
+  the shared blackboard is traceable to exactly one lease.
 
 <details>
 <summary>TypeScript Code — Heartbeat + Reassignment (Click to expand/collapse)</summary>

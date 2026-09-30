@@ -42,7 +42,7 @@ This directory gathers the tooling that realizes **each component of the harness
 ┌──────────────────────────────────────────────────────────────────────┐
 │                         AI CODING SKILLS FRAMEWORK                   │
 │                                                                      │
-│  harness/      → Knowledge: 7 components, 12 modules (01–12)         │
+│  harness/      → Knowledge: 7 components, 15 modules (01–15)         │
 │  loop/         → Loops: concepts, patterns, safety, operating        │
 │  tools/        → ❯ Execution tooling (binary/CLI/plugins)            │
 └──────────────────────────────────────────────────────────────────────┘

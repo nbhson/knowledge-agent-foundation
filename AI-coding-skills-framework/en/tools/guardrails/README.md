@@ -33,9 +33,23 @@ LLMs have no concept of "unwanted side effect" — they just generate text. **Gu
 
 ### Relationship to the Harness
 
+> **This directory is a product catalog, not the harness's policy.**
+> Each entry below is a *specific library you could adopt*. The canonical
+> **authorization and isolation policy** — risk tiers, mandatory gate payloads,
+> timeout-deny (fail closed), the two-person rule, the `PAUSED:` protocol — is owned by
+> [`harness/15-approval-gates`](../../harness/15-approval-gates/README.md), and the
+> **isolation mechanism** by
+> [`harness/12-sandbox-execution`](../../harness/12-sandbox-execution/README.md).
+> A guardrail library *validates*; it does not decide what is allowed. If you find
+> yourself inventing a risk tier here, it belongs in `15`.
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │  GUARDRAILS MAP VS HARNESS COMPONENTS                      │
+│                                                            │
+│  harness/15-approval-gates  → CANONICAL policy + PAUSED:   │
+│                              protocol (owns policy)        │
+│  harness/12-sandbox-execution → canonical isolation tiers  │
 │                                                            │
 │  Guardrails AI            → harness/06 (tool input/output) │
 │  NeMo Guardrails (NVIDIA) → harness/07 (workflow rails)    │

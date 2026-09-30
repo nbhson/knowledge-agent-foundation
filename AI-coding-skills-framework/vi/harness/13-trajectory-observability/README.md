@@ -1,4 +1,4 @@
-# 📈 XIII. Trajectory & Observability
+# 📈 Harness 13. Trajectory & Observability
 
 > ## 📑 Mục Lục
 >
@@ -1138,6 +1138,7 @@ là mẫu phát hiện được. Hộp đen là cách bạn tìm ra chuyến bay
 
 - `03-update-memory-store/trajectory-fork-replay.md` — implementation engine (fork/replay/resume)
 - `07-workflow/README.md` §13 — bên tiêu thụ resume (checkpoint-resume, idempotency)
+- `07-workflow/README.md` §5 — *liền kề, không trùng lặp*: distributed tracing cho một run (`trace_id`/spans/logs/metrics) của một workflow. Nối với module này qua `runId`; một span không phải một `TrajectoryEvent`.
 - `08-task/README.md` §11 — bên sinh task (nguồn của `parentTaskId`)
 - `11-evaluation/README.md` §15 — bên tiêu thụ eval (trajectory eval, hiệu chuẩn người)
 - `12-sandbox-execution/README.md` §9 — bên sinh event `sandbox`
@@ -1146,7 +1147,7 @@ là mẫu phát hiện được. Hộp đen là cách bạn tìm ra chuyến bay
 
 ---
 
-*Tài liệu: XIII. Trajectory & Observability — HARNESS ENGINEERING EDITION*
+*Tài liệu: Harness 13. Trajectory & Observability — HARNESS ENGINEERING EDITION*
 *Module cross-cutting · cột sống của observability harness*
 *Cập nhật: 19/07/2026*
 *Tác giả: AI Knowledge Repository*

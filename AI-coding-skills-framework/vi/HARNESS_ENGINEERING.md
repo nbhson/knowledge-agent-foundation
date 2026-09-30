@@ -45,7 +45,7 @@
     - [Tích Hợp Component Với Modules Trong Repo](#tích-hợp-component-với-modules-trong-repo)
       - [Bảng Mapping Chi Tiết](#bảng-mapping-chi-tiết)
   - [🔭 Toàn Cảnh: Harness Engineering — AI Coding Skills Framework](#-toàn-cảnh-harness-engineering--ai-coding-skills-framework)
-    - [Kiến Trúc Tổng Thể: 7 Components → 12 Modules](#kiến-trúc-tổng-thể-7-components--12-modules)
+    - [Kiến Trúc Tổng Thể: 7 Components → 15 Modules](#kiến-trúc-tổng-thể-7-components--15-modules)
     - [6.2. Anthropic Multi-Agent Architecture](#62-anthropic-multi-agent-architecture)
     - [6.3. Claude Code Leak - Hệ Thống Harness Siêu Đẳng](#63-claude-code-leak---hệ-thống-harness-siêu-đẳng)
       - [A. Quản lý Context 5 Cấp Độ](#a-quản-lý-context-5-cấp-độ)
@@ -1473,14 +1473,14 @@ Mỗi thành phần của Harness tương ứng trực tiếp với các modules
 
 ## 🔭 Toàn Cảnh: Harness Engineering — AI Coding Skills Framework
 
-### Kiến Trúc Tổng Thể: 7 Components → 12 Modules
+### Kiến Trúc Tổng Thể: 7 Components → 15 Modules
 
-Sơ đồ dưới đây cho thấy **toàn bộ hệ thống Harness Engineering** và cách nó ánh xạ tới **12 modules** trong AI Coding Skills Framework:
+Sơ đồ dưới đây cho thấy **toàn bộ hệ thống Harness Engineering** và cách nó ánh xạ tới **15 modules** trong AI Coding Skills Framework — module `01`–`11` là các giai đoạn pipeline, còn `12`–`15` là mặt phẳng kiểm soát xuyên module mà tất cả đều phụ thuộc vào:
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════════════════╗
 ║              AI CODING SKILLS FRAMEWORK — TOÀN CẢNH HARNESS ENGINEERING              ║
-║                  Architecture Overview: 7 Components → 12 Modules                    ║
+║                 Architecture Overview: 7 Components → 15 Modules                    ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 
                          TIẾN HÓA: 3 KỶ NGUYÊN AI ENGINEERING
@@ -1569,7 +1569,7 @@ Sơ đồ dưới đây cho thấy **toàn bộ hệ thống Harness Engineering
  │  │ MCP integration   │  │ Output validation│  │ (retry patterns) │                 │
  │  │ Tool validation   │  │ Security checks  │  │ 11-evaluation     │                 │
  │  │                   │  │ Prompt injection │  │ (metrics)         │                 │
- │  │                   │  │ detection        │  │ 12-loop-eng       │                 │
+ │  │                   │  │ detection        │  │ loop/ (cấp cao)  │                 │
  │  └──────────────────┘  └──────────────────┘  └──────────────────┘                 │
  │            │                         │                         │                    │
  │            └─────────────────────────┼─────────────────────────┘                    │
@@ -1584,7 +1584,9 @@ Sơ đồ dưới đây cho thấy **toàn bộ hệ thống Harness Engineering
  │                         │  │ (10-auto)    │ │ (06-tools) │ │                        │
  │                         │  └──────────────┘ └────────────┘ │                        │
  │                         │  ┌──────────────────────────────┐ │                        │
- │                         │  │ Execution Permissions        │ │                        │
+ │                         │  │ Cách Ly & Ranh Giới           │ │                        │
+ │                         │  │ Thực Thi   → 12-sandbox      │ │                        │
+ │                         │  │ Cổng Duyệt  → 15             │ │                        │
  │                         │  └──────────────────────────────┘ │                        │
  │                         └──────────────────────────────────┘                        │
  │                                      │                                               │
@@ -1599,51 +1601,73 @@ Sơ đồ dưới đây cho thấy **toàn bộ hệ thống Harness Engineering
                         ════════════════════════════════════
                          MODULES CỐT LÕI TRONG FRAMEWORK
 
- ┌─────────────────────────────────────────────────────────────────────────────────┐
- │                                                                                 │
- │  01  ── retrieve-memory-knowledge    (Retrieve & Memory — RAG Pipeline)        │
- │  02  ── build-context                 (Context Management — 5 levels)          │
- │  03  ── update-memory-store           (Memory Update — lưu kiến thức mới)      │
- │  04  ── plan-decompose-task           (Planning — chia nhỏ task)               │
- │  05  ── prompt-builder                (Prompt + Guardrails)                    │
- │  06  ── decide-tools-mcp              (Tools + Permissions + MCP)              │
- │  07  ── workflow                      (Workflow + Feedback Loops)              │
- │  08  ── task                          (Task Management)                         │
- │  09  ── multi-agent                   (Agent Orchestration)                     │
- │  10  ── automation                    (Automation + Access Control)             │
- │  11  ── evaluation                    (Evaluation + Metrics + Guardrails)       │
- │  12  ── loop-engineering              (Continuous Improvement Loop)             │
- │                                                                                 │
- └─────────────────────────────────────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────────────────────────────────────┐
+  │  01  ── retrieve-memory-knowledge (Truy xuất & Bộ nhớ — pipeline RAG)          │
+  │  02  ── build-context             (Quản lý Context — 5 cấp)                    │
+  │  03  ── update-memory-store       (Cập nhật Bộ nhớ — lưu tri thức mới)         │
+  │  04  ── plan-decompose-task       (Lập kế hoạch — phân rã nhiệm vụ)            │
+  │  05  ── prompt-builder            (Prompt + Guardrail)                         │
+  │  06  ── decide-tools-mcp          (Tool + Quyền + MCP)                         │
+  │  07  ── workflow                  (Workflow + Vòng Lặp Phản Hồi)               │
+  │  08  ── task                      (Quản lý Nhiệm Vụ)                           │
+  │  09  ── multi-agent               (Điều Phối Agent)                            │
+  │  10  ── automation                (Tự Động Hoá + Kiểm Soát Truy Cập)           │
+  │  11  ── evaluation                (Đánh Giá + Số Đo)                           │
+  │  12  ── sandbox-execution         (Sandbox — cách ly & ranh giới thực thi)     │
+  │  13  ── trajectory-observability  (Trajectory — xương sống quan sát)           │
+  │  14  ── compaction-context        (Nén Context — quản lý cửa sổ context)       │
+  │  15  ── approval-gates            (Cổng Duyệt — human-in-the-loop)             │
+  └────────────────────────────────────────────────────────────────────────────────┘
+
+                         ┌──────────────────────────────────────────────┐
+                         │   MẶT PHẲNG KIỂM SOÁT XUYÊN MODULE (12–15)   │
+                         │   Không phải một giai đoạn pipeline — mà là    │
+                         │   nền tảng mà mọi module ở trên phải đáp ứng. │
+                         │                                              │
+                         │  12 sandbox      → ranh giới cách ly          │
+                         │  13 trajectory   → quan sát được, replay được│
+                         │  14 compaction   → kiểm soát context lớn dần  │
+                         │  15 approval     → gate thao tác không đảo ngược│
+                         │                                              │
+                         │  Mỗi module là chuẩn cho câu hỏi của riêng nó;│
+                         │  module khác chỉ trỏ tới, không lặp lại.      │
+                         └──────────────────────────────────────────────┘
 
  ══════════════════════════════════════════════════════════════════════════════════
 
  PHÂN TÍCH MỐI QUAN HỆ:
  - Harness ≈ TOÀN BỘ khung bên ngoài (bao gồm 7 components)
  - RAG Pipeline (01) ≈ 1 phần của MEMORY component — Thành phần "Bộ não"
- - 12 modules ≈ 12 kỹ năng cụ thể, mỗi module phục vụ 1+ components của Harness
+- 15 modules ≈ 15 kỹ năng cụ thể; module 01–11 là các giai đoạn pipeline, còn
+   module 12–15 là mặt phẳng kiểm soát xuyên module mà tất cả đều phụ thuộc vào
  - Prompt Engineering (05) ≈ Kỹ thuật nền tảng, nằm xuyên suốt nhiều components
+ - Vòng lặp cải thiện KHÔNG phải là harness/12. Nó nằm ở phần `loop/` cấp cao nhất
+   của framework; harness/12 là cách ly sandbox.
 
  TỶ LỆ BAO PHỦ CỦA TỪNG MODULE TRONG HARNESS:
  ┌─────────────────────────────────────────────────────────────────────────┐
- │  01-retrieve-memory     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  85%   │
- │  02-build-context       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  70%   │
+ │  01-retrieve-memory     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  85%   │
+ │  02-build-context       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  70%   │
  │  03-update-memory       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░  50%   │
  │  04-plan-decompose      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░  55%   │
- │  05-prompt-builder      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░  60%   │
- │  06-decide-tools        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  75%   │
- │  07-workflow            ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░  80%   │
- │  08-task                ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░  45%   │
- │  09-multi-agent         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  65%   │
- │  10-automation          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░  40%   │
- │  11-evaluation          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  70%   │
- │  12-loop-engineering    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  60%   │
+ │  05-prompt-builder      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  60%   │
+ │  06-decide-tools        ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  75%   │
+ │  07-workflow            ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░  80%   │
+ │  08-task                ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░  45%   │
+ │  09-multi-agent         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░  65%   │
+ │  10-automation          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░  40%   │
+ │  11-evaluation          ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  70%   │
+ │  ── mặt phẳng kiểm soát xuyên module — mọi giai đoạn trên đều phụ thuộc ── │
+ │  12-sandbox-execution   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░  75%   │
+ │  13-trajectory-obser   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░  80%   │
+ │  14-compaction-context  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░  65%   │
+ │  15-approval-gates      ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░  70%   │
  └─────────────────────────────────────────────────────────────────────────┘
 
 **Tóm lại:**
 | Khía cạnh | RAG Pipeline (01) | Harness Engineering (Toàn bộ) |
 |-----------|-------------------|-------------------------------|
-| **Phạm vi** | 1 kỹ thuật: retrieve + augment | 7 components, 12 modules |
+| **Phạm vi** | 1 kỹ thuật: retrieve + augment | 7 components, 15 modules |
 | **Vai trò** | Cung cấp kiến thức cho LLM | Kiểm soát mọi thứ AI có thể làm |
 | **Tỷ lệ bao phủ** | ~85% của Memory component | 100% toàn bộ hệ thống |
 | **Quan hệ** | Là 1 phần của Memory | Là tổng thể bao hàm RAG |

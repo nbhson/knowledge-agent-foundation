@@ -1,4 +1,4 @@
-# 🗜️ XIV. Context Compaction
+# 🗜️ Harness 14. Context Compaction
 
 > ## 📑 Mục Lục
 >
@@ -1095,7 +1095,7 @@ giản là may mắn.
 
 ---
 
-*Tài liệu: XIV. Context Compaction — HARNESS ENGINEERING EDITION*
+*Tài liệu: Harness 14. Context Compaction — HARNESS ENGINEERING EDITION*
 *Module cross-cutting · thứ cho phép một context window cố định gánh một run không giới hạn*
 *Cập nhật: 19/07/2026*
 *Tác giả: AI Knowledge Repository*

@@ -3221,20 +3221,47 @@ class ToolLearner:
 - Sandboxed tool environments
 - Audit trail for all operations
 
-## 17. Củng Cố Production: Sandboxing, MCP, Approval, Memoization
+## 17. Củng Cố Production: MCP, Ranh Giới Thực Thi, Memoization
+
+> **Ghi chú sở hữu.** Mục này phụ trách phần **tầng tool** sở hữu: MCP client, các khai báo
+> năng lực mà một tool phải công bố, và memoization. **Chính sách cách ly** (tier, 5 control
+> bắt buộc, runner đã harden) do [`12-sandbox-execution`](../12-sandbox-execution/README.md) sở hữu;
+> **phán quyết của con người** (risk tier, payload cổng, timeout-deny) do
+> [`15-approval-gates`](../15-approval-gates/README.md) sở hữu. Cả hai là module cross-cutting
+> bao quanh mọi tool call. Module này khai báo *tool cần gì*; 12 và 15 quyết định *tool có được không*.
 
 ### 17.1 Định nghĩa
 
-| Thuật ngữ | Định nghĩa |
-|------|------------|
-| Sandbox | Tool/code không tin cậy chạy trong Docker/microVM/gVisor với allowlist FS, mặc định không net, timeout+kill, không chứa secret env |
-| MCP client production | Auth (OAuth/xoay key), ghim `protocolVersion` + cache capability có TTL, `tools/list` ETag, giới hạn kích thước kết quả + cắt ngắn |
-| Cổng op nguy hiểm | Ghi/chạy/mạng/publish cần bản ghi approval tường minh (ai, cái gì, diff, hết hạn) |
-| Memoization | `(tool, args_hash)` giống nhau trong TTL trả kết quả cache; streaming nhả chunk một phần có trần |
+| Thuật ngữ | Định nghĩa | Chủ sở hữu |
+|------|------------|-------|
+| Sandbox | Tool/code không tin cậy chạy trong Docker/microVM/gVisor với allowlist FS, mặc định không net, timeout+kill, không chứa secret env | → `12-sandbox-execution` |
+| MCP client production | Auth (OAuth/xoay key), ghim `protocolVersion` + cache capability có TTL, `tools/list` ETag, giới hạn kích thước kết quả + cắt ngắn | module này |
+| Cổng op nguy hiểm | Ghi/chạy/mạng/publish cần bản ghi approval tường minh (ai, cái gì, diff, hết hạn) | → `15-approval-gates` |
+| Memoization | `(tool, args_hash)` giống nhau trong TTL trả kết quả cache; streaming nhả chunk một phần có trần | module này |
 
-### 17.2 Sandboxing Thật
+### 17.2 Ranh Giới Thực Thi — Phần Module Này Sở Hữu
 
-Mặc định từ chối: chỉ jail `workdir`, root chỉ đọc trừ `/work/tmp`, `network: none` trừ khi tool khai báo `net: [allowlist]`. Luôn `timeout + SIGKILL cả process group`. Không bao giờ tiêm env `AWS_/GH_/OPENAI_`; chỉ cấp cred tạm có phạm vi hẹp. Ưu tiên `gVisor (runsc)` hoặc `microVM (Firecracker)` cho code không tin cậy; Docker thường `--pids-limit --memory --cpus --read-only --tmpfs` là mức tối thiểu.
+Tool registry là nơi một tool *công bố* bán kính ảnh hưởng của nó; `12-sandbox-execution` là
+nơi bản công bố đó được *cưỡng chế*. Việc của module này là giữ cho bản công bố đó trung thực:
+
+1. **Mọi tool phải công bố năng lực, không chỉ tham số.** Cùng với `path`/`query`, một tool
+   khai báo `net: ["api.example.com"]`, `allowWrite: ["src/**"]`, `secrets: ["EXAMPLE_API_KEY"]`
+   và `irreversible: boolean`. Tool không khai báo gì sẽ nhận profile từ chối mặc định.
+2. **Bản khai báo được version và có thể review.** Đổi `irreversible: false → true` là một
+   diff có ý nghĩa bảo mật và phải qua cùng quy trình review với code; các tier cổng trong
+   `15-approval-gates` được định khoá theo chính các field này.
+3. **Executor từ chối mở rộng quyền.** Nếu runtime của tool yêu cầu nhiều hơn điều nó đã khai
+   báo (ghi ngoài `allowWrite`, egress ra host không có trong `net`), harness chặn lời gọi và
+   phát `tool_result` với `error: "capability-escalation"` — không cho qua trong im lặng.
+4. **Rate limit và timeout cũng là phần khai báo của tool** (`rate_limit_per_minute`,
+   `timeout_seconds` trong `ToolDefinition` ở trên), và deadline sandbox ở `12` phải
+   `≥` timeout của tool để deadline ngoài không bao giờ nổ trước deadline trong.
+
+Bộ quy tắc đầy đủ — tier cách ly, allowlist filesystem, network deny-by-default,
+deadline + process-group kill, trần output, giữ secret, ma trận policy theo role,
+và runner đã harden với image ghim theo digest — nằm ở
+[`12-sandbox-execution`](../12-sandbox-execution/README.md). Hãy đọc module đó trước khi
+viết bất kỳ dòng code nào spawn subprocess.
 
 ### 17.3 Quy Tắc MCP Trong Production
 
@@ -3244,25 +3271,9 @@ Mặc định từ chối: chỉ jail `workdir`, root chỉ đọc trừ `/work/
 4. Streaming: chuyển tiếp chunk `content` khi tới, áp trần tổng + idle timeout (10s); hủy khi client cancel.
 
 <details>
-<summary>TypeScript Code — Sandbox + Gọi MCP (Click to expand/collapse)</summary>
+<summary>TypeScript Code — Gọi MCP + Memoization (Click to expand/collapse)</summary>
 
 ```typescript
-import { spawn } from "node:child_process";
-export interface SandboxOpts { workdir: string; allowWrite: string[]; allowNet: string[]; timeoutMs: number; memory: string; env: Record<string,string>; }
-const SECRET_ENV = /^(AWS_|GH_|GITHUB_|OPENAI_|ANTHROPIC_|SK-)/i;
-export function runSandboxed(cmd: string[], args: string[], o: SandboxOpts): Promise<{ stdout: string; stderr: string; code: number }> {
-  for (const k of Object.keys(o.env)) if (SECRET_ENV.test(k)) throw new Error(`secret env blocked: ${k}`);
-  const docker = ["run", "--rm", "--read-only", `--memory=${o.memory}`, "--pids-limit=64", "--network", o.allowNet.length ? "bridge" : "none",
-    "-v", `${o.workdir}:/work:rw`, "-w", "/work", ...o.allowWrite.flatMap(p => ["-v", `${p}:${p}:rw`]), "sandbox-img:latest", ...cmd, ...args];
-  return new Promise((resolve, reject) => {
-    const p = spawn("docker", docker, { env: { PATH: process.env.PATH } });
-    let out = "", err = ""; const t = setTimeout(() => { try { process.kill(-p.pid!, "SIGKILL"); } catch {} reject(new Error("sandbox timeout kill")); }, o.timeoutMs);
-    p.stdout.on("data", d => { out += d; if (out.length > 256_000) { clearTimeout(t); try { process.kill(-p.pid!, "SIGKILL"); } catch {} reject(new Error("output cap exceeded")); } });
-    p.stderr.on("data", d => err += d);
-    p.on("close", code => { clearTimeout(t); resolve({ stdout: out.slice(0, 256_000), stderr: err.slice(0, 64_000), code: code ?? 1 }); });
-    p.on("error", e => { clearTimeout(t); reject(e); });
-  });
-}
 const memo = new Map<string, { at: number; val: any }>();
 export async function callMcp(url: string, token: string, tool: string, args: object, v = "2025-06-18") {
   const key = `${tool}:${JSON.stringify(args)}`; const m = memo.get(key);
@@ -3277,17 +3288,36 @@ export async function callMcp(url: string, token: string, tool: string, args: ob
 }
 ```
 
+> Runner subprocess có sandbox từng nằm ở đây đã chuyển sang
+> [`12-sandbox-execution` §4.2](../12-sandbox-execution/README.md), nơi ghim image theo digest,
+> chặn path traversal qua `realpath`, ép idle timeout, và redact secret khỏi output.
+> Đừng đưa lại runner gắn tag `:latest` vào đây.
+
 </details>
 
 ### 17.4 UX Approval Cho Op Nguy Hiểm
 
-Phân tầng: `read` tự động, `write/exec` cần xem trước diff + duyệt một click (hết hạn 5 phút), `publish/delete/auth-change` cần gõ xác nhận + lý do. Bản ghi approval: `{tool, argsHash, diffSummary, approver, expiresAt, trajectoryId}`. Timeout thì từ chối mặc định. Hiển thị: lệnh, cwd, file chạm tới, egress mạng, cờ không đảo ngược.
+Taxonomy tier, payload cổng bắt buộc có bằng chứng, timeout-deny (fail closed), và audit
+trail `approval_request` / `approval_verdict` đều do
+[`15-approval-gates`](../15-approval-gates/README.md) sở hữu. Phần thuộc về đây là
+**UX đồng ý phía tool**, vì tool definition chính là nơi người duyệt biết mình đang duyệt cái gì:
+
+- **Hiển thị từ bản khai báo, không phải từ args thô.** Cổng hiện `command`, `cwd`, các file
+  chạm tới, egress mạng, và cờ `irreversible` — tất cả đến từ năng lực tool đã khai báo (§17.2),
+  không phải từ việc phân tích lại `args` tại thời điểm duyệt.
+- **Tool không khai báo năng lực gì sẽ hiện thành bán kính ảnh hưởng không xác định**, điều này
+  ép lên tier cao nhất. Không bao giờ để một tool có vẻ an toàn hơn thực tế.
+- **Một click cho `write/exec`, gõ xác nhận cho `publish/delete/auth-change`** — nhưng cửa sổ
+  hết hạn và luật hai-người đến từ `15`, không từ đây.
+- **Tool MCP nhận nhãn server** trong prompt đồng ý. Duyệt một lời gọi tới MCP server từ xa
+  là quyết định tin cậy khác hẳn việc duyệt một subprocess cục bộ.
 
 ### 17.5 Checklist
 
-- [ ] Sandbox: mặc định tắt net, allowlist FS, timeout+SIGKILL, trần output, không secret env?
+- [ ] Mọi tool có khai báo `net` / `allowWrite` / `secrets` / `irreversible`? Không khai báo = từ chối mặc định?
+- [ ] Control sandbox đã đối chiếu với `12-sandbox-execution` (tắt net, allowlist FS, timeout+SIGKILL, trần output, không secret env, image ghim digest)?
 - [ ] MCP: ghim version, cache giới hạn có TTL + vô hiệu, auth xoay vòng, trần kích thước/timeout?
-- [ ] Op nguy hiểm có cổng với xem trước diff + bản ghi approval hết hạn?
+- [ ] Op nguy hiểm qua cổng với xem trước diff + bản ghi approval hết hạn, theo `15-approval-gates`?
 - [ ] Memo cuộc gọi giống nhau theo hash args chuẩn có TTL; streaming có trần?
 
 ---

@@ -96,7 +96,7 @@ Unlike Module VII (Workflow), which organizes a pipeline, Loop Engineering focus
 Module XII is split into **dedicated files** so it is easy to learn one part at a time — mirroring the documentation structure of the `loop-engineering` repo:
 
 ```
-12-loop-engineering/
+loop/
 ├── README.md            ← YOU ARE HERE — overview + learning path + case studies
 ├── 01-concepts/         ← Concepts: 5 building blocks, anatomy, L1-L3, taxonomy
 ├── 02-patterns/         ← 7 production patterns, one file per pattern

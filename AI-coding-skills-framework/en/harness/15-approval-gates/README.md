@@ -1,4 +1,4 @@
-# 🔐 XV. Approval Gates — Human-in-the-Loop for Irreversible Actions
+# 🔐 Harness 15. Approval Gates — Human-in-the-Loop for Irreversible Actions
 
 > ## 📑 Table of Contents
 >
@@ -1022,7 +1022,7 @@ export interface FatigueMetric { tier: Tier; approvalRate: number; medianWaitMs:
 - Write every request/verdict as a trajectory event with `diffHash`/`dryRunHash` (→ 13).
 - Batch `write`-tier reviews to keep human attention on the decisions that need it (§7.1).
 - Measure approval rate + median wait per tier and treat drift as an incident signal.
-- Test te restart path: open gate, kill process, restart, verdict still enforced.
+- Test the restart path: open gate, kill process, restart, verdict still enforced.
 
 ### 13.2 DON'T ❌
 
@@ -1151,11 +1151,11 @@ metric (→ 9.3) becomes the product dashboard of the next five years.
 - `12-sandbox-execution/README.md` — technical ceiling that gates complement
 - `13-trajectory-observability/` — gate as event, audit + replay (§6 of this module consumes it)
 - `14-compaction-context/README.md` — pending approvals are part of the pin set (→ 14 §3.2)
-- `08-execute-task/README.md` §11 — idempotency cache that makes resume safe
+- `08-task/README.md` §11 — idempotency cache that makes resume safe
 
 ---
 
-*Document: XV. Approval Gates — HARNESS ENGINEERING EDITION*
+*Document: Harness 15. Approval Gates — HARNESS ENGINEERING EDITION*
 *Cross-cutting module · control plane for irreversible actions · human-in-the-loop*
 *Updated: 19/07/2026*
 *Author: AI Knowledge Repository*

@@ -1,4 +1,4 @@
-# 🗜️ XIV. Context Compaction
+# 🗜️ Harness 14. Context Compaction
 
 > ## 📑 Table of Contents
 >
@@ -410,11 +410,11 @@ and do the next step correctly. Test it exactly that way:
 ```typescript
 /** The acceptance test for a resume block: can a cold agent continue? */
 export function resumeIsSufficient(block: ResumeBlock, nextAction: string): boolean {
-  return block.goal.length > 0                                    // không mục đích thì không có nhiệm vụ
-      && block.open.length > 0                                    // phải biết còn việc gì
-      && block.repro.command.length > 0                           // phải lặp lại được lỗi
-      && block.next.length > 0                                    // phải biết làm gì tiếp
-      && countTokens(block) <= 300;                               // ngân sách cứng
+  return block.goal.length > 0                                    // no goal, no task
+      && block.open.length > 0                                    // must know what is still open
+      && block.repro.command.length > 0                           // must be able to re-trigger the bug
+      && block.next.length > 0                                    // must know what to do next
+      && countTokens(block) <= 300;                               // hard budget
 }
 ```
 
@@ -1093,7 +1093,7 @@ difference between an agent that survives long runs and one that is merely lucky
 
 ---
 
-*Document: XIV. Context Compaction — HARNESS ENGINEERING EDITION*
+*Document: Harness 14. Context Compaction — HARNESS ENGINEERING EDITION*
 *Cross-cutting module · what lets a fixed context window support an unbounded run*
 *Last updated: 19/07/2026*
 *Author: AI Knowledge Repository*

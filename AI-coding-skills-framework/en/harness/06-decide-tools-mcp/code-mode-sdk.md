@@ -194,6 +194,6 @@ export class CodeModeExecutor {
 - **Detailed Logging**: Require the LLM to use `console.log()` at key processing milestones for easy tracing in the Event Stream.
 
 ### 🛡️ Security Guardrails
-- **Sandbox Isolation**: Always run code in an isolated environment (Docker Container, Worker Threads, or V8 Isolate). Never use `eval()` or `vm.runInThisContext()`.
-- **Resource Constraints**: Set execution time limits (`timeoutMs`), memory limits (`maxMemory`), and a maximum number of Shell commands.
-- **Permission Approval**: If the script performs dangerous operations (e.g.: `rm -rf`, `git push --force`), the Sandbox must pause and request confirmation from the User.
+- **Sandbox Isolation**: Always run code in an isolated environment (Docker Container, Worker Threads, or V8 Isolate). Never use `eval()` or `vm.runInThisContext()`. The tier taxonomy, the mandatory controls, and the hardened runner are specified in [`12-sandbox-execution`](../12-sandbox-execution/README.md) — this section only records that Code Mode scripts inherit them.
+- **Resource Constraints**: Set execution time limits (`timeoutMs`), memory limits (`maxMemory`), and a maximum number of Shell commands. These are the `12` §3 resource caps applied to a Code Mode sandbox; change them there, not here.
+- **Permission Approval**: If the script performs dangerous operations (e.g.: `rm -rf`, `git push --force`), the Sandbox must pause and request confirmation from the User. The pause mechanism is the `PAUSED:` protocol in [`15-approval-gates`](../15-approval-gates/README.md) §5 — note that "pause and ask" is not the same as "deny on timeout", and it is `15` that decides which applies.

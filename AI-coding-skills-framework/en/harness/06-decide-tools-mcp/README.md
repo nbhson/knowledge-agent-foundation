@@ -34,6 +34,12 @@
 >   - [15.1 Tool Learning](#151-tool-learning)
 > - [16. Future](#16-future)
 >   - [16.1 Trends 2026-2028](#161-trends-2026-2028)
+> - [17. Production Hardening: MCP, Execution Boundaries, Memoization](#17-production-hardening-mcp-execution-boundaries-memoization)
+>   - [17.1 Definitions](#171-definitions)
+>   - [17.2 Execution Boundaries — What This Module Owns](#172-execution-boundaries--what-this-module-owns)
+>   - [17.3 MCP Production Rules](#173-mcp-production-rules)
+>   - [17.4 Dangerous-Op Approval UX](#174-dangerous-op-approval-ux)
+>   - [17.5 Checklist](#175-checklist)
 > - [Reference Materials](#reference-materials)
 >   - [Papers & Research](#papers-&-research)
 >   - [Frameworks & Tools](#frameworks-&-tools)
@@ -3219,20 +3225,48 @@ class ToolLearner:
 
 ---
 
-## 17. Production Hardening: Sandboxing, MCP, Approvals, Memoization
+## 17. Production Hardening: MCP, Execution Boundaries, Memoization
+
+> **Ownership note.** This section covers what the *tool layer* owns: the MCP client, the
+> capability declarations a tool must publish, and memoization. The **isolation policy**
+> (tiers, the five mandatory controls, the hardened runner) is owned by
+> [`12-sandbox-execution`](../12-sandbox-execution/README.md); the **human verdict**
+> (risk tiers, gate payload, timeout-deny) is owned by
+> [`15-approval-gates`](../15-approval-gates/README.md). Both are cross-cutting modules that
+> wrap every tool call. This module declares *what a tool needs*; 12 and 15 decide *whether it gets it*.
 
 ### 17.1 Definitions
 
-| Term | Definition |
-|------|------------|
-| Sandbox | Untrusted tool/code runs in Docker/microVM/gVisor with FS allowlist, no net (default), timeout+kill, no secret env |
-| MCP production client | Auth (OAuth/key rotation), `protocolVersion` pin + capability cache with TTL, `tools/list` ETag, result size caps + truncation |
-| Dangerous-op gate | Write/exec/network/publish requires explicit approval record (who, what, diff, expiry) |
-| Memoization | Identical `(tool, args_hash)` within TTL returns cached result; streaming yields partial chunks with cap |
+| Term | Definition | Owner |
+|------|------------|-------|
+| Sandbox | Untrusted tool/code runs in Docker/microVM/gVisor with FS allowlist, no net (default), timeout+kill, no secret env | → `12-sandbox-execution` |
+| MCP production client | Auth (OAuth/key rotation), `protocolVersion` pin + capability cache with TTL, `tools/list` ETag, result size caps + truncation | this module |
+| Dangerous-op gate | Write/exec/network/publish requires explicit approval record (who, what, diff, expiry) | → `15-approval-gates` |
+| Memoization | Identical `(tool, args_hash)` within TTL returns cached result; streaming yields partial chunks with cap | this module |
 
-### 17.2 Real Sandboxing
+### 17.2 Execution Boundaries — What This Module Owns
 
-Default-deny: `workdir` jail only, read-only root except `/work/tmp`, `network: none` unless tool declares `net: [allowlist]`. Always `timeout + SIGKILL process group`. Never inject `AWS_/GH_/OPENAI_` env; pass scoped temp creds only. Prefer `gVisor (runsc)` or `microVM (Firecracker)` for untrusted code; plain Docker `--pids-limit --memory --cpus --read-only --tmpfs` is minimum.
+The tool registry is where a tool *declares* its blast radius; `12-sandbox-execution` is where
+that declaration is *enforced*. This module's job is to keep the declaration honest:
+
+1. **Every tool publishes its capabilities**, not just its parameters. Alongside `path`/`query`,
+   a tool declares `net: ["api.example.com"]`, `allowWrite: ["src/**"]`, `secrets: ["EXAMPLE_API_KEY"]`,
+   and `irreversible: boolean`. A tool that declares nothing gets the default-deny profile.
+2. **The declaration is versioned and reviewable.** Changing `irreversible: false → true` is a
+   security-relevant diff and must go through the same review as a code change — the gate
+   tiers in `15-approval-gates` are keyed off these fields.
+3. **The executor refuses to widen.** If a tool's runtime asks for more than it declared
+   (a write outside `allowWrite`, an egress host not in `net`), the harness denies the call and
+   emits a `tool_result` with `error: "capability-escalation"` — it does not silently allow.
+4. **Rate limits and timeouts are per-tool declarations too** (`rate_limit_per_minute`,
+   `timeout_seconds` in `ToolDefinition` above), and the sandbox deadline in `12` must be
+   `≥` the tool timeout so the outer deadline never fires before the inner one reports.
+
+The full rule set — isolation tiers, filesystem allowlist, network deny-by-default,
+deadline + process-group kill, output caps, secret containment, per-role policy matrix,
+and the hardened runner that pins images by digest — lives in
+[`12-sandbox-execution`](../12-sandbox-execution/README.md). Read that module before writing
+any code that spawns a subprocess.
 
 ### 17.3 MCP Production Rules
 
@@ -3242,25 +3276,9 @@ Default-deny: `workdir` jail only, read-only root except `/work/tmp`, `network: 
 4. Streaming: forward `content` chunks as they arrive, enforce total cap + idle timeout (10s); abort on client cancel.
 
 <details>
-<summary>TypeScript Code — Sandbox + MCP Call (Click to expand/collapse)</summary>
+<summary>TypeScript Code — MCP Call + Memoization (Click to expand/collapse)</summary>
 
 ```typescript
-import { spawn } from "node:child_process";
-export interface SandboxOpts { workdir: string; allowWrite: string[]; allowNet: string[]; timeoutMs: number; memory: string; env: Record<string,string>; }
-const SECRET_ENV = /^(AWS_|GH_|GITHUB_|OPENAI_|ANTHROPIC_|SK-)/i;
-export function runSandboxed(cmd: string[], args: string[], o: SandboxOpts): Promise<{ stdout: string; stderr: string; code: number }> {
-  for (const k of Object.keys(o.env)) if (SECRET_ENV.test(k)) throw new Error(`secret env blocked: ${k}`);
-  const docker = ["run", "--rm", "--read-only", `--memory=${o.memory}`, "--pids-limit=64", "--network", o.allowNet.length ? "bridge" : "none",
-    "-v", `${o.workdir}:/work:rw`, "-w", "/work", ...o.allowWrite.flatMap(p => ["-v", `${p}:${p}:rw`]), "sandbox-img:latest", ...cmd, ...args];
-  return new Promise((resolve, reject) => {
-    const p = spawn("docker", docker, { env: { PATH: process.env.PATH } });
-    let out = "", err = ""; const t = setTimeout(() => { try { process.kill(-p.pid!, "SIGKILL"); } catch {} reject(new Error("sandbox timeout kill")); }, o.timeoutMs);
-    p.stdout.on("data", d => { out += d; if (out.length > 256_000) { clearTimeout(t); try { process.kill(-p.pid!, "SIGKILL"); } catch {} reject(new Error("output cap exceeded")); } });
-    p.stderr.on("data", d => err += d);
-    p.on("close", code => { clearTimeout(t); resolve({ stdout: out.slice(0, 256_000), stderr: err.slice(0, 64_000), code: code ?? 1 }); });
-    p.on("error", e => { clearTimeout(t); reject(e); });
-  });
-}
 const memo = new Map<string, { at: number; val: any }>();
 export async function callMcp(url: string, token: string, tool: string, args: object, v = "2025-06-18") {
   const key = `${tool}:${JSON.stringify(args)}`; const m = memo.get(key);
@@ -3275,17 +3293,36 @@ export async function callMcp(url: string, token: string, tool: string, args: ob
 }
 ```
 
+> The sandboxed subprocess runner that used to sit here has moved to
+> [`12-sandbox-execution` §4.2](../12-sandbox-execution/README.md), which pins the image by
+> digest, guards path traversal via `realpath`, enforces an idle timeout, and redacts
+> secrets from output. Do not reintroduce a `:latest`-tagged runner here.
+
 </details>
 
 ### 17.4 Dangerous-Op Approval UX
 
-Tiers: `read` auto, `write/exec` needs diff preview + one-click approve (5-min expiry), `publish/delete/auth-change` needs typed confirm + reason. Approval record: `{tool, argsHash, diffSummary, approver, expiresAt, trajectoryId}`. Deny-by-default on timeout. Show: command, cwd, files touched, net egress, irreversible flag.
+The tier taxonomy, the mandatory-evidence gate payload, timeout-deny (fail closed), and the
+`approval_request` / `approval_verdict` audit trail are all owned by
+[`15-approval-gates`](../15-approval-gates/README.md). What stays here is the **tool-side
+consent UX**, because a tool definition is where the approver learns what they are approving:
+
+- **Render from the declaration, not from raw args.** The gate shows `command`, `cwd`, files
+  touched, net egress, and the `irreversible` flag — all of which come from the tool's declared
+  capabilities (§17.2), not from re-parsing `args` at approval time.
+- **A tool with no declared capabilities renders as an unknown blast radius**, which forces the
+  highest tier. Never let a tool appear safer than it is.
+- **One-click for `write/exec`, typed confirm for `publish/delete/auth-change`** — but the
+  expiry window and the two-person rule come from `15`, not from here.
+- **MCP tools get a server badge** in the consent prompt. Approving a call to a remote MCP
+  server is a different trust decision from approving a local subprocess.
 
 ### 17.5 Checklist
 
-- [ ] Sandbox: net-off default, FS allowlist, timeout+SIGKILL, output cap, no secret env?
+- [ ] Every tool declares `net` / `allowWrite` / `secrets` / `irreversible`? Undeclared = default-deny?
+- [ ] Sandbox controls verified against `12-sandbox-execution` (net-off, FS allowlist, timeout+SIGKILL, output cap, no secret env, digest-pinned image)?
 - [ ] MCP: version pinned, caps cached w/ TTL + invalidate, auth rotated, size/timeout caps?
-- [ ] Dangerous ops gated with diff preview + expiring approval record?
+- [ ] Dangerous ops gated with diff preview + expiring approval record, per `15-approval-gates`?
 - [ ] Identical-call memo keyed on canonical args hash with TTL; streaming capped?
 
 ---

@@ -33,10 +33,20 @@ Không có observability, bạn đang **bay trong đêm tối không đèn**. Kh
 
 ### Quan Hệ Với Harness
 
+> **Thư mục này là catalog sản phẩm/công cụ, không phải hợp đồng của harness.**
+> Mọi thứ bên dưới là một *vendor hay thư viện cụ thể* mà bạn có thể chọn dùng. Hợp đồng
+> event **chuẩn** — harness phát ra điều gì, schema `TrajectoryEvent`, join key, retention,
+> redaction — thuộc sở hữu của
+> [`harness/13-trajectory-observability`](../../harness/13-trajectory-observability/README.md).
+> Chọn công cụ ở đây; tuân thủ hợp đồng ở kia. Nếu bạn thấy mình đang định nghĩa shape của
+> event ở đây, nó thuộc về `13`.
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │  OBSERVABILITY MAP VS HARNESS COMPONENTS                   │
 │                                                            │
+│  harness/13-trajectory-obser → HỢP ĐỒNG event chuẩn       │
+│                              (giữ schema, không phải đây) │
 │  harness/06-decide-tools-mcp → log tool calls + outcomes   │
 │  harness/07-workflow         → trace flow qua components   │
 │  harness/11-evaluation       → metrics thu thập được      │

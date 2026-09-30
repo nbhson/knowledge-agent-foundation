@@ -36,7 +36,7 @@ Có một vấn đề âm thầm: mỗi dự án mới bạn **viết lại cùn
 ### Quan Hệ Với Harness
 
 ```
-harness/  ← dạy KIẾN THỨC (7 components, 12 modules)
+harness/  ← dạy KIẾN THỨC (7 components, 15 modules)
 loop/     ← dạy VÒNG LẶP (concepts, patterns, safety, operating)
 tools/loop-cli/  ← ❯ CÔNG CỤ hiện thực hóa cả hai
 

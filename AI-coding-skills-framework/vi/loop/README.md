@@ -96,7 +96,7 @@ Khác với Module VII (Workflow) vốn tổ chức một pipeline, Loop Enginee
 Module XII được chia thành **các file chuyên đề** để dễ học theo từng phần — tương ứng cấu trúc tài liệu của repo `loop-engineering`:
 
 ```
-12-loop-engineering/
+loop/
 ├── README.md            ← BẠN ĐANG Ở ĐÂY — tổng quan + lộ trình + case studies
 ├── 01-concepts/         ← Khái niệm: 5 building blocks, anatomy, L1-L3, taxonomy
 ├── 02-patterns/         ← 7 production patterns, mỗi pattern một file

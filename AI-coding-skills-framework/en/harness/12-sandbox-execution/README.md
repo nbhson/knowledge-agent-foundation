@@ -1,4 +1,4 @@
-# 🔒 XII. Sandbox Execution
+# 🔒 Harness 12. Sandbox Execution
 
 > ## 📑 Table of Contents
 >
@@ -673,7 +673,7 @@ in the harness. Rules:
 
 ### 5.2 Code-Mode Sandboxing
 
-Code-mode (→ `06/code-mode-sdk.md` §5) has the LLM write TypeScript that calls tools,
+Code-mode (→ `06-decide-tools-mcp/code-mode-sdk.md` §5) has the LLM write TypeScript that calls tools,
 instead of emitting one JSON tool call per operation. Two major wins — 70–90% fewer
 round trips, and `Promise.all` over independent calls — and one major risk: the
 generated program is arbitrary code.
@@ -1227,7 +1227,7 @@ transparency logs, and continuous escape-drill suites running in production.
 
 ---
 
-*Document: XII. Sandbox Execution — HARNESS ENGINEERING EDITION*
+*Document: Harness 12. Sandbox Execution — HARNESS ENGINEERING EDITION*
 *Cross-cutting module · canonical home for the sandbox concept*
 *Last updated: 19/07/2026*
 *Author: AI Knowledge Repository*

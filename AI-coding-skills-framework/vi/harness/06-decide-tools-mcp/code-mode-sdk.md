@@ -194,6 +194,6 @@ export class CodeModeExecutor {
 - **Detailed Logging**: Yêu cầu LLM dùng `console.log()` tại các mốc xử lý quan trọng để dễ dàng truy vết trong Event Stream.
 
 ### 🛡️ Security Guardrails
-- **Sandbox Isolation**: Luôn chạy mã trong môi trường cô lập (Docker Container, Worker Threads, hoặc V8 Isolate). Không bao giờ dùng `eval()` hoặc `vm.runInThisContext()`.
-- **Resource Constraints**: Thiết lập giới hạn thời gian chạy (`timeoutMs`), dung lượng bộ nhớ (`maxMemory`), và số câu lệnh Shell tối đa.
-- **Permission Approval**: Nếu script thực hiện các thao tác nguy hiểm (vd: `rm -rf`, `git push --force`), Sandbox phải tạm dừng và yêu cầu xác nhận từ phía User.
+- **Sandbox Isolation**: Luôn chạy mã trong môi trường cô lập (Docker Container, Worker Threads, hoặc V8 Isolate). Không bao giờ dùng `eval()` hoặc `vm.runInThisContext()`. Taxonomy tier, các control bắt buộc, và runner đã harden được đặc tả trong [`12-sandbox-execution`](../12-sandbox-execution/README.md) — mục này chỉ ghi nhận rằng script Code Mode kế thừa chúng.
+- **Resource Constraints**: Thiết lập giới hạn thời gian chạy (`timeoutMs`), dung lượng bộ nhớ (`maxMemory`), và số câu lệnh Shell tối đa. Đây là các giới hạn tài nguyên ở `12` §3 áp cho sandbox Code Mode; hãy đổi ở đó, không đổi ở đây.
+- **Permission Approval**: Nếu script thực hiện các thao tác nguy hiểm (vd: `rm -rf`, `git push --force`), Sandbox phải tạm dừng và yêu cầu xác nhận từ phía User. Cơ chế tạm dừng là giao thức `PAUSED:` ở [`15-approval-gates`](../15-approval-gates/README.md) §5 — lưu ý rằng "tạm dừng và hỏi" không giống "từ chối khi hết hạn", và `15` là nơi quyết định cái nào áp dụng.

@@ -2909,9 +2909,24 @@ Quy tắc: mỗi task có `lease_id + deadline + max_attempts`; supervisor phi t
 
 ### 16.4 Sandbox Cho Từng Agent + Giữ Secret
 
-- Tool tối thiểu theo role: `reviewer` chỉ có FS đọc + không shell; `coder` có shell sandbox (không net) trừ khi được cấp rõ.
-- Secret không bao giờ nằm trong message: agent nhận token ngắn hạn theo phạm vi (5–15 phút) qua env injection; supervisor redact `sk-*, ghp_*, AWS_*` khỏi log/transcript.
-- Chính sách egress: chặn theo mặc định; allow-list domain cho từng agent; mọi I/O tool đều audit kèm `agent_id + lease_id`.
+**Cơ chế cách ly** — tier cách ly, 5 control bắt buộc, runner đã harden, và ma trận policy
+theo role — thuộc sở hữu của
+[`12-sandbox-execution`](../12-sandbox-execution/README.md) §2–§6. Mục này chỉ bổ sung hai
+thứ riêng của *một đội* agent chứ không phải của một run đơn lẻ:
+
+- **Tool tối thiểu theo role, phân giải qua ma trận role.** `reviewer` chỉ có FS đọc + không
+  shell; `coder` có shell sandbox không net. Thay vì lặp lại các grant này, hãy tra cứu:
+  ma trận policy theo role ở `12` §6 được khoá theo *tên role*, nên run multi-agent và run
+  solo phân giải ra *cùng* policy cho *cùng* một role. Một `reviewer` mà lại chạy được shell
+  trong swarm nhưng không trong solo là bug leo thang đặc quyền.
+- **Secret là lease theo từng agent, không phải theo message.** Agent nhận token ngắn hạn
+  theo phạm vi (5–15 phút) qua env injection, và supervisor redact `sk-*, ghp_*, AWS_*` khỏi
+  log và transcript trước khi ghi. Secret containment bên trong sandbox là `12` §3.5; phần
+  riêng của multi-agent là một secret đã đưa cho agent này không bao giờ được xuất hiện trong
+  context của agent khác qua một projection trên blackboard chung.
+- **Chính sách egress: chặn theo mặc định, allow-list domain cho từng agent.** Mọi I/O tool đều
+  audit kèm `agent_id + lease_id` — đây chính là thứ làm cho việc redact ở trên truy vết được:
+  một token rò rỉ trên blackboard chung sẽ truy được về đúng một lease.
 
 <details>
 <summary>TypeScript Code — Heartbeat + Reassignment (Click to expand/collapse)</summary>

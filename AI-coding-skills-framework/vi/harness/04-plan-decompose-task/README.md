@@ -2673,7 +2673,31 @@ Chính sách: log `attempt, error_class, decision, reason` mỗi lần chuyển;
 
 ### 14.3 Cổng Approval Human-in-Loop
 
-Chặn subtask gắn `risk ∈ {high, irreversible}`: `db.migrate, prod.deploy, user.delete, external.send`. Payload cổng: `diff plan + bán kính ảnh hưởng + output dry-run + lệnh rollback`. Thực thi tạm dừng có timeout (ví dụ 30 phút → tự động từ chối). Từ chối → đánh dấu `blocked`, kích hoạt replan loại nhánh bị từ chối. Mọi approval được audit-log `(who, when, diff_hash)`.
+**Nửa phía planner của cổng.** Risk tier được gán *ở đây*, lúc lập kế hoạch — một subtask
+gắn `risk ∈ {high, irreversible}` là ứng viên đi qua cổng, và chính tag đó là khoá mà
+`15-approval-gates` dùng để tra phán quyết. Ba việc thuộc module này:
+
+1. **Gán tag, không gắn cổng.** Gắn `db.migrate, prod.deploy, user.delete, external.send`
+   là `risk ∈ {high, irreversible}` ngay khi phân rã. Subtask không có tag là `low` và không
+   bao giờ chặn.
+2. **Liệt kê bán kính ảnh hưởng từ registry policy.** Lấy đúng tập tài nguyên mà subtask
+   chạm tới từ registry sandbox/policy ở
+   [`12-sandbox-execution` §6](../12-sandbox-execution/README.md) — không phải từ một phỏng
+   đoán trong plan.
+3. **Từ chối → replan, không retry.** Một lần từ chối ghi lại `reason` và kích hoạt replan
+   *loại nhánh bị từ chối* (xem bảng quyết định ở §14.2). Retry lại chính subtask bị từ chối
+   sẽ lặp vô hạn.
+
+**Nửa còn lại của cổng thuộc [`15-approval-gates`](../15-approval-gates/README.md)**:
+taxonomy tier và TTL, payload bắt buộc có bằng chứng (`diff plan + bán kính ảnh hưởng + output
+dry-run + lệnh rollback`), timeout-deny (fail closed), giao thức checkpoint `PAUSED:`, luật
+hai-người, và audit trail `approval_request` / `approval_verdict`. Đừng lặp lại những hằng số
+đó ở đây — một planner và một gatekeeper bất đồng về cửa sổ hết hạn là một cổng hoặc treo
+vĩnh viễn, hoặc tự kích hoạt mà không ai canh.
+
+Mọi approval được audit-log `(who, when, diff_hash)` và ghi vào trajectory store
+(`13-trajectory-observability` §6), để "con người chưa từng thấy nó" là một tuyên bố kiểm chứng
+được chứ không phải cái cớ.
 
 ### 14.4 Idempotency Subtask + Lỗi Một Phần
 

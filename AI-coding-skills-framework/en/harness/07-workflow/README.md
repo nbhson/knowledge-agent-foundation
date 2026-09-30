@@ -1456,6 +1456,20 @@ class SagaOrchestrator:
 > - **Analogy:** Like a taxi's dashcam + instrument cluster + GPS map: you know where the car is going, how fast or slow it's moving, and where it's stuck.
 > - **Why it matters:** Without observability, when a workflow is slow or wrong you can't find the root cause and you have to debug step by step by feel.
 
+> **Ownership note — two different layers, do not conflate them.** This section is
+> **per-run instrumentation for one workflow**: a `trace_id` threaded through the steps of a
+> single execution, spans with parent/child structure, a logger, and a metrics collector. That
+> is the classic distributed-tracing toolkit and it is the right tool for "why was *this run*
+> slow".
+>
+> The **cross-module event contract** — the append-only `TrajectoryEvent` stream that every
+> harness module emits into and every debugging tool reads from, with join keys, fork/replay,
+> retention, and redaction — is owned by
+> [`13-trajectory-observability`](../13-trajectory-observability/README.md). A `trace_id` is
+> not a `sessionId`, and a span is not a `TrajectoryEvent`; the two join on `runId`. If you are
+> building the harness's spine, read `13`. If you are instrumenting one workflow, what follows
+> is enough.
+
 ### 5.1 Distributed Tracing
 
 Like a "tracing order" that follows an entire journey: each request is assigned a unique trace_id, and however many services it passes through, each hop is recorded as spans (parent span, child span) — that way you can reconstruct the whole journey of a request and pinpoint exactly which step is slow or broken:
@@ -3140,6 +3154,20 @@ Write-ahead log: `append({seq, stepId, inputHash, status, outputRef})` + atomic 
 Idempotency store: `Map<idempotencyKey, resultRef>` with TTL; mutations require key, reads don't. Backpressure: global `Semaphore(maxParallel=4–8)`, per-step queue cap (e.g. 100); `enqueue` throws `BackpressureError` when full — caller retries with jitter. Deadline: single `deadlineAt` per run; each step gets `remaining = deadlineAt - now()` (minus buffer); propagate via `AbortSignal.timeout(remaining)`. Never extend deadlines silently.
 
 ### 13.4 Human Approval / Pause-Resume Nodes
+
+**This section owns the checkpoint primitive; the gate policy belongs to
+[`15-approval-gates`](../15-approval-gates/README.md).** The engine below provides *mechanism* —
+a typed `PAUSED:` throw after a durable checkpoint, a write-ahead log, an idempotency store,
+and a `WAITING_APPROVAL` state that survives process death. It does **not** decide *whether* a
+step needs a human or what the approver is shown. Those are specified in `15`: the risk-tier
+taxonomy and TTLs, the mandatory-evidence payload, timeout-deny (fail closed), the two-person
+rule, and the `approval_request` / `approval_verdict` audit trail. The protocol's ordering
+contract — checkpoint first, then throw; the human's approval is a *verdict delivery*, not a
+restart — is written out in `15` §5.2.
+
+Treat `needsApproval?: boolean` below as the seam: `07` moves the run to `WAITING_APPROVAL`
+and throws; `15` decides who settles it and what happens on timeout. A `true` here does not
+mean "ask someone", it means "ask the Gatekeeper".
 
 <details>
 <summary>TypeScript Code — Durable Engine (Click to expand/collapse)</summary>

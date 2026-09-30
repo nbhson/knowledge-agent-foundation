@@ -23,12 +23,19 @@ Module 08 (Task Management)   ───►  hooks/ (phase-1 → phase-5)  ⚠️
 Module 09 (Multi-Agent)       ───►  ❌ CHƯA CÓ                  ❌ MISSING
 Module 10 (Automation)        ───►  hooks/ + rules/             ⚠️ PARTIAL
 Module 11 (Evaluation)        ───►  reports/, report-templates/ ✅ DONE
+Module 12 (Sandbox)           ───►  📄 docs only (chưa có)        ❌ MISSING
+Module 13 (Trajectory/Obs.)   ───►  📄 docs only (chưa có)        ❌ MISSING
+Module 14 (Compaction)        ───►  📄 docs only (chưa có)        ❌ MISSING
+Module 15 (Approval Gates)    ───►  📄 docs only (chưa có)        ❌ MISSING
 ```
+
+> Module `01`–`11` là các giai đoạn pipeline; `12`–`15` là mặt phẳng kiểm soát xuyên
+> module (sandbox, trajectory, compaction, approval) mà các module trên đều phụ thuộc vào.
 
 | Thuộc tính | AI Coding Skills Framework | instruction/ |
 |------------|---------------------------|------------|
 | **Mục đích** | Tài liệu học tập — giáo trình lý thuyết | Bộ cấu hình thực tế — files điều khiển AI agent |
-| **Nội dung** | 11 module: Retrieve, Context, Prompt, Workflow, Multi-Agent, Evaluation... | Skills, Rules, Workflows, Knowledge, Hooks, Templates |
+| **Nội dung** | 15 module: Retrieve, Context, Prompt, Workflow, Multi-Agent, Evaluation... | Skills, Rules, Workflows, Knowledge, Hooks, Templates |
 | **Đối tượng** | Developers muốn **hiểu nguyên lý** AI Agent | AI Agent (Cline/Copilot/Cursor) đọc trực tiếp khi coding |
 | **Kết quả** | Hiểu "tại sao" và "cách làm" | AI agent hành xử đúng chuẩn dự án |
 | **Cần thêm gì** | Chỉ cần đọc | Cần kiến thức về project-specific rules, team workflows |
@@ -60,6 +67,19 @@ Module 11 (Evaluation)        ───►  reports/, report-templates/ ✅ DONE
 |--------|-----------|-----------------------------|
 | **03 - Update Memory Store** | Write-back memory, memory consolidation, event sourcing | **Hoàn toàn chưa có.** Không có cơ chế lưu trữ lại kiến thức mới, merge/dedupe facts, hay event sourcing |
 | **09 - Multi-Agent** | Agent roles, communication, orchestration, shared memory | **Hoàn toàn chưa có.** Không có multi-agent config, agent-to-agent communication, shared memory |
+
+#### 🔒 Mặt phẳng kiểm soát (12–15) — chưa có tương ứng
+
+Các module này là tài liệu policy/contract, không phải kỹ năng triển khai được, nên cột
+`instruction/` trống là đúng — nhưng điều đó cũng có nghĩa là **harness hiện không có cơ chế
+thực thi** cho chúng.
+
+| Module | Framework | Hiện trạng trong instruction/ |
+|--------|-----------|-----------------------------|
+| **12 - Sandbox Execution** | Isolation tiers, network egress control, image pinning | **Chưa có.** Tool call chạy không sandbox; không có network policy, không ghim image digest |
+| **13 - Trajectory & Observability** | Append-only event stream, join keys, retention | **Chưa có.** Không có structured event log xuyên module; chỉ có text log |
+| **14 - Compaction & Context** | Compaction trigger, pin set, pruning | **Chưa có.** Không có cơ chế nén context hay quản lý token budget |
+| **15 - Approval Gates** | Risk tiers, gate payload, timeout-deny, audit | **Chưa có.** Approval ở module 04 chỉ là bước trong workflow, không có timer, payload hay audit trail |
 
 ### Tại sao thiếu?
 

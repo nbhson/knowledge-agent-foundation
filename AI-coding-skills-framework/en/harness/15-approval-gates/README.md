@@ -556,6 +556,8 @@ Automated checks over the audit stream:
   violation of deny→no-retry (→ 4.3).
 
 Quarterly review cadence: approval rate per tier, median wait, override incidents,
+
+> 🔑 **Policy / Permission highlight:** this section is the **policy-compliance sensor** — it turns the audit log (§6.1) into enforceable policy verdicts (missing dry-run evidence, self-approval, out-of-order approval, deny→retry). Pair with `12-sandbox-execution` (deny-by-default) and `06` §8 (RBAC) for the full policy loop: decide → enforce → audit → detect.
 delegation-chain depth. The point of the review is not policing — it's *design*
 intelligence: a tier with a 98% approval rate and 30-second median wait is not being
 read, it's being rubber-stamped, and the gate has become theater (→ 14).

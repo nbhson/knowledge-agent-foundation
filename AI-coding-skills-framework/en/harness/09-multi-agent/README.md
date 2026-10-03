@@ -2970,6 +2970,8 @@ async function handleFault(agentId: string, lease: TaskLease, reason: string,
 
 **Real-world:** Claude Code subagents run isolated with bounded tool grants; on subagent stall the orchestrator kills the process, bumps the task lease, and respawns with condensed transcript — reviewers vote 2-of-3 (quorum) so one crashed voter never blocks merge.
 
+**File Reference**: For the full sub-agent spec (lifecycle, spawn contract, roles, budget, testing), see [`SUBAGENT.md`](SUBAGENT.md)
+
 ---
 
 ## References

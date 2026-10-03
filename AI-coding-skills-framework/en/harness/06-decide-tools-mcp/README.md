@@ -2018,6 +2018,8 @@ class ToolComposer:
 >
 > **Why it matters:** Tools like `write_file` or `execute_python` can cause irreversible damage; a permission system is the barrier that stops unintended agent side effects.
 
+> 🔑 **Policy / Permission highlight:** this section is the **policy & permission decision point** — RBAC role → permission level → allow/deny + audit. Enforcement lives in `12-sandbox-execution` (§6 policy matrix), human overrides in `15-approval-gates`, and pre-execution checks in `tools/guardrails`.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 

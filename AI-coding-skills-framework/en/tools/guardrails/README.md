@@ -132,6 +132,8 @@ def guardrail_check(tool: ToolDefinition, params: Dict) -> bool:
         approve = human_approve(params)     # human confirmation required
         if not approve: return False
     if exceeded_rate_limit(tool): return False  # rate limited
+
+> 🔑 **Policy / Permission highlight:** this guardrail is the **pre-execution policy checkpoint** — `requires_permission` (standard / elevated / admin) maps to `06` §8 RBAC, and `elevated` escalates to `15-approval-gates` for human confirm. Rate limit is the companion abuse policy.
     return True
 ```
 

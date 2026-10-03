@@ -540,6 +540,8 @@ Các check tự động trên dòng audit:
   deny→no-retry (→ 4.3).
 
 Nhịp review hàng quý: approval rate theo tier, wait trung vị, override incidents, độ sâu
+
+> 🔑 **Highlight Policy / Permission:** đây là **cảm biến tuân thủ policy** — biến audit log (§6.1) thành verdict policy có thể enforce (thiếu dry-run evidence, tự duyệt, approval mất thứ tự, deny→retry). Kết hợp `12-sandbox-execution` (deny-by-default) và `06` §8 (RBAC) thành vòng policy đầy đủ: decide → enforce → audit → detect.
 chuỗi delegation. Mục đích review không phải kiểm soát — nó là *trí tuệ thiết kế*: một
 tier với approval rate 98% và wait trung vị 30 giây không được đọc, nó bị stamp máy móc,
 và gate đã thành kịch (→ 14).

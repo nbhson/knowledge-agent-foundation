@@ -2015,6 +2015,8 @@ class ToolComposer:
 >
 > **Vì sao quan trọng:** Các tool như `write_file` hay `execute_python` có thể gây thiệt hại không đảo ngược; phân quyền là hàng rào chặn side effects ngoài ý muốn của agent.
 
+> 🔑 **Highlight Policy / Permission:** đây là **điểm ra quyết định policy & permission** — role RBAC → mức permission → allow/deny + audit. Thực thi ở `12-sandbox-execution` (§6 ma trận policy), override bởi người ở `15-approval-gates`, kiểm tra pre-execution ở `tools/guardrails`.
+
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 

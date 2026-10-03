@@ -2971,6 +2971,8 @@ async function handleFault(agentId: string, lease: TaskLease, reason: string,
 
 **Thực tế:** subagent của Claude Code chạy cô lập với quyền tool giới hạn; khi subagent treo, orchestrator kill process, tăng task lease và khởi động lại với transcript rút gọn — reviewer bỏ phiếu 2-of-3 (quorum) nên một voter crash không bao giờ chặn merge.
 
+**Tham chiếu file**: Spec đầy đủ về sub-agent (vòng đời, contract spawn, vai trò, budget, kiểm thử), xem [`SUBAGENT.md`](SUBAGENT.md)
+
 ---
 
 ## Tài Liệu Tham Khảo

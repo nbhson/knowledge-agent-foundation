@@ -138,6 +138,8 @@ Nếu bạn cho phép auto-merge cho loops trivial:
 
 Document allowlist trong `AGENTS.md` hoặc `loop-auto-merge-allowlist.md`.
 
+> 🔑 **Highlight Policy / Permission:** đây là **policy quyền merge** — default-deny auto-merge, chỉ allowlist tường minh mới là đường ngoại lệ. Coi file allowlist như policy-as-code: versioned, reviewed, và được `gate check` kiểm tra trước mọi merge.
+
 ### 2.3 MCP Connector Least Privilege
 
 | Connector | Read | Write |
@@ -148,6 +150,8 @@ Document allowlist trong `AGENTS.md` hoặc `loop-auto-merge-allowlist.md`.
 | Database | — | không production write từ loops |
 
 Dùng bot accounts / tokens riêng với scopes tối thiểu.
+
+> 🔑 **Highlight Policy / Permission (connector):** đây là **policy permission theo connector** (least privilege từng integration) — mỗi MCP connector chỉ nhận đúng scope read/write cần thiết, trên identity riêng. Soi chiếu `12-sandbox-execution` §6 (ma trận theo role) và `06` §8 (các mức RBAC).
 
 ### 2.4 Human Gates
 

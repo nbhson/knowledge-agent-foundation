@@ -138,6 +138,8 @@ If you allow auto-merge for trivial loops:
 
 Document the allowlist in `AGENTS.md` or `loop-auto-merge-allowlist.md`.
 
+> 🔑 **Policy / Permission highlight:** this is a **merge-permission policy** — default-deny auto-merge, with an explicit allowlist as the only exception path. Treat the allowlist file as policy-as-code: versioned, reviewed, and checked by `gate check` before any merge.
+
 ### 2.3 MCP Connector Least Privilege
 
 | Connector | Read | Write |
@@ -148,6 +150,8 @@ Document the allowlist in `AGENTS.md` or `loop-auto-merge-allowlist.md`.
 | Database | — | no production writes from loops |
 
 Use dedicated bot accounts / tokens with minimal scopes.
+
+> 🔑 **Policy / Permission highlight:** this is a **connector-permission policy** (least privilege per integration) — each MCP connector gets only the read/write scopes it needs, on a dedicated identity. Mirrors `12-sandbox-execution` §6 (per-role matrix) and `06` §8 (RBAC levels).
 
 ### 2.4 Human Gates
 

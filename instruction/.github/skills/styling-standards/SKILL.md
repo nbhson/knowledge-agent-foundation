@@ -1,6 +1,7 @@
 ---
 name: styling-standards
 description: Guidelines for modular SCSS structures, order of imports, CSS variables, and responsive grid layouts in the Horizon 2 UI project.
+user-invocable: false
 ---
 
 # Styling Standards & SCSS Guidelines
@@ -73,6 +74,11 @@ ordinary project partials without an Angular/Sass migration plan.
 - Theme-dependent values belong in `_theme.scss` as CSS custom properties
   under `[data-theme='light']`/`[data-theme='dark']`; consume them with
   `var(--...)` in rules that support both themes.
+- TypeScript-side colors (chart fills, canvas, HTML strings in services) live in
+  the owning feature's `color.constants.ts` (plural naming — see
+  [Angular Architecture §6.4](../angular-architecture/SKILL.md)), bound to the
+  same CSS custom properties where both sides consume the palette; never
+  duplicate the palette as TS literals and stylesheet defaults.
 
 ## 4. Helpers, Mixins, and Selector Design
 
@@ -165,3 +171,29 @@ Before completing a style change:
 6. Run `npm run format`, `npm run lint`, and `npm run build` for the final
    change. For visual changes, run `npm run startdev` and inspect the affected
    route manually.
+
+## 9. Material Override Protocol (in order — stop at the first that works)
+
+1. Component input / theme configuration (`_theme.scss` owner) — no CSS override at all.
+2. Scoped class + state class on the host or documented wrapper.
+3. Shared global partial (overlays render outside the component host — their rules live there, never only in a component stylesheet).
+4. Scoped `::ng-deep` under the owning component class with a one-line reason comment — last resort, never unscoped.
+5. `!important` only for Material/Bootstrap specificity or a deliberate state override, after a scoped selector was tried.
+
+Each step down this ladder must be justifiable in review: "why didn't step N−1 work" is a valid reviewer question.
+
+## 10. Common Pitfalls (check before finishing)
+
+| Pitfall | Why it hurts | Fix |
+|---|---|---|
+| Styling by `autoId` or generated MDC class | Breaks on automation renames / Material upgrades | Semantic classes; `autoId` is automation-only |
+| `[style]`/inline style for layout or colors | Unthemeable, unresponsive, untestable | Classes + state classes + tokens |
+| Fixed pixel widths on page grids | Overflow on narrow viewports | Fluid tracks (`minmax`, `1fr`), scoped scroll containers |
+| Sticky header without narrow-breakpoint reset | Content hidden behind chrome | Reset/reduce sticky at the narrow breakpoint |
+| Status by color alone | Fails contrast + color-blind users | Icon/label/text state alongside color |
+
+## Token Governance (enterprise)
+
+- New tokens go to the owning partial (`_variable.scss` for app-wide, feature stylesheet only for single-consumer geometry) with a meaningful name and one comment stating intent.
+- Never fork a token (copy-paste with a new name and a slightly different value) — update the token or document why two tokens must coexist.
+- Theme-dependent values stay in `_theme.scss` as CSS custom properties; TS-side palette stays in the owning `*.constants.ts` bound to the same properties — one source of truth per side, never three copies.

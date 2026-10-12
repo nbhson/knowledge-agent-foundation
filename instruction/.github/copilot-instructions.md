@@ -1,196 +1,97 @@
-﻿# Workspace Custom Instructions: Horizon 2 UI
+﻿---
+name: 'Workspace Instructions'
+description: 'Global 5-phase routing for Horizon 2 UI (strict mode default).'
+---
+
+# Workspace Custom Instructions: Horizon 2 UI
 
 ---
 
 **Priority — Strict 5-phase routing (phase-gated loading)**
 
-Strict mode is the DEFAULT. When handling developer requests, Copilot must route
-the workflow type first (Feature / Bug Fix / Refactor / Unit Test / Code Review /
-Jira Ticket Review), then execute the phase matrix in `.github/hooks/session.json`
+Strict mode is the DEFAULT. When handling developer requests, Copilot routes
+the workflow type first (New Feature / Bug Fix / Refactor / Unit Test / Code Review /
+Jira Ticket Investigate), then follows the phase matrix in `.github/phases/README.md`
+(+ machine-readable mirror in `.github/phases/session.json`)
 in order — full P1→P5 for code-delivery, P1+P5 for analysis-only.
 
 Load ONLY what the current phase needs per the load index in
-`.github/hooks/README.md` (one skill + knowledge + one template at a time).
+`.github/phases/README.md` (one skill + knowledge + one template at a time).
+Path-scoped rules auto-attach from `.github/instructions/*.instructions.md`
+(`angular15` for `**/*.{ts,html}`, `scss` for `**/*.scss`, `angular-tests` for
+`**/*.spec.ts`) — do not repeat them here.
 Strict means no skipped gates — not preloading every file upfront.
 Every code change ends with a Phase 5 report (template + stable content-hash +
 `REPORTS.md` row + Jira sync or manual steps).
 
+> These are **conventions** (prompt guidance), not enforced gates: nothing here
+> executes code or blocks tools by itself. Executable automation lives in
+> `.github/hooks/`:
+> - `phase-gates.json` (+ `phase-guard.sh`/`.ps1`) — real Copilot hooks
+>   (`sessionStart` injects routing context, `preToolUse` enforces the Phase 2
+>   approval gate, `postToolUse` reminds lint/format, `sessionEnd`/`errorOccurred`
+>   point back to the phase index). `touch .github/PHASE2_APPROVED` after the
+>   developer approves a non-trivial plan (file is gitignored, never committed).
+> - `report-lifecycle.sh` — report archive/delete + manifest verify. Run
+>   on demand (`bash .github/hooks/report-lifecycle.sh`). Not coupled
+>   to npm lifecycle.
+> Cloud-agent note: hooks run non-interactively in an ephemeral Linux sandbox
+> (only `bash` honored, outbound network firewalled, files discarded at job end);
+> a `preToolUse` decision of `ask` is treated as `deny`, and command-hook
+> timeouts are fail-open — so the Jira fallback below must be
+> manual steps, never interactive prompts.
+
 ---
 
-## Developer Workflow Orchestration 
+## Developer Workflow Convention
 
-This section is mandatory. Before making code changes, GitHub Copilot must follow these workflow phases in order and must not skip the planning/review step.
+Before making code changes, Copilot follows these workflow phases in order and
+does not skip the planning/review step. (Full visual flowchart for humans:
+`phases/DIAGRAM.md` — reference only, not loaded per phase.)
 
-GitHub Copilot acts as a guide to assist the developer through these sequential phases when delivering changes:
+> **Routing source of truth:** `phases/session.json` → `workflow_phase_config`
+> (machine-readable, authoritative). `phases/README.md` is its human-readable
+> mirror. Do NOT copy the routing table elsewhere — link here instead.
+> Summary: code-delivery workflows (new-feature, bug-fix, refactor, unit-test)
+> run full P1→P5; analysis-only (code-review, jira-ticket-investigate) run
+> P1+P5 only (`skip_phases` in session.json). Template + report filename mapping
+> lives in exactly one place: `skills/report-generation/SKILL.md` §1.
 
-```mermaid
-flowchart TD
-    Request[Developer Request]
-    Decision{Request Type}
+Phase order: P1 Understanding → P2 Planning → P3 Execution & Formatting →
+P4 Validation & PR → P5 Report Generation. Post-merge sync runs after merge.
 
-    Request --> Decision
+Key conventions:
 
-    Decision -->|Jira Ticket Review| JiraReviewWF[Jira Review Workflow]
-    Decision -->|Feature Delivery| FeatureWF[Feature Delivery Workflow]
-    Decision -->|Bug Fix| BugFixWF[Bug Fix Workflow]
-    Decision -->|Refactor| RefactorWF[Refactor Workflow]
-    Decision -->|Unit Test| UnitTestWF[Unit Test Workflow]
-    Decision -->|Code Review| CodeReviewWF[Code Review Workflow]
-
-    subgraph Phase1["Phase 1 - Understanding (MCP w/ Fallback)"]
-        LoadGuidelines[Load Guidelines & Core Rules]
-        CheckJira{Jira MCP Available?}
-        LoadJira[Fetch Jira Ticket via MCP]
-        AskJira[Ask Dev for Ticket Summary]
-        CheckFigma{Figma MCP Available?}
-        LoadFigma[Fetch Figma Design via MCP]
-        AskFigma[Ask Dev for Design Spec / Screenshot]
-        LoadReportContext[Load Relevant Report Context]
-        Investigation[Investigation]
-        ContradictionScan[Identify Contradictions & Ambiguities]
-        ApplyRules[Apply Stack Rules]
-
-        LoadGuidelines --> CheckJira
-        CheckJira -->|Yes| LoadJira
-        CheckJira -->|No| AskJira
-        LoadJira --> CheckFigma
-        AskJira --> CheckFigma
-        CheckFigma -->|Yes| LoadFigma
-        CheckFigma -->|No| AskFigma
-        LoadFigma --> LoadReportContext
-        AskFigma --> LoadReportContext
-        LoadReportContext --> Investigation
-        Investigation --> ContradictionScan
-        ContradictionScan --> ApplyRules
-    end
-
-    JiraReviewWF --> LoadGuidelines
-    FeatureWF --> LoadGuidelines
-    BugFixWF --> LoadGuidelines
-    RefactorWF --> LoadGuidelines
-    UnitTestWF --> LoadGuidelines
-    CodeReviewWF --> LoadGuidelines
-
-    ApplyRules --> RoutingCheck{Workflow Type?}
-    RoutingCheck -->|Jira Ticket Review / Code Review| Phase5Direct[Proceed to Phase 5 — Analysis-Only]
-    RoutingCheck -->|Feature Delivery / Bug Fix / Refactor / Unit Test| ContradictionGate
-
-    subgraph Phase2["Phase 2 - Planning"]
-        ContradictionGate{Contradictions Resolved?}
-        Clarify[Clarify & Freeze Decisions with Developer]
-        Clarified{Developer Clarified?}
-        Blocked[Blocked: Waiting for Developer Clarification]
-        Plan[Draft Technical Design / Plan]
-        Approval{Developer Approval Gate*}
-        Refine[Refine Plan]
-
-        ContradictionGate -->|No| Clarify
-        Clarify --> Clarified
-        Clarified -->|No| Blocked
-        Clarified -->|Yes| ContradictionGate
-        Blocked --> Clarify
-        ContradictionGate -->|Yes| Plan
-        Plan --> Approval
-        Approval -->|Rejected| Refine
-        Refine --> Plan
-    end
-
-    subgraph Phase3["Phase 3 - Execution & Formatting"]
-        TaskList[Create Task List]
-        ExecuteTasks[Implement Code Changes]
-        CheckFigmaV{Figma MCP Available?}
-        VerifyDesign[Verify UI Against Figma Specs]
-        ManualVerify[Verify UI Manually vs Design]
-        WriteTests[Write/Update Unit Tests]
-        FormatCode[Run npm run lint & format]
-
-        TaskList --> ExecuteTasks
-        ExecuteTasks --> CheckFigmaV
-        CheckFigmaV -->|Yes| VerifyDesign
-        CheckFigmaV -->|No| ManualVerify
-        VerifyDesign --> WriteTests
-        ManualVerify --> WriteTests
-        WriteTests --> FormatCode
-    end
-
-    Approval -->|Approved| TaskList
-
-    subgraph Phase4["Phase 4 - Validation & PR (AC + Contradictions + Build + Tests + Bitbucket w/ Fallback)"]
-        CompileCheck[Run npm run build]
-        TestCheck[Run npm run test]
-        ACCheck[Verify Acceptance Criteria vs Jira Ticket]
-        ContradictionCheck[Verify Frozen Contradiction Decisions]
-        ValidationGate{Build OK & Tests OK & AC Met & Contradictions Applied?}
-        CheckBB{Bitbucket MCP Available?}
-        CreateBranch[Create Bitbucket Branch]
-        BitbucketPR[Create Bitbucket PR via MCP]
-        PreparePR[Prepare PR Description Manually]
-        DevCreatePR[Developer Creates PR in Bitbucket]
-        Reviewer[Review Code Diffs]
-
-        FormatCode --> CompileCheck
-        CompileCheck --> TestCheck
-        TestCheck --> ACCheck
-        ACCheck --> ContradictionCheck
-        ContradictionCheck --> ValidationGate
-        ValidationGate -->|No| TaskList
-        ValidationGate -->|Yes| CheckBB
-        CheckBB -->|Yes| CreateBranch
-        CheckBB -->|No| PreparePR
-        CreateBranch --> BitbucketPR
-        PreparePR --> DevCreatePR
-        BitbucketPR --> Reviewer
-        DevCreatePR --> Reviewer
-    end
-
-    subgraph Phase5["Phase 5 - Report Generation & Jira Sync (w/ Fallback)"]
-        GenerateReport[Generate Final Report]
-        ArchiveReport[Archive & Publish Report]
-        CheckJiraS{Jira MCP Available?}
-        SyncJira[Sync Jira: Status + Comment + PR Link]
-        ManualJira[Provide Manual Jira Update Steps]
-
-        GenerateReport --> ArchiveReport
-        ArchiveReport --> CheckJiraS
-        CheckJiraS -->|Yes| SyncJira
-        CheckJiraS -->|No| ManualJira
-    end
-
-    Reviewer --> GenerateReport
-    Phase5Direct --> GenerateReport
-
-    %% Visual styling
-    classDef analysisOnly fill:#ffe082,stroke:#f57f17,stroke-width:2px
-    classDef codeDelivery fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
-    class JiraReviewWF,CodeReviewWF,Phase5Direct analysisOnly
-    class FeatureWF,BugFixWF,RefactorWF,UnitTestWF codeDelivery
-```
-
-> **Notes:**
-> - `*` **Approval Gate** is mandatory for **non-trivial tasks** (multiple files, behavior changes, or significant implementation work). For trivial/no-code queries, Copilot presents the draft plan and may proceed without an explicit pause.
-> - **Contradiction Gate** runs before planning: if ticket/design/clarification inputs conflict, Copilot must list the conflicts, obtain developer decisions, and freeze the final interpretation before drafting implementation details.
-> - **Analysis-only workflows** (Code Review, Jira Ticket Review): execute only Phase 1 + Phase 5. Skip Phases 2-4 entirely — no planning, no code changes, no build/test gates, no PR creation.
-> - **Code-delivery workflows** (Feature Delivery, Bug Fix, Refactor, Unit Test): execute all 5 phases in order with the Phase 2 approval gate mandatory for non-trivial tasks.
-> - The routing decision is driven by `session.json` → `workflow_phase_config.workflows.<type>.skip_phases`. An empty list means full 5-phase execution; a non-empty list means analysis-only (P1 + P5 only).
-> - **Reviewer** (Review Code Diffs) runs for **all** workflows during Phase 4 before PR submission — not only for the Code Review workflow. It is an in-place check gate, not a separate pass.
-> - **Phase 4 Validation Gate requires all four**: Build passes, Tests pass, all Jira ticket Acceptance Criteria are explicitly met, AND frozen contradiction decisions are applied (each item traced to implementation/tests). Build+Test green alone is NOT sufficient to proceed.
+- **Approval gate** (non-trivial: ≥2 files, behavior change, or shared surface —
+  threshold table in `phases/phase-2-planning.md`): present a draft plan and
+  wait for developer approval before editing. Trivial/no-code queries present a
+  brief plan and may proceed without a pause.
+- **Contradiction gate** (before planning): list conflicts between ticket, design,
+  and clarifications; obtain developer decisions; freeze the final interpretation
+  before drafting implementation details. Blocked until resolved.
+- **Phase 4 validation gate needs all four**: build passes, tests pass, every
+  Jira Acceptance Criterion traced ✅, every frozen contradiction decision
+  applied ✅ — each traced to implementation/tests. Build+test green alone is
+  NOT sufficient.
+- **Reviewer** (review code diffs) runs in Phase 4 for every code-delivery
+  workflow — it is an in-place check, not a separate pass.
+- Routing source of truth: `phases/session.json` → `workflow_phase_config`
+  (authoritative). Real enforcement (where the harness supports it) is
+  `.github/hooks/phase-gates.json`.
 
 ### MCP Availability & Degradation Mode
 
-Every MCP integration has an explicit `Available?` decision with a fallback. **No task ever blocks on a missing MCP connection.** The workflow degrades gracefully:
+The Jira integration has an explicit `Available?` decision with a fallback. **No task ever blocks on a missing MCP connection.** The workflow degrades gracefully:
 
-| Mode | Jira | Figma | Bitbucket | Behavior |
-| :--- | :--- | :--- | :--- | :--- |
-| **Full** | ✅ | ✅ | ✅ | Fully automatic: fetch ticket + design, create PR, sync Jira |
-| **Partial A** | ❌ | ✅ | ✅ | Ask dev to paste ticket summary (AC, description) → rest runs automatically |
-| **Partial B** | ✅ | ❌ | ✅ | Ask dev to paste design/screenshot → Phase 3 verifies UI manually by eye |
-| **Partial C** | ✅ | ✅ | ❌ | Prepare PR description in advance → dev creates PR manually on Bitbucket |
-| **Manual** | ❌ | ❌ | ❌ | Run as pre-MCP workflow: developer provides all context, Copilot completes 5 phases with manual info |
+| Mode | Jira | Behavior |
+| :--- | :--- | :--- |
+| **Full** | ✅ | Fully automatic: fetch ticket, sync Jira |
+| **Manual** | ❌ | Ask dev to paste ticket summary (AC, description) → run as pre-MCP workflow with manual info |
 
 **General rules:**
-1. When an MCP server is unreachable, ask the developer **once** for the replacement (ticket summary / design spec / PR creation). Do not ask repeatedly.
-2. Record in the report under `MCP Status` — which servers were usable, which fell back to manual, and why.
-3. Fallback **does not change the 5-phase order** — it only changes the context source and how PR creation is executed.
+1. When the Jira server is unreachable, ask the developer **once** for the ticket summary. Do not ask repeatedly.
+2. Record in the report under `MCP Status` — whether Jira was usable or fell back to manual, and why.
+3. Fallback **does not change the 5-phase order** — it only changes the context source.
 4. When Jira is unreachable, Acceptance Criteria come from the dev-provided ticket summary; Phase 4 must still trace each AC to implementation/tests.
 
 ---
@@ -198,35 +99,44 @@ Every MCP integration has an explicit `Available?` decision with a fallback. **N
 ## Strict Mode (Default)
 
 Strict mode is the default for all requests. The agent follows the full ordered
-hooks, the Phase 2 approval gate, and the contradiction gate before
-implementation begins. The `strict-rules` agent is the default agent.
+phases, the Phase 2 approval gate, and the contradiction gate before
+implementation begins. The `h2-standard` agent is the default agent.
 
-## Quick Mode (Legacy Opt-In)
+## Quick Mode (Express — Opt-In Light Mode)
 
-Quick mode is NOT the default. It applies only when the developer explicitly
-prefixes the request with `quick:` (or invokes the adaptive-rules agent) for
-trivial, low-risk work. It may use the leanest valid workflow but must still
-respect repo rules, run lint/format, and escalate to strict mode whenever the
-task becomes risky, unclear, or cross-cutting.
+Quick mode is NOT the default. Two ways in:
 
-## Workflow Enforcement Summary
+| Entry | When |
+|---|---|
+| Select the `h2-express` agent in the agents dropdown | Ad-hoc small task in chat |
+| Run the `h2-express` prompt (`prompts/h2-express.prompt.md`) | Repeatable light workflow with the same rules |
 
-The definitive execution rules live in `.github/hooks/session.json` and `.github/hooks/README.md`. This file is intentionally concise and should not repeat the full policy text.
+It uses the leanest valid workflow but must still respect repo rules, run
+lint/format, and escalate to strict mode whenever the task becomes risky,
+unclear, or cross-cutting. Trivial rule-6 changes log one `merge-log.md` line
+only (no report file — see `phases/phase-2-planning.md` rule 6).
 
-- **Code-delivery workflows** follow the phase sequence in `.github/hooks/README.md`.
+## Workflow Convention Summary
+
+The routing convention is owned SOLELY by `.github/phases/session.json` →
+`workflow_phase_config` (`.github/phases/README.md` is its human-readable
+mirror), plus path-scoped rules in `.github/instructions/*.instructions.md`. This file is intentionally concise and should not repeat the full policy text.
+
+- **Code-delivery workflows** follow the phase sequence in `.github/phases/README.md`.
 - **Analysis-only review workflows** skip planning/execution/validation and move directly from Phase 1 to Phase 5.
-- **Read relevant report context** from `.github/reports/` when it exists, especially for non-trivial or repeated work.
+- **Read relevant report context** from `.github/reports/<workflow-type>/` (or `archive/YYYY-MM/`) when it exists, especially for non-trivial or repeated work.
 - **Blocking contradictions** must be resolved before implementation continues.
 - **After code changes**, apply lint/format and validation, then generate the required report or PR notes when applicable.
 
-The detailed hook references and specialized guidance remain in:
+The detailed phase references and specialized guidance remain in:
 
-- `.github/hooks/README.md`
-- `.github/hooks/phase-1-understanding.hook.md`
-- `.github/hooks/phase-2-planning.hook.md`
-- `.github/hooks/phase-3-execution-formatting.hook.md`
-- `.github/hooks/phase-4-validation-pr.hook.md`
-- `.github/hooks/phase-5-report-generation.hook.md`
+- `.github/phases/README.md`
+- `.github/phases/DIAGRAM.md` (human reference only)
+- `.github/phases/phase-1-understanding.md`
+- `.github/phases/phase-2-planning.md`
+- `.github/phases/phase-3-execution-formatting.md`
+- `.github/phases/phase-4-validation-pr.md`
+- `.github/phases/phase-5-report-generation.md`
 - `.github/skills/post-code-change/SKILL.md`
 - `.github/skills/report-generation/SKILL.md`
 - `.github/skills/pre-pull-request/SKILL.md`

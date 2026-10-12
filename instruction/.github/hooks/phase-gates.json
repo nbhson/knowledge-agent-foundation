@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "echo '{\"additionalContext\": \"Strict mode default. Read .github/copilot-instructions.md routing + .github/phases/README.md load index. Load ONLY the current phase per the index. Angular 15.2.1 NgModule/RxJS, no signals, no @if/@for.\"}'",
+        "powershell": "echo '{\"additionalContext\": \"Strict mode default. Read .github/copilot-instructions.md routing + .github/phases/README.md load index. Load ONLY the current phase per the index. Angular 15.2.1 NgModule/RxJS, no signals, no @if/@for.\"}'",
+        "timeoutSec": 10
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "bash .github/hooks/phase-guard.sh",
+        "powershell": "powershell -File .github/hooks/phase-guard.ps1",
+        "timeoutSec": 15
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "echo '{\"additionalContext\": \"Post-edit reminder: run npm run lint + npm run format on touched files; no secrets; template bindings must be property/async/pure-pipe/handler/trackBy only.\"}'",
+        "powershell": "echo '{\"additionalContext\": \"Post-edit reminder: run npm run lint + npm run format on touched files; no secrets; template bindings must be property/async/pure-pipe/handler/trackBy only.\"}'",
+        "timeoutSec": 10
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": "echo '[phase-gates] session ended — file Phase 5 report per .github/phases/phase-5-report-generation.md before closing.'",
+        "powershell": "echo '[phase-gates] session ended — file Phase 5 report per .github/phases/phase-5-report-generation.md before closing.'",
+        "timeoutSec": 10
+      }
+    ],
+    "errorOccurred": [
+      {
+        "type": "command",
+        "bash": "echo '[phase-gates] error — return to .github/phases/README.md index and resume from the failing phase with file:line evidence.'",
+        "powershell": "echo '[phase-gates] error — return to .github/phases/README.md index and resume from the failing phase with file:line evidence.'",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

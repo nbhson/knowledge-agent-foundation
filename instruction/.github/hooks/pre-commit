@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# pre-commit (local only) — activated per clone via:
+#   git config core.hooksPath .github/hooks
+# Checks: staged *.ctx.md files keep a valid stable hash + .github refs resolve.
+# Failing hook never loses work — fix the reported line and recommit.
+set -uo pipefail
+
+STAGED_CTX="$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep '\.ctx\.md$' || true)"
+STAGED_GITHUB="$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep '^\.github/' || true)"
+
+ERRORS=0
+
+if [[ -n "$STAGED_CTX" ]]; then
+  ctx_files=()
+  while IFS= read -r f; do
+    [[ -n "$f" ]] && ctx_files+=("$f")
+  done <<< "$STAGED_CTX"
+  bash .github/hooks/verify-report-hash.sh "${ctx_files[@]}" || ERRORS=$((ERRORS + 1))
+fi
+
+if [[ -n "$STAGED_GITHUB" ]]; then
+  bash .github/hooks/check-refs.sh || ERRORS=$((ERRORS + 1))
+fi
+
+if [[ "$ERRORS" -gt 0 ]]; then
+  echo "[pre-commit] blocked: fix the failures above and recommit."
+  echo "  Bypass (not recommended): git commit --no-verify (CI will still catch it)."
+  exit 1
+fi
+exit 0

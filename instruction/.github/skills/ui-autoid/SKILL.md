@@ -1,6 +1,7 @@
 ---
 name: ui-autoid
 description: Guidelines for adding autoId attributes to HTML elements to support UI automation testing (clickable and viewable elements) in the Horizon 2 UI project.
+user-invocable: false
 ---
 
 # UI Automation autoId Attribute
@@ -111,7 +112,7 @@ Use `autoId="..."` (static) or `[attr.autoId]="'...'"` (dynamic). Never use `[au
 
 ## 5. Relation to Other Skills
 
-- **Feature Delivery / Refactor / Unit Test**: Always add/update `autoId` for any touched template with interactive or viewable elements.
+- **New Feature / Refactor / Unit Test**: Always add/update `autoId` for any touched template with interactive or viewable elements.
 - **Unit Test**: Use `autoId` as primary selector (`fixture.nativeElement.querySelector('[autoId="..."]')`) instead of fragile CSS/text selectors.
 - **Code Review / Pre-PR**: Verify new/modified templates comply with the naming convention; no accidental renames.
 - **Angular Architecture**: Presenter components accept `autoId` via `@Input()` and bind with `[attr.autoId]`.

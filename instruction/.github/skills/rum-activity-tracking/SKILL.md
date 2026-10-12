@@ -1,6 +1,7 @@
 ---
 name: rum-activity-tracking
 description: Guidelines for implementing user activity tracking (Elastic APM RUM) via rum-* template attributes and RumEventService, covering page visits, tab changes, user interactions, and section context in the Horizon 2 UI project.
+user-invocable: false
 ---
 
 # RUM Activity Tracking

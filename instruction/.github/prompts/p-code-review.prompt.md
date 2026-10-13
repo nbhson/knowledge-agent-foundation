@@ -1,11 +1,11 @@
 ---
-name: 'H2-Code-Review'
+name: 'P-Code-Review'
 description: 'Analysis-only P1+P5 peer review with checklist and PR notes.'
 argument-hint: '<PR link or branch range> <ticket/design context>'
-agent: 'h2-standard'
+agent: 'p-standard'
 ---
 
-# H2-Code-Review
+# P-Code-Review
 
 Inputs: $ARGUMENTS (diff under review + ticket/design context).
 

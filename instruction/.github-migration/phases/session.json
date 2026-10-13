@@ -3,7 +3,7 @@
   "quick_mode": {
     "enabled": false,
     "deprecated": true,
-    "description": "Light mode (kept for backward compat). Active when the `h2-express` **agent** is selected in the agents dropdown — agent-only, no skill/prompt entry, no prefix required.",
+    "description": "Light mode (kept for backward compat). Active when the `p-express` **agent** is selected in the agents dropdown — agent-only, no skill/prompt entry, no prefix required.",
     "authoritative_ref": ".github/phases/phase-2-planning.md#approval-gate-scope",
     "note": "Single source of truth for trivial vs non-trivial is the threshold table in phase-2-planning.md. Do NOT duplicate rules here — this block is a pointer only and must not diverge."
   },

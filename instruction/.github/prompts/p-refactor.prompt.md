@@ -1,11 +1,11 @@
 ---
-name: 'H2-Refactor'
+name: 'P-Refactor'
 description: 'Strict P1→P5 refactor with smell inventory and no-behavior-change proof.'
 argument-hint: '<target modules/files> <smell/motivation>'
-agent: 'h2-standard'
+agent: 'p-standard'
 ---
 
-# H2-Refactor
+# P-Refactor
 
 Inputs: $ARGUMENTS (target + motivation, affected modules).
 

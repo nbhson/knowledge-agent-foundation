@@ -90,7 +90,7 @@ link to the owner instead.
 
 - Follow the phase order above; analysis-only review workflows execute P1+P5 with the P4-lite review checks embedded in Phase 5.
 - Contradiction handling remains mandatory across the flow: identify, resolve, freeze, and verify decisions in later phases.
-- Quick mode (`h2-express` agent, selected in the agents dropdown — no prefix) is opt-in only and never the default. Trivial vs non-trivial threshold is defined once in `phase-2-planning.md`; `session.json:quick_mode` is a pointer-only block.
+- Quick mode (`p-express` agent, selected in the agents dropdown — no prefix) is opt-in only and never the default. Trivial vs non-trivial threshold is defined once in `phase-2-planning.md`; `session.json:quick_mode` is a pointer-only block.
 
 ## Extending the Framework
 

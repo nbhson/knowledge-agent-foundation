@@ -1,16 +1,16 @@
 ---
-name: 'H2-Express'
+name: 'P-Express'
 description: 'Light mode for trivial, low-risk tasks. Minimal plan, targeted change, focused validation.'
 argument-hint: '<small task description>'
-agent: 'h2-express'
+agent: 'p-express'
 ---
 
-# H2-Express
+# P-Express
 
 Inputs: $ARGUMENTS (one small, low-risk task).
 
 Follow [.github/copilot-instructions.md](../copilot-instructions.md)
-Quick Mode and the `h2-express` agent — NOT the strict 5-phase flow.
+Quick Mode and the `p-express` agent — NOT the strict 5-phase flow.
 
 - Keep it minimal: brief understanding → tiny plan (chat only, no
   `implementation_plan.md`) → targeted change → focused validation
@@ -24,4 +24,4 @@ Quick Mode and the `h2-express` agent — NOT the strict 5-phase flow.
 - Escalate to strict mode immediately when: ≥2 files, behavior/UI-contract
   change, shared surface (`src/shared/`, `@services/*`, store, guards,
   routing), contradictions, or security sensitivity. Say so explicitly and
-  switch to the matching `h2-*` strict prompt.
+  switch to the matching `p-*` strict prompt.

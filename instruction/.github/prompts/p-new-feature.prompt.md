@@ -1,11 +1,11 @@
 ---
-name: 'H2-New-Feature'
+name: 'P-New-Feature'
 description: 'Strict P1→P5 new feature with approval gate and Phase 5 report.'
 argument-hint: '<Jira-key> <mô tả ngắn + AC>'
-agent: 'h2-standard'
+agent: 'p-standard'
 ---
 
-# H2-New-Feature
+# P-New-Feature
 
 Inputs: $ARGUMENTS (Jira key or dev summary with testable AC).
 

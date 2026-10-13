@@ -1,10 +1,10 @@
 ---
-name: h2-new-feature
+name: p-new-feature
 description: Strict P1→P5 new feature with approval gate and Phase 5 report.
 disable-model-invocation: true
 argument-hint: '<Jira-key> <mô tả ngắn + AC>'
 ---
-# H2-New-Feature
+# P-New-Feature
 
 Inputs: $ARGUMENTS (Jira key or dev summary with testable AC).
 

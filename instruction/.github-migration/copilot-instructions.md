@@ -100,7 +100,7 @@ The Jira integration has an explicit `Available?` decision with a fallback. **No
 
 Strict mode is the default for all requests. The agent follows the full ordered
 phases, the Phase 2 approval gate, and the contradiction gate before
-implementation begins. The `h2-standard` agent is the default agent.
+implementation begins. The `p-standard` agent is the default agent.
 
 ## Quick Mode (Express — Opt-In Light Mode)
 
@@ -108,14 +108,14 @@ Quick mode is NOT the default and has exactly ONE entry point:
 
 | Entry | When |
 |---|---|
-| Select the `h2-express` **agent** in the agents dropdown | Ad-hoc small task in chat |
+| Select the `p-express` **agent** in the agents dropdown | Ad-hoc small task in chat |
 
 It uses the leanest valid workflow but must still respect repo rules, run
 lint/format, and escalate to strict mode whenever the task becomes risky,
 unclear, or cross-cutting. Trivial rule-6 changes log one `merge-log.md` line
 only (no report file — see `phases/phase-2-planning.md` rule 6).
 
-> Note: there is no `h2-express` skill/prompt entry — the `h2-express.agent.md`
+> Note: there is no `p-express` skill/prompt entry — the `p-express.agent.md`
 > is the sole carrier of the light-mode policy. Quick mode is agent-only.
 
 ## Workflow Convention Summary

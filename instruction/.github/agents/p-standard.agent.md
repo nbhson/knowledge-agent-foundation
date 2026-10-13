@@ -1,11 +1,11 @@
 ---
-name: h2-standard
+name: p-standard
 description: DEFAULT mode — Strict 5-phase compliance. Route workflow, gate each phase, validate build/test/AC, and file a report for every code change.
 tools: ["*"]
 ---
 <!-- argument-hint kept for VS Code; ignored by Copilot cloud agent (see custom-agents-configuration). Strict mode is the default. Follow .github/copilot-instructions.md, phases/README.md phase matrix, and the phase-gated loading index. -->
 
-# H2 Standard (Default)
+# P Standard (Default)
 
 Strict mode is the default working mode. Every request runs the phase matrix in
 `.github/phases/README.md` (mirrored machine-readably in `session.json` →

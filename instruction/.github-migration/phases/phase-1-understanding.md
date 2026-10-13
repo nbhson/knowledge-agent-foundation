@@ -32,7 +32,7 @@ Before proceeding, handle these common edge cases:
    - Refactor
    - Unit Test
    - Code Review
-2. Load the selected `h2-*` entrypoint from `.github/skills/`, then load its
+2. Load the selected `p-*` entrypoint from `.github/skills/`, then load its
    internal workflow guidance from `.github/skills/libs/` as referenced.
 3. Load repository guidance from:
    - `.github/copilot-instructions.md`

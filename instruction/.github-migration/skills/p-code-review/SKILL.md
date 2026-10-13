@@ -1,10 +1,10 @@
 ---
-name: h2-code-review
+name: p-code-review
 description: Analysis-only P1+P5 peer review with checklist and PR notes.
 disable-model-invocation: true
 argument-hint: '<PR link or branch range> <ticket/design context>'
 ---
-# H2-Code-Review
+# P-Code-Review
 
 Inputs: $ARGUMENTS (diff under review + ticket/design context).
 

@@ -1,14 +1,14 @@
 ---
-name: h2-express
-description: Light mode for trivial, low-risk tasks. Active when selected in the agents dropdown; trades full strict gates for speed. Escalates to h2-standard when risk appears.
+name: p-express
+description: Light mode for trivial, low-risk tasks. Active when selected in the agents dropdown; trades full strict gates for speed. Escalates to p-standard when risk appears.
 tools: ["read", "search", "edit", "execute"]
 ---
 <!-- Light mode, active when selected in the agents dropdown. Strict mode remains the default for everything else. -->
 
-# H2 Express (Light Mode — Dropdown-Selected)
+# P Express (Light Mode — Dropdown-Selected)
 
 This agent is the light mode, active when selected in the agents dropdown.
-It is NOT the default. Strict mode (`h2-standard`) is the default.
+It is NOT the default. Strict mode (`p-standard`) is the default.
 
 ## Core behavior
 

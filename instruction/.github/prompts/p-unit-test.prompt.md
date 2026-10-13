@@ -1,11 +1,11 @@
 ---
-name: 'H2-Unit-Test'
+name: 'P-Unit-Test'
 description: 'Strict P1→P5 Jest test delivery with mocks and red-green proof.'
 argument-hint: '<target file.ts> <behaviors to verify>'
-agent: 'h2-standard'
+agent: 'p-standard'
 ---
 
-# H2-Unit-Test
+# P-Unit-Test
 
 Inputs: $ARGUMENTS (target `*.ts` + behaviors; existing spec read first).
 

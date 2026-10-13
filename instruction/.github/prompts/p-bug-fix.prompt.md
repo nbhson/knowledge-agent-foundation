@@ -1,11 +1,11 @@
 ---
-name: 'H2-Bug-Fix'
+name: 'P-Bug-Fix'
 description: 'Strict P1→P5 bug fix with repro, red-green proof and bug report.'
 argument-hint: '<Jira-key> <expected vs actual + repro steps>'
-agent: 'h2-standard'
+agent: 'p-standard'
 ---
 
-# H2-Bug-Fix
+# P-Bug-Fix
 
 Inputs: $ARGUMENTS (bug report: repro steps, expected vs actual, env).
 

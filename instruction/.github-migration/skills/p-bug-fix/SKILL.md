@@ -1,10 +1,10 @@
 ---
-name: h2-bug-fix
+name: p-bug-fix
 description: Strict P1→P5 bug fix with repro, red-green proof and bug report.
 disable-model-invocation: true
 argument-hint: '<Jira-key> <expected vs actual + repro steps>'
 ---
-# H2-Bug-Fix
+# P-Bug-Fix
 
 Inputs: $ARGUMENTS (bug report: repro steps, expected vs actual, env).
 

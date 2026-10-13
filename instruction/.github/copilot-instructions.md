@@ -100,7 +100,7 @@ The Jira integration has an explicit `Available?` decision with a fallback. **No
 
 Strict mode is the default for all requests. The agent follows the full ordered
 phases, the Phase 2 approval gate, and the contradiction gate before
-implementation begins. The `h2-standard` agent is the default agent.
+implementation begins. The `p-standard` agent is the default agent.
 
 ## Quick Mode (Express — Opt-In Light Mode)
 
@@ -108,8 +108,8 @@ Quick mode is NOT the default. Two ways in:
 
 | Entry | When |
 |---|---|
-| Select the `h2-express` agent in the agents dropdown | Ad-hoc small task in chat |
-| Run the `h2-express` prompt (`prompts/h2-express.prompt.md`) | Repeatable light workflow with the same rules |
+| Select the `p-express` agent in the agents dropdown | Ad-hoc small task in chat |
+| Run the `p-express` prompt (`prompts/p-express.prompt.md`) | Repeatable light workflow with the same rules |
 
 It uses the leanest valid workflow but must still respect repo rules, run
 lint/format, and escalate to strict mode whenever the task becomes risky,

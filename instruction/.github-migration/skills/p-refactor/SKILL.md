@@ -1,10 +1,10 @@
 ---
-name: h2-refactor
+name: p-refactor
 description: Strict P1→P5 refactor with smell inventory and no-behavior-change proof.
 disable-model-invocation: true
 argument-hint: '<target modules/files> <smell/motivation>'
 ---
-# H2-Refactor
+# P-Refactor
 
 Inputs: $ARGUMENTS (target + motivation, affected modules).
 

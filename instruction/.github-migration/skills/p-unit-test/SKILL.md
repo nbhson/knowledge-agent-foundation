@@ -1,10 +1,10 @@
 ---
-name: h2-unit-test
+name: p-unit-test
 description: Strict P1→P5 Jest test delivery with mocks and red-green proof.
 disable-model-invocation: true
 argument-hint: '<target file.ts> <behaviors to verify>'
 ---
-# H2-Unit-Test
+# P-Unit-Test
 
 Inputs: $ARGUMENTS (target `*.ts` + behaviors; existing spec read first).
 

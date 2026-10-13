@@ -1,10 +1,10 @@
 ---
-name: h2-jira-ticket-investigate
+name: p-jira-ticket-investigate
 description: Analysis-only P1+P5 ticket triage with AC scoring and next-step routing.
 disable-model-invocation: true
 argument-hint: '<Jira-key> (or paste summary when MCP offline)'
 ---
-# H2-Jira-Ticket-Investigate
+# P-Jira-Ticket-Investigate
 
 Inputs: $ARGUMENTS (ticket key; or pasted summary when Jira MCP unreachable — ask once).
 

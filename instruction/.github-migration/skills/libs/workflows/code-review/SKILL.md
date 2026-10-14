@@ -31,7 +31,7 @@ Work the diff in passes so correctness is judged before style. Do not start with
 
 1. **Code Organization & Module Structure**:
 
-   - Verify feature-first placement: API/DTO/mock files belong to the matching `src/api/<area>/<feature>/`; feature components and their templates, styles, and specs are grouped by component; models, constants, services, and utilities live in owner-specific folders.
+   - Verify feature-first placement per [Project Structure](../../../../knowledge/project-structure.md) (§Standard Feature Module Layout + §Feature-Private vs App-Wide): `*.api.ts`/`*.dto.ts`/transport mocks belong to `src/api/<area>/<feature>/` (NEVER a local `api/` folder); feature-private kinds (`components/`, `directives/`, `pipes/`, `services/`, `models/`, `constants/`, `enums/`, `validators/`, `guards/`, `interceptors/`, `utils/`, `store/`) stay inside `src/app/<area>/<feature>/`; app-wide reuse (2+ consumers) belongs in `src/shared|constants|models|scss/` (e.g. `EMPTY_STRING` → `src/constants/constants.ts`) — flag per-feature duplication and sibling-feature deep imports (`../sibling-feature/...`).
    - Check for duplicate or overlapping NgModules. Consolidate modules only when their components share a feature boundary, lifecycle, and ownership; preserve separate modules for distinct lazy routes, public APIs, or independently owned features.
    - Ensure components are declared/exported by the correct NgModule and feature routes remain lazy-loaded where required.
 

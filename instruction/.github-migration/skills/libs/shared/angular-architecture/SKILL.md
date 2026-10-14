@@ -117,7 +117,25 @@ view:
 
 Keep component files together under the feature's `components/` directory and
 put types/constants in owner-specific `models/`, `dto/`, and `constants/`
-modules. Follow the 500-line component ceiling in §6.6 below.
+modules. Follow the 500-line component ceiling in §6.6 below. The full
+canonical layout (all 12 feature-private folders + the feature-private vs
+app-wide placement table) is the single source of truth in
+`knowledge/project-structure.md` (§Standard Feature Module Layout,
+§Feature-Private vs App-Wide Placement) — this skill only adds the
+checkable gates below.
+
+- **Feature-private by default**: `components/`, `directives/`, `pipes/`,
+  `services/`, `models/`, `constants/`, `enums/`, `validators/`, `guards/`,
+  `interceptors/`, `utils/`, `store/` under `src/app/<area>/<feature>/`
+  are importable ONLY by that feature's own module/service/components.
+- **App-wide on second use**: reused by 2+ features/areas → promote to
+  `src/shared/` (components, directives, pipes, guards), `src/constants/`
+  (constants incl. `EMPTY_STRING`, enums), `src/models/` (shared types),
+  `src/scss/` (shared styles), `src/app/services|util|validators/`
+  (shared services/utils/validators). Never deep-import a sibling feature
+  (`../sibling-feature/...`).
+- **API exception**: a feature module NEVER has a local `api/` folder —
+  `*.api.ts` + `*.dto.ts` live only in `src/api/<area>/<feature>/` (§6.1).
 
 ---
 
@@ -262,16 +280,27 @@ re-runs on **every** CD pass. Ban list with real violations found in repo:
 
 ### 6.6 Component-file grouping exemplar + 500-line budget
 
-Target layout (only the module at root, everything else grouped by kind):
+Target layout — canonical source is
+`knowledge/project-structure.md` (§Standard Feature Module Layout):
+only the module + routing at root, everything else grouped by kind,
+`api/` NEVER local (lives in `src/api/<area>/<feature>/`):
 
 ```
 <feature>/
-├── <feature>.module.ts               # ONLY the module at root
+├── <feature>-routing.module.ts
+├── <feature>.module.ts                # ONLY module + routing at root
 ├── components/<name>/<name>.component.{ts,html,scss,spec.ts}
-├── constants/*.constants.ts
 ├── directives/*.directive.ts
+├── pipes/*.pipe.ts
+├── services/*.service.ts (+ *.spec.ts)
 ├── models/*.model.ts
-└── utils/*.util.ts (+ *.spec.ts beside the util)
+├── constants/*.constants.ts
+├── enums/*.enum.ts
+├── validators/*.validator.ts
+├── guards/*.guard.ts
+├── interceptors/*.interceptor.ts
+├── utils/*.util.ts (+ *.spec.ts beside the util)
+└── store/                             # only when NgRx is needed
 ```
 
 - New components follow this from the first commit — never land 4+ loose
@@ -290,7 +319,9 @@ Target layout (only the module at root, everything else grouped by kind):
 src/api/<area>/...  ──transport, DTOs, transport mocks──▶  feature service
 feature service     ──mapped view-models, state──────────▶  component
 src/shared/...      ──reusable primitives────────────────▶  features
-src/constants/...   ──app-wide literals──────────────────▶  app code
+src/constants/...   ──app-wide literals (incl. EMPTY_STRING)─▶  app code
+src/models/...      ──shared types───────────────────────▶  app code
+src/scss/...        ──shared tokens/styles───────────────▶  app styles
 library (projects/*) ──self-contained────────────────────▶  (imports nothing from src/app/)
 ```
 

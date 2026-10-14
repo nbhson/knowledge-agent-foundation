@@ -1,7 +1,7 @@
 ---
 name: new-feature
 description: Step-by-step workflow for scoping, designing, building component logic, writing unit tests, and delivering new features in the Horizon 2 UI project.
-argument-hint: '<Jira-key> <mô tả ngắn + AC>'
+argument-hint: '<Jira-key> <short-desc + AC>'
 user-invocable: false
 ---
 
@@ -23,7 +23,7 @@ This document outlines the workflow for developing and delivering new features i
 ## Required Steps & Phases
 
 1. **Discovery & Setup (Phase 1)**: Clarify scope and acceptance criteria; map feature folders, NgModules, API/service/component ownership, and consumers. Identify module consolidation opportunities without merging distinct lazy routes or independently owned features. Search for reusable services, constants, models, utils, pipes, and components before adding new implementation. Apply the four Code Organization, Architecture, Type Safety, and Frontend Maintainability checks in [Angular Architecture §6](../../shared/angular-architecture/SKILL.md).
-    - **Placement pre-flight** (all checkable, see [Angular Architecture §6](../../shared/angular-architecture/SKILL.md)): (a) new API files go to the owning domain folder — list sibling `src/api/<area>/` folders first; (b) new object shapes reuse owner `dto/`/`models/` interfaces (never anonymous inline types); (c) new string/color literals reuse `EMPTY_STRING` and the owner `color.constants.ts` (plural naming); (d) new `.component.ts` gets a 500-line budget from the first commit with grouping per §6.6; (e) no computation calls in template bindings — precompute in the service or use a pure pipe.
+    - **Placement pre-flight** (all checkable, see [Angular Architecture §6](../../shared/angular-architecture/SKILL.md) + [Project Structure](../../../../knowledge/project-structure.md)): (a) new API files go to `src/api/<area>/<feature>/` — never a local `api/` folder inside the feature; list sibling `src/api/<area>/` folders first; (b) feature-private kinds go to the matching `<feature>/` subfolder (`components/`, `directives/`, `pipes/`, `services/`, `models/`, `constants/`, `enums/`, `validators/`, `guards/`, `interceptors/`, `utils/`, `store/` — create only the kinds the feature needs, no empty placeholders); app-wide kinds go to `src/shared|constants|models|scss/` (e.g. `EMPTY_STRING` → `src/constants/constants.ts`) — promote on second use, never deep-import a sibling feature; (c) new object shapes reuse owner `dto/`/`models/` interfaces (never anonymous inline types); (d) new string/color literals reuse `EMPTY_STRING` and the owner `color.constants.ts` (plural naming); (e) new `.component.ts` gets a 500-line budget from the first commit with grouping per §6.6; (f) no computation calls in template bindings — precompute in the service or use a pure pipe.
     - **Contract-first**: define the API DTO shape, the view-model shape, and the mapping between them up front (owner `dto/` vs `models/`); list new routes/guards and required state (local vs NgRx) before coding.
 2. **Design Decisions (Phase 2)**: Record the decisions that shape the implementation, so reviewers can judge them instead of rediscovering them:
     - Component split: which container orchestrates, which presenters render (inputs in, outputs out, `OnPush`, no service injection in presenters).

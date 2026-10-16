@@ -1,6 +1,6 @@
 # 🧠 Memory & Context in AI — A Learning Guide
 
-> **This framework teaches you how to BUILD AN AI AGENT** — from memory design, context handling, planning, multi-agent coordination, to automation and evaluation. This is NOT a guide on how to use AI the ordinary way.
+> **This guide teaches you how to BUILD AN AI AGENT** — from memory design, handling context, planning, teamwork between agents, to automation and checking results. This is NOT a guide on using AI the everyday way.
 
 ---
 
@@ -34,10 +34,15 @@
 # Install Ollama (run LLM & Embedding locally)
 curl -fsSL https://ollama.com/install.sh | sh
 
-# Pull models
-ollama pull gemma3:12b        # Main LLM
+# Pull models (Jul-2026 examples — see Oct-2026 note below)
+ollama pull gemma3:12b        # Main LLM (example)
 ollama pull nomic-embed-text  # Embedding model
 ```
+
+> **Oct-2026 note.** The two `ollama pull` lines are just Jul-2026 examples —
+> swap in any newer model, the pattern stays the same. Fresh picks:
+> `qwen3.6`, `deepseek-v4-flash/pro (up to 1M ctx)`, `gemma4 26B-A4B`, `gpt-oss:20b/120b (light via MXFP4)`,
+> `muse-glimmer 30b`, `minimax-m3`, `glm-5.2`, `granite4.2`. Use Ollama >=0.6.
 
 </details>
 

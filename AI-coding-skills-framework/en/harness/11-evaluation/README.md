@@ -94,11 +94,11 @@ Evaluation = What You Measure → What You Improve → What You Ship
 
 **Analogies**: Evaluation is like a quality-control system in a factory — not just checking whether the product is broken (Level 1), but also whether the finish is nice (Level 3), whether the materials are safe (Level 4), and whether the customer is happy (Level 5).
 
-**If you skip it**: you ship code without knowing its quality, don't know when a regression appears, don't know which model beats which, and in the end technical debt accumulates to the point where refactoring costs 10× as much.
+**If you skip it**: you ship code without really knowing how good it is, you miss regressions when they appear, you can't tell which model is better, and tech debt quietly grows until fixing it costs about 10× more.
 
 ## Overview
 
-**Evaluation** in AI coding is the process of **assessing the effectiveness and quality** of an AI agent performing coding tasks. Evaluation includes benchmarking, metrics collection, and continuous improvement based on evaluation results.
+**Evaluation** in AI coding means **checking how well** an AI agent does coding work. That includes running benchmarks, collecting simple metrics, and using what you learn to keep making the agent better.
 
 > **"You can't improve what you can't measure"** — Peter Drucker
 
@@ -3471,5 +3471,11 @@ print(f"$/pass-task: ${cost_per_pass_task(46.0, 710):.4f}")
 
 ---
 
-**Last updated:** 19/07/2026  
+---
+
+> **Oct-2026 addendum:** evals now extend beyond chat to automation (per-node + workflow evals,
+> Custom Graders Library, generated graders). Pair `minimal-benchmark-harness.md` with trajectory
+> logs from `13-trajectory-observability` + OTel `_meta` trace keys for reproducible scoring.
+
+**Last updated:** 16/10/2026  
 **Author:** AI Knowledge Repository

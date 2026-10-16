@@ -18,14 +18,14 @@
 
 ### Opening Story
 
-In 1736, Euler solved the **Seven Bridges of Königsberg** problem: can you cross every bridge exactly once and return to where you started? He drew the land areas as **nodes** and the bridges as **edges** — and **Graph Theory** was born.
+In 1736, Euler solved the **Seven Bridges of Königsberg** puzzle: can you cross every bridge exactly once and end up back where you started? He drew the land areas as **nodes** and the bridges as **edges** — and that simple sketch became **Graph Theory**.
 
 Three hundred years later, that same abstraction describes:
 - Social networks (person —[follows]→ person)
 - Codebases (function —[calls]→ function)
 - Enterprise knowledge (contract —[approved_by]→ person —[reports_to]→ manager)
 
-**A graph is not a new data structure. It is a way of seeing the world as a network of relationships.**
+**A graph is not just a new data structure. It is a friendly way of seeing the world as a web of relationships.**
 
 ### Why Foundations Matter?
 
@@ -43,7 +43,7 @@ Three hundred years later, that same abstraction describes:
 
 ## Overview
 
-This module provides the **theoretical and hands-on groundwork** that every subsequent module builds on:
+This module gives you the **friendly groundwork** that every later module builds on:
 
 ```mermaid
 flowchart TD
@@ -138,7 +138,7 @@ Subject   Predicate         Object
 
 ### 2.1 A Detailed Classification
 
-> **📌 Quick understanding:** "Graph type" = the answer to the question *"What characteristics do your relationships have?"* Are they directed? Weighted? Are there many kinds of entities? Every time you pick the wrong type, you'll write code that's wrong or run the wrong queries.
+> **📌 Quick knowing:** "Graph type" = the answer to the question *"What characteristics do your relationships have?"* Are they directed? Weighted? Are there many kinds of entities? Every time you pick the wrong type, you'll write code that's wrong or run the wrong queries.
 
 ```
 ┌─────────────────┬─────────────────────────────────────────┬──────────────────┐
@@ -230,7 +230,7 @@ hetero_schema = {
 
 ## 3. Graph Representations
 
-> **📌 Quick understanding:** "Graph representation" = **how you store the graph in memory / a file**. The same graph can be stored in many different ways — each has its own "strong points" and "weak points". It's like how you can store the same contact list on paper, in Excel, or in the cloud — same content, but a very different way of looking things up.
+> **📌 Quick knowing:** "Graph representation" = **how you store the graph in memory / a file**. The same graph can be stored in many different ways — each has its own "strong points" and "weak points". It's like how you can store the same contact list on paper, in Excel, or in the cloud — same content, but a very different way of looking things up.
 
 **The most concrete example** — the same graph "Alice knows Bob, Bob knows Carol":
 
@@ -340,7 +340,7 @@ How many nodes do you have?
 
 ## 4. Metrics & Graph Characteristics
 
-> **📌 Quick understanding:** Metrics = **measuring tools** that help you answer the question *"What are the characteristics of this graph?"* A few examples: Which node matters most? Which group is most tightly connected? Is the graph "dense" or "sparse"?
+> **📌 Quick knowing:** Metrics = **measuring tools** that help you answer the question *"What are the characteristics of this graph?"* A few examples: Which node matters most? Which group is most tightly connected? Is the graph "dense" or "sparse"?
 
 ### 4.1 The Important Metrics
 

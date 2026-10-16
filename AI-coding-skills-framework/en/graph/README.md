@@ -17,7 +17,7 @@ You have a 10,000-page document repository about your company: contracts, report
 
 > *"Who approved the Phoenix project contract, and what AI-related projects has that person managed before?"*
 
-**Vector RAG** finds 5 chunks containing "Phoenix" — but no chunk contains both the `approver` and the `AI project` at the same time. It guesses and hallucinates a name.
+**Vector RAG** finds 5 chunks with the word "Phoenix" — but no single chunk holds both the `approver` and the `AI project` at once. So it guesses and makes up a name.
 
 **GraphRAG** is different. It has already extracted:
 
@@ -33,7 +33,7 @@ A single `TRAVERSE 2 hops` query returns the exact answer **with a proof path** 
 
 > *"Knowledge is not a pile of chunks. It's a web of relationships."*
 
-**Graph Engineering** is the craft of designing a **graph-structured knowledge substrate** — so that AI doesn't just *find* information, but can also *reason* over it in multiple steps, with explanations and citations.
+**Graph Engineering** is the craft of building a **well-connected knowledge base** — so AI doesn't just *find* facts, but can also *connect them* step by step, with clear reasons and sources.
 
 ### Why Does Graph Engineering Matter?
 

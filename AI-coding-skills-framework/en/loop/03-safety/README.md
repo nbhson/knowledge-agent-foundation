@@ -1,12 +1,12 @@
 # 🛡️ 03. Safety & Loop Design Checklist
 
-> Loops amplify judgment — both good and bad. This section covers the **Loop Design Checklist** (the production readiness rubric) and **Safety & Guardrails** (the minimum for production loops that touch code or external systems).
+> Loops make your judgment stronger — for better or worse. This section covers the **Loop Design Checklist** (the production readiness rubric) and **Safety & Guardrails** (the minimum you need for production loops that touch code or external systems).
 
 ---
 
 ## 1. Loop Design Checklist
 
-Use this before turning a loop on in production. Score **honestly** — a loop missing verification is not ready to run unattended.
+Use this before you switch a loop on in production. Please score **honestly** — a loop without verification is not ready to run on its own.
 
 ### §1 Purpose & Scope
 - [ ] **One clear goal** — in one sentence: what does this loop accomplish?
@@ -82,7 +82,7 @@ Use this before turning a loop on in production. Score **honestly** — a loop m
 
 ### Quick Red Flags
 
-Stop and fix before continuing if:
+Please stop and fix things first if you see any of these:
 - The same PR has > 3 auto-fix attempts with no progress
 - The verifier is **the same agent session** as the implementer
 - There is no state file — the loop loses its memory every run
@@ -95,7 +95,7 @@ Stop and fix before continuing if:
 
 ### 2.1 Path Denylist
 
-A loop must **never** auto-edit these paths without human consent:
+A loop must **never** auto-edit these paths without human approval:
 
 ```
 .env
@@ -112,11 +112,11 @@ payments/**
 billing/**
 ```
 
-Encode this in the `minimal-fix` and implementer skills:
+Please put this rule in the `minimal-fix` and implementer skills:
 
 > Do not modify files matching the denylist. Escalate to a human with context.
 
-The `loop-gate` tool enforces this denylist **mechanically** from `gate.yaml` (it does not rely on whether the loop has read the file):
+The `loop-gate` tool enforces this denylist **automatically** from `gate.yaml` (it does not depend on whether the loop has read the file):
 
 ```bash
 npx @cobusgreyling/loop gate check --action auto-merge --paths <changed files>
@@ -127,7 +127,7 @@ npx @cobusgreyling/loop gate check --action auto-merge --paths <changed files>
 
 **Default: no auto-merge.**
 
-If you allow auto-merge for trivial loops:
+If you allow auto-merge for simple loops:
 
 | Allowed | Not allowed |
 |-----------|-----------------|
@@ -136,9 +136,9 @@ If you allow auto-merge for trivial loops:
 | Import ordering | Lockfile changes |
 | Config in allowlisted `docs/` paths | Any denylist path |
 
-Document the allowlist in `AGENTS.md` or `loop-auto-merge-allowlist.md`.
+Please write down the allowlist in `AGENTS.md` or `loop-auto-merge-allowlist.md`.
 
-> 🔑 **Policy / Permission highlight:** this is a **merge-permission policy** — default-deny auto-merge, with an explicit allowlist as the only exception path. Treat the allowlist file as policy-as-code: versioned, reviewed, and checked by `gate check` before any merge.
+> 🔑 **Policy / Permission highlight:** this is a **merge-permission policy** — auto-merge is off by default, and an explicit allowlist is the only exception. Please treat the allowlist file as policy-as-code: versioned, reviewed, and checked by `gate check` before any merge.
 
 ### 2.3 MCP Connector Least Privilege
 
@@ -149,40 +149,40 @@ Document the allowlist in `AGENTS.md` or `loop-auto-merge-allowlist.md`.
 | Slack | channel history | post to `#loop-escalations` only |
 | Database | — | no production writes from loops |
 
-Use dedicated bot accounts / tokens with minimal scopes.
+Please use dedicated bot accounts / tokens with the smallest scopes you need.
 
-> 🔑 **Policy / Permission highlight:** this is a **connector-permission policy** (least privilege per integration) — each MCP connector gets only the read/write scopes it needs, on a dedicated identity. Mirrors `12-sandbox-execution` §6 (per-role matrix) and `06` §8 (RBAC levels).
+> 🔑 **Policy / Permission highlight:** this is a **connector-permission policy** (least privilege for each integration) — every MCP connector only gets the read/write scopes it really needs, on its own dedicated identity. Mirrors `12-sandbox-execution` §6 (per-role matrix) and `06` §8 (RBAC levels).
 
 ### 2.4 Human Gates
 
-Always require a human for:
+Please always ask a human to step in for:
 - Security, authentication, authorization
 - Payments, billing, PII handling
 - Infrastructure / Terraform / K8s production
 - Dependency upgrades (supply chain risk)
 - Changes touching > N files (suggested N=10)
 - A third failure on the same item
-- Token budget extensions: agents **cannot** raise caps in `loop-budget.md` on their own — a human must approve and make the edit. (L3 loops use the `budget-negotiator` skill to *request* more budget.)
+- Token budget extensions: agents **cannot** raise caps in `loop-budget.md` by themselves — a human must approve and make the edit. (L3 loops use the `budget-negotiator` skill to *request* more budget.)
 
 ### 2.5 Secrets in Prompts & Logs
 
 - Never paste API keys into scheduler prompts
-- CI logs can contain secrets — the triage skill should redact before writing state
+- CI logs can contain secrets — the triage skill should redact them before writing state
 - State files are often committed — **no credentials in `STATE.md`**
 
 ### 2.6 Flake & Test Safety
 
-- Don't disable tests to make CI green
-- Don't raise timeouts blindly without a root-cause note
-- Quarantine flakes with an explicit ticket + human approval
+- Don't disable tests just to make CI green
+- Don't raise timeouts without a note about the root cause
+- Please quarantine flakes with an explicit ticket + human approval
 
 ### 2.7 Incident Response
 
 If a loop merges bad code:
-1. **Pause all loops immediately** (`scheduler_list` → delete)
+1. **Pause all loops right away** (`scheduler_list` → delete)
 2. Revert the merge
 3. Write it up in state + `stories/`
-4. Tighten the verifier or shrink the scope before restarting
+4. Make the verifier stricter or shrink the scope before restarting
 
 ### 2.8 Pre-Flight Safety Check (before L3)
 

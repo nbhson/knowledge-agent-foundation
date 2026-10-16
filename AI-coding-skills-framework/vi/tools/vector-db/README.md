@@ -14,11 +14,11 @@
 
 ### Câu Chuyện Mở Đầu
 
-Harness cần nhớ. Nhưng "nhớ" kiểu keyword-search không đủ — user hỏi *"lần trước mình thảo luận về bảo hiểm cho người lao động với điều kiện gì?"* mà memory của bạn chỉ tìm đúng chữ khớp thì sẽ miss.
+Harness thì phải có trí nhớ. Nhưng nhớ kiểu keyword-search thôi là chưa đủ — user hỏi *"lần trước mình bàn về bảo hiểm cho người lao động với điều kiện gì nhỉ?"* mà memory của bạn chỉ biết khớp đúng mặt chữ thì kiểu gì cũng sót.
 
 > *"Memory is the difference between a stateless function and an agent that learns."*
 
-**Vector Database** giải quyết bằng cách biến mọi text thành **vector embedding** — một dãy số đại diện cho *ý nghĩa* — rồi tìm kiếm bằng **khoảng cách cosine**. Đây chính là nền tảng cho `harness/01-retrieve-memory-knowledge`: thay vì cho LLM cả kho kiến thức, bạn chỉ cho **những chunk liên quan nhất về mặt ngữ nghĩa**.
+**Vector Database** gỡ điểm này bằng cách biến mọi đoạn text thành **vector embedding** — một dãy số đại diện cho *ý nghĩa* — rồi tìm kiếm bằng **khoảng cách cosine**. Đây chính là nền tảng của `harness/01-retrieve-memory-knowledge`: thay vì bê cả kho kiến thức nhét vào LLM, bạn chỉ đưa **vài chunk liên quan nhất về mặt ngữ nghĩa**.
 
 ### Tại Sao Vector DB Quan Trọng?
 

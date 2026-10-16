@@ -90,7 +90,7 @@ Không có evaluation framework, bạn **không biết** GraphRAG đúng bao nhi
 > **📌 Khái Niệm Cơ Bản:**
 > **Trước khi đánh giá "AI trả lời đúng không", phải đánh giá "graph có tốt không"?** Nếu graph thiếu sót hoặc sai, kết quả RAG dù code hoàn hảo cũng sẽ vô nghĩa (GIGO — garbage in, garbage out).
 >
-> **9 thước đo sức khỏe của graph.** Dùng phép so sánh analogies:
+> **Có 9 thước đo để kiểm tra "sức khỏe" của graph.** Hình dung nôm na như sau:
 >
 > - **Node/Edge Coverage** = *độ phủ* — "trích xuất được bao nhiêu % sự thật từ documents?" Giống kiểm tra kiến thức: bỏ sót 30% kiến thức thì trả lời chỉ đúng 70%.
 > - **Duplicate Rate** = *độ sạch* — "có bao nhiêu entities trùng lặp?" Giống danh bạ ghi "Nguyễn Văn A" và "NV A" thành 2 người → truy vấn bị chia cắt.

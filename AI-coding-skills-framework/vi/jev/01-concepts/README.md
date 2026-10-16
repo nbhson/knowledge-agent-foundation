@@ -136,7 +136,7 @@ TypeSafe extrapolate (2026):
   → "cheaper machine intelligence → far wider deployment"
 ```
 
-Ý tưởng: khi quyết định có kiểu **gần như miễn phí và 70-500ms**, người ta đặt nó vào **mọi nơi** — từng row trong database, từng message, từng tool call — thay vì chỉ vài điểm昂贵 trong pipeline.
+Ý tưởng: khi một quyết định có kiểu **gần như miễn phí mà chỉ mất 70-500ms**, người ta sẽ đặt nó vào **khắp mọi nơi** — từng dòng trong database, từng message, từng tool call — thay vì chỉ dùng ở vài điểm đắt đỏ trong pipeline.
 
 ---
 

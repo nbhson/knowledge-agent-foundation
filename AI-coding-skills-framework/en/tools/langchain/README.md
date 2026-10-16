@@ -14,13 +14,13 @@
 
 ### The Opening Story
 
-You've read `HARNESS_ENGINEERING.md` — you understand the 7 components: retrieve memory, build context, update memory, plan, prompt builder, tool decision, workflow. You want to **write real code** for a harness, not just understand the theory.
+You have read `HARNESS_ENGINEERING.md` — you know the 7 parts: fetch memory, build context, update memory, make a plan, build prompts, pick tools, run the workflow. Now you want to **write real code** for a harness, not just learn the ideas.
 
-You have two options: write all the orchestration from scratch (LLM calls, tool routing, memory, retry...), or use a professional framework that has already solved 80% of that problem.
+You have two choices: write all the setup yourself (LLM calls, tool routing, memory, retries...), or use a ready-made framework that has already solved most of it for you.
 
 > **Option 4 — LangChain / LlamaIndex (Professional framework)** — quoted from HARNESS_ENGINEERING.md
 
-**LangChain / LangGraph** is the standard framework for materializing harness engineering: it provides tool-calling, memory, RAG, prompt templates out of the box, and — with LangGraph — the ability to model the harness flow as a **stateful graph** (retrieve → build → act → update → repeat).
+**LangChain / LangGraph** is the standard toolkit for turning harness ideas into code: it gives you tool-calling, memory, RAG, and prompt templates right away, and — with LangGraph — lets you shape the harness flow as a **stateful graph** (fetch → build → act → update → repeat).
 
 ### Why LangChain Matters?
 
@@ -38,10 +38,10 @@ You have two options: write all the orchestration from scratch (LLM calls, tool 
 
 | # | Reason | Explanation |
 |---|--------|-------------|
-| 1 | **Production-ready** | Tool calling, retries, streaming, tracing available out of the box |
-| 2 | **Stateful graphs (LangGraph)** | Model the harness as a graph with state — exactly the loop philosophy |
-| 3 | **Broad ecosystem** | 700+ integrations, from vector DBs to MCP |
-| 4 | **Sample code ready** | HARNESS_ENGINEERING.md already has a TypeScript snippet |
+| 1 | **Production-ready** | Tool calling, retries, streaming, and tracing work out of the box |
+| 2 | **Stateful graphs (LangGraph)** | Shape the harness as a graph with state — much like the loop idea |
+| 3 | **Broad ecosystem** | 700+ ready integrations, from vector DBs to MCP |
+| 4 | **Sample code ready** | HARNESS_ENGINEERING.md already includes a TypeScript example |
 
 ### Relationship to the Harness
 
@@ -63,7 +63,7 @@ You have two options: write all the orchestration from scratch (LLM calls, tool 
 
 ### LangChain (Core)
 
-The base library: LLM wrappers, chains, tools, memory, retrievers, prompts.
+The base library: LLM wrappers, chains, tools, memory, retrievers, and prompts.
 
 ```typescript
 import { ChatOpenAI } from "@langchain/openai";
@@ -83,7 +83,7 @@ const harness = {
 
 ### LangGraph (Orchestration)
 
-Adds the **stateful graph** layer — each node is a harness component, with conditional branching and loops.
+Adds the **stateful graph** layer — each step is a harness part, with branches and loops when needed.
 
 ```python
 from langgraph.graph import StateGraph, END
@@ -101,7 +101,7 @@ graph.add_conditional_edges("agent", should_continue, {"tools": "tools", END: EN
 graph.add_edge("tools", "agent")              # loop — like loop/
 ```
 
-This is exactly the `loop/` philosophy — the agent doesn't end after one LLM call, it **repeats** until the task is complete.
+This follows the `loop/` idea closely — the agent does not stop after one LLM call, it **keeps going** until the task is finished.
 
 ## Learning Roadmap (Directory Structure)
 

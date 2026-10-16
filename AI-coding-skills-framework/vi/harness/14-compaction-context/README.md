@@ -65,11 +65,9 @@
 
 ### Opening Story
 
-Lượt thứ 47. Agent đang giữa một cuộc refactor: 31 tool call, bốn file được viết lại,
-hai bộ test đã chạy, một stack trace gây rối nằm ở đâu đó giữa chừng. Context window
-đang ở 96%. Tool result kế tiếp dài 4.000 token và không vừa.
+Tới lượt thứ 47. Agent đang giữa một cuộc refactor: 31 tool call, bốn file đã viết lại, hai bộ test đã chạy, và đâu đó giữa chừng còn một stack trace gây rối. Context window lúc này đã 96%. Tool result kế tiếp dài 4.000 token mà chỗ trống thì không còn.
 
-Giờ đội có ba lựa chọn tệ và không có lựa chọn tốt nào:
+Lúc này cả đội chỉ còn ba lựa chọn, mà lựa chọn nào cũng dở:
 
 1. **Để nó chết.** Run chết ở lượt 47 với lỗi độ dài context. Người dùng thấy "có
    gì đó sai" sau 20 phút.
@@ -80,11 +78,7 @@ Giờ đội có ba lựa chọn tệ và không có lựa chọn tốt nào:
    stack trace và bỏ mất định nghĩa nhiệm vụ, nên agent giải quyết nhầm vấn đề một
    cách trôi chảy.
 
-**Không cái nào trong ba là "compaction".** Compaction là một *policy*: một điều kiện
-kích hoạt, một pin set gồm những thứ không bao giờ được loại, một hàm utility quyết
-định cái gì đi tiếp theo, và một resume block dựng lại trạng thái của run theo cấu
-trúc cố định. Làm đúng bốn thứ đó thì lượt 47 trở nên tầm thường. Làm sai thì lỗi
-*vô hình* — run *hoàn thành*, chỉ là hoàn thành sai nhiệm vụ.
+**Không cái nào trong ba cách trên là "compaction" cả.** Compaction đúng nghĩa giống như dọn vali có nguyên tắc: một điều kiện kích hoạt rõ ràng, một pin set gồm những thứ "cấm đụng vào", một hàm utility quyết định cái gì đi tiếp, và một resume block dựng lại trạng thái run theo cấu trúc cố định. Làm đúng bốn thứ đó thì lượt 47 chỉ là chuyện nhỏ. Làm ẩu thì lỗi cực kỳ *khó thấy* — run vẫn *chạy xong*, chỉ là xong... sai nhiệm vụ.
 
 ### Vì Sao Compaction Là Bắt Buộc?
 
@@ -99,12 +93,7 @@ trúc cố định. Làm đúng bốn thứ đó thì lượt 47 trở nên tầ
 | 128k (điển hình) | ~4k | ~32 | không giới hạn |
 | 32k (nhỏ/local) | ~2k | ~16 | không giới hạn |
 
-**Không giới hạn** chính là điểm. Compaction không phải tối ưu hoá; nó là cơ chế biến
-context cố định thành một run dài không giới hạn. Nó cũng là thứ làm cho
-checkpoint-resume của `07-workflow` khả thi (→ 07 §13), giao nốt sub-agent ở
-`09-multi-agent` trở thành hiện thực (→ 09 §16.2), và loop budget của
-`10-automation` có thể ép được (→ 10 §17.3) — mỗi thứ đều cần một run sống lâu hơn
-một context window.
+**Chữ "không giới hạn" chính là điểm ăn tiền.** Compaction không phải món tối ưu cho vui; nó là cơ chế biến một context cố định thành một run dài vô tận. Nó cũng là thứ giúp checkpoint-resume của `07-workflow` chạy được (→ 07 §13), giúp việc giao nốt cho sub-agent ở `09-multi-agent` thành hiện thực (→ 09 §16.2), và giúp loop budget của `10-automation` siết được (→ 10 §17.3) — vì món nào cũng cần một run sống lâu hơn một context window.
 
 #### Hiệu ứng bậc hai
 
@@ -120,9 +109,7 @@ một context window.
 > - **So sánh:** Như xếp vali nhỏ cho chuyến đi dài. Vali tràn thì không quăng bừa; bạn có quy tắc (đồ vệ sinh ở lại, hoá đơn cũ đi) và để lại danh sách những gì đã bỏ.
 > - **Vì sao quan trọng:** Mọi run agent dài đều chết nếu không compaction: tràn context, sụp chất lượng kiểu lost-in-the-middle, và hoá đơn token gấp 3–5× vì gửi lại tool output chết. Compaction ở 70% giữ run sống vô hạn với chi phí phẳng.
 
-**Context Compaction** là thứ cho phép một context window cố định gánh một run không
-giới hạn. Đây là phần ít được thiết kế nhất trong hầu hết agent harness, và cũng là
-phần tốn kém nhất khi làm sai.
+**Context Compaction** là thứ giúp một context window bé xíu "gánh" được một run dài bất tận. Đây cũng là phần hay bị làm qua loa nhất trong các agent harness, và hễ làm ẩu là trả giá đắt nhất.
 
 ```
 TRƯỚC compaction (188k trên ngân sách 200k)
@@ -197,8 +184,7 @@ SAU compaction (74k trên ngân sách 200k)
 
 ### 1.2 Hai Họ Kỹ Thuật: Summarization và Pruning
 
-Chúng bổ trợ nhau, không phải hai lựa chọn thay thế, và nhầm lẫn chúng là gốc rễ của
-phần lớn hiện thực tệ.
+Hai cách này bổ trợ cho nhau, chứ không phải hai món để bạn chọn một trong hai — và nhầm lẫn chỗ này chính là gốc rễ của hầu hết bản hiện thực dở tệ.
 
 | | **Summarization** | **Pruning** |
 |---|------------------|------------|
@@ -209,9 +195,7 @@ phần lớn hiện thực tệ.
 | **Rủi ro** | Mất chi tiết, tóm tắt bịa | Mất thông tin trông như không cần |
 | **Áp cho** | Tool output cũ, file đọc dài | Nhánh thất bại, diff bị thay thế, chit-chat |
 
-**Thứ tự rất quan trọng:** prune trước (miễn phí, không mất thông tin của nhánh chết),
-rồi mới tóm tắt phần còn lại quá lớn (tốn kém, có hao hụt). Các đội tóm tắt trước rồi
-mới prune không bao giờ trả được gần 40% chi phí và vẫn giữ nhiều thông tin hơn.
+**Nhớ thứ tự vàng:** prune trước cho gọn (miễn phí, lại không mất thông tin của nhánh chết), rồi mới tóm tắt phần còn lại quá lớn (tốn tiền gọi LLM, lại hao hụt). Đội nào làm ngược — tóm tắt trước rồi mới prune — thì vừa mất oan gần 40% chi phí, vừa giữ lại ít thông tin hơn.
 
 ---
 
@@ -226,10 +210,7 @@ mới prune không bao giờ trả được gần 40% chi phí và vẫn giữ n
  50% ──── hăng hái quá: 2 lần compaction mỗi run, tốn chất lượng, tốn lời gọi LLM.
 ```
 
-Lỗi ở mốc 90% rất cụ thể và rất thường gặp: một lần `read_file` 30 KB tiêu 8% của cửa
-sổ 200k trong *một* step. Trigger ở 90%, nhận một kết quả 8%, giờ ở 98% — và kết quả
-*kế tiếp* tràn, buộc phải compact lại giữa chừng task, với ít chỗ để tóm tắt cho ra
-hàng. Compaction dưới áp lực đúng là lúc bạn không thể chịu sự hao hụt.
+Lỗi ở mốc 90% rất cụ thể mà đội nào cũng từng dính: một cú `read_file` 30 KB ngốn hết 8% cửa sổ 200k chỉ trong *một* step. Trigger ở 90%, nhận thêm một kết quả 8%, giờ bạn đã ở 98% — và kết quả *kế tiếp* tràn, buộc phải compact ngay giữa chừng task, trong lúc chẳng còn mấy chỗ để tóm tắt cho ra hồn. Compaction mà làm trong lúc bị dí deadline thì đúng là lúc dễ mất thông tin nhất.
 
 **Quy tắc: trigger khi bạn vẫn còn đủ khả năng tóm tắt cho tử tế.**
 
@@ -257,8 +238,7 @@ tôi ổn" khi đang giữ 195k token.
 
 ### 3.1 Pinned và Evictable
 
-Pin set trả lời câu hỏi: "mất nó thì run có sai không?". Bất cứ thứ gì mà việc mất nó
-làm thay đổi *nhiệm vụ* chứ không phải *khẩu vị* — thì pin.
+Pin set trả lời đúng một câu hỏi: "mất nó thì run có làm sai không?". Hễ mất mà làm đổi cả *nhiệm vụ* chứ không chỉ đổi *khẩu vị* — thì pin lại, khỏi bàn.
 
 | Pinned (không bao giờ loại) | Evictable (theo thứ tự loại) |
 |----------------------------|------------------------------|
@@ -272,9 +252,7 @@ làm thay đổi *nhiệm vụ* chứ không phải *khẩu vị* — thì pin.
 | Schema output mô hình phải tạo ra | Lịch sử của một subtask đã xong |
 | Con trỏ tới memory bền | Tool output chết tốn token (tóm tắt, không bỏ hẳn) |
 
-**Tinh tế:** "tín hiệu lỗi cuối" được pin *chỉ cho loop đang hoạt động*. Khi loop đã
-được giải quyết, lỗi đó trở thành evictable. Pin nó vĩnh viễn nghĩa là pin set của bạn
-tăng đơn điệu và cuối cùng vượt ngân sách — một kiểu hỏng khác, và âm thầm.
+**Mẹo nhỏ mà hay bị quên:** "tín hiệu lỗi cuối" chỉ được pin *khi loop còn đang chạy*. Loop xong rồi thì lỗi đó thành evictable. Cứ pin mãi thì pin set của bạn sẽ phình to dần cho tới lúc vượt ngân sách — một kiểu hỏng khác, mà lại hỏng trong im lặng.
 
 ### 3.2 Pin Set
 
@@ -302,9 +280,7 @@ export function isPinned(span: ContextSpan, pins: PinSet, planState: PlanState):
 }
 ```
 
-**Quy tắc: pin set được suy ra, không thao tác tay.** Nó tính từ plan, loop đang hoạt
-động, và danh sách gate đang chờ — nên tự co lại khi công việc hoàn thành thay vì phình
-ra.
+**Quy tắc gọn nhẹ: pin set là thứ suy ra tự động, đừng gõ tay.** Nó tính từ plan, loop đang chạy và danh sách gate đang chờ — nên công việc xong tới đâu là nó tự co lại tới đó, thay vì phình ra mãi.
 
 ---
 
@@ -340,9 +316,7 @@ utility = 0.30·recency + 0.40·structural_reachability + 0.30·failure_signal
 | `structural_reachability` | Span này có nằm trên critical path tới goal hiện tại không? | BFS trên plan graph (→ 04) từ task đang hoạt động; span nuôi một node *đang chờ* điểm cao, span nuôi node *đã xong* điểm thấp |
 | `failure_signal` | Span có mang lỗi mà loop đang săn không? | so khớp chuỗi/trace với lỗi cuối của loop (xem §8.3) |
 
-Rồi loại theo utility tăng dần, không bao giờ vượt ngân sách. Quan trọng là **thứ tự
-này hoạt động trên plan graph, không phải trên danh sách message** — đó là lý do nó
-cần `08` và `04` để hữu ích.
+Rồi loại dần theo utility từ thấp lên cao, không bao giờ lấn vào ngân sách. Điểm mấu chốt là **thứ tự này chạy trên plan graph, chứ không phải trên danh sách message** — đó là lý do nó cần `08` và `04` chống lưng mới phát huy tác dụng.
 
 ```typescript
 /** Cài đặt tham chiếu: §8.3. Tín hiệu lỗi cuối của loop đáng 0.30 — thiếu nó, một
@@ -400,8 +374,7 @@ và `Evicted[]` để write-back vào memory và phát event audit. Văn xuôi t
 
 ### 5.2 Chuẩn Chất Lượng
 
-Một resume block tốt khi một **agent mới với context rỗng** có thể tiếp tục run và làm
-đúng bước kế tiếp. Kiểm thử đúng bằng cách đó:
+Một resume block đạt chuẩn khi một **agent mới toanh với context trống trơn** vẫn đọc xong mà biết phải làm bước kế tiếp là gì. Cách test chuẩn nhất cũng là cách đó:
 
 ```typescript
 /** Bài test chấp nhận cho một resume block: agent lạnh có đi tiếp được không? */
@@ -433,10 +406,7 @@ thầm phá một run.
 | Nhánh chết | **Resume block** |
 | — | Invariant / ràng buộc |
 
-Ranh giới không phải "quan trọng vs không quan trọng". Nó là **"sau run này còn cần
-không?"**. Tool stdout ở lượt 4 có thể cần ở lượt 44, nhưng không cần sau lượt 60 — đó
-là việc của context. Một quyết định ở lượt 12 sẽ cần cho một *run khác* tuần sau — đó
-là việc của memory.
+Ranh giới này không phải chuyện "quan trọng hay không". Nó là câu hỏi **"qua khỏi run này còn cần nữa không?"**. Tool stdout ở lượt 4 có thể cần tới lượt 44, nhưng qua lượt 60 thì hết vai — đó là việc của context. Còn một quyết định ở lượt 12 mà tuần sau một *run khác* vẫn cần — đó là việc của memory.
 
 ### 6.2 Contract Hay Vỡ Nhất Trong Production
 
@@ -445,8 +415,7 @@ sau, mô hình không biết vì sao mình đã quyết định điều đó, v�
 *thành công* và codebase lệch nhẹ so với thiết kế mà người dùng đã đồng ý bốn mươi
 phút trước.
 
-**Quy tắc:** write-back **trước khi** loại. Không phải sau, không phải "để sau" —
-trước. Trình tự:
+**Quy tắc sống còn:** write-back **trước khi** loại. Không phải sau, không phải "để mai tính" — mà là trước. Trình tự chuẩn:
 
 ```
 1. chọn span để loại (utility tăng dần)
@@ -470,7 +439,7 @@ memory backend, chạy một compaction, và assert run từ chối đi tiếp.
 
 ### 7.1 Header / Body / Footer
 
-Compaction có hao hụt, nên hãy thiết kế prompt để sống sót qua nó:
+Compaction kiểu gì cũng hao hụt ít nhiều, nên hãy thiết kế prompt sao cho "sống sót" được qua nó — giống như gói đồ dễ vỡ mà vẫn đi đường dài được:
 
 ```
 [HEADER — invariant, luôn được giữ]
@@ -1097,5 +1066,5 @@ giản là may mắn.
 
 *Tài liệu: Harness 14. Context Compaction — HARNESS ENGINEERING EDITION*
 *Module cross-cutting · thứ cho phép một context window cố định gánh một run không giới hạn*
-*Cập nhật: 19/07/2026*
+*Cập nhật: 16/10/2026*
 *Tác giả: AI Knowledge Repository*

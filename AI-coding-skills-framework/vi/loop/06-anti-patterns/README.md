@@ -1,6 +1,6 @@
 # ⚠️ 06. Anti-Patterns & Failure Modes
 
-> Các sai lầm thiết kế cần tránh **trước khi** bật loops unattended, và **catalog các cách thực sự loops hỏng** kèm cách giảm thiểu.
+> Những lỗi thiết kế bạn nên tránh **trước khi** bật loops unattended, cùng **catalog các kiểu hỏng mà loops hay gặp** và cách giảm thiểu.
 
 ---
 
@@ -23,7 +23,7 @@
 
 ## 2. Failure Mode Catalog
 
-Real ways loops fail — dùng khi debug một loop misbehaving hoặc viết pattern mới.
+Đây là những kiểu hỏng có thật ngoài đời — bạn dùng khi debug một loop đang chạy sai hoặc khi viết pattern mới.
 
 ### Phân Loại Severity
 
@@ -37,73 +37,73 @@ Real ways loops fail — dùng khi debug một loop misbehaving hoặc viết pa
 
 ### 2.1 Infinite Fix Loop
 
-- **Symptom**: Cùng PR/CI job bị auto-fix 5+ lần; không bao giờ hội tụ.
+- **Symptom**: Cùng một PR/CI job bị auto-fix 5+ lần mà vẫn không xong.
 - **Severity**: S2
-- **Causes**: Verifier yếu hoặc cùng session với implementer; root cause misdiagnosed (symptom fixing); flaky test bị xem là regression.
-- **Mitigations**: Hard cap attempts (vd 3) → escalate; tách verifier model/effort; classify flakes; ghi attempt count trong state.
+- **Causes**: Verifier yếu hoặc cùng session với implementer; chẩn đoán sai nguyên nhân gốc (chỉ chữa triệu chứng); test chập chờn bị xem là regression.
+- **Mitigations**: Đặt hard cap attempts (ví dụ 3) rồi escalate; tách verifier ra model/effort riêng; phân loại flakes; ghi attempt count vào state.
 
 ### 2.2 State Rot
 
-- **Symptom**: `STATE.md` tham chiếu PRs merged, tickets đóng, branches stale.
-- **Severity**: S1 → S2 (loop act trên ghosts)
-- **Causes**: Không có prune step cuối run; state không được đọc đầu run; nhiều loops ghi cùng file không schema.
-- **Mitigations**: Prune closed/merged items mỗi run; `Last run` timestamp + validate IDs; một state file mỗi pattern.
+- **Symptom**: `STATE.md` vẫn nhắc tới PR đã merge, ticket đã đóng, branch đã cũ.
+- **Severity**: S1 → S2 (loop hành động dựa trên "bóng ma")
+- **Causes**: Không có bước prune cuối mỗi run; state không được đọc đầu run; nhiều loop cùng ghi vào một file mà không có schema.
+- **Mitigations**: Prune các item đã closed/merged mỗi run; ghi `Last run` timestamp và kiểm tra lại IDs; mỗi pattern một state file riêng.
 
 ### 2.3 Verifier Theater
 
-- **Symptom**: Verifier "approve" nhưng tests fail trong CI hoặc review thấy bugs.
+- **Symptom**: Verifier bấm "approve" nhưng tests vẫn fail ngoài CI hoặc review vẫn thấy bug.
 - **Severity**: S2
-- **Causes**: Verifier prompt mơ hồ ("looks good"); verifier không chạy tests; cùng model, cùng context với implementer.
-- **Mitigations**: Verifier phải chạy test/lint và report output; khác instructions ("find reasons to reject"); model mạnh hơn cho unattended.
+- **Causes**: Prompt của verifier chung chung ("looks good"); verifier không chạy tests; dùng cùng model, cùng context với implementer.
+- **Mitigations**: Verifier phải chạy test/lint và báo cáo output; instructions khác đi ("tìm lý do để reject"); dùng model mạnh hơn cho unattended.
 
 ### 2.4 Notification Fatigue
 
-- **Symptom**: Slack/email ping mỗi 5 phút; team mute bot.
-- **Severity**: S1 → S2 (escalations thật bị bỏ lỡ)
-- **Causes**: Notify trên mọi run, không phải mọi *actionable* finding; ngưỡng "high priority" quá thấp.
-- **Mitigations**: Chỉ notify khi cần human decision; digest mode cho report-only loops; tighten triage rules.
+- **Symptom**: Slack/email ping mỗi 5 phút; cả team tắt tiếng bot.
+- **Severity**: S1 → S2 (các escalation thật bị bỏ lỡ)
+- **Causes**: Cứ mỗi run là notify, thay vì chỉ notify khi có finding *đáng làm*; ngưỡng "high priority" đặt quá thấp.
+- **Mitigations**: Chỉ notify khi cần người ra quyết định; dùng digest mode cho report-only loops; siết lại triage rules.
 
 ### 2.5 Token Burn
 
-- **Symptom**: Bill tăng vọt; loop chạy full sub-agent chains trên triage rỗng/nhiễu.
+- **Symptom**: Bill tăng vọt; loop chạy full chuỗi sub-agent dù triage trống hoặc toàn nhiễu.
 - **Severity**: S1
-- **Causes**: Cadence dưới phút với sub-agents nặng; không early-exit khi watchlist rỗng; retry cả pipeline trên transient API errors.
-- **Mitigations**: Cheaper triage-only pass trước; `scheduler_delete` khi hết việc; daily token budget → pause loop.
+- **Causes**: Cadence dày dưới từng phút mà sub-agents nặng; không early-exit khi watchlist rỗng; retry cả pipeline dù chỉ lỗi API nhất thời.
+- **Mitigations**: Chạy lượt triage-only rẻ trước; `scheduler_delete` khi hết việc; đặt daily token budget để tự pause loop.
 
 ### 2.6 Over-Reach (Wrong Scope)
 
-- **Symptom**: Loop refactor modules không liên quan, "fix" design issues, chạm denylist paths.
+- **Symptom**: Loop refactor các module không liên quan, "fix" cả design issue, chạm vào denylist paths.
 - **Severity**: S2 → S3
-- **Causes**: minimal-fix skill quá permissive; không có path allowlist/denylist; triage xếp architectural work vào "High Priority".
-- **Mitigations**: Denylist enforced trong skills; "smallest possible diff" + verifier kiểm tra touched files; triage signal-only.
+- **Causes**: minimal-fix skill cho phép quá rộng; không có path allowlist/denylist; triage xếp architectural work vào "High Priority".
+- **Mitigations**: Siết denylist ngay trong skills; giữ nguyên tắc "diff nhỏ nhất có thể" và verifier kiểm tra touched files; triage chỉ phát tín hiệu.
 
 ### 2.7 Comprehension Debt Spiral
 
-- **Symptom**: Velocity tăng nhưng không ai giải thích được recent changes; review thành rubber-stamp.
+- **Symptom**: Tốc độ tăng nhưng không ai giải thích được các change gần đây; review thành gật cho qua.
 - **Severity**: S2 (dài hạn)
-- **Causes**: Human ngừng đọc loop output; auto-merge trên allowlist phình to; không có human synthesis hàng tuần.
-- **Mitigations**: Mandatory human review cho non-trivial PRs; weekly "loop digest"; cap auto-merge cho truly trivial paths.
+- **Causes**: Mọi người ngừng đọc output của loop; auto-merge allowlist phình to; thiếu tổng hợp hàng tuần từ con người.
+- **Mitigations**: Bắt buộc review bởi người với PR non-trivial; duy trì "loop digest" hàng tuần; chỉ auto-merge các path thật sự vụn vặt.
 
 ### 2.8 Cognitive Surrender
 
-- **Symptom**: "The loop handles it" — không có ý kiến về correctness/design.
-- **Severity**: S2 (cultural)
-- **Causes**: Loop success metric = volume, không phải quality; không human gates trên medium-risk work.
-- **Mitigations**: Human gates tường minh trong mọi pattern; success metric = time saved *with* quality bar; Osmani: "Build it like someone who intends to stay the engineer".
+- **Symptom**: "Loop lo hết rồi" — không còn ai có ý kiến về correctness/design.
+- **Severity**: S2 (văn hóa)
+- **Causes**: Đo thành công của loop bằng số lượng thay vì chất lượng; thiếu human gates cho medium-risk work.
+- **Mitigations**: Ghi human gates rõ ràng trong mọi pattern; đo thành công bằng time saved *kèm* quality bar; như Osmani nói: "Build it like someone who intends to stay the engineer".
 
 ### 2.9 Parallel Collision
 
-- **Symptom**: Hai sub-agents sửa cùng files; merge conflicts; corrupted state.
+- **Symptom**: Hai sub-agent sửa cùng files; merge conflicts; state hỏng.
 - **Severity**: S2
-- **Causes**: Không worktree isolation; hai loops action trên cùng PR không phối hợp.
-- **Mitigations**: `isolation: worktree` cho mọi code-editing sub-agents; lock/queue trong state: "PR #1234 — worktree in progress".
+- **Causes**: Không cô lập bằng worktree; hai loop cùng action trên một PR mà không phối hợp.
+- **Mitigations**: Dùng `isolation: worktree` cho mọi sub-agent sửa code; khóa/hàng đợi trong state: "PR #1234 — worktree in progress".
 
 ### 2.10 Escalation Failure
 
-- **Symptom**: Loop kẹt retrying; human không bao giờ được báo.
+- **Symptom**: Loop kẹt ở retrying mãi; không ai được báo.
 - **Severity**: S2
-- **Causes**: Max attempts không được implement; escalation chỉ ghi vào state không ai đọc.
-- **Mitigations**: Connector ping khi escalate (Slack, Linear comment); `High Priority (waiting on human)` section trong STATE.md; alert nếu item trong section đó > 24h.
+- **Causes**: Max attempts không được cài thật; escalation chỉ ghi vào state mà chẳng ai đọc.
+- **Mitigations**: Ping qua connector khi escalate (Slack, Linear comment); giữ mục `High Priority (waiting on human)` trong STATE.md; báo động nếu item nằm đó quá 24h.
 
 ---
 

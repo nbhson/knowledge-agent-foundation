@@ -27,7 +27,7 @@ You have a Knowledge Graph with 10,000 people and projects. You want to:
 2. **Classify**: which team does this person belong to? (node classification)
 3. **Detect**: are any relations missing? (KG completion)
 
-**Rule-based reasoning** (module 06) works with hand-written rules — but it doesn't scale when there are hundreds of relation types. **GNNs** learn automatically from the graph's structure: no rules to write, just examples needed.
+**Rule-based reasoning** (module 06) works with hand-written rules — but it gets hard to keep up when you have hundreds of relation types. **GNNs** learn the patterns straight from the shape of the graph: no hand-written rules, just examples to learn from.
 
 > *"Rules tell the graph what you know. GNNs discover what you don't know you know."*
 
@@ -166,7 +166,7 @@ Example: Alice and Carol have never met (no direct edge),
 > *Weighted average* = each node contributes in inverse proportion to its number of neighbors (so a highly-connected node doesn't "drown out" a sparsely-connected one).
 >
 > **Analogies:**
-> - **GCN = a group discussion**: each person = a node. Each layer = one group meeting: everyone shares opinions (message), then everyone consolidates into a new opinion (update). Listening to many friends → broader understanding.
+> - **GCN = a group discussion**: each person = a node. Each layer = one group meeting: everyone shares opinions (message), then everyone consolidates into a new opinion (update). Listening to many friends → broader knowing.
 > - **Activation (ReLU) = noise filtering**: keeps only the positive signal, discards the negative (negative) signal — helps the model learn nonlinear patterns.
 
 ```

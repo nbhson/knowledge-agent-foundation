@@ -58,9 +58,9 @@
 > - [16. Future Trends in Observability](#16-future-trends-in-observability)
 > - [References](#references)
 >
-> **Cross-cutting module.** Trajectory is the spine of the whole harness. Every stage
-> emits into it; every debug session reads from it. This module is the map;
-> `03-update-memory-store/trajectory-fork-replay.md` holds the engine implementation.
+> **Cross-cutting module.** Think of trajectory as the backbone of the whole harness. Every stage
+> writes to it, and every debugging session reads from it. This guide is the map;
+> `03-update-memory-store/trajectory-fork-replay.md` has the engine code.
 
 ---
 
@@ -69,11 +69,12 @@
 Ticket: *"The agent deleted `src/auth/middleware.ts` and the user reported it 40 minutes
 later. Why?"*
 
-Without a trajectory, this question is unanswerable. You have a chat log (the model's
-words, not its actions), a partial CI log, and a gut feeling ("it was working on the auth
-refactor"). You cannot say which turn contained the delete, what the tool returned before
-it, whether the file was even in the current branch at that moment, or what the agent
-thought it was doing. You write a post-mortem that is really just a guess.
+Without a trajectory, you can't answer this. You have the chat text (what the model
+said, not what it did), a partial CI log, and a hunch ("it was working on the auth
+refactor"). You can't tell which turn made the delete, what the tool returned just
+before it, whether the file was even in the current branch at that moment, or what
+the agent thought it was doing. You end up writing a post-mortem that is really just
+a guess.
 
 With a trajectory, the same question takes eleven seconds and one query:
 
@@ -89,19 +90,19 @@ ORDER BY seq;
 ```
 
 **And the follow-up questions answer themselves.** Why did it delete? `seq 29: prompt` —
-the exports were unused, and the model chose deletion over leaving dead code. Was that
-reversible? `seq 33` records `git worktree`, so yes, and the final patch is in `seq 51`.
-Should this have been gated? Blast radius was one file — below the `write` threshold —
-but the file was *imported by 3 other files the agent never read*. That is a policy
-question, and now it is an answerable one.
+the exports were unused, and the model chose deletion over leaving dead code. Could you
+undo it? `seq 33` records `git worktree`, so yes, and the final patch is in `seq 51`.
+Should this have been gated? The blast radius was one file — below the `write` threshold —
+but that file was *imported by 3 other files the agent never read*. That is a policy
+question, and now you can actually answer it.
 
-**This is what a trajectory buys: the difference between "it broke" and "here is exactly
-what happened, here is why, and here is what we should change."**
+**This is what a trajectory gives you: the difference between "it broke" and "here is exactly
+what happened, here is why, and here is what we should change."
 
 ### Why Is Trajectory Non-Optional?
 
-> *"An agent system without a trajectory log is a system where every incident is
-> unreproducible, every cost is unattributable, and every regression is invisible."*
+> *"If your agent system has no trajectory log, every incident is
+> hard to reproduce, every cost is hard to explain, and every regression stays hidden."*
 
 #### Four Capabilities That Fall Apart Without It
 
@@ -112,11 +113,11 @@ what happened, here is why, and here is what we should change."**
 | **Cost** | Bill ÷ run count; no attribution | `GROUP BY task_id` with tokens + model tier |
 | **Audit** (→ 15) | "Who approved the deploy?" → scroll Slack | One immutable, hash-linked record |
 
-The cost angle deserves emphasis. Without per-step tokens and per-step model tier you
-cannot answer *"why did our bill triple last month?"* — only that it did. With a
+The cost story is worth highlighting. Without per-step tokens and per-step model tier you
+can't answer *"why did our bill triple last month?"* — you only know that it did. With a
 trajectory it is `SELECT SUM(tokens) WHERE model='frontier' GROUP BY session`, and the
-answer is usually "a retry loop on 3% of runs" or "compaction stopped firing" — both
-fixable in an afternoon.
+answer is usually "a retry loop on 3% of runs" or "compaction stopped working" — both
+easy to fix in an afternoon.
 
 #### Core Philosophy
 
@@ -131,11 +132,11 @@ Observability = the discipline of querying that evidence before opinions form
 >
 > - **Concept:** A trajectory is an **append-only event log** of a run: every prompt, tool call, tool result, plan revision, eval verdict, memory write, approval, and compaction — each timestamped, attributed, and joined by keys. **Observability** is the practice of querying that log to debug, replay, attribute cost, and improve the system.
 > - **Analogy:** The flight data recorder. A routine landing gets no attention; a crash is investigated entirely from the recorder, and the same data replays the flight path.
-> - **Why it matters:** Without it you cannot answer "why did it edit the wrong file?", "which retrieved chunk poisoned the answer?", or "what did this run cost?". With it, debugging is a query, evaluation is SQL, and incidents are reproducible.
+> - **Why it matters:** Without it you can't answer "why did it edit the wrong file?", "which retrieved chunk poisoned the answer?", or "what did this run cost?". With it, debugging is a query, evaluation is SQL, and incidents are reproducible.
 
-**Trajectory & Observability** turns an opaque agent run into a queryable, replayable,
-auditable object. It is the difference between an agent you *operate* and an agent you
-*hope*.
+**Trajectory & Observability** turns a hidden agent run into something you can query, replay,
+and audit. It's the difference between an agent you *run* and an agent you just
+*hope works*.
 
 ```
 ┌────────────────────── HARNESS EMITTERS ──────────────────────┐
@@ -165,9 +166,9 @@ auditable object. It is the difference between an agent you *operate* and an age
           └────────────────┘      └────────────────────┘
 ```
 
-**Two invariants make it work:** (1) *append-only* — no event is ever mutated, so the
-history is trustworthy; (2) *every event carries `sessionId` + `parentTaskId`* — so no
-event is an orphan and every question has a join.
+**Two simple rules make it work:** (1) *append-only* — you never change an old event, so the
+history stays trustworthy; (2) *every event carries `sessionId` + `parentTaskId`* — so no
+event is lost on its own and every question has a join.
 
 ## Contents
 
@@ -196,8 +197,8 @@ event is an orphan and every question has a join.
 
 ### 1.1 Core Schema
 
-One shape, emitted by every module, read by every tool. This is the single most
-important artifact in a harness's observability layer.
+One shape, used by every module, read by every tool. This is the single most
+important piece of your observability layer.
 
 ```typescript
 export type EventKind =
@@ -258,8 +259,8 @@ export interface TrajectoryEvent {
 | `eval` | 11 | judge, score, rubric, humanSampleId | regression detection (→ 11) |
 | `error` | any | code, retryable, stack ref | SLO, alerting |
 
-**Rule:** if a module produces a fact that someone will eventually want to correlate,
-it emits an event. A fact that lives only in memory is a fact you cannot debug with.
+**Rule:** if a module creates a fact that someone might want to look up later,
+it should emit an event. A fact that only lives in memory is a fact you can't debug with.
 
 ### 1.3 Validation & Versioning
 
@@ -289,8 +290,8 @@ export const TrajectoryEventSchema = z.object({
 ```
 
 **Version the schema, not the fields.** Add `v: 2` and keep readers that handle both.
-A trajectory written six months ago must still be readable — that is the whole point of
-keeping it. Silent field renames destroy the only copy of the truth.
+A trajectory written six months ago should still be readable — that is the whole point of
+keeping it. Quietly renaming fields destroys your only copy of the truth.
 
 ---
 
@@ -314,7 +315,7 @@ Interleaving that matters:
 
 - **`tool_call` then `tool_result`, always paired.** An unpaired `tool_call` is a hung step — and a query that finds them is your hang detector (→ `09` §16.1).
 - **`plan_revision` interleaved with the tool calls that motivated it.** Reconstruction requires cause and effect adjacent.
-- **`compaction` between the prompt it shrank and the prompt that followed.** Otherwise you cannot explain why the model forgot something.
+- **`compaction` between the prompt it shrank and the prompt that followed.** Otherwise you can't explain why the model forgot something.
 
 ### 2.2 Write Path — Durability Tiers
 
@@ -473,8 +474,8 @@ export function idempotencyKeyOf(e: TrajectoryEvent): string {
 **The rule that prevents disasters:** replay never re-triggers an irreversible side
 effect. `idempotencyKeyOf()` = `(taskId, tool, argvHash)`; on replay, a completed key is
 skipped and its recorded `tool_result` is substituted. This is why
-`07-workflow/README.md` §13.3 requires idempotency keys on every step — replay is not a
-nice-to-have, it is the *reason* those keys exist.
+`07-workflow/README.md` §13.3 requires idempotency keys on every step — replay isn't a
+nice-to-have, it's the *reason* those keys exist.
 
 `fingerprint` deserves a note: it hashes `(template, retrieved chunk ids, memory ids,
 policy hash)`. If a replay produces a different fingerprint, the *inputs* changed — and
@@ -517,7 +518,7 @@ and the 3 highest-scoring ones were stale" — which has an owner and a fix.
 
 ### 4.3 Orphan Detection
 
-An event with no `parentTaskId` (or a task that does not exist) is a wiring bug. Run
+An event with no `parentTaskId` (or a task that doesn't exist) is a wiring bug. Run
 this continuously:
 
 ```sql
@@ -645,7 +646,7 @@ GROUP BY t.session_id, e.model
 ORDER BY usd DESC LIMIT 20;
 ```
 
-The most common finding: **cost is not in the prompts, it is in the retry loops and the
+The most common finding: **cost isn't in the prompts, it's in the retry loops and the
 frontier-tier steps nobody needed.** A cost dashboard built on this query usually finds
 15–30% savings in the first week with no quality change.
 
@@ -871,7 +872,7 @@ flaky (infrastructure problem). Those demand completely different fixes.
 
 Observability vendors turned the trajectory into a product: trace waterfalls, prompt
 versioning, dataset curation from traces, and eval runs over saved traces. The insight
-that generalizes: **traces are not just logs, they are the raw material for evaluation
+that generalizes: **traces aren't just logs, they are the raw material for evaluation
 datasets.** Every failed run is a curated eval case, already in the right shape, with the
 real context that produced it.
 
@@ -907,7 +908,7 @@ OpenHands makes the event stream the runtime's interface: the agent emits
 `Action`/`Observation` pairs, and every action is recorded as it executes rather than
 afterwards. Design consequences:
 
-1. **Recording is not a side effect — it is the loop.** You cannot "forget to log" because logging *is* how the loop communicates.
+1. **Recording isn't a side effect — it's the loop.** You can't "forget to log" because logging *is* how the loop communicates.
 2. **Observations are first-class events**, not implicit return values. The difference matters: a truncated tool result is an event with `truncated: true`, not a silent string cut.
 3. **Replay comes nearly free** because the event stream is the execution model.
 
@@ -1004,7 +1005,7 @@ export interface ReplayCase {
 
 ### 12.2 Six Design Principles
 
-1. **Append-only.** Events are facts; facts are not edited. Corrections are new events (`plan_revision`), never mutations.
+1. **Append-only.** Events are facts; facts aren't edited. Corrections are new events (`plan_revision`), never mutations.
 2. **Every event is attributable.** `actor` and `parentTaskId` are mandatory. No orphans, ever.
 3. **Redact at write.** Read-time redaction has already lost.
 4. **Telemetry must never fail the task.** Append errors are counted, not thrown into the agent loop. An agent that stops working because logging broke is worse than one that is silently unobserved.
@@ -1021,7 +1022,7 @@ export interface ReplayCase {
 - `fsync` approvals, memory writes, and session boundaries; buffer the rest.
 - Store `seq` gaplessly and alert on gaps — a gap means lost evidence.
 - Build cost attribution from step-level `model` + `tokens`, not from aggregate billing.
-- Turn every failed run into a curated eval case; it is already in the right shape.
+- Turn every failed run into a curated eval case; it's already in the right shape.
 - Replay the top-20 production trajectories nightly against a pinned model.
 - Emit `gen_ai.*` OpenTelemetry attributes so traces land in existing backends.
 
@@ -1076,14 +1077,14 @@ export interface ReplayCase {
 
 ### 16.1 Agent-Native Tracing (2026-2028)
 
-- **Trajectory-aware evaluation.** Rubrics that score *the path* — did it check the test before declaring success? — rather than the final answer. The data is already there; it is a query problem.
+- **Trajectory-aware evaluation.** Rubrics that score *the path* — did it check the test before declaring success? — rather than the final answer. The data is already there; it's a query problem.
 - **Automatic drift detection.** A trajectory embedder that flags runs structurally unlike your known-good population before a human looks at them.
 - **Causal attribution.** Given a bad outcome, identify the earliest decision that caused it. This is the frontier: not "what happened" but "which turn do I change".
 
 ### 16.2 Privacy-Preserving Telemetry
 
 - **On-device redaction with differential privacy aggregates** for the metrics you keep globally while the payloads stay tenant-local.
-- **Confidential-compute trace sinks** so even the observability vendor cannot read the trajectory — the same SEV-SNP/TDX pattern as `12-sandbox-execution` §16.3.
+- **Confidential-compute trace sinks** so even the observability vendor can't read the trajectory — the same SEV-SNP/TDX pattern as `12-sandbox-execution` §16.3.
 
 ### 16.3 Self-Describing Trajectories
 
@@ -1132,7 +1133,7 @@ detectible pattern. The flight recorder is how you find the flight that was hija
 
 - `03-update-memory-store/trajectory-fork-replay.md` — the engine implementation (fork/replay/resume)
 - `07-workflow/README.md` §13 — the resume consumer (checkpoint-resume, idempotency)
-- `07-workflow/README.md` §5 — *adjacent, not a duplicate*: per-run distributed tracing (`trace_id`/spans/logs/metrics) for a single workflow. Joins this module on `runId`; a span is not a `TrajectoryEvent`.
+- `07-workflow/README.md` §5 — *adjacent, not a duplicate*: per-run distributed tracing (`trace_id`/spans/logs/metrics) for a single workflow. Joins this module on `runId`; a span isn't a `TrajectoryEvent`.
 - `08-task/README.md` §11 — the task producer (`parentTaskId` source)
 - `11-evaluation/README.md` §15 — the eval consumer (trajectory eval, human calibration)
 - `12-sandbox-execution/README.md` §9 — the `sandbox` event producer
@@ -1143,5 +1144,5 @@ detectible pattern. The flight recorder is how you find the flight that was hija
 
 *Document: Harness 13. Trajectory & Observability — HARNESS ENGINEERING EDITION*
 *Cross-cutting module · the spine of harness observability*
-*Last updated: 19/07/2026*
+*Last updated: 16/10/2026*
 *Author: AI Knowledge Repository*

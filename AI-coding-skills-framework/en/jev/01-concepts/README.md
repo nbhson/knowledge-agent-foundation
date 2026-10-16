@@ -1,6 +1,6 @@
 # 🔬 01. Core Concepts — Jev & System One Models
 
-> This section explains **what Jev is**, **the System One / System Two split** it comes from, **the history and naming** behind TypeSafe and Jev, **the high-level architecture**, **why giving up text generation buys you superpowers**, **when to use (and not use) Jev**, and **Jev's place in the agent ecosystem**. Read [README.md](../README.md) first for the overall context.
+> This section covers **what Jev is**, **the fast/slow thinking split** behind it, **the short story of TypeSafe and Jev's name**, **the big-picture design**, **why skipping text generation is actually a strength**, **when to use it (and when not to)**, and **where Jev fits in your agent setup**. Start with [README.md](../README.md) for the full picture.
 
 ---
 

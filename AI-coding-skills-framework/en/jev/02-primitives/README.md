@@ -1,6 +1,6 @@
 # 🧩 02. The Three Primitives — Choice, Score, Noul
 
-> This section explains **the request shape** (state + questions), the **three typed primitives** — **Choice**, **Score**, **Noul** — with code samples, **parallel evaluation** (why adding questions barely changes latency), and **how to choose the right primitive**. Read [README.md](../README.md) for context and [01-concepts](../01-concepts/) for what Jev is.
+> This section covers **the shape of a request** (state + questions), the **three handy building blocks** — **Choice**, **Score**, **Noul** — with code samples, **why asking together is fast** (adding questions barely slows things down), and **how to pick the right one**. See [README.md](../README.md) for context and [01-concepts](../01-concepts/) for what Jev is.
 
 ---
 

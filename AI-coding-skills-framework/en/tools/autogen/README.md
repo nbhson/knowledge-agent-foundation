@@ -14,20 +14,20 @@
 
 ### The Opening Story
 
-Your harness keeps getting more complex: a single agent doing everything — retrieve, plan, code, review. Once the task gets big enough, the single agent becomes the **bottleneck**: overloaded context, one small error breaks the whole chain, and no division of specialized labor.
+Your harness is getting bigger. At first, one agent does everything — it looks things up, makes a plan, writes code, and reviews the result. But when tasks grow, that single agent runs into trouble: its context gets too full, one small mistake can break the whole chain, and there is no teamwork to share the load.
 
 > *"One agent doing everything is a monolith. A harness of specialized agents is a microservices architecture for cognition."*
 
-**AutoGen (Microsoft)** solves this with a **conversation-based multi-agent** model: multiple agents (assistant, user proxy, critic, planner...) talk to each other through a `ConversableAgent` abstraction. Each agent has a role, a system prompt, and its own capabilities — like specialized nodes in a harness.
+**AutoGen (Microsoft)** fixes this with a **conversation-based multi-agent** setup: several agents (assistant, user proxy, critic, planner...) talk to each other through a `ConversableAgent` idea. Each agent has its own role, its own instructions, and its own skills — a bit like small expert helpers inside one bigger harness.
 
 ### Why AutoGen Matters?
 
 | # | Reason | Explanation |
 |---|--------|-------------|
-| 1 | **Multi-agent is natural** | Conversation-based — agents exchange messages, and any of them can call tools |
-| 2 | **UserProxyAgent = harness** | The sample code in HARNESS_ENGINEERING.md shows the UserProxyAgent playing the orchestrating-harness role |
-| 3 | **Integrated code execution** | Agents can run code in a sandbox, receive results, and fix things themselves |
-| 4 | **GroupChat for orchestration** | Multiple agents + a manager = a decision-making council |
+| 1 | **Multi-agent is natural** | Agents talk through messages, and any agent can call tools |
+| 2 | **UserProxyAgent = harness** | The example in HARNESS_ENGINEERING.md uses UserProxyAgent as the main organizer |
+| 3 | **Integrated code execution** | Agents can run code in a safe sandbox, read the result, and fix problems by themselves |
+| 4 | **GroupChat for orchestration** | Many agents plus a manager work together like a small team that makes decisions |
 
 ### Relationship to the Harness
 
@@ -48,7 +48,7 @@ Your harness keeps getting more complex: a single agent doing everything — ret
 
 ### Conversation-Based Multi-Agent
 
-AutoGen uses an **agent-to-agent conversation** architecture. Instead of a linear pipeline, the agents exchange messages:
+AutoGen uses **agents talking to each other**. Instead of one straight line of steps, the agents send messages back and forth:
 
 ```
 User → UserProxyAgent → AssistantAgent (calls tool) → UserProxyAgent (runs code)
@@ -75,7 +75,7 @@ harness = UserProxyAgent(
 )
 ```
 
-`human_input_mode="NEVER"` turns the UserProxyAgent into a **self-operating harness**: it calls tools on its own, collects results on its own, and keeps going until it's done or hits the `max_consecutive_auto_reply` limit.
+With `human_input_mode="NEVER"`, the UserProxyAgent turns into a **harness that runs by itself**: it calls tools on its own, gathers the results on its own, and keeps going until the job is done or it reaches the `max_consecutive_auto_reply` limit.
 
 ### GroupChat — Multiple Agents
 
@@ -92,7 +92,7 @@ group_chat = GroupChat(
 manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config)
 ```
 
-This is exactly **harness/09-multi-agent** in code form — a manager orchestrating who speaks when, like a harness orchestrating its workers.
+This is **harness/09-multi-agent** written as code — a manager decides who speaks next, much like a harness guides its workers.
 
 ## Learning Roadmap (Directory Structure)
 
@@ -143,7 +143,7 @@ manager = GroupChatManager(groupchat=group_chat)
 result = manager.run(task="Implement login API with rate limiting")
 ```
 
-Flow: the planner proposes → the coder implements → the critic finds bugs → back to the coder to fix → ... until the critic is satisfied — a code-based **loop/05-multi-loop**.
+How it runs: the planner suggests a plan → the coder writes the code → the critic spots bugs → the coder fixes them → this repeats until the critic is happy — a code version of **loop/05-multi-loop**.
 
 ### 2. Human-in-the-Loop for Sensitive Changes
 

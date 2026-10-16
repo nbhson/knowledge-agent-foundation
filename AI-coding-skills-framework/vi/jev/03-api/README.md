@@ -8,9 +8,9 @@
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Jev expose **một endpoint duy nhất**: `POST https://api.typesafe.ai/v1/systemone`, xác thực bằng **Bearer API key**. Model version hiện tại là **jev-1.13.0**, dùng alias **jev-latest** để luôn nhận bản mới nhất.
-> **Ẩn dụ/so sánh:** Giống **một function call trên cloud** — một URL, một key, một body JSON. Không streaming, không conversation, không multi-turn — mỗi request là **một lần decide độc lập**.
-> **Vì sao quan trọng:** Bề mặt API nhỏ = integration nhanh. Nhưng cũng có nghĩa **stateless hoàn toàn** — bạn tự quản context (state) ở bên ngoài; xem [04-calibration](../04-calibration/) về state hygiene.
+> **Khái niệm:** Jev chỉ có **một endpoint duy nhất**: `POST https://api.typesafe.ai/v1/systemone`, xác thực bằng **Bearer API key**. Phiên bản hiện tại là **jev-1.13.0**, bạn có thể dùng alias **jev-latest** để luôn nhận bản mới nhất.
+> **Ẩn dụ/so sánh:** Giống như **gọi một hàm trên cloud** — một URL, một key, một body JSON. Không streaming, không hội thoại nhiều lượt — mỗi request là **một lần quyết định độc lập**.
+> **Vì sao quan trọng:** API rất gọn nên tích hợp nhanh. Nhưng bù lại nó **không nhớ trạng thái** — bạn phải tự quản lý context (state) ở phía ngoài; xem thêm [04-calibration](../04-calibration/) về cách giữ state sạch.
 
 ### 1.1 Cấu Trúc Endpoint
 

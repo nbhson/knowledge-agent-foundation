@@ -31,7 +31,7 @@
 
 ## 1. Introduction
 
-In the RAG era (2023–2025), we proved: **get the right context into the LLM and small models beat big models**. But vector-search RAG has one fatal blind spot: it only finds **"passages that resemble the question"** — it can't find **"relationships between entities."**
+In the RAG era (2023–2025), we learned: **give the LLM the right context and small models can beat big ones**. But plain vector-search RAG has one big blind spot: it only finds **"passages that look like the question"** — it can't find **"how things are linked."**
 
 **Example:**
 - Ask: *"Who approved the contract for project X, and who does that person report to?"*

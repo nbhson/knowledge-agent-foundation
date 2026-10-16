@@ -1,6 +1,6 @@
 # 📊 04. Measuring Tokens Saved — Savings
 
-> RTK doesn't just compress output — it also **measures** token savings. This is the bridge to the harness's `11-evaluation` module: you need numbers to know how effectively your harness is running.
+> RTK doesn't just trim output — it also **measures** how much you saved. That makes it a friendly bridge to the harness's `11-evaluation` module: you get real numbers that show how well your harness is running.
 
 ## Measurement Commands
 

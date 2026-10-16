@@ -78,8 +78,8 @@ Jev trả về:
 }
 ```
 
-- **≤ 255 options** — đủ cho mọi taxonomy realisttic.
-- **confidence ≠ P(đúng)**: với Choice/Score, confidence là **distribution tập trung到 mức nào** (peaked → cao, flat → thấp). Chi tiết: [04-calibration](../04-calibration/).
+- **≤ 255 options** — đủ cho mọi bảng phân loại trong thực tế.
+- **confidence ≠ P(đúng)**: với Choice/Score, confidence cho biết **phân phối xác suất tập trung tới mức nào** (càng dồn về một đáp án thì càng cao, càng dàn đều thì càng thấp). Chi tiết: [04-calibration](../04-calibration/).
 
 ### 2.2 Khi Nào Thêm Option "Other"
 

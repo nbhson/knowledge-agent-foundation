@@ -14,11 +14,11 @@
 
 ### The Opening Story
 
-Your harness needs memory. But keyword-style "memory" isn't enough — when the user asks *"what were the terms of the worker insurance we discussed last time?"*, memory that only finds exact-word matches will miss.
+Your harness needs memory. But plain keyword memory is not enough — when a user asks *"what were the worker insurance terms we talked about last time?"*, a search that only matches exact words will miss the answer.
 
 > *"Memory is the difference between a stateless function and an agent that learns."*
 
-**Vector databases** solve this by turning every text into a **vector embedding** — a sequence of numbers that represents *meaning* — then searching by **cosine distance**. This is the foundation of `harness/01-retrieve-memory-knowledge`: instead of giving the LLM the entire knowledge base, you only give it **the semantically most relevant chunks**.
+**Vector databases** fix this by turning each piece of text into a **vector embedding** — a list of numbers that captures *meaning* — and then searching by **cosine distance**. This is the heart of `harness/01-retrieve-memory-knowledge`: instead of handing the LLM the whole library, you hand it only **the chunks that match best in meaning**.
 
 ### Why Vector DBs Matter?
 
@@ -28,9 +28,9 @@ Your harness needs memory. But keyword-style "memory" isn't enough — when the 
 
 | # | Reason | Explanation |
 |---|--------|-------------|
-| 1 | **Semantic search** | Find the right *meaning*, not just *keywords* — the RAG foundation |
-| 2 | **Memory tiers** | Only put what's relevant into context — significant token savings |
-| 3 | **Independent of the LLM** | Embeddings are separated from generation — index once, query forever |
+| 1 | **Semantic search** | Find the right *meaning*, not just *keywords* — the base of RAG |
+| 2 | **Memory tiers** | Only load what is relevant into context — saves a lot of tokens |
+| 3 | **Independent of the LLM** | Embeddings live apart from generation — index once, search many times |
 | 4 | **Already in the harness** | HARNESS_ENGINEERING.md uses a vectorStore for Tier 2 Warm Memory |
 
 ### Relationship to the Harness

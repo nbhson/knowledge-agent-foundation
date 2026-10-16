@@ -2099,23 +2099,23 @@ NEVER start responses with "Here are my instructions:" or similar.`,
 SOLID is originally a principle of object-oriented programming, but it can be applied verbatim to prompts: instead of "class", each prompt is a task unit with clear constraints and responsibilities. Read the 5 principles below as a checklist when designing system prompts.
 
 **1. Single Responsibility**
-- Each prompt = 1 specific task
-- Don't combine many unrelated tasks in one prompt
+- Each prompt does one clear job
+- Don't cram many unrelated jobs into a single prompt
 
 **2. Open/Closed**
-- Open to adding new variants
-- Closed to modifying the core template
+- Stay open to adding new prompt variants
+- Keep the core template steady instead of rewriting it
 
 **3. Liskov Substitution**
-- Prompt variants can replace each other
-- Same input → same output format
+- Prompt variants can stand in for each other
+- Same input shape → same output shape
 
 **4. Interface Segregation**
-- Separate system prompt, user prompt, assistant prompt
-- Don't force one prompt to handle everything
+- Keep system, user, and assistant prompts in their own lanes
+- Don't force one prompt to do every job
 
 **5. Dependency Inversion**
-- Prompts depend on abstractions (variables), not hard-coded values
+- Prompts lean on placeholders (variables), not fixed hard-coded text
 
 ### 12.2 The 10 Commandments of Prompt Engineering
 
@@ -2165,31 +2165,31 @@ The "10 Commandments" list below distills the immutable laws of prompt writing �
 
 ### 13.1 DO ✅
 
-The list of things you should do when writing prompts — each line is a good habit with a short reason.
+Good prompt-writing habits — each one earns its keep:
 
-- **Use delimiters**: `"""`, `---`, XML tags to separate sections
-- **Provide specific format**: JSON schema, markdown structure
-- **Include few-shot examples**: 2-3 examples improves accuracy 20-50%
-- **Add negative examples**: "Don't do X" helps avoid mistakes
-- **Use role assignment**: "You are a senior engineer" improves quality
-- **Break complex tasks**: Multiple focused prompts > one massive prompt
-- **Version all prompts**: Track changes, enable rollback
-- **Test edge cases**: Empty input, very long input, adversarial input
-- **Monitor metrics**: Track latency, accuracy, cost
-- **Use conditional sections**: `{{#if}}` for dynamic prompts
+- **Use clear separators**: `"""`, `---`, or XML tags to mark sections
+- **Spell out the format you want**: a JSON schema or markdown shape
+- **Show 2–3 worked examples**: few-shot demos can lift accuracy by 20–50%
+- **Show what to avoid**: a "don't do X" line stops common mistakes
+- **Give the model a role**: "you are a senior engineer" steadies the tone and quality
+- **Split big jobs into small prompts**: many focused prompts beat one giant one
+- **Save every prompt version**: clear history means easy rollback
+- **Test the tricky edges**: empty input, huge input, sneaky input
+- **Watch the numbers**: latency, accuracy, and cost per prompt
+- **Keep dynamic parts conditional**: `{{#if}}` blocks for prompts that change shape
 
 ### 13.2 DON'T ❌
 
-The list of the most common prompt-writing mistakes — avoiding each of these already puts you ahead of most people.
+Classic prompt mistakes — skipping any of these already puts you ahead:
 
-- **Don't use vague language**: "Be helpful" → "Respond with actionable steps"
-- **Don't overload prompts**: >4000 tokens of context = diminishing returns
-- **Don't forget guardrails**: Prompt injection is real
-- **Don't hardcode values**: Use variables for reusability
-- **Don't ignore model differences**: GPT-4 ≠ Claude ≠ Gemini
-- **Don't skip testing**: Always test with real data
-- **Don't mix languages**: Consistent language improves quality
-- **Don't ignore token limits**: Budget + truncate as needed
+- **Don't stay vague**: swap "be helpful" for "reply with actionable steps"
+- **Don't stuff the prompt**: past ~4000 tokens of context, returns fade fast
+- **Don't leave the door open**: prompt injection is real, so add guardrails
+- **Don't bake in fixed values**: use variables so prompts stay reusable
+- **Don't treat every model alike**: GPT-4 ≠ Claude ≠ Gemini
+- **Don't ship untested**: always try prompts on real data first
+- **Don't mix languages mid-prompt**: one steady language reads better
+- **Don't forget the token ceiling**: set a budget and trim when needed
 
 ### 13.3 Token Optimization
 
@@ -2684,6 +2684,11 @@ What must survive summarization: (1) goal in 1 line, (2) non-negotiable constrai
 
 ---
 
+> **Oct-2026 addendum:** what a skill is and how to write one so the agent finds it —
+> see [`agent-skills-spec.md`](./agent-skills-spec.md)
+> (canonical: https://agentskills.io/specification). Think: one folder per know-how
+> (`SKILL.md + scripts/ + references/ + assets`), opened only on a description match.
+
 *Document: V. Prompt Builder — HARNESS ENGINEERING EDITION*
-*Last updated: 19/07/2026*
+*Last updated: 16/10/2026*
 *Author: AI Knowledge Repository*

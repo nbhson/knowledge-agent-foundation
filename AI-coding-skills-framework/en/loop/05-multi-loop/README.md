@@ -2,11 +2,11 @@
 
 > **📌 Core Concept**
 >
-> **Definition:** Multi-loop coordination is **the traffic rules for many loops sharing one repo** — branch ownership, separate state files, priority ranking on conflict, and collision detection. Goal: many loops running in parallel without "fighting".
-> **Analogy:** Like an **intersection with no traffic lights** — if every driver decides for themselves, everyone thinks they have priority, and gridlock and accidents follow. The red light (locks), the signs (state files), and the priority ranking keep all cars moving safely. A repo with many loops is not inherently bad — it's only dangerous when **there are no boundaries**.
-> **Why it matters:** Once you have 2+ loops (say Daily Triage + CI Sweeper), without coordination they'll edit the same file, the same PR, or lose each other's data. This section prevents that before you have to learn it from mistakes.
+> **Definition:** Multi-loop coordination is **the traffic rules for many loops sharing one repo** — who owns which branch, separate state files, priority ranking when conflicts happen, and collision detection. The goal: many loops can run side by side without "fighting".
+> **Analogy:** Think of an **intersection without traffic lights** — if every driver decides alone, everyone assumes they have priority, and you get gridlock and crashes. Red lights (locks), signs (state files), and priority rules keep all cars moving safely. Many loops in one repo are not bad by themselves — they only get dangerous when **there are no boundaries**.
+> **Why it matters:** Once you have 2+ loops (for example Daily Triage + CI Sweeper), without coordination they can edit the same file, the same PR, or overwrite each other's data. This section helps you prevent that before you learn it the hard way.
 
-> Running more than one loop in a repo is normal. Running them **without boundaries** is how loops fight each other. This section guides safe coordination.
+> Running more than one loop in a repo is normal. Running them **without boundaries** is how loops fight each other. This section shows you how to coordinate them safely.
 
 ---
 
@@ -31,13 +31,13 @@ post-merge-state.md         # Cleanup backlog
 loop-run-log.md             # Append-only observability
 ```
 
-Linear / GitHub Projects work equivalently — the loop must **read and write** the same store every run.
+Linear / GitHub Projects work just as well — the loop must **read and write** the same store every run.
 
 ---
 
 ## 3. Priority When Loops Conflict
 
-> **Easy way to read it:** When two loops want to do the same thing, the one that is more "on fire" wins — red CI (loop 1) blocks everything because no one can merge to the repo. Read the rows top to bottom as a priority ladder: on conflict, the higher-ranked loop wins; the lower-ranked loop yields.
+> **Easy way to read it:** When two loops want to do the same thing, the more urgent one wins — red CI (loop 1) blocks everything because nobody can merge. Please read the rows top to bottom as a priority ladder: when there is a conflict, the higher loop wins and the lower loop steps back.
 
 | Priority | Loop | Reason |
 |----------|------|-------|
@@ -66,7 +66,7 @@ Document this in the root `LOOP.md`:
 
 ## 5. Collision Detection
 
-> **Easy way to read it:** Collision detection is "**looking before crossing the road**" — every loop writes `acting_on` (what it's doing) to its state; before starting work, the loop **reads** the other states to be sure nobody else is doing the same thing. The `loop-worktree lock/unlock` tool turns this into mechanical locks (advisory locks) instead of relying on self-discipline.
+> **Easy way to read it:** Collision detection means "**look before you cross the road**" — every loop writes `acting_on` (what it is working on) into its state. Before starting work, the loop **reads** the other states to make sure nobody else is doing the same thing. The `loop-worktree lock/unlock` tool turns this from a polite agreement into real mechanical locks (advisory locks).
 
 Every action loop should write `acting_on: branch-or-pr-id` in its state file. Before spawning a fix:
 
@@ -107,7 +107,7 @@ Use a shared section in `STATE.md`:
 | PR Babysitter | L2 | 10m |
 | Post-Merge Cleanup | L1 → L2 | 1d off-peak |
 
-Add CI Sweeper **only after** the PR Babysitter's attempt limits and verifier have been proven for two weeks.
+Please add CI Sweeper **only after** the PR Babysitter's attempt limits and verifier have worked well for two weeks.
 
 ---
 

@@ -42,17 +42,17 @@
 
 ### Câu Chuyện Mở Đầu
 
-Hãy tưởng tượng bạn bước vào một **workshop sửa xe** với hàng trăm dụng cụ: cờ lê, tua vít, máy khoan, máy hàn... Một người thợ giỏi biết chính xác dụng cụ nào cần cho mỗi việc. Nhưng một người mới? Anh ta sẽ **dùng máy khoan để tháo ốc vít** — hoặc worse, **dùng búa đập vào động cơ**.
+Hãy tưởng tượng bạn ghé vào một **tiệm sửa xe** đầy ắp đồ nghề: cờ lê, tua vít, máy khoan, máy hàn... Bác thợ lâu năm liếc qua là biết ngay phải cầm món nào. Còn anh học việc mới vào nghề thì lóng ngóng — có khi lại mang **máy khoan ra vặn con ốc nhỏ**, tệ hơn là **vác búa gõ vào lốc máy**.
 
-**Đó chính xác là vấn đề của AI Agent khi không có Tool Decision Intelligence.**
+**Agent AI mà thiếu khả năng chọn tool khôn ngoan thì cũng y hệt như vậy.**
 
-LLM có thể "biết" gọi tool, nhưng khi có **50+ tools** trong arsenal, việc chọn sai tool hoặc truyền sai parameters sẽ dẫn đến: lãng phí token, kết quả sai, hoặc worse — **side effects không mong muốn** như xóa file quan trọng, gửi email sai nội dung, hoặc thực hiện hành động không thể đảo ngược.
+Mô hình ngôn ngữ thì "biết" gọi tool đấy, nhưng khi trong tay có tới **50+ tools**, chỉ cần chọn nhầm một cái hay truyền sai tham số là đủ rắc rối: tốn token vô ích, nhận về kết quả sai bét, hoặc tệ nhất là gây ra **hậu quả khó cứu vãn** — như xóa nhầm file quan trọng, gửi nhầm email, hay châm ngòi cho một hành động không thể quay lại.
 
-**Giải pháp**: Structured Tool Decision — một quy trình rõ ràng từ **phân tích ý định → chọn tool → validate parameters → thực hiện → kiểm tra kết quả**.
+**Cách gỡ rối**: dựng một quy trình chọn tool rõ ràng từng bước — **nghe xem user thật sự muốn gì → chọn tool hợp nhất → kiểm tra tham số cho kỹ → chạy thử → ngó lại kết quả xem ổn không**.
 
 ### Tại Sao Tool Decision Quan Trọng?
 
-> *"Một agent có 50 tools nhưng chọn sai tool = người thợ có 50 cái búa nhưng dùng búa đập kính."*
+> *"Có 50 cái tool trong tay mà chọn sai thì cũng như có cả hộp búa nhưng lại mang búa ra đập kính."*
 
 #### 3 Bằng Chứng Khoa Học
 
@@ -68,23 +68,23 @@ LLM có thể "biết" gọi tool, nhưng khi có **50+ tools** trong arsenal, v
 Tool Selection = Intent Classification → Tool Matching → Parameter Validation → Execution → Result Validation
 ```
 
-**Analogies**: Tool decision giống bác sĩ kê đơn — phải chẩn đoán đúng bệnh (intent), chọn đúng thuốc (tool), đúng liều (parameters), và theo dõi tác dụng phụ (result validation).
+**Nói cho dễ nhớ**: chọn tool cũng như bác sĩ kê đơn — phải bắt đúng bệnh (intent), bốc đúng thuốc (tool), dặn đúng liều (parameters), rồi còn hẹn tái khám xem thuốc có hợp không (result validation).
 
-**Nếu bỏ qua**: Agent gọi tool sai → lãng phí tokens, kết quả sai, hoặc worse — side effects không mong muốn (xóa file, gửi email sai, v.v.).
+**Nếu làm ẩu bước này**: gọi nhầm tool là mất tiền token, nhận kết quả trật lất, thậm chí rước họa (xóa nhầm file, gửi nhầm mail...).
 
 ## Tổng Quan
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Tool Decision là quá trình quyết định khi nào gọi tool nào và gọi với tham số ra sao — từ phân tích task, chọn tool, gọi API đến xử lý kết quả.
+> **Khái niệm:** Tool Decision là lúc agent quyết định "giờ dùng món nào, xài ra sao" — từ đọc đề bài, lựa tool, gọi API cho tới xử lý kết quả trả về.
 >
-> **Ẩn dụ/so sánh:** Module này là "bộ tay chân" của agent: mọi kế hoạch (planning) chỉ thành hành động thật khi đi qua đây, giống cánh tay robot nhận lệnh từ bộ não (LLM) và chấp hành có kiểm soát an toàn.
+> **Hình dung vui:** Module này là đôi "tay chân" của agent: mọi kế hoạch hay ho trong đầu (planning) muốn thành việc thật đều phải qua đây, giống cánh tay robot nghe lệnh từ bộ não (LLM) nhưng luôn có dây an toàn đi kèm.
 >
-> **Vì sao quan trọng:** Quyết định tool đúng người, đúng lúc, đúng tham số quyết định agent hoàn thành công việc hay làm hỏng việc.
+> **Sao phải quan tâm:** Chọn đúng người, đúng việc, đúng cách thì xong việc; chọn ẩu là hỏng việc.
 
-AI Agent cần biết **khi nào dùng tool nào** và **gọi tool đó như thế nào**. Đây là quá trình quyết định: Phân tích task → Chọn tool → Gọi API → Xử lý kết quả.
+Nói ngắn gọn, agent lúc nào cũng quanh quẩn với hai câu hỏi: **việc này nên dùng tool nào?** và **gọi nó thế nào cho đúng?** Toàn bộ quá trình gói trong một vòng: đọc task → chọn tool → gọi API → xử gọn kết quả.
 
-Trong Harness Engineering, Tool Decision là **"bộ tay chân"** — nơi planning được convert thành hành động thực tế. Mọi tool call đều phải đi qua guardrails, validation, và logging.
+Trong Harness Engineering, Tool Decision chính là **"đôi tay"** biến kế hoạch trên giấy thành hành động thật. Tool nào muốn chạy cũng phải đi qua cổng kiểm soát, kiểm tra hợp lệ và ghi log đầy đủ.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -158,17 +158,17 @@ Trong Harness Engineering, Tool Decision là **"bộ tay chân"** — nơi plann
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Tool Selection Patterns (Các mô hình/chiến lược lựa chọn công cụ) là cách AI Agent quyết định chọn công cụ nào từ một tập hợp lớn (tool registry, search, categories) để hoàn thành tác vụ cụ thể.
+> **Khái niệm:** Tool Selection Patterns là mấy "chiêu" chọn tool của agent khi đứng trước cả một kho tool (registry, tìm kiếm, phân loại theo nhóm) — gặp việc nào thì rút món nào cho hợp.
 >
-> **Ẩn dụ/so sánh:** Giống người thợ sửa xe đứng trước hộp đồ nghề hằng trăm món: thợ giỏi không cần đọc hướng dẫn từng cây cờ lê mà vẫn biết ngay dùng món nào cho từng con ốc.
+> **Hình dung vui:** Như bác thợ sửa xe đứng trước tủ đồ nghề đầy ắp: người lành nghề chẳng cần đọc hướng dẫn từng cây cờ lê mà liếc con ốc là biết phải cầm cây nào.
 >
-> **Vì sao quan trọng:** Chọn đúng tool ngay từ đầu giúp tiết kiệm token, tránh side effects và tăng tỉ lệ hoàn thành task.
+> **Sao phải quan tâm:** Chọn trúng ngay từ đầu thì đỡ tốn token, tránh gây chuyện ngoài ý muốn và tăng khả năng làm xong việc.
 
 ### 1.1 Tool Registry
 
-Mục này là "danh bạ" của toàn bộ tool trong hệ thống. `ToolDefinition` là hồ sơ khai báo một tool (tên, mô tả, parameters, quyền hạn, rate limit, timeout, chi phí); `ToolRegistry` là kho lưu giữ giúp register, search, lọc theo category, phát hiện tool deprecated và theo dõi metrics (tỉ lệ thành công, latency). Cách đọc: xem hồ sơ `ToolDefinition` trước, rồi xem các method của `ToolRegistry` để biết registry làm được những gì.
+Mục này là cuốn "danh bạ" của cả nhà tool. `ToolDefinition` là tờ lý lịch của từng tool (tên gì, làm được gì, cần tham số nào, cần quyền gì, giới hạn gọi, timeout, chi phí...); còn `ToolRegistry` là bác quản thủ thư viện lo việc đăng ký, tìm kiếm, lọc theo nhóm, đánh dấu tool hết hạn và theo dõi xem tool nào chạy ngon, tool nào hay hỏng. Đọc thì cứ xem tờ lý lịch `ToolDefinition` trước, rồi ngó các hàm của `ToolRegistry` để biết "bác thủ thư" làm được những gì.
 
-*Ẩn dụ:* Giống tủ thuốc có nhãn rõ ràng — mỗi tool là một lọ thuốc ghi công dụng (description), liều lượng (parameters) và hạn dùng (deprecation date); registry là người quản tủ thuốc, biết chính xác lọ nào nằm ngăn nào.
+*Hình dung vui:* Như tủ thuốc dán nhãn cẩn thận — mỗi lọ ghi rõ công dụng (description), liều dùng (parameters), hạn dùng (deprecation date); còn registry là người giữ tủ, hỏi lọ nào là chỉ đúng ngăn đó.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -417,9 +417,9 @@ class ToolRegistry:
 
 ### 1.2 Example Tools — Extended Set
 
-Mục này minh họa cách xây nhanh một bộ tool mặc định: hàm `create_default_tools()` đăng ký từng `ToolDefinition` vào `ToolRegistry` kèm name, description, parameters, category và tags. Khi đọc, chú ý một số tool nhạy cảm được đánh dấu `requires_permission="elevated"` (`sql_query`, `execute_python`, `write_file`) nghĩa là cần quyền cao hơn mới chạy được. Đây chính là danh sách tool để các phần sau (intent classifier, executor, tests) dùng chung.
+Mục này bày sẵn cho bạn một bộ tool "mở tủ là xài". Hàm `create_default_tools()` lần lượt đăng ký từng `ToolDefinition` vào `ToolRegistry` kèm tên, mô tả, tham số, nhóm và thẻ gợi nhớ. Để ý mấy tool nhạy cảm như `sql_query`, `execute_python`, `write_file` bị dán nhãn `requires_permission="elevated"` — tức là muốn chạy phải có quyền cao hơn mới được. Bộ tool này sẽ được xài chung cho các phần sau (phân loại ý định, chạy tool, viết test).
 
-*Ẩn dụ:* Như tủ đồ nghề đóng sẵn cho người mới: không cần sắm lẻ từng món, mở tủ là đủ dụng cụ cơ bản cho phần lớn công việc.
+*Hình dung vui:* Như bộ hộp đồ nghề đóng sẵn cho người mới: khỏi phải đi chợ mua lẻ từng món, mở nắp ra là đủ đồ chơi cho hầu hết việc thường ngày.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -652,17 +652,17 @@ def create_default_tools():
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Intent Classification (Phân loại ý định) là quá trình đoán user muốn làm gì từ câu hỏi (search, tính toán, viết code, ghi nhớ, v.v.), rồi ánh xạ sang nhóm tool phù hợp — kết hợp rule-based (nhanh, rẻ) với embedding/LLM-based (chính xác hơn, đắt hơn) để cân bằng chất lượng và chi phí.
+> **Khái niệm:** Intent Classification là bước "đoán ý" user: chỉ cần nghe câu hỏi là biết họ muốn tìm kiếm, tính toán, viết code hay lưu ghi nhớ... rồi dẫn tới đúng nhóm tool. Thường kết hợp hai kiểu: rule-based (soi từ khóa, nhanh mà rẻ) với embedding/LLM-based (hiểu sâu hơn, tốn kém hơn) để vừa nhanh vừa trúng.
 >
-> **Ẩn dụ/so sánh:** Như lễ tân khách sạn nghe khách nói câu đầu tiên để đoán họ cần đặt phòng, gọi xe hay hỏi giờ, rồi mới chuyển tới đúng bộ phận phụ trách.
+> **Hình dung vui:** Như chị lễ tân khách sạn nghe khách mở miệng một câu là đoán được họ cần đặt phòng, gọi xe hay hỏi giờ ăn sáng, rồi chuyển máy đúng bộ phận.
 >
-> **Vì sao quan trọng:** Xác định sai ý định sẽ dẫn tới gọi sai tool, tốn token và trả về kết quả vô nghĩa; phân loại đúng là bước đệm bắt buộc trước khi chọn tool.
+> **Sao phải quan tâm:** Đoán sai ý là gọi sai tool, vừa đốt token vừa trả lời lạc đề; đoán trúng là đặt nền móng cho mọi bước sau.
 
 ### 2.1 Multi-Strategy Intent Classifier
 
-Mục này là bộ phân loại ý định ba tầng để đọc và tái sử dụng. Tầng 1 là rule-based: dò keyword như "tìm", "tính", "đọc" trong câu hỏi. Tầng 2 là LLM-based: hỏi model phân tích ý định. Tầng 3 là auto: ưu tiên dùng rule nếu confidence cao (từ 0.7), chỉ gọi LLM khi nghi ngờ. Hàm `classify_multi_intent()` còn tách một câu chứa nhiều ý định, ví dụ "Đọc file và chạy test" thành hai intent [read, test].
+Mục này là bộ máy đoán ý ba tầng, đọc hiểu để xài lại. Tầng 1 là soi từ khóa (rule-based): thấy chữ "tìm", "tính", "đọc" là khoanh vùng ngay. Tầng 2 là nhờ LLM đọc kỹ rồi phán. Tầng 3 là chế độ auto: nếu rule đã chắc ăn (confidence từ 0.7 trở lên) thì tin luôn, còn lấn cấn mới gọi LLM cho chắc. Hàm `classify_multi_intent()` còn tách được câu dài nhiều ý, ví dụ "Đọc file và chạy test" thì tách thành hai ý [read, test].
 
-*Ẩn dụ:* Giống quầy lễ tân có sổ kịch bản (rule) để trả lời nhanh câu phổ biến; chỉ cần gọi quản lý (LLM) khi gặp câu khó.
+*Hình dung vui:* Như quầy lễ tân có sẵn sổ kịch bản (rule) để trả lời nhanh mấy câu quen thuộc; chỉ khi gặp câu khoai mới nhấc máy gọi quản lý (LLM) xuống xử lý.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -880,17 +880,17 @@ Output JSON:
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** MCP Protocol (Model Context Protocol) là giao thức chuẩn dựa trên JSON-RPC 2.0, cho phép bất kỳ LLM nào cũng có thể khám phá (tools/list) và gọi (tools/call) các tool do MCP servers bên ngoài cung cấp, cùng với resources và prompts — thống nhất giữa mọi nhà cung cấp.
+> **Khái niệm:** MCP Protocol (Model Context Protocol) là "ngôn ngữ chung" dựa trên JSON-RPC 2.0 để bất kỳ LLM nào cũng bắt chuyện được với tool bên ngoài: muốn biết có gì thì hỏi (tools/list), muốn xài thì gọi (tools/call), kèm theo resources và prompts — một chuẩn xài chung cho mọi nhà.
 >
-> **Ẩn dụ/so sánh:** Giống cổng sạc USB-C: trước đây mỗi thiết bị một kiểu cáp riêng, giờ một chuẩn dùng chung cho mọi thiết bị. MCP là "chuẩn cắm chung" để AI gắn tool từ mọi dịch vụ mà không cần viết code tích hợp riêng từng loại.
+> **Hình dung vui:** Như cổng sạc USB-C: ngày xưa mỗi hãng một kiểu cáp riêng, giờ một chuẩn cắm được hết. MCP là "chuẩn cắm chung" để AI gắn tool của bất kỳ ai mà khỏi viết code riêng cho từng loại.
 >
-> **Vì sao quan trọng:** Giải quyết bài toán tích hợp theo kiểu nối thêm từng đôi một (mỗi cặp LLM-tool một adapter); một giao thức chuẩn giúp hệ sinh thái tool phát triển nhanh gấp nhiều lần.
+> **Sao phải quan tâm:** Không có chuẩn chung thì cứ mỗi cặp LLM-tool lại phải viết một cầu nối riêng; có chuẩn rồi thì hệ sinh thái tool lớn nhanh gấp bội.
 
 ### 3.1 MCP Architecture Deep Dive
 
-Đọc sơ đồ này thế nào? Có ba lớp rõ ràng. Lớp trên là HOST (client, nơi LLM chạy: Claude Desktop, app GPT, agent riêng của bạn); lớp dưới là các SERVERS (GitHub, Database, File, Web Search, Slack, v.v.) cung cấp tool. Ở giữa là đường kết nối JSON-RPC qua stdio/SSE/HTTP — giống một tổng đài chuẩn. Quy trình hoạt động: LLM hỏi server "bạn có tool gì" (tools/list), rồi gọi tool cụ thể (tools/call). Dải cuối sơ đồ liệt kê toàn bộ tính năng giao thức: thương lượng khả năng (capabilities negotiation), truy cập resource, prompt templates, sampling và logging.
+Đọc sơ đồ này ra sao? Có ba tầng rõ ràng. Tầng trên là HOST (nơi LLM chạy: Claude Desktop, app GPT, agent nhà trồng...); tầng dưới là các SERVERS (GitHub, Database, File, Web Search, Slack...) chuyên cung cấp tool. Ở giữa là đường dây JSON-RPC qua stdio/SSE/HTTP — như một tổng đài điện thoại chuẩn. Luồng chạy rất đời thường: LLM hỏi server "bên bạn có món gì hay" (tools/list), rồi gọi đúng món mình cần (tools/call). Dải cuối sơ đồ liệt kê hết các tính năng: thống nhất khả năng hỗ trợ (capabilities negotiation), đọc resource, dùng prompt mẫu, sampling và ghi log.
 
-*Ẩn dụ:* Như trung tâm điều hành taxi: hãng xe (host) gọi theo đúng quy chuẩn tổng đài (protocol) tới các tài xế (servers), ai rảnh thì nhận lệnh — thay vì phải quen từng tài xế một.
+*Hình dung vui:* Như tổng đài điều xe: hãng xe (host) gọi theo đúng quy chuẩn tổng đài (protocol) tới các bác tài (servers), ai rảnh thì nhận cuốc — khỏi cần quen riêng từng bác tài.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -943,9 +943,9 @@ Output JSON:
 
 ### 3.2 MCP Client Implementation
 
-Mục này cho bạn một client MCP đầy đủ để dùng thử: `connect()` kết nối tới server kèm thương lượng capabilities, `list_tools()` lấy danh sách tool và cache, `call_tool()` gọi tool với timeout và xử lý lỗi, `read_resource()` đọc resource. Hàm `format_tools_for_llm()` chuyển tool MCP sang đúng format của từng provider (OpenAI `type: function` hay Anthropic). Lớp `MultiServerMCPManager` cuối cùng quản lý nhiều server: gom tool về một namespace chung và tự động failover sang server khác khi server chính lỗi. Điểm mấu chốt để nhớ: cache, timeout, routing và fallback là bốn thứ bắt buộc của một client MCP dùng trong production.
+Mục này tặng bạn một client MCP đầy đủ để mang về xài ngay: `connect()` bắt tay với server và thống nhất khả năng hỗ trợ, `list_tools()` lấy danh sách tool về cache, `call_tool()` gọi tool có timeout và xử lý lỗi đàng hoàng, `read_resource()` đọc resource. Hàm `format_tools_for_llm()` biến tool MCP thành đúng "khẩu vị" từng nhà (OpenAI kiểu `type: function`, Anthropic kiểu khác). Lớp `MultiServerMCPManager` ở cuối lo quản nhiều server cùng lúc: gom tool về một mối, server này sập thì tự chuyển sang server khác. Nhớ bốn chữ để sống sót trong production: cache, timeout, định tuyến và dự phòng (fallback).
 
-*Ẩn dụ:* Giống tổng đài viên điều phối: thuộc số máy nào trả lời được yêu cầu nào; khi một số bận thì tự chuyển sang số dự phòng (failover).
+*Hình dung vui:* Như cô tổng đài viên dày dạn: thuộc lòng số máy nào giải quyết được việc gì; số này bận thì bấm ngay sang số dự phòng (failover).
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1231,11 +1231,11 @@ class MultiServerMCPManager:
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Tool Executor (Bộ thực thi công cụ) là thành phần chịu trách nhiệm gọi tool một cách an toàn: validate parameters, kiểm tra permission và rate limit, chạy với timeout, retry theo exponential backoff và ghi log mọi lần gọi — nằm giữa quyết định chọn tool và kết quả trả về.
+> **Khái niệm:** Tool Executor là "người trực bếp" chuyên bấm nút chạy tool cho an toàn: kiểm tra tham số, soát quyền và giới hạn lượt gọi, chạy có hẹn giờ (timeout), hỏng thì thử lại theo kiểu backoff, và ghi log từng lần gọi — nằm giữa khâu chọn tool và kết quả trả về.
 >
-> **Ẩn dụ/so sánh:** Như bồi bàn có checklist trước khi gọi món: món có trong menu không (tool tồn tại), có đủ nguyên liệu không (parameters), nhà bếp có nhận không (permission, rate limit), rồi mới đưa cho bếp và theo dõi đến khi ra món (timeout, retry).
+> **Hình dung vui:** Như anh bồi bàn kỹ tính: trước khi đưa order xuống bếp phải ngó lại — món này quán có bán không (tool tồn tại), còn nguyên liệu không (parameters), bếp có nhận không (permission, rate limit) — rồi mới đưa phiếu và đứng canh tới khi món ra lò (timeout, retry).
 >
-> **Vì sao quan trọng:** Phần lớn lỗi của agent nằm ở tool call thất bại; executor là nơi tập trung xử lý mọi lỗi đó nhất quán, quan sát được và không làm hỏng task khi gặp sự cố.
+> **Sao phải quan tâm:** Đa số pha "toang" của agent đều từ tool gọi hỏng; executor là chỗ gom hết mớ rắc rối đó về một mối để xử lý gọn, dễ soi, không làm sập cả bữa ăn.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1533,11 +1533,11 @@ class ToolExecutor:
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Function Calling là cơ chế cho phép LLM trả về không chỉ văn bản mà cả các lệnh gọi có cấu trúc (structured calls) theo schema đã khai báo — ví dụ gọi `calculator` với `{"expression": "2+3"}` — đồng thời hỗ trợ parallel calls để gọi nhiều tool trong một lượt, tăng hiệu quả và giảm độ trễ.
+> **Khái niệm:** Function Calling là cách để LLM không chỉ "nói suông" mà còn biết "ra toa" hẳn hoi theo mẫu có sẵn — ví dụ gọi `calculator` kèm `{"expression": "2+3"}` — lại còn gọi nhiều tool một lượt (parallel calls) cho nhanh, đỡ phải chờ từng cái.
 >
-> **Ẩn dụ/so sánh:** Giống bác sĩ viết toa thuốc thay vì kể chuyện: model "viết toa" (tool call kèm JSON arguments) để dược sĩ (executor) bốc đúng thuốc, đúng liều, thay vì tự đi nấu thuốc.
+> **Hình dung vui:** Như bác sĩ kê toa thay vì kể chuyện: model "viết toa" (tool call kèm JSON) để dược sĩ (executor) bốc đúng thuốc đúng liều, thay vì để bệnh nhân tự về nhà sắc thuốc.
 >
-> **Vì sao quan trọng:** Đây là ngôn ngữ giao tiếp chuẩn giữa LLM và code runtime — nền tảng của mọi agent hiện đại và là cách LLM thao tác với thế giới bên ngoài.
+> **Sao phải quan tâm:** Đây là tiếng nói chung giữa LLM và code — nền tảng của mọi agent hiện đại, cũng là cách LLM "thò tay" ra thế giới bên ngoài.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1719,11 +1719,11 @@ class FunctionCallingAgent:
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Tool Decision Pipeline là quy trình end-to-end từ nhận user query → intent classification → tool matching → trích và validate parameters → execution → result validation, đảm bảo mỗi bước đều có kiểm soát và logging.
+> **Khái niệm:** Tool Decision Pipeline là đường ống khép kín từ lúc nghe câu hỏi → đoán ý → lựa tool → nắn tham số cho chuẩn → chạy thử → soi lại kết quả, bước nào cũng có người gác cổng và sổ ghi chép.
 >
-> **Ẩn dụ/so sánh:** Giống dây chuyền nhà máy: khâu đầu phân loại phôi (intent classification), khâu giữa chọn máy và nạp nguyên liệu (tool matching + parameters), khâu cuối kiểm tra chất lượng sản phẩm trước khi xuất xưởng (result validation).
+> **Hình dung vui:** Như dây chuyền trong xưởng: đầu vào phân loại nguyên liệu (intent classification), giữa chuyền chọn máy và nạp liệu (tool matching + parameters), cuối chuyền kiểm hàng trước khi đóng thùng (result validation).
 >
-> **Vì sao quan trọng:** Gộp toàn bộ quyết định tool vào một ống dẫn duy nhất giúp dễ thêm guardrails, dễ debug và dễ mở rộng mà không vỡ các phần khác.
+> **Sao phải quan tâm:** Gom hết chuyện chọn tool vào một ống duy nhất thì muốn gắn thêm chốt an toàn cũng dễ, muốn tìm chỗ hỏng cũng nhanh, muốn mở rộng cũng không sợ bung các chỗ khác.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1865,11 +1865,11 @@ Output JSON (chỉ parameters, đúng types):"""
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Tool Composition (Kết hợp công cụ) là kỹ thuật ghép nhiều tool calls — nối tiếp (chain), song song (parallel), có điều kiện (conditional) hoặc fan-out/fan-in (pipeline) — để giải quyết các tác vụ phức tạp mà một tool đơn lẻ bó tay.
+> **Khái niệm:** Tool Composition là nghệ thuật xâu nhiều tool lại với nhau — nối đuôi (chain), chạy song song (parallel), rẽ nhánh theo điều kiện (conditional) hay tỏa ra rồi gom lại (fan-out/fan-in) — để xử những việc khó mà một tool đơn lẻ làm không xuể.
 >
-> **Ẩn dụ/so sánh:** Như nấu một món ăn: nhiều công cụ bếp (thái, luộc, xào) phải chạy đúng thứ tự, có bước chạy song song (vừa luộc rau vừa nấu nước sốt), có bước chọn nhánh tùy kết quả kiểm tra.
+> **Hình dung vui:** Như nấu một mâm cơm: nhiều đồ nghề bếp (thái, luộc, xào) phải chạy đúng thứ tự, có món làm song song (vừa luộc rau vừa nấu canh), có lúc lại rẽ nhánh tùy xem nếm thử mặn nhạt ra sao.
 >
-> **Vì sao quan trọng:** Hầu hết task thực tế cần hai tool trở lên; biết cách tổ hợp chúng thành workflow là bước chuyển từ agent gọi lẻ sang agent làm trọn quy trình.
+> **Sao phải quan tâm:** Việc đời thực hiếm khi xong bằng một tool; biết ghép tool thành quy trình là bước từ "chạy vặt từng món" lên "đứng bếp cả mâm".
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2009,13 +2009,13 @@ class ToolComposer:
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Permission System (Hệ thống phân quyền) là cơ chế RBAC (Role-Based Access Control) kiểm soát người dùng nào được gọi tool nào, theo vai trò (guest/user/power_user/admin) và mức permission (public/standard/elevated/admin), kèm audit log cho mọi quyết định chấp hay từ chối.
+> **Khái niệm:** Permission System là bộ phận "gác cổng" theo vai vế (RBAC): ai được đụng vào tool nào, theo vai (guest/user/power_user/admin) và theo mức (public/standard/elevated/admin), lần nào cho qua hay chặn lại cũng ghi sổ (audit log).
 >
-> **Ẩn dụ/so sánh:** Giống thẻ ra vào công ty: khách chỉ vào được sảnh, nhân viên vào văn phòng, quản lý mới vào phòng máy chủ — mỗi lần quẹt thẻ đều để lại vết tích (audit log).
+> **Hình dung vui:** Như thẻ ra vào công ty: khách chỉ loanh quanh được ở sảnh, nhân viên vào được văn phòng, còn phòng máy chủ thì chỉ quản lý mới có vân tay — mà mỗi lần quẹt thẻ đều để lại dấu vết.
 >
-> **Vì sao quan trọng:** Các tool như `write_file` hay `execute_python` có thể gây thiệt hại không đảo ngược; phân quyền là hàng rào chặn side effects ngoài ý muốn của agent.
+> **Sao phải quan tâm:** Mấy tool như `write_file` hay `execute_python` mà xài bừa là gây chuyện khó cứu; phân quyền là hàng rào chắn mấy pha "táy máy" ngoài ý muốn của agent.
 
-> 🔑 **Highlight Policy / Permission:** đây là **điểm ra quyết định policy & permission** — role RBAC → mức permission → allow/deny + audit. Thực thi ở `12-sandbox-execution` (§6 ma trận policy), override bởi người ở `15-approval-gates`, kiểm tra pre-execution ở `tools/guardrails`.
+> 🔑 **Điểm cần nhớ về Policy / Permission:** đây là **ngã ba quyết định policy & permission** — vai trò (role) dẫn tới mức quyền → cho qua hay chặn lại + ghi audit. Muốn xem thi hành thật thì ghé `12-sandbox-execution` (§6 ma trận policy), muốn xem người duyệt thì ghé `15-approval-gates`, còn kiểm tra ngay trước giờ chạy thì nằm ở `tools/guardrails`.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2094,11 +2094,11 @@ class ToolPermissionChecker:
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Rate Limiting (Giới hạn tần suất) là cơ chế giới hạn số lượng tool calls trong một khoảng thời gian (ví dụ tối đa 60 lần/phút), dùng các chiến lược như fixed window, sliding window hay token bucket để kiểm soát ngân sách token, chặn abuse và giữ hệ thống ổn định.
+> **Khái niệm:** Rate Limiting là cái "van tiết lưu" giới hạn số lần gọi tool trong một khoảng thời gian (ví dụ tối đa 60 lần/phút), với đủ kiểu van như fixed window, sliding window hay token bucket — để giữ ngân sách token, chặn phá hoại và giữ hệ thống khỏi quá tải.
 >
-> **Ẩn dụ/so sánh:** Như van giảm áp của bình nước: nước vẫn chảy nhưng có ngưỡng chặn — ngăn một kênh hút cạn nguồn cấp (abuse) và tránh vỡ đường ống (overload).
+> **Hình dung vui:** Như van giảm áp của bình nước: nước vẫn chảy đều nhưng không bao giờ xối xả — một vòi không thể hút cạn cả bể (abuse) và đường ống cũng khỏi lo bị vỡ (overload).
 >
-> **Vì sao quan trọng:** Khi agent loop gọi tool hàng trăm lần trong một phút, rate limit là phao cứu sinh bảo vệ chi phí và sức khỏe của hệ thống.
+> **Sao phải quan tâm:** Agent mà loop cả trăm lần gọi tool trong một phút thì rate limit chính là phao cứu sinh cho ví tiền và sức khỏe hệ thống.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2181,17 +2181,17 @@ class RateLimiter:
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Harness Integration (Tích hợp Harness) là lớp kết nối Tool Decision module với toàn bộ Harness Framework — Memory, Guardrails, Feedback, Permissions — thông qua các interface TypeScript thống nhất.
+> **Khái niệm:** Harness Integration là chấu cắm nối module chọn tool với cả nhà Harness — Memory, Guardrails, Feedback, Permissions — qua mấy bản interface TypeScript xài chung.
 >
-> **Ẩn dụ/so sánh:** Giống một đầu nối chuẩn trên máy hút bụi đa năng: mọi phụ kiện (bàn chải, đầu hút, ống mềm) đều gắn được vào cùng một cổng — interface TypeScript chính là cái đầu nối chuẩn để các module harness nối vào nhau.
+> **Hình dung vui:** Như đầu nối chuẩn của máy hút bụi đa năng: dù là bàn chải, đầu hút hay ống mềm, cứ đúng cỡ là cắm vào chạy được — interface TypeScript chính là cái cỡ chuẩn để các module gắn vào nhau.
 >
-> **Vì sao quan trọng:** Module chỉ có giá trị khi cắm được vào harness thật; interface thống nhất giúp cắm nhanh, dễ test riêng từng module và không đổ vỡ khi module khác thay đổi.
+> **Sao phải quan tâm:** Module hay mấy mà cắm không vừa harness thì cũng để ngắm; có interface chung thì cắm nhanh, test riêng từng món cũng dễ, món này đổi cũng không làm bung món kia.
 
 ### 10.1 TypeScript Interfaces
 
-Mục này là bản hợp đồng TypeScript định nghĩa diện mạo của một hệ thống tool decision để harness dùng được: register/get/list/search tool, `classifyIntent`, `executeTool`/`executeChain`/`executeParallel`, cùng `checkPermission`/`checkRateLimit` và `getStats`. Cách đọc: phần `interface` mô tả hình dạng dữ liệu bắt buộc phải có, phần class `HarnessToolDecisionSystem` là một cách triển khai tham khảo cho thấy trình tự một lần gọi tool thật: kiểm tra permission → kiểm tra rate limit → thực thi → ghi metrics. Nếu bạn viết module của riêng mình, chỉ cần thỏa interface là harness dùng được ngay.
+Mục này là tờ "hợp đồng mẫu" bằng TypeScript, ghi rõ một hệ thống chọn tool muốn chơi với harness thì phải có mặt mũi ra sao: đăng ký/lấy/liệt kê/tìm tool, `classifyIntent`, `executeTool`/`executeChain`/`executeParallel`, thêm `checkPermission`/`checkRateLimit` và `getStats`. Đọc thì cứ xem `interface` là điều khoản bắt buộc, còn class `HarnessToolDecisionSystem` là một bản làm mẫu cho thấy một lần gọi tool ngoài đời chạy qua các cửa nào: soát quyền → soát lượt gọi → bấm chạy → ghi sổ đo đạc. Sau này bạn viết module riêng, chỉ cần đúng hợp đồng là harness nhận ngay.
 
-*Ẩn dụ:* Giống bản hợp đồng cho thuê văn phòng: interface là điều khoản chung bắt buộc, class là bản triển khai cụ thể do từng bên tự viết.
+*Hình dung vui:* Như hợp đồng thuê văn phòng: interface là điều khoản chung ai cũng phải theo, class là cách từng bên tự trang trí văn phòng của mình.
 
 <details>
 <summary><b>10.1 TypeScript Interfaces (Click to expand/collapse)</b></summary>
@@ -2310,15 +2310,15 @@ class HarnessToolDecisionSystem implements ToolDecisionSystem {
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Case Studies Thực Tế là các phân tích chi tiết về kiến trúc tool-use đang chạy thật trong những sản phẩm AI tiên tiến (SWE-agent, Claude Code, Cursor IDE, DeepSeek Harness) để rút ra bài học thiết kế có thể áp dụng ngay.
+> **Khái niệm:** Case Studies là mấy câu chuyện người thật việc thật: mổ xẻ xem các sản phẩm AI xịn (SWE-agent, Claude Code, Cursor IDE, DeepSeek Harness) đang xài tool ra sao, để mình học lỏm chiêu hay về áp dụng.
 >
-> **Ẩn dụ/so sánh:** Giống đọc case study của một đầu bếp nổi tiếng: không phải để chép y nguyên công thức, mà để nhìn ra nguyên tắc (trình tự, an toàn, ngữ cảnh) rồi tự chế biến lại cho phù hợp.
+> **Hình dung vui:** Như đọc chuyện nghề của đầu bếp nổi tiếng: không phải để bê nguyên công thức về, mà để ngấm cái nguyên tắc (thứ tự, an toàn, hợp ngữ cảnh) rồi tự nêm nếm cho vừa bếp nhà mình.
 >
-> **Vì sao quan trọng:** Những sản phẩm này đã được tối ưu bằng tiền thật và dữ liệu người dùng thật; học họ giúp bạn tránh tự thiết kế lại một bánh xe hỏng.
+> **Sao phải quan tâm:** Mấy sản phẩm này đã trả học phí bằng tiền thật và người dùng thật để tối ưu; học họ thì mình khỏi phải phát minh lại cái bánh xe méo.
 
 ### 11.1. SWE-agent — Tool-Use for Software Engineering
 
-**Tool strategy**: Simple, focused tools with clear descriptions.
+**Chiêu dùng tool**: ít mà chất, tool nào cũng mô tả rõ ràng dễ hiểu.
 
 ```
 Tools: read_file, search_code, edit_file, run_command
@@ -2327,11 +2327,11 @@ Key insight: "Read before edit" — SWE-agent always reads files first
 to understand context before making changes.
 ```
 
-**Result**: 20.5% success rate on SWE-bench (+64% over baseline)
+**Kết quả**: tỉ lệ thành công 20.5% trên SWE-bench (+64% so với cách làm cũ)
 
 ### 11.2. Claude Code — Hierarchical Tool Access
 
-**Tool strategy**: Layered permissions, tool composition.
+**Chiêu dùng tool**: phân quyền theo tầng, tool ghép được với nhau.
 
 ```
 Layer 1 (always available): read_file, search_code
@@ -2342,7 +2342,7 @@ Layer 4 (admin): push_code, deploy
 
 ### 11.3. Cursor IDE — Context-Aware Tool Selection
 
-**Tool strategy**: Select tools based on editor context.
+**Chiêu dùng tool**: nhìn ngữ cảnh trong editor mà chọn tool (đang mở file gì, đang bôi đen đoạn nào...).
 
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
@@ -2367,7 +2367,7 @@ const toolsForContext = {
 
 ### 11.4. DeepSeek Harness — Code Mode SDK (`@deepseek-ai/dsh`)
 
-**Bối cảnh**: DeepSeek Harness cung cấp **Code Mode** — một runtime mode tối ưu cho single-turn coding tasks. Sử dụng SDK `@deepseek-ai/dsh` để execute code trong Node.js `vm` sandbox với batched tool operations, giảm **70-90% latency và token costs** so với multi-turn agent loop.
+**Bối cảnh**: DeepSeek Harness có một chế độ chạy gọi là **Code Mode** — sinh ra để xử nhanh gọn mấy task code chỉ cần chạy một lượt. Bạn dùng SDK `@deepseek-ai/dsh` để chạy code trong sandbox `vm` của Node.js, gom nhiều thao tác tool thành từng mẻ (batch) nên **nhẹ hơn hẳn 70-90% cả thời gian chờ lẫn tiền token** so với kiểu agent hỏi-đáp nhiều vòng.
 
 <details>
 <summary><b>TypeScript Architecture (Click to expand/collapse)</b></summary>
@@ -2860,16 +2860,16 @@ function uuid(): string {
 
 </details>
 
-**Key Innovations**:
+**Mấy điểm ăn tiền**:
 
-1. ✅ **Single-turn Execution** — Toàn bộ task chạy trong 1 script, không cần multi-turn LLM loop
-2. ✅ **Batched Tool Calls** — `batchTools([...])` gom nhiều tool calls thành 1 lần execute, giảm **70-90% latency**
-3. ✅ **VM Sandbox Isolation** — Node.js `vm` context, no network, no filesystem outside allowed paths
-4. ✅ **Deterministic Replay** — Cùng script + cùng input = cùng output. Dễ debug, test, CI/CD
-5. ✅ **Token Cost Reduction** — Không cần gửi tool results về LLM để decide next step. LLM chỉ gọi 1 lần (hoặc 0 nếu pure code)
-6. ✅ **Parallel by Default** — `batchTools` chạy tất cả tools song song tự động
+1. ✅ **Chạy một lượt là xong** — Cả task gói trong 1 script, khỏi vòng lặp LLM nhiều lượt
+2. ✅ **Gom mẻ mà chạy** — `batchTools([...])` dồn nhiều tool calls vào 1 lần chạy, **đỡ chờ 70-90% thời gian**
+3. ✅ **Nhốt trong sandbox VM** — Node.js `vm` context, không mạng, không thò tay ra ngoài chỗ cho phép
+4. ✅ **Chạy lại y hệt** — Cùng script + cùng input là ra cùng output. Debug, test, CI/CD đều khỏe
+5. ✅ **Đỡ tốn token** — Khỏi gửi kết quả tool về cho LLM tính bước tiếp. LLM chỉ cần gọi 1 lần (có khi 0 lần nếu code thuần)
+6. ✅ **Song song mặc định** — `batchTools` cho mọi tool chạy cùng lúc tự động
 
-**Code Mode vs Standard Mode**:
+**Code Mode so với kiểu thường**:
 
 | Aspect | Standard Mode | Code Mode (`@deepseek-ai/dsh`) |
 |--------|---------------|-------------------------------|
@@ -2881,7 +2881,7 @@ function uuid(): string {
 | **Determinism** | Non-deterministic | Deterministic (script-based) |
 | **Use Case** | Open-ended tasks | Well-defined coding tasks |
 
-**File Reference**: Chi tiết implementation xem [`code-mode-sdk.md`](code-mode-sdk.md)
+**Đọc thêm code thật ở đâu**: xem chi tiết implementation trong [`code-mode-sdk.md`](code-mode-sdk.md)
 
 ---
 
@@ -2889,33 +2889,33 @@ function uuid(): string {
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Design Principles (Nguyên tắc thiết kế) là tập hợp các chỉ dẫn kiến trúc phần mềm — cụ thể là áp dụng nguyên lý SOLID vào hệ thống quản lý và điều phối tools.
+> **Khái niệm:** Design Principles là bộ "luật làng" về kiến trúc phần mềm — ở đây là mang nguyên lý SOLID vào áp cho hệ thống quản lý và điều phối tools.
 >
-> **Ẩn dụ/so sánh:** Giống quy hoạch đô thị đặt tiêu chuẩn trước khi cấp phép xây nhà: không cần biết từng căn nhà ra sao, nhưng ai cũng phải theo cùng quy chuẩn để thành phố không thành mớ bòng bong.
+> **Hình dung vui:** Như quy hoạch khu phố trước khi cấp phép xây nhà: không cần biết từng căn sẽ sơn màu gì, nhưng móng, đường, điện nước ai cũng theo một chuẩn thì phố mới không thành mớ bòng bong.
 >
-> **Vì sao quan trọng:** Hệ sinh thái tool sống và mọc thêm hàng ngày; thiết kế theo SOLID giúp thêm tool mới mà không làm gãy tool cũ.
+> **Sao phải quan tâm:** Nhà tool nay nở mai thêm món mới liên tục; làm theo SOLID thì thêm món mới mà không làm sập món cũ.
 
 ### 12.1 SOLID Cho Tools
 
-**1. Single Responsibility**
-- Mỗi tool = 1 việc rõ ràng
-- Không combine search + write trong 1 tool
+**1. Single Responsibility — Mỗi tool một nghề**
+- Mỗi tool chỉ nhận một việc rõ ràng
+- Đừng nhét cả tìm kiếm + ghi file vào chung một tool
 
-**2. Open/Closed**
-- Mở cho thêm tools mới (register)
-- Đóng cho sửa đổi existing tools
+**2. Open/Closed — Dễ thêm, khó vỡ**
+- Thoải mái đăng ký tool mới (register)
+- Hạn chế đụng chạm tool đang chạy ổn
 
-**3. Liskov Substitution**
-- Tất cả tools implement cùng interface
-- Có thể swap tool này bằng tool khác
+**3. Liskov Substitution — Hàng nào cũng vừa khay**
+- Tool nào cũng nói chung một interface
+- Đổi tool này bằng tool khác mà chỗ cắm vẫn vừa
 
-**4. Interface Segregation**
-- Tool definitions tách biệt với execution
-- Permission checker tách biệt với executor
+**4. Interface Segregation — Ai lo việc nấy**
+- Tờ khai tool (definition) để riêng với người chạy tool (execution)
+- Người gác cổng quyền (permission checker) để riêng với người chạy (executor)
 
-**5. Dependency Inversion**
-- Tools phụ thuộc vào ToolRegistry abstraction
-- Không hardcode tool implementations
+**5. Dependency Inversion — Nhờ vào hợp đồng, đừng bám vào ruột**
+- Tool nào cũng dựa vào abstraction `ToolRegistry`
+- Đừng hardcode ruột gan từng tool vào code
 
 ---
 
@@ -2923,35 +2923,35 @@ function uuid(): string {
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Best Practices (Thực hành tốt nhất) là tập hợp các quy tắc nên làm (DO), không nên làm (DON'T) và chiến lược tối ưu đúc kết từ kinh nghiệm thực tiễn khi xây dựng tool decision systems.
+> **Khái niệm:** Best Practices là cuốn "bí kíp" rút ra từ bao pha toát mồ hôi: việc nên làm (DO), việc nên tránh (DON'T) và mẹo tối ưu khi dựng hệ thống chọn tool.
 >
-> **Ẩn dụ/so sánh:** Giống cuốn sổ an toàn lao động: ghi rõ thao tác chuẩn (DO) và cảnh báo cấm (DON'T) để người mới không phải tự rút kinh nghiệm bằng cách gây ra đổ vỡ.
+> **Hình dung vui:** Như bảng nội quy an toàn trong xưởng: ghi rõ thao tác chuẩn (DO) và việc cấm tiệt (DON'T) để người mới vào không phải trả giá bằng đồ hỏng.
 >
-> **Vì sao quan trọng:** Đa số thất bại của tool systems đến từ những lỗi phòng được; danh sách này giúp bạn thừa hưởng bài học mà không phải tự trả giá.
+> **Sao phải quan tâm:** Đa số pha hỏng của hệ tool đều là lỗi hoàn toàn tránh được; đọc trước bảng này là hưởng ké bài học xương máu của người đi trước.
 
 ### 13.1 DO ✅
 
-- **Validate parameters before execution**: Prevent errors
-- **Use exponential backoff for retries**: Don't hammer failing services
-- **Log all tool calls**: For debugging and optimization
-- **Set timeouts**: Prevent hanging calls
-- **Implement permission checks**: Security first
-- **Track cost per call**: Budget management
-- **Provide clear tool descriptions**: LLM needs to understand tools
-- **Support both rule-based and LLM-based intent**: Best of both worlds
-- **Cache tool lists**: Don't re-fetch on every call
-- **Use fallback tools**: If primary fails, try alternative
+- **Kiểm tra tham số trước khi chạy**: chặn lỗi từ trong trứng
+- **Thử lại theo kiểu backoff (càng lúc chờ càng lâu)**: đừng nện liên tục vào service đang ốm
+- **Ghi log mọi lần gọi tool**: sau này debug hay tối ưu đều cần
+- **Đặt timeout**: đừng để một cuộc gọi treo cả hệ thống
+- **Soát quyền trước**: an toàn là trên hết
+- **Theo dõi chi phí mỗi lần gọi**: giữ hầu bao cho chặt
+- **Viết mô tả tool cho rõ ràng**: LLM cũng như người mới — mô tả ú ớ là làm sai
+- **Xài song song cả rule-based lẫn LLM-based**: vừa nhanh vừa chắc
+- **Cache danh sách tool**: đừng lần nào cũng đi hỏi lại từ đầu
+- **Có tool dự phòng**: món chính hỏng thì còn món thay thế
 
 ### 13.2 DON'T ❌
 
-- **Đừng skip parameter validation**: Invalid params = crashes
-- **Đừng ignore rate limits**: API bans are real
-- **Đừng hardcode tool paths**: Use registry
-- **Đừng forget error handling**: Every tool call can fail
-- **Đừng use vague tool descriptions**: LLM can't guess
-- **Đừng allow unlimited retries**: Set max retries
-- **Đừng execute dangerous tools without permission**: Always check auth
-- **Đừng ignore deprecated tools**: Gracefully migrate users
+- **Đừng bỏ qua kiểm tra tham số**: tham số bậy là sập ngay
+- **Đừng coi thường rate limit**: bị khóa API là chuyện có thật
+- **Đừng ghi cứng đường dẫn tool trong code**: cứ đi qua registry
+- **Đừng quên xử lý lỗi**: tool nào cũng có ngày dở chứng
+- **Đừng viết mô tả tool chung chung**: LLM không đoán mò giùm bạn đâu
+- **Đừng cho thử lại vô hạn**: đặt trần số lần retry
+- **Đừng chạy tool nguy hiểm mà không xin phép**: lúc nào cũng phải kiểm tra quyền
+- **Đừng lờ tool đã deprecated**: dắt user sang tool mới cho nhẹ nhàng
 
 ---
 
@@ -2959,11 +2959,11 @@ function uuid(): string {
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Testing (Kiểm thử) là quy trình xây dựng unit test và integration test để đánh giá độ chính xác của từng thành phần — tool selection, intent classification, executor, permission, rate limiter — và của pipeline tổng thể.
+> **Khái niệm:** Testing là khâu "tổng duyệt": viết unit test soi từng món (chọn tool, đoán ý, chạy tool, phân quyền, giới hạn lượt gọi) rồi viết integration test cho cả pipeline chạy liền một mạch.
 >
-> **Ẩn dụ/so sánh:** Như buổi tổng duyệt trước giờ diễn: từng diễn viên lên thoại riêng (unit test) và cả dàn kịch chạy liền một mạch (integration test) để bắt lỗi trước khi đưa lên sân khấu thật (production).
+> **Hình dung vui:** Như buổi tổng duyệt trước đêm diễn: từng diễn viên thoại riêng (unit test), rồi cả đoàn chạy liền vở (integration test) để bắt lỗi trước khi mở màn trước khán giả (production).
 >
-> **Vì sao quan trọng:** Tool call thất bại là lỗi đắt nhất khi đã online; test sớm giúp bắt lỗi ở thời điểm chi phí sửa gần như bằng không.
+> **Sao phải quan tâm:** Tool gọi hỏng ngoài production là lỗi đắt nhất; bắt được lúc còn trên bàn test thì tiền sửa gần như bằng không.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -3105,17 +3105,17 @@ if __name__ == "__main__":
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Advanced Patterns (Các mô hình nâng cao) bao gồm những kỹ thuật chuyên sâu như Tool Learning — khả năng agent tự học cách dùng tool mới trong runtime — cùng dynamic tool registration.
+> **Khái niệm:** Advanced Patterns là mấy chiêu nâng cao như Tool Learning — để agent tự học cách xài tool mới ngay trong lúc chạy — cùng kiểu đăng ký tool động (dynamic registration).
 >
-> **Ẩn dụ/so sánh:** Giống nhân viên bán hàng mới: những ngày đầu việc gì cũng phải xem sổ hướng dẫn, vài tháng sau tự biết món nào bán chạy, bước nào mất khách — hệ thống tự thuộc bài theo thời gian thay vì chờ người sửa code.
+> **Hình dung vui:** Như bạn nhân viên bán hàng mới: tuần đầu việc gì cũng phải giở sổ hướng dẫn, vài tháng sau tự biết món nào bán chạy, khâu nào dễ mất khách — càng làm càng thuộc bài mà chẳng cần ai sửa code giùm.
 >
-> **Vì sao quan trọng:** Hệ thống càng chạy càng tinh chỉnh — tăng tỉ lệ thành công và giảm latency mà không cần can thiệp thủ công.
+> **Sao phải quan tâm:** Hệ thống chạy càng lâu càng tự khôn ra — trúng nhiều hơn, chờ ít hơn, mà khỏi cần người canh chỉnh tay.
 
 ### 15.1 Tool Learning
 
-Mục này chạy được gì? `ToolLearner` ghi lại mỗi lần agent gọi tool: loại task, tool nào, thành công hay không, latency bao nhiêu (hàm `record`). Khi cần chọn tool cho một task, hàm `recommend()` xếp hạng các ứng viên theo tỉ lệ thành công, trừ đi điểm phạt latency; tool chưa từng dùng nhận điểm trung bình 0.5. Ý tưởng đơn giản nhưng là nền tảng của agent tự tối ưu: hệ thống tự rút kinh nghiệm từ lịch sử thay vì sửa code thủ công.
+Mục này chạy được trò gì? `ToolLearner` cặm cụi ghi sổ mỗi lần agent gọi tool: việc thuộc loại nào, xài tool nào, thành hay bại, chờ bao lâu (hàm `record`). Tới lúc cần chọn tool, hàm `recommend()` xếp hạng ứng viên theo tỉ lệ thành công rồi trừ điểm mấy anh chậm chạp; tool nào chưa từng xài thì cho điểm giữa giữa 0.5. Chiêu đơn giản mà là nền móng để agent tự khôn lên: rút kinh nghiệm từ sổ cũ thay vì chờ người sửa code.
 
-*Ẩn dụ:* Giống app gọi xe ghi nhớ tài xế nào thường đón đúng hẹn và chạy nhanh, để lần sau ưu tiên đặt xe của người đó.
+*Hình dung vui:* Như app gọi xe nhớ mặt bác tài nào hay đón đúng giờ, chạy êm — lần sau ưu tiên gán xe của bác đó cho bạn.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -3190,38 +3190,38 @@ class ToolLearner:
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Tương Lai phản ánh các xu hướng công nghệ nổi bật trong tool decision và MCP giai đoạn 2026-2028: chuẩn hóa giao thức, tự động khám phá tool và tạo wrapper cho tool lạ, cùng multi-agent tool sharing.
+> **Khái niệm:** Tương Lai là mục ngó trước mấy con sóng lớn của làng tool decision và MCP giai đoạn 2026-2028: chuẩn hóa giao thức, agent tự mò ra tool mới và tự gói wrapper, rồi chia sẻ tool giữa nhiều agent.
 >
-> **Ẩn dụ/so sánh:** Giống dự báo thời tiết trước chuyến đi dài: không chắc chắn 100%, nhưng giúp bạn chuẩn bị hành trang (kiến trúc) đúng hướng ngay từ hôm nay.
+> **Hình dung vui:** Như coi dự báo thời tiết trước chuyến đi xa: không ai dám chắc 100%, nhưng ngó trước thì soạn hành lý (kiến trúc) mới đúng hướng.
 >
-> **Vì sao quan trọng:** Quyết định kiến trúc hôm nay quyết định hệ thống theo kịp xu hướng 2-3 năm tới hay phải xây lại từ nền móng.
+> **Sao phải quan tâm:** Cách đặt móng hôm nay quyết định hai ba năm nữa bạn ung dung lướt sóng hay phải đập đi xây lại từ đầu.
 
 ### 16.1 Xu Hướng 2026-2028
 
-**1. Auto Tool Discovery**
-- Agent tự discover tools từ MCP servers
-- Tự tạo wrapper cho unknown tools
-- Semantic tool matching
+**1. Tự mò ra tool (Auto Tool Discovery)**
+- Agent tự lần ra tool từ các MCP servers
+- Tự gói wrapper cho tool lạ chưa gặp bao giờ
+- Ghép tool theo nghĩa (semantic matching)
 
-**2. Tool Composition AI**
-- Agent tự compose tools thành workflows
-- Learned tool chains from execution history
-- Self-optimizing pipelines
+**2. AI tự ghép tool (Tool Composition AI)**
+- Agent tự xâu tool thành quy trình
+- Học chuỗi tool ngon từ lịch sử chạy thật
+- Pipeline tự tối ưu dần
 
-**3. Cross-Platform Tools**
-- Tool portability across agents
-- Standardized tool marketplace
-- Universal tool interface
+**3. Tool xài chéo mọi nơi (Cross-Platform Tools)**
+- Tool mang từ agent này sang agent khác vẫn chạy
+- Chợ tool theo chuẩn chung
+- Một interface xài cho mọi nhà
 
-**4. Predictive Tool Use**
-- Predict which tools will be needed
-- Pre-warm connections
-- Pre-fetch data
+**4. Đoán trước để dọn sẵn (Predictive Tool Use)**
+- Đoán trước sẽ cần tool nào
+- Hâm nóng kết nối từ sớm
+- Lấy sẵn dữ liệu chờ đó
 
-**5. Tool Security**
-- Zero-trust tool execution
-- Sandboxed tool environments
-- Audit trail for all operations
+**5. Tool an toàn hơn (Tool Security)**
+- Chạy tool kiểu zero-trust (không tin ai sẵn)
+- Nhốt tool trong sandbox
+- Việc nào cũng để lại vết audit
 
 ## 17. Củng Cố Production: MCP, Ranh Giới Thực Thi, Memoization
 
@@ -3267,7 +3267,11 @@ viết bất kỳ dòng code nào spawn subprocess.
 
 ### 17.3 Quy Tắc MCP Trong Production
 
-1. Ghim `protocolVersion`; cache `tools/list` 5–15 phút; gặp `426`/tool lạ thì vô hiệu ngay.
+> **Oct-2026:** spec stateless `2026-07-28` là bản mới nhất rồi nhé.
+> Cách chuyển chi tiết từng bước xem ở [`2026-07-28-migration.md`](./2026-07-28-migration.md).
+> Kiểu chào hỏi `initialize` và `Mcp-Session-Id` cũ bỏ hẳn.
+
+1. Ghim `protocolVersion` **theo từng request** (`_meta` + header `MCP-Protocol-Version`, mặc định `"2026-07-28"`, giữ shim tương thích `"2025-06-18"`); cache `tools/list` theo `ttlMs/cacheScope` (fallback 5–15 phút); gặp `426`/tool lạ/`UnsupportedProtocolVersionError` thì vô hiệu ngay.
 2. Auth: OAuth2 bearer có refresh + scope tối thiểu; xoay key; không bao giờ log token (redact `Bearer`).
 3. Trần: `timeout 30s`, `kết quả ≤128KB`, `args ≤32KB`, validate args theo schema trước khi gửi.
 4. Streaming: chuyển tiếp chunk `content` khi tới, áp trần tổng + idle timeout (10s); hủy khi client cancel.
@@ -3277,7 +3281,7 @@ viết bất kỳ dòng code nào spawn subprocess.
 
 ```typescript
 const memo = new Map<string, { at: number; val: any }>();
-export async function callMcp(url: string, token: string, tool: string, args: object, v = "2025-06-18") {
+export async function callMcp(url: string, token: string, tool: string, args: object, v = "2026-07-28") { // tương thích: "2025-06-18"; xem 2026-07-28-migration.md
   const key = `${tool}:${JSON.stringify(args)}`; const m = memo.get(key);
   if (m && Date.now() - m.at < 60_000) return { ...m.val, memoHit: true };
   const r = await fetch(`${url}/tools/call`, { method: "POST", signal: AbortSignal.timeout(30_000),
@@ -3355,5 +3359,5 @@ trail `approval_request` / `approval_verdict` đều do
 ---
 
 *Tài liệu: VI. Decide Tools / MCP Calls — HARNESS ENGINEERING EDITION*
-*Ngày cập nhật: 19/07/2026*
+*Ngày cập nhật: 16/10/2026 (stateless 2026-07-28: xem 2026-07-28-migration.md)*
 *Tác giả: AI Knowledge Repository*

@@ -1,6 +1,6 @@
 # 🤝 06. Jev + LLM — Division of Labor
 
-> This section explains **how to combine Jev with LLMs without muddling their roles**: the two-brain model ("Jev decides, LLM writes"), model routing, tool-call gateways, the Pydantic AI FallbackModel pattern, and where Jev slots into harnesses, loops, and graphs — plus the **anti-patterns** that break hybrid systems. Read [README.md](../README.md) first for the overall context of Module XIV — Jev & System One Models.
+> This section shows **how to pair Jev with LLMs without mixing up their jobs**: the two-brain idea ("Jev decides, LLM writes"), picking models, guarding tool calls, the Pydantic AI FallbackModel setup, and where Jev fits into harnesses, loops, and graphs — plus the **common traps** that break mixed setups. See [README.md](../README.md) for the big picture of Module XIV — Jev & System One Models.
 
 ---
 

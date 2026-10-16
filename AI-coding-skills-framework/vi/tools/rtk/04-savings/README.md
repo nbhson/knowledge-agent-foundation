@@ -1,6 +1,6 @@
 # 📊 04. Đo Lường Token Đã Tiết Kiệm — Savings
 
-> RTK không chỉ nén output — nó còn **đo lường** mức tiết kiệm token. Đây là cầu nối với module `11-evaluation` của harness: bạn cần số liệu để biết harness của mình hoạt động hiệu quả thế nào.
+> RTK không chỉ nén output — nó còn **đo luôn** xem bạn tiết kiệm được bao nhiêu token. Đây là cầu nối sang module `11-evaluation` của harness: muốn biết harness chạy hiệu quả tới đâu thì phải có số liệu cụ thể.
 
 ## Lệnh Đo Lường
 
@@ -72,9 +72,9 @@ Consider `rtk init` for these or add custom TOML filters.
 
 ## Lưu Ý Khi Đo Lường
 
-- Chạy `rtk gain` định kỳ để theo dõi xu hướng (giống module `11-evaluation` — đo lường liên tục).
-- `rtk discover` cho biết lệnh nào chưa được filter — cơ hội bổ sung custom TOML filters.
-- Telemetry mặc định **tắt** — RTK không gửi số liệu của bạn đi đâu nếu không opt-in.
+- Thỉnh thoảng chạy `rtk gain` để theo dõi xu hướng (đúng tinh thần module `11-evaluation` — đo liên tục).
+- `rtk discover` chỉ ra lệnh nào chưa được filter — đó là chỗ bạn còn bổ sung custom TOML filters được.
+- Telemetry mặc định **tắt** — RTK không gửi số liệu của bạn đi đâu nếu bạn không opt-in.
 
 ---
 

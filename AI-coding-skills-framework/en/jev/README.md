@@ -28,7 +28,7 @@ The obvious 2026 move: call a frontier LLM for every ticket. But that means:
 - A JSON blob you must parse, validate, retry on malformed quotes, and pray it stayed in schema
 - Zero calibration: when it says "high confidence", that word means nothing statistically
 
-Using a frontier LLM for every tiny decision is like **calling in an emergency surgical team to apply a band-aid** — or **hiring a Michelin chef to boil water**. The team *can* do it. It is spectacularly the wrong tool.
+Using a frontier LLM for every tiny decision is like **calling an emergency surgical team to put on a band-aid** — or **hiring a top chef just to boil water**. They *can* do it. It is just not the right job for them.
 
 When your software makes thousands of decisions an hour and only needs **a typed value plus a probability**, generating strings is waste — pure token-shaped waste.
 

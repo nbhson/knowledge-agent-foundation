@@ -22,9 +22,9 @@ You have extracted 5,000 entities and 12,000 relations. You store them in `graph
 
 The next week, you need to answer: *"Find all projects that Alice's team has worked on, up to 3 steps of REPORTS_TO/MANAGES."*
 
-With JSON, you write a manual BFS loop, load the entire file into RAM, and run 2 seconds per query. 100 queries? Timeout.
+With JSON, you end up writing a manual BFS loop, loading the whole file into memory, and waiting about 2 seconds per query. 100 queries? That gets slow fast.
 
-A **Graph Database** solves this: **native storage + indexes + query engine** — answers the same question in 15ms with a single line of Cypher.
+A **Graph Database** makes this easy: it comes with **built-in storage, indexes, and a query engine** — so you can answer the same question in about 15ms with a single line of Cypher.
 
 ### Why Storage & Query Matter?
 

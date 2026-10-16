@@ -14,13 +14,13 @@
 
 ### Câu Chuyện Mở Đầu
 
-Harness của bạn đang chạy loop tự động nightly. Một loop bắt đầu tốn 50,000 token mỗi lần thay vì 10,000. Một agent khác gọi tool lặp 10 lần trước khi finish. Một prompt mới làm quality giảm nhưng bạn không biết vì sao.
+Hãy hình dung thế này: harness của bạn đang chạy loop tự động mỗi đêm. Bỗng một loop ngốn tới 50.000 token mỗi lần thay vì 10.000 như trước. Một agent khác gọi tool lặp đi lặp lại tới 10 lần mới chịu finish. Một prompt mới làm chất lượng tụt mà bạn chẳng hiểu vì sao.
 
-Không có observability, bạn đang **bay trong đêm tối không đèn**. Không biết cost, không biết attempt nào thành công, không biết tool nào chậm, không biết context nào bị cắt.
+Không có observability thì đúng là **lái đêm mà tắt đèn**: không biết tốn bao nhiêu cost, attempt nào thành công, tool nào ì ạch, đoạn context nào bị cắt mất.
 
 > *"You can't optimize what you can't measure. You can't fix what you can't see."*
 
-**Observability cho AI systems** = trace từng LLM call, từng tool call, từng token, từng latency, từng cost — giống như APM cho microservices, nhưng cho agent pipes.
+**Observability cho AI systems** nghĩa là trace từng LLM call, từng tool call, từng token, từng latency, từng cost — giống như APM cho microservices, nhưng là bản dành cho agent pipes.
 
 ### Tại Sao Observability Quan Trọng?
 

@@ -14,13 +14,13 @@
 
 ### Câu Chuyện Mở Đầu
 
-Bạn đã đọc `HARNESS_ENGINEERING.md` — hiểu 7 components: retrieve memory, build context, update memory, plan, prompt builder, tool decision, workflow. Bạn muốn **code thật** một harness, không chỉ hiểu lý thuyết.
+Giả sử bạn đã đọc `HARNESS_ENGINEERING.md` — đã nắm 7 components: retrieve memory, build context, update memory, plan, prompt builder, tool decision, workflow. Giờ bạn muốn **code thật** một harness, chứ không dừng ở lý thuyết.
 
-Bạn có hai lựa chọn: viết từ đầu toàn bộ orchestration (LLM calls, tool routing, memory, retry...), hoặc dùng một framework chuyên nghiệp đã giải quyết 80% bài toán đó.
+Tới đây thường chỉ có hai hướng: tự viết lại toàn bộ orchestration từ đầu (LLM calls, tool routing, memory, retry...), hoặc mượn một framework đã làm hộ mình 80% việc đó.
 
 > **Cách 4 — LangChain / LlamaIndex (Framework chuyên nghiệp)** — trích từ HARNESS_ENGINEERING.md
 
-**LangChain / LangGraph** là framework chuẩn để hiện thực hóa harness engineering: nó cung cấp sẵn tool-calling, memory, RAG, prompt templates, và — với LangGraph — khả năng mô hình hóa luồng harness như một **stateful graph** (retrieve → build → act → update → lặp lại).
+**LangChain / LangGraph** là framework quen thuộc để biến harness engineering thành code thật: có sẵn tool-calling, memory, RAG, prompt templates, và — với LangGraph — bạn vẽ luôn luồng harness thành một **stateful graph** (retrieve → build → act → update → lặp lại).
 
 ### Tại Sao LangChain Quan Trọng?
 
@@ -63,7 +63,7 @@ Bạn có hai lựa chọn: viết từ đầu toàn bộ orchestration (LLM cal
 
 ### LangChain (Core)
 
-Thư viện nền: LLM wrappers, chains, tools, memory, retrievers, prompts.
+Thư viện nền: gồm LLM wrappers, chains, tools, memory, retrievers, prompts.
 
 ```typescript
 import { ChatOpenAI } from "@langchain/openai";
@@ -83,7 +83,7 @@ const harness = {
 
 ### LangGraph (Orchestration)
 
-Thêm lớp **stateful graph** — mỗi node là một harness component, có điều kiện rẽ nhánh, có vòng lặp.
+LangGraph đắp thêm một lớp **stateful graph** — mỗi node là một harness component, muốn rẽ nhánh có điều kiện cũng được, muốn cho lặp lại cũng xong.
 
 ```python
 from langgraph.graph import StateGraph, END
@@ -101,7 +101,7 @@ graph.add_conditional_edges("agent", should_continue, {"tools": "tools", END: EN
 graph.add_edge("tools", "agent")              # vòng lặp — giống loop/
 ```
 
-Đây chính là triết lý `loop/` — agent không kết thúc sau một lần gọi LLM, mà **lặp lại** cho đến khi hoàn thành.
+Đây đúng là tinh thần của `loop/` — agent không gọi LLM một phát rồi thôi, mà **lặp lại** cho tới khi xong việc.
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 

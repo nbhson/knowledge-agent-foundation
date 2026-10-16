@@ -1,6 +1,6 @@
 # ⚠️ 06. Anti-Patterns & Failure Modes
 
-> Design mistakes to avoid **before** turning loops unattended, plus a **catalog of the real ways loops actually break** with mitigations.
+> These are design mistakes to avoid **before** you let loops run on their own, plus a **catalog of the real ways loops actually break** and how to fix them.
 
 ---
 
@@ -23,7 +23,7 @@
 
 ## 2. Failure Mode Catalog
 
-Real ways loops break — use this when debugging a misbehaving loop or writing a new pattern.
+These are the real ways loops break — use this list when you are debugging a misbehaving loop or writing a new pattern.
 
 ### Severity Classification
 

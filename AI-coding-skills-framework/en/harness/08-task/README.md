@@ -40,13 +40,13 @@
 
 ### Opening Story
 
-Imagine you are the **administrator of a general hospital**. Every day, hundreds of patients arrive: someone with acute abdominal pain, someone needing a routine checkup, someone wanting a vaccination. If you **don't triage** — sending an emergency patient behind a routine exam — the result will be a **disaster**.
+Imagine you just started as the **front-desk manager of a busy neighborhood clinic**. The doors open and in they come: someone clutching their stomach in pain, someone here for a routine checkup, a kid waiting for a quick vaccination. If you **skip triage** and ask the emergency case to wait behind the routine exam — well, you can feel how quickly that morning turns into a **mess**.
 
 **AI Agents face the same problem without Task Management.**
 
-When a user sends a complex request like *"Refactor the auth module, add tests, update docs, then deploy"* — the agent receives **everything at once** but doesn't know where to start, what to prioritize, or what can run in parallel. The result: messy work, missed steps, or worse — **deploying untested code**.
+Now swap the clinic for an AI agent, and the patients for a big request like *"Refactor the auth module, add tests, update docs, then deploy."* The agent hears **everything in one breath** — but where should it begin? What matters most? What can happen side by side? Without a plan, you get jumbled work, skipped steps, or worst of all — **shipping code nobody ever tested**.
 
-**Solution**: Structured Task Management — a system for classifying, prioritizing, decomposing, and tracking tasks so the agent **does the right thing, at the right time, in the right order**.
+**The friendly fix**: Structured Task Management — think of it as the clinic's calm triage nurse. It sorts, ranks, breaks down, and keeps an eye on every job, so the agent always does **the right thing, at the right time, in the right order**.
 
 ### Why Is Task Management Important?
 
@@ -80,7 +80,7 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 >
 > **Why it matters:** Without task management, the agent easily gets overloaded, works in the wrong order, and wastes resources.
 
-**Task Management** in AI coding is the process of **analyzing, decomposing, prioritizing, and tracking** coding tasks. Good tasks help AI agents focus on the right work, avoid overload, and deliver quality results.
+**Task Management** in AI coding is just the habit of **sorting, slicing, ranking, and watching** your coding chores. Done well, it helps your agent focus on the right job, skip the overwhelm, and deliver work you can trust.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -142,7 +142,7 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 
 ### 1.1 Coding Task Classification
 
-The diagram below summarizes the coding task taxonomy in 5 main groups — each group is a different "specialty" (new code, code modification, code analysis, documentation, testing). Read it as a classification tree: from the top-level group, follow a branch down to a specific task type, to find where your task belongs.
+Think of the picture below as the clinic's department directory with 5 friendly wings — writing new code, changing code, studying code, writing docs, and testing. Start at the top, follow the little branch that sounds like your job, and you will land exactly where your task belongs.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -183,7 +183,7 @@ The diagram below summarizes the coding task taxonomy in 5 main groups — each 
 
 ### 1.2 Task Classification Engine
 
-The code below is the actual classification engine: it takes a natural-language task description, searches keyword patterns (e.g., seeing "fix" or "bug" places it in the MODIFICATION group), then estimates complexity and returns a fully populated Task object. Try it with any description to see how the agent "understands" the request.
+Here is the little receptionist brain that does the sorting: you hand it a plain-English request, it listens for clue words (spot "fix" or "bug" and it thinks, "ah, MODIFICATION"), guesses how big the job is, and hands you back a tidy Task card. Go ahead and try it with any sentence — it is fun to watch the agent "get" what you mean.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -339,7 +339,7 @@ class TaskClassifier:
 
 ### 1.3 Decision Tree: Choosing Task Handling Strategy
 
-The diagram below describes the decision rules when a task arrives: if the request is unclear, clarify first; if it's under 500 tokens, just do it; if it's large, decompose it into sub-tasks and then choose a sequential, parallel, or TDD execution strategy. Follow the arrows from top to bottom to see which "door" the agent takes for each type of task.
+Think of the flowchart below as the receptionist's cheat sheet. A new task walks in: if the request is fuzzy, ask a kind clarifying question first; if it is tiny (under ~500 tokens), just do it on the spot; if it is big, split it into bite-size pieces and then pick your style — one-by-one, side-by-side, or test-first (TDD). Just follow the arrows down and you will see which door each task walks through.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -384,7 +384,7 @@ The diagram below describes the decision rules when a task arrives: if the reque
 
 ### 2.1 Task Decomposition Patterns
 
-The diagram below lists the 6 common task decomposition patterns. The difference lies in how sub-tasks relate to each other: running sequentially in a required order, running in parallel then merging results (parallel, map-reduce), or a parent-child hierarchy. Look at the arrows in the diagram to pick the pattern that fits the work you're doing.
+The sketch below lays out 6 everyday ways to slice a big cake into servable pieces. Some slices must be eaten in order (sequential), some can be shared out and gathered back together (parallel, map-reduce), and some stack like a family tree (parent-child). Glance at the arrows and pick the slicing style that matches your appetite today.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -448,7 +448,7 @@ The diagram below lists the 6 common task decomposition patterns. The difference
 
 ### 2.2 Task Decomposer
 
-This is the code that implements decomposition: the TaskDecomposer object takes a Task, automatically picks a decomposition strategy (feature, layer, file, TDD, vertical slice, spike), and returns an ordered list of SubTasks with dependencies, token estimates, and check criteria. If it doesn't know which to pick, it suggests one based on the task's type and complexity.
+Here is the friendly kitchen helper that does the slicing for you: hand the TaskDecomposer your big Task, and it picks a slicing style (by feature, by layer, by file, test-first, thin vertical slice, or quick research spike). Out comes a neat to-do list of SubTasks — in order, with dependencies, token guesses, and a little "how do I know I am done?" note on each. Not sure which style fits? It happily suggests one based on your task's shape and size.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -733,9 +733,9 @@ class TaskDecomposer:
 
 ### 3.1 Priority Model
 
-The code below shows how to compute a priority score for each task with an Eisenhower-Matrix-style formula: each task gets scored on urgency, importance, and effort, with a bonus added if it's a small, easy job (quick win) or many other tasks depend on it. The TaskScheduler then lines up tasks into batches that follow the right order without exceeding the per-session token budget.
+Here is how the clinic decides who goes first — with a classic Eisenhower-style scorecard. Every task gets marks for urgency, importance, and effort, plus a little gold star if it is a quick win or if many other jobs are waiting on it. The TaskScheduler then lines everyone up into calm, orderly batches that respect your token budget for the session.
 
-In plain terms, it's a queue-ranking scale: urgent and important work scores high; big but non-urgent work is placed later; small, easy jobs are prioritized to quickly "clear the desk".
+In plain coffee-chat terms: urgent-and-important jumps to the front, big-but-patient waits its turn, and tiny easy wins get fast-tracked just to clear the desk and build momentum.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -842,9 +842,9 @@ class TaskScheduler:
 
 ### 4.1 Task Lifecycle
 
-The diagram below is the state map of a task from birth to end: PENDING → PLANNING → IN_PROGRESS → TESTING → REVIEW → DONE. Beyond the main path there are special branches — BLOCKED (when blocked, go back to waiting), FAILED (on failure, start over), CANCELLED (canceled). Follow the arrows to see which transitions from which state to which are valid.
+Picture the life story of a task, from first hello to happy goodbye: PENDING → PLANNING → IN_PROGRESS → TESTING → REVIEW → DONE. Along the way there are a few side roads — BLOCKED (uh oh, wait a moment), FAILED (oops, let's try again), CANCELLED (never mind). Just follow the arrows to see which doors legally open from each room.
 
-Put simply, this is "the journey of a task through the wards": just created it waits for an exam (PENDING), planned (PLANNING), in treatment (IN_PROGRESS), in lab testing (TESTING), in consultation (REVIEW), then discharged (DONE).
+In everyday ward-talk: a newborn task waits in the lobby (PENDING), sees the doctor for a plan (PLANNING), gets treatment (IN_PROGRESS), visits the lab (TESTING), gets a second opinion (REVIEW), then happily goes home (DONE).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -884,7 +884,7 @@ Put simply, this is "the journey of a task through the wards": just created it w
 
 ### 4.2 Task State Manager
 
-This is the state management code: TaskStateManager keeps a "tracking log" for every task, only allows state changes when they are valid, records start times, attempt counts, and the last error, and emits events so other parts of the system can react. If you try an illegal state change (e.g., TESTING → PENDING), the code throws an error immediately — like a hospital rule that forbids cutting corners.
+Here is the ward's trusty logbook keeper: TaskStateManager writes down every move each task makes, only allows legal moves (no sneaky shortcuts), and notes start times, try counts, and the last oopsie — while ringing a little bell (events) so the rest of the team can react. Try an illegal hop like TESTING → PENDING and it kindly but firmly says "nope" — just like a good hospital rule.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1023,7 +1023,7 @@ class InvalidTransitionError(Exception):
 
 ### 5.1 Task Dependency Graph
 
-The code below implements a DAG (Directed Acyclic Graph) to manage dependencies. The reading convention is simple: "A → B" means task A must finish before task B can start. This class supports cycle detection, execution-order sorting (topological sort), and splitting tasks into groups that can run in parallel.
+Here is a small traffic manager built on a DAG (just a fancy word for "a map with no roundabouts"). Reading it is easy: "A → B" simply means "please finish A before starting B." This helper spots traffic jams (cycles), works out who goes first (topological sort), and groups independent jobs so they can cruise side by side.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1136,7 +1136,7 @@ class TaskDependencyGraph:
 
 ### 6.1 Common Task Templates
 
-The code below defines common task templates as a dictionary: each template (bug_fix, new_feature, code_review, refactor, debug_investigation, performance_optimization, migration) contains a title, a sub-task list with individual token estimates, and a total estimated token count. The create_task_from_template function just needs the template name and fills in specifics to immediately produce a complete Task.
+Think of the snippet below as a box of well-loved recipe cards: one card each for bug_fix, new_feature, code_review, refactor, debug_investigation, performance_optimization, and migration. Every card lists the steps, a token guess for each step, and the full-meal total. The little `create_task_from_template` helper just asks for the card's name, fills in your details, and hands you a ready-to-cook Task.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1271,7 +1271,7 @@ def create_task_from_template(template_name: str, **kwargs) -> Task:
 
 ### 7.1 Token Estimation Model
 
-The table below is an empirical "price list" for estimating tokens per task type: look up the task type (bug fix, new feature, migration, etc.) and complexity, read the Estimated Tokens column, and you know how much to budget. The bottom section gives quick estimation numbers (e.g., 1 line of code lands at 5-10 tokens) and how to allocate a 128K context window.
+Think of the table below as the menu prices at your favorite café: find your task type (bug fix, new feature, migration…), peek at the complexity, and the Estimated Tokens column tells you roughly what the bill looks like. The footer adds handy rules of thumb (a line of code sips about 5–10 tokens) plus a sample budget for a 128K context window.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1309,7 +1309,7 @@ The table below is an empirical "price list" for estimating tokens per task type
 
 ### 7.2 Effort Estimation Algorithm
 
-This is the automatic estimation code: EffortEstimator takes a Task, picks a base number (BASE_TOKENS) based on complexity, multiplies by a per-task-type factor (e.g., writing docs is cheaper than new code), adds a "fee" for each file touched, then returns tokens, an estimated duration (assuming about 100 tokens per minute), and a batch summary.
+Meet your friendly cost estimator: EffortEstimator glances at your Task, picks a starting price (BASE_TOKENS) from its size, adjusts it for the kind of work (writing docs costs less than brand-new code, for example), adds a small fee per file touched — and out pops a token guess, a rough time estimate (about 100 tokens a minute), plus a tidy batch summary.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1401,7 +1401,7 @@ class EffortEstimator:
 
 ### 8.1 Common Anti-Patterns
 
-The diagram below lists the 8 most common task management errors. Each error is marked "❌ ANTI-PATTERN", with identifying symptoms and a "→ SOLUTION" arrow showing how to cure it. Read it as a lookup table: when you see any symptom in your task, apply the corresponding solution immediately.
+Think of the poster below as the clinic's "watch out for these 8 common colds" chart. Each cold gets a ❌ ANTI-PATTERN label, a list of tell-tale sniffles, and a → SOLUTION prescription right beside it. Feeling a symptom in your own task? Just look it up and take the remedy.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1444,7 +1444,7 @@ The diagram below lists the 8 most common task management errors. Each error is 
 
 ### 8.2 Anti-Pattern Detector
 
-This is the automatic anti-pattern detection engine: AntiPatternDetector takes a Task, runs the checks in sequence (task larger than 20K tokens, vague description, missing estimate, too many dependencies, missing file scope), and returns a list of issues with severity and remediation suggestions. Run it before starting a task to "diagnose" early.
+Think of this as the checkup machine at the clinic door: AntiPatternDetector gives your Task a quick once-over — too big? too vague? missing a cost guess? tangled in too many dependencies? — and hands you a gentle report with severity levels and "here is how to feel better" tips. Run it before you start, like washing your hands.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>

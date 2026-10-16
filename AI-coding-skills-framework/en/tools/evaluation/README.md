@@ -14,20 +14,20 @@
 
 ### The Opening Story
 
-You change the system prompt from "you are a helpful assistant" to "you are a senior engineer". Quality goes up — or down? You say the harness is "better", but **where's the proof?** You add RAG with top-5 chunks — does it actually improve answer accuracy, or does it just burn more tokens?
+You change the system prompt from "you are a helpful assistant" to "you are a senior engineer". Is the result better — or worse? You feel the harness is "better", but **where is the proof?** You add RAG with top-5 chunks — does the answer really get more correct, or does it just use more tokens?
 
 > *"If you ship prompt changes without evaluation, you're gambling — not engineering."*
 
-**Evaluation (Eval)** is the way to turn "feels better" into **measurable numbers**: score responses, compare across prompt/model versions, and catch regressions before they reach production.
+**Evaluation (Eval)** turns a vague "feels better" into **clear numbers you can check**: it scores answers, compares prompt and model versions, and catches problems before they reach real users.
 
 ### Why Evaluation Matters?
 
 | # | Reason | Explanation |
 |---|--------|-------------|
-| 1 | **Evidence instead of feeling** | Measure accuracy, faithfulness, relevance with numbers |
-| 2 | **Regression detection** | Catch that a new prompt degraded quality before deploy |
-| 3 | **Comparable** | A/B between models, prompts, retrieval strategies |
-| 4 | **The execution partner of harness/11** | Harness/11 teaches *how* to evaluate — these tools provide the *tooling* for evaluation |
+| 1 | **Evidence instead of feeling** | Measure accuracy, faithfulness, and relevance with real numbers |
+| 2 | **Regression detection** | Spot when a new prompt makes quality worse, before you ship it |
+| 3 | **Comparable** | Compare models, prompts, and retrieval setups side by side |
+| 4 | **The execution partner of harness/11** | Harness/11 explains *how* to evaluate — these tools give you the *equipment* to do it |
 
 ### Relationship to the Harness
 

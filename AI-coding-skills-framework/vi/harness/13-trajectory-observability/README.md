@@ -66,13 +66,9 @@
 
 ### Opening Story
 
-Ticket: *"Agent xoá `src/auth/middleware.ts` và user báo lại sau 40 phút. Tại sao?"*
+Hãy tưởng tượng sáng thứ Hai bạn nhận ticket: *"Agent xoá mất `src/auth/middleware.ts`, user phát hiện sau 40 phút. Vì sao vậy?"*
 
-Không có trajectory, câu hỏi này không trả lời được. Bạn có một chat log (lời model,
-không phải hành động của nó), một phần CI log, và cảm giác ("nó đang refactor auth").
-Bạn không nói được lệnh xoá nằm ở lượt nào, tool trả về gì trước đó, file lúc đó có
-thực sự nằm trên nhánh hiện tại không, hay agent đang nghĩ là mình đang làm gì. Bạn
-viết một post-mortem mà thực chất chỉ là phỏng đoán.
+Nếu không có trajectory, coi như bạn đang mò mẫm trong bóng tối. Trong tay chỉ có đoạn chat của model (toàn lời nó *nói*, chứ không phải việc nó *làm*), thêm vài dòng log CI rời rạc, cộng với cảm giác mơ hồ kiểu "hình như nó đang refactor auth". Bạn chịu chết, không chỉ ra được lệnh xoá nằm ở lượt nào, ngay trước đó tool trả về cái gì, lúc ấy file có thật sự nằm trên nhánh hiện tại không, hay trong đầu agent đang nghĩ gì. Cuối cùng đành viết post-mortem mà thực ra là... đoán mò.
 
 Có trajectory, cùng câu hỏi đó mất mười một giây và một query:
 
@@ -87,15 +83,9 @@ ORDER BY seq;
 -- seq 34: eval        "tests pass" (thật — không còn gì import nó)
 ```
 
-**Và các câu hỏi tiếp theo tự trả lời lấy nhau.** Tại sao nó xoá? `seq 29: prompt` —
-các export không ai dùng, và mô hình chọn xoá thay vì để lại code chết. Có hoàn tác
-được không? `seq 33` ghi `git worktree`, nên có, và patch cuối nằm ở `seq 51`. Chuyện
-này có nên qua gate không? Blast radius là một file — dưới ngưỡng `write` — nhưng file
-đó được **3 file khác import mà agent chưa từng đọc**. Đó là một câu hỏi chính sách, và
-giờ nó có câu trả lời.
+**Và cái hay là các câu hỏi tiếp theo tự trả lời lẫn nhau.** Tại sao nó lại xoá? Nhìn `seq 29: prompt` là thấy ngay — mô hình thấy mấy export không ai dùng nên chọn cách xoá thay vì để lại code chết. Có cứu được không? `seq 33` có ghi `git worktree`, nên cứu được, bản patch cuối nằm ở `seq 51`. Chuyện này có đáng phải qua cổng duyệt không? Blast radius chỉ là một file — dưới ngưỡng `write` — nhưng khổ nỗi file đó được **3 file khác import mà agent chưa từng mở ra đọc**. Thế là từ một câu hỏi kỹ thuật, ta có luôn câu trả lời cho chính sách.
 
-**Đây là thứ một trajectory mua được: khác biệt giữa "nó hỏng" và "đây chính xác là
-gì đã xảy ra, đây là lý do, và đây là điều chúng ta nên đổi".**
+**Nói ngắn gọn: trajectory giúp bạn thoát khỏi cảnh "nó hỏng rồi", để nói được "chính xác chuyện gì đã xảy ra, vì sao, và giờ mình nên sửa chỗ nào".**
 
 ### Vì Sao Trajectory Là Bắt Buộc?
 
@@ -111,11 +101,7 @@ gì đã xảy ra, đây là lý do, và đây là điều chúng ta nên đổi
 | **Chi phí** | Hoá đơn ÷ số run; không phân bổ được | `GROUP BY task_id` kèm tokens + model tier |
 | **Audit** (→ 15) | "Ai duyệt deploy?" → cuộn lại Slack | Một bản ghi bất biến, nối bằng hash |
 
-Góc chi phí đáng nhấn mạnh. Không có tokens và model tier ở từng step, bạn không trả
-lời được *"vì sao tháng trước hóa đơn tăng gấp ba?"* — chỉ biết là nó tăng. Có
-trajectory thì đó là `SELECT SUM(tokens) WHERE model='frontier' GROUP BY session`, và
-câu trả lời thường là "vòng retry trên 3% số run" hoặc "compaction ngừng chạy" — cả hai
-đều sửa được trong một buổi chiều.
+Chuyện tiền nong rất đáng để kể kỹ một chút. Nếu mỗi step không ghi lại tokens và model tier đã dùng, bạn sẽ bó tay trước câu hỏi *"vì sao tháng trước hoá đơn tăng gấp ba?"* — chỉ biết là nó tăng, thế thôi. Còn khi đã có trajectory, bạn chỉ cần chạy `SELECT SUM(tokens) WHERE model='frontier' GROUP BY session`, và đáp án thường rất đời thường: "do vòng retry ở 3% số run" hoặc "do compaction ngừng chạy" — cả hai đều sửa gọn trong một buổi chiều.
 
 #### Triết lý cốt lõi
 
@@ -132,9 +118,7 @@ Observability = kỷ luật truy vấn bằng chứng đó trước khi hình th
 > - **So sánh:** Như hộp đen máy bay. Chuyến hạ cánh bình thường không ai nhìn; một sự cố thì điều tra toàn bộ từ hộp đen, và chính dữ liệu đó phát lại đúng lộ trình.
 > - **Vì sao quan trọng:** Không có nó, bạn không trả lời được "sao nó sửa nhầm file?", "chunk retrieval nào đầu độc câu trả lời?", hay "run này tốn bao nhiêu?". Có nó, debug là một query, eval là SQL, và incident tái hiện được.
 
-**Trajectory & Observability** biến một run agent mờ đục thành một đối tượng truy vấn
-được, replay được, audit được. Đó là khác biệt giữa một agent bạn *vận hành* và một
-agent bạn *hy vọng*.
+**Trajectory & Observability** biến một run agent đang mờ mịt như "nồi lẩu thập cẩm" thành thứ bạn có thể truy vấn, phát lại và audit đàng hoàng. Nói dân dã: đó là khác biệt giữa một agent bạn *thật sự vận hành* và một agent bạn chỉ biết *cầu may*.
 
 ```
 ┌────────────────────── HARNESS EMITTERS ──────────────────────┐
@@ -164,9 +148,7 @@ agent bạn *hy vọng*.
           └────────────────┘      └────────────────────┘
 ```
 
-**Hai bất biến làm nên nó:** (1) *chỉ-append* — không event nào bị sửa, nên lịch sử đáng
-tin; (2) *mọi event mang `sessionId` + `parentTaskId`* — nên không event nào mồ côi và
-mọi câu hỏi đều có đường join.
+**Hai nguyên tắc vàng làm nên tất cả:** (1) *chỉ-append* — event đã ghi thì không bao giờ sửa, nên lịch sử luôn đáng tin như sổ cái; (2) *mọi event đều mang `sessionId` + `parentTaskId`* — nhờ đó không event nào bị mồ côi, câu hỏi nào cũng có đường để lần theo.
 
 ## Mục Lục Chi Tiết
 
@@ -195,8 +177,7 @@ mọi câu hỏi đều có đường join.
 
 ### 1.1 Schema Cốt Lõi
 
-Một shape, mọi module emit, mọi công cụ đọc. Đây là artifact quan trọng nhất trong
-tầng observability của một harness.
+Một shape duy nhất, mọi module cùng emit, mọi công cụ cùng đọc. Đây là món "hợp đồng" quan trọng nhất trong cả tầng observability — cả nhà dùng chung một khuôn thì mới nói chuyện được với nhau.
 
 ```typescript
 export type EventKind =
@@ -257,9 +238,7 @@ export interface TrajectoryEvent {
 | `eval` | 11 | judge, score, rubric, humanSampleId | phát hiện hồi quy (→ 11) |
 | `error` | bất kỳ | code, retryable, tham chiếu stack | SLO, cảnh báo |
 
-**Quy tắc:** nếu một module tạo ra một sự thật mà sớm nay sẽ có người muốn tương
-quan, nó phải emit một event. Một sự thật chỉ nằm trong memory là một sự thật bạn
-không thể debug bằng.
+**Nguyên tắc nằm lòng:** nếu một module tạo ra sự thật nào mà nay mai có người muốn lần theo, nó phải emit một event. Một sự thật chỉ nằm trong memory mà không lên log thì lúc cần debug, bạn chịu thua.
 
 ### 1.3 Validate & Phiên Bản Hoá
 
@@ -288,9 +267,7 @@ export const TrajectoryEventSchema = z.object({
 });
 ```
 
-**Phiên bản hoá schema, đừng phiên bản từng trường.** Thêm `v: 2` và giữ lại reader
-xử lý được cả hai. Một trajectory viết sáu tháng trước phải vẫn đọc được — đó là
-chính lý do giữ nó. Đổi tên trường trong im lặng phá hủy bản sao duy nhất của sự thật.
+**Hãy version cả schema, đừng version từng trường riêng lẻ.** Thêm `v: 2` và giữ reader đọc được cả bản cũ lẫn mới. Một trajectory viết từ sáu tháng trước vẫn phải đọc được — giữ được lịch sử đọc được chính là lý do ta lưu nó. Đổi tên trường trong im lặng chẳng khác nào xé mất trang duy nhất ghi lại sự thật.
 
 ---
 
@@ -310,15 +287,15 @@ session_start
   → session_end        (task xong: 5/5, cost $0.41, 214s)
 ```
 
-Các điểm xen kẽ quan trọng:
+Mấy chỗ xen kẽ này rất đáng để ý, kiểu như "cặp đôi" lúc nào cũng phải đi cùng nhau:
 
-- **`tool_call` rồi `tool_result`, luôn đi cặp.** Một `tool_call` không có `tool_result` là một step bị treo — và chính query tìm ra chúng là công cụ phát hiện treo của bạn (→ `09` §16.1).
-- **`plan_revision` xen giữa với các tool call đã sinh nó.** Dựng lại câu chuyện đòi nguyên nhân và hệ quả nằm cạnh nhau.
-- **`compaction` nằm giữa prompt nó rút gọn và prompt kế tiếp.** Nếu không, bạn không giải thích được vì sao mô hình quên mất thứ gì.
+- **`tool_call` rồi `tool_result`, lúc nào cũng đi cặp.** Một `tool_call` mà không thấy `tool_result` đâu chính là một step bị treo — và query tìm ra chúng cũng là "máy báo treo" của bạn (→ `09` §16.1).
+- **`plan_revision` nằm xen giữa các tool call đã sinh ra nó.** Muốn kể lại câu chuyện cho ra đầu đuôi thì nguyên nhân và hệ quả phải nằm cạnh nhau.
+- **`compaction` nằm giữa prompt nó rút gọn và prompt kế tiếp.** Nếu không, bạn sẽ không bao giờ giải thích nổi vì sao mô hình tự dưng "quên" mất thứ gì.
 
 ### 2.2 Đường Ghi — Các Tầng Bền Vững
 
-Không phải event nào cũng xứng đáng `fsync`. Xếp theo cái giá khi mất:
+Không phải event nào cũng đáng để `fsync` ngay. Hãy xếp hạng theo kiểu "mất nó thì đau tới đâu":
 
 | Event | Bền vững | Lý do |
 |-------|----------|-------|
@@ -335,11 +312,7 @@ Không phải event nào cũng xứng đáng `fsync`. Xếp theo cái giá khi m
 ./trajectories/ses_44b.jsonl
 ```
 
-**Tại sao JSONL chứ không phải bảng?** Ghi chỉ-append, không cần khoá trong trường hợp
-thường, `grep` được, dễ mang váo, replay được. Index là vấn đề *dẫn xuất*; nạp vào
-DuckDB/SQLite để phân tích. Lưu log dạng bảng trước nghĩa là mọi event là một giao
-dịch trong hot path — thuế độ trễ lên vòng lặp agent, đổi lấy một câu query bạn chạy
-một tuần một lần.
+**Sao lại là JSONL mà không phải bảng SQL?** Vì ghi kiểu nối đuôi thì khỏi cần khoá trong trường hợp thường, `grep` phát ăn ngay, mang đi đâu cũng tiện, replay cũng dễ. Còn index là chuyện *tính sau*; cần phân tích thì nạp vào DuckDB/SQLite. Nếu ngay từ đầu đã lưu dạng bảng, mỗi event thành một giao dịch nằm ngay trên đường chạy nóng — bạn phải trả "thuế độ trễ" cho vòng lặp agent, chỉ để đổi lấy một câu query mỗi tuần mới chạy một lần.
 
 ### 2.3 Đường Đọc & Tail Trực Tiếp
 
@@ -381,8 +354,7 @@ GROUP BY model ORDER BY usd DESC;
 | **Fork** | Clone session tại event `K`, đi tiếp với prompt/model/policy khác | "Nếu chỗ này dùng model lớn thì sao?" | Tiền tố giống nhau; hậu tố có thể phân kỳ tuỳ ý |
 | **Resume** | Nạp checkpoint cuối + phần event ghi sau crash | Workflow bền vững (→ 07 §13) | Không được chạy lại side effect đã commit |
 
-Đây là ba công cụ khác nhau với ba bảo đảm khác nhau. Lẫn lộn chúng là cách các đội
-biến một "replay" thành công cụ gửi lại email production.
+Đây là ba món khác nhau với ba lời hứa khác nhau. Nhầm lẫn chúng là cách nhanh nhất để biến một buổi "replay" vô hại thành cú gửi lại email production cho khách hàng.
 
 ### 3.2 Implementation
 
@@ -470,11 +442,7 @@ export function idempotencyKeyOf(e: TrajectoryEvent): string {
 | `prompt` | ❌ (có sampling) | cùng `fingerprint` (template + context hash), không phải cùng token |
 | `eval` (LLM judge) | ❌ | cùng rubric + cùng input; kỳ vọng score trong ±0.1 |
 
-**Quy tắc ngăn thảm hoạ:** replay không bao giờ kích hoạt lại một side effect không
-thể hoàn tác. `idempotencyKeyOf()` = `(taskId, tool, argvHash)`; khi replay, key đã
-hoàn tất bị bỏ qua và `tool_result` đã ghi được thay thế. Đây chính là lý do
-`07-workflow/README.md` §13.3 yêu cầu idempotency key trên mọi step — replay không
-phải thứ "có thì hay", nó là *lý do* những key đó tồn tại.
+**Quy tắc chống thảm hoạ:** replay không bao giờ được kích hoạt lại một side effect không thể hoàn tác. `idempotencyKeyOf()` = `(taskId, tool, argvHash)`; khi replay, key nào đã xong thì bỏ qua và lấy lại `tool_result` đã ghi. Đây cũng chính là lý do `07-workflow/README.md` §13.3 đòi mọi step phải có idempotency key — replay không phải món "có thì vui", nó là *lý do* những chiếc key đó tồn tại.
 
 `fingerprint` đáng được chú ý: nó hash `(template, id chunk đã lấy, id memory, hash
 policy)`. Nếu một lần replay cho fingerprint khác, *input* đã đổi — và dù có so sánh
@@ -495,8 +463,7 @@ output bao nhiêu cũng không cho bạn biết vì sao. Hãy kiểm tra fingerp
 | Judge có đồng ý với con người không? | `eval.{judge, score, humanSampleId}` (→ 11 §15.4) |
 | Step này có được sandbox đúng không? | `sandbox.policyHash` ↔ `tool_call.policyHash` (→ 12) |
 
-Mỗi dòng là một câu hỏi mà người dùng sẽ hỏi trong vòng một tuần sau khi ship. Mỗi
-dòng là một query SQL. Mỗi dòng là bất khả thi nếu thiếu key.
+Mỗi dòng trên là một câu hỏi mà kiểu gì người dùng cũng sẽ hỏi bạn trong tuần đầu sau khi ship. Mỗi dòng là một query SQL. Và mỗi dòng đều bất khả thi nếu hôm đó bạn quên gắn key.
 
 ### 4.2 Năm Câu Hỏi Một Query Trả Lời
 
@@ -549,8 +516,7 @@ lớn chiếm phần lớn dung lượng byte và ít giá trị nhất sáu tu�
 
 ### 5.2 Redaction Lúc Emit
 
-Redaction diễn ra **lúc ghi**, không phải lúc đọc. Redact lúc đọc thất bại ngay khi bất
-kỳ thứ gì đọc bảng thô — và bảng thô luôn bị đọc bởi các query ad-hoc.
+Redaction phải làm **ngay lúc ghi**, đừng để tới lúc đọc. Redact lúc đọc là thua chắc, vì kiểu gì cũng có query ad-hoc chọc thẳng vào bảng thô — mà bảng thô thì lúc nào cũng bị người ta lôi ra soi.
 
 ```typescript
 const PII = [
@@ -599,8 +565,7 @@ không cần tin vào chính hệ thống đã xoá.
 
 ### 6.1 Catalog Query
 
-Mọi metric là một query trên cùng một bảng. Đây là phần thưởng cho công sức thiết kế
-schema.
+Mọi metric đều là một query trên cùng một bảng. Đây chính là phần thưởng xứng đáng cho công sức thiết kế schema tử tế từ đầu.
 
 ```sql
 -- Hiệu quả step (→ 11 §15.1)
@@ -664,9 +629,7 @@ thường tìm ra 15–30% tiết kiệm trong tuần đầu mà không đổi c
 | 4 | Nó **hỏng** ở đâu? | `tool_result.exit_code != 0` + `error` |
 | 5 | **Judge** nói gì? | `eval.payload` |
 
-Trả lời 2 và 3 trước 4 là kỷ luật. Phần lớn ticket kiểu "mô hình làm cái gì đó ngu
-ngốc" thực chất là lỗi ở câu 2: mô hình thiếu thông tin, và câu 3 phản ánh đúng điều
-đó.
+Trả lời câu 2 và 3 trước câu 4 — đó là kỷ luật. Rất nhiều ticket kiểu "mô hình làm cái gì ngớ ngẩn quá" thực ra lại hỏng ở câu 2: mô hình bị thiếu thông tin đầu vào, và câu 3 chỉ đang phản ánh trung thực cái thiếu đó mà thôi.
 
 ### 7.2 So Sánh Hai Run
 
@@ -862,11 +825,7 @@ test), trạng thái resolve, và chi phí token. Vì trajectory có cấu trúc
 mọi bài nộp, nó đóng vai trò kép: (a) đầu vào đánh giá (→ 11), (b) bề mặt
 contamination (→ 11 §15.2), và (c) artifact debug khi một bài từng pass bắt đầu fail.
 
-Bài học thiết kế: **làm trajectory trở thành artifact đánh giá, không phải output
-cuối.** Eval chỉ dựa trên output cuối cho bạn biết *nó* fail. Eval dựa trên trajectory
-cho bạn biết nó fail vì không tìm ra bug (vấn đề retrieval), vì viết sai patch (vấn
-đề suy luận), hay vì patch đúng mà test harness flaky (vấn đề hạ tầng). Ba thứ đó
-đòi hỏi cách sửa hoàn toàn khác nhau.
+Bài học thiết kế rút ra: **hãy biến trajectory thành món chính của buổi đánh giá, đừng chỉ nộp output cuối.** Eval chỉ nhìn output cuối thì chỉ biết *nó fail*. Eval nhìn cả trajectory mới biết nó fail vì không tìm ra bug (lỗi retrieval), vì viết patch sai (lỗi suy luận), hay vì patch đúng mà hạ tầng test chập chờn. Ba kiểu hỏng này cần ba toa thuốc hoàn toàn khác nhau.
 
 ### 10.2 LangSmith / Langfuse — Trace Là Sản Phẩm
 
@@ -1149,5 +1108,5 @@ là mẫu phát hiện được. Hộp đen là cách bạn tìm ra chuyến bay
 
 *Tài liệu: Harness 13. Trajectory & Observability — HARNESS ENGINEERING EDITION*
 *Module cross-cutting · cột sống của observability harness*
-*Cập nhật: 19/07/2026*
+*Cập nhật: 16/10/2026*
 *Tác giả: AI Knowledge Repository*

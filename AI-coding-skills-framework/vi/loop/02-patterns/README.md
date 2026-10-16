@@ -2,11 +2,11 @@
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Một "production pattern" là **một template vòng lặp đã được chứng minh** — bộ khung có sẵn gồm scheduler, skills, state, cách kiểm chứng và cách bàn giao cho human. Thay vì nghĩ ra loop từ đầu, bạn chọn một pattern phù hợp rồi dùng `loop init` scaffold ra.
-> **Ẩn dụ/so sánh:** Giống **các món trong thực đơn nhà hàng** — bạn không phải phát minh lại cách nấu; đầu bếp (loop-engineering repo) đã thử, đã phục vụ khách thật và ghi rõ "món này cay (high cost), món này an toàn cho người mới (L1)". Việc của bạn là chọn món hợp khẩu vị.
-> **Vì sao quan trọng:** Các pattern này được "dogfooded" trên repo thật — tức là từng chi tiết (cadence, token cost, failure mode) là kinh nghiệm đã mua bằng tiền thật, không phải lý thuyết. Bạn tái sử dụng bài học, tránh 7 lần vấp giống người trước.
+> **Khái niệm:** Nói ngắn gọn, một "production pattern" là **mẫu vòng lặp đã có người dùng thật và chạy ổn ngoài thực tế** — có sẵn scheduler, skills, state, cách kiểm chứng và cách bàn giao cho con người. Thay vì tự vẽ loop từ đầu, bạn chỉ cần chọn mẫu hợp nhất rồi chạy `loop init` để dựng khung.
+> **Hình dung cho dễ:** Cứ như **gọi món ở quán quen** — bạn không cần tự nghĩ công thức; bếp (repo loop-engineering) đã nấu thử, đã bán cho khách thật, và ghi chú rõ "món này cay (tốn token), món này lành cho người mới (L1)". Việc của bạn chỉ là chọn món hợp với mình.
+> **Vì sao đáng quan tâm:** Mỗi chi tiết trong các pattern này (chạy bao lâu một lần, tốn bao nhiêu token, hay hỏng theo kiểu gì) đều là bài học trả bằng tiền thật, không phải lý thuyết suông. Bạn dùng lại kinh nghiệm đó để khỏi vấp đúng 7 cái hố mà người đi trước đã gặp.
 
-> Đây là **7 pattern loop** đã được chứng minh có thể chạy trong môi trường thật. Mỗi pattern trả lời: giải quyết vấn đề gì, cadence nào, skills/state nào, cách kiểm chứng, cách bàn giao cho human, và tool-specific notes.
+> Dưới đây là **7 mẫu loop dùng được thật ngoài production**. Mỗi mẫu trả lời ngắn gọn: giải quyết việc gì, chạy bao lâu một lần, cần skills/state nào, kiểm chứng ra sao, bàn giao cho con người thế nào, cùng vài lưu ý riêng theo từng tool.
 
 ## Bảng Tổng Hợp
 
@@ -22,7 +22,7 @@
 
 ## Pattern Picker — Chọn Loop Nào?
 
-> **Đọc sao cho dễ:** Bảng dưới đây là **máy trả lời tự động** - bạn chỉ cần trả lời một câu "thứ đang đau nhức ngay lúc này là gì?" rồi làm theo nhánh. Nếu đau 2 thứ cùng lúc, đọc tiếp `Overlap Rules` để biết loop nào được chạy chung.
+> **Đọc bảng này thế nào:** Bạn chỉ cần trả lời một câu "chỗ nào đang đau nhất lúc này?" rồi đi theo nhánh tương ứng. Nếu đau hai chỗ cùng lúc, đọc tiếp `Overlap Rules` để biết loop nào chạy chung được với loop nào.
 
 ```
 What hurts right now?
@@ -56,15 +56,15 @@ What hurts right now?
 
 ## First Loop Recommendation
 
-Nếu không chắc, bắt đầu với **Daily Triage ở L1**. Nó dạy kỷ luật state mà không có rủi ro auto-merge.
+Nếu bạn còn phân vân chưa biết bắt đầu từ đâu, cứ chọn **Daily Triage ở L1**. Loop này giúp bạn làm quen với nếp ghi state mà không lo nó tự merge linh tinh.
 
 ## Cách Dùng Một Pattern
 
-1. **Chọn pattern**: xem bảng trên hoặc decision tree phía trên.
-2. **Scaffold**: `npx @cobusgreyling/loop init . --pattern <name> --tool grok` (hoặc `--tool claude` / `--tool opencode` / `--tool codex`).
-3. **Copy skills** từ `templates/` nếu cần custom.
-4. **Setup scheduling** (`/loop`, `scheduler_create`, GitHub Action, Codex Automation).
-5. **Chạy tuần một ở L1 report-only** trước khi bật fixes.
-6. **Audit**: `npx @cobusgreyling/loop audit . --suggest`.
+1. **Chọn mẫu**: nhìn bảng hoặc cây quyết định ở trên.
+2. **Dựng khung**: `npx @cobusgreyling/loop init . --pattern <name> --tool grok` (hoặc `--tool claude` / `--tool opencode` / `--tool codex`).
+3. **Chép thêm skills** từ `templates/` nếu bạn muốn tùy biến thêm.
+4. **Gắn lịch chạy** (`/loop`, `scheduler_create`, GitHub Action, Codex Automation).
+5. **Tuần đầu cứ chạy ở L1 report-only** rồi hãy mở thêm quyền tự sửa.
+6. **Chấm điểm lại**: `npx @cobusgreyling/loop audit . --suggest`.
 
-> **Quy tắc vàng**: đừng bao giờ nhảy lên L3 cho một pattern mới trên production repo. Xem [04-operating](../04-operating/) về upgrade path.
+> **Nhớ kỹ**: đừng nhảy thẳng lên L3 cho mẫu mới trên repo production. Xem [04-operating](../04-operating/) để biết lộ trình nâng cấp từ từ.

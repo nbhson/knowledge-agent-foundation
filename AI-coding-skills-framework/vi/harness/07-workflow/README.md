@@ -44,13 +44,13 @@
 
 ### Câu Chuyện Mở Đầu
 
-Hãy tưởng tượng một **nhà máy ô tô**. Mỗi chiếc xe đi qua hàng trăm trạm: lắp khung → gắn động cơ → sơn → kiểm tra chất lượng → đóng gói. Nếu không có **quy trình chuẩn** — mỗi công nhân làm theo ý mình — kết quả sẽ là thảm họa: ốc vít rơi thiếu, sơn loang, kiểm tra bỏ sót.
+Hãy tưởng tượng một **xưởng làm bánh mì** vào giờ cao điểm buổi sáng. Bột phải nhào rồi mới ủ, ủ đủ giờ mới nướng, nướng xong mới đóng gói đem bán. Nếu mỗi người thợ tự làm theo ý mình — người nướng khi bột chưa ủ, người đóng gói khi bánh còn sống — thì cả mẻ bánh hôm đó coi như bỏ.
 
-**AI Agent cũng y hệt vậy khi thiếu Workflow.**
+**AI Agent không có Workflow cũng rối y như vậy.**
 
-Nhiều developer viết agent nhưng chỉ là **một chuỗi function calls liền nhau** — không có state management, không có error recovery, không có checkpoint. Khi task đơn giản, nó chạy được. Nhưng khi task phức tạp — **mỗi lần lỗi là phải chạy lại từ đầu**.
+Nhiều bạn viết agent chỉ là **một chuỗi function gọi nối tiếp nhau** — không lưu trạng thái đang làm tới đâu, không có cách chữa cháy khi lỗi, không có điểm lưu để chạy tiếp. Task nhỏ thì còn chạy được. Nhưng task càng lớn — **chỉ cần lỗi một bước là phải chạy lại từ đầu, vừa mất thời gian vừa tốn tiền**.
 
-**Giải pháp**: Structured Workflow — một hệ thống quản lý **toàn bộ lifecycle** của task, từ trigger đến feedback, với khả năng **recover, checkpoint, và observability** tại mọi bước.
+**Giải pháp** chính là Workflow có cấu trúc — một cách tổ chức để quản lý **cả vòng đời** của task, từ lúc bắt đầu (trigger) tới lúc xong và rút kinh nghiệm (feedback), mà bước nào cũng **lưu vết được, lỗi có đường lui, và nhìn thấy đang chạy tới đâu**.
 
 ### Tại Sao Workflow Quan Trọng?
 
@@ -70,11 +70,11 @@ Nhiều developer viết agent nhưng chỉ là **một chuỗi function calls l
 Workflow = Trigger → Plan → Execute → Validate → Deploy → Feedback
 ```
 
-Mỗi bước phải có **state management**, **error recovery**, và **observability**. Workflow không chỉ là "thứ tự steps" — nó là hệ thống quản lý **toàn bộ lifecycle** của một task.
+Mỗi bước trong chuỗi đó đều phải có **quản lý trạng thái (state management)**, **cách xử lý khi lỗi (error recovery)**, và **cách theo dõi (observability)**. Workflow không chỉ là "xếp thứ tự các bước" — mà là cách lo cho **cả vòng đời** của một task.
 
-**Analogies**: Workflow giống hệ thống giao thông — đèn tín hiệu (guardrails), tuyến đường (steps), trung tâm kiểm soát (orchestrator), và camera giám sát (logging).
+**Hình dung cho dễ**: Workflow giống hệ thống giao thông trong thành phố — có đèn tín hiệu (guardrails), có tuyến đường vẽ sẵn (steps), có trung tâm điều phối (orchestrator), và có camera theo dõi (logging).
 
-**Nếu bỏ qua**: Agent thực hiện tasks lộn xộn, không thể recover khi lỗi, không track được tiến độ, và debug trở thành nightmare.
+**Nếu bỏ qua Workflow**: agent làm việc lộn xộn, đang chạy mà lỗi là chịu chết không cứu được, không biết tiến độ tới đâu, và mỗi lần debug là một lần đau đầu.
 
 ## Tổng Quan
 
@@ -84,7 +84,7 @@ Mỗi bước phải có **state management**, **error recovery**, và **observa
 > - **Ẩn dụ/so sánh:** Giống bếp nhà hàng: đầu bếp (agent) có nguyên liệu tốt vẫn cần thực đơn và quy trình trực (workflow) để ra món đúng giờ, đúng chất lượng mỗi lần.
 > - **Vì sao quan trọng:** Không có workflow, agent làm việc theo cảm hứng — vừa chậm, vừa khó lặp lại kết quả, và hỏng giữa chừng là phải làm lại từ đầu.
 
-**Workflow** là quá trình **thiết kế và tổ chức các bước thực hiện** để hoàn thành một tác vụ coding phức tạp. Trong Harness Engineering, Workflow Engine là **"trung tâm điều phối"** — quản lý toàn bộ luồng từ trigger → plan → execute → validate → deploy, với observability, error recovery, và state management.
+**Workflow** là cách **sắp xếp các bước làm việc** để hoàn thành một task coding phức tạp. Trong Harness Engineering, Workflow Engine đóng vai trò **"người điều phối chính"** — lo toàn bộ hành trình từ trigger → plan → execute → validate → deploy, kèm theo theo dõi (observability), xử lý lỗi (error recovery), và quản lý trạng thái (state management).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1455,18 +1455,18 @@ class SagaOrchestrator:
 > - **Ẩn dụ/so sánh:** Giống camera hành trình + đồng hồ công tơ mét + bản đồ GPS của một chiếc taxi: biết xe đang đi đâu, chạy nhanh chậm thế nào, và đang bị kẹt ở đoạn nào.
 > - **Vì sao quan trọng:** Không quan sát được thì khi workflow chậm hay sai, bạn không thể tìm ra nguyên nhân và phải mò từng bước một để debug.
 
-> **Ghi chú sở hữu — hai tầng khác nhau, đừng gộp làm một.** Mục này là **luyên thông cho một
-> run**: một `trace_id` xuyên qua các bước của *một* lần thực thi, span có cấu trúc cha–con,
-> một logger, và một metrics collector. Đó là bộ công cụ distributed tracing kinh điển, và
-> nó đúng cho câu hỏi "vì sao *run này* chậm".
+> **Ghi chú để khỏi nhầm — hai tầng khác nhau, đừng gộp làm một.** Mục này chỉ lo **theo dõi cho một
+> lượt chạy (run)**: một `trace_id` đi xuyên suốt các bước của *lần chạy đó*, các span chia theo quan hệ cha–con,
+> một logger, và một bộ gom metrics. Đó là bộ đồ nghề tracing phân tán kinh điển, và
+> nó trả lời câu hỏi "vì sao *lần chạy này* bị chậm".
 >
-> **Hợp đồng event xuyên module** — luồng `TrajectoryEvent` append-only mà mọi module trong
-> harness ghi vào và mọi công cụ debug đọc từ, với join key, fork/replay, retention, và
-> redaction — thuộc sở hữu của
+> **Hợp đồng event dùng chung giữa các module** — luồng `TrajectoryEvent` dạng append-only mà mọi module trong
+> harness đều ghi vào và mọi công cụ debug đều đọc từ đó, với join key, fork/replay, retention, và
+> redaction — là phần của
 > [`13-trajectory-observability`](../13-trajectory-observability/README.md). Một `trace_id`
-> không phải là `sessionId`, và một span không phải là một `TrajectoryEvent`; hai thứ nối với
-> nhau qua `runId`. Nếu bạn đang dựng xương sống cho harness, hãy đọc `13`. Nếu bạn chỉ đang
-> lắp đặt một workflow, phần dưới đây là đủ.
+> không phải là `sessionId`, và một span không phải là một `TrajectoryEvent`; hai thứ gặp nhau
+> ở `runId`. Nếu bạn đang dựng khung xương cho harness thì đọc thêm `13`. Còn nếu bạn chỉ đang
+> ráp một workflow chạy được, phần dưới đây là đủ dùng.
 
 ### 5.1 Distributed Tracing
 
@@ -2239,7 +2239,7 @@ jobs:
 
 </details>
 
-**Lesson**: GitHub Actions uses DAG-based workflow execution with event triggers and dependency resolution.
+**Bài học rút ra**: GitHub Actions chạy workflow theo kiểu DAG — việc nào phụ thuộc việc nào được giải quyết rõ ràng, và mọi thứ bắt đầu từ sự kiện (event triggers).
 
 ### 9.2. Apache Airflow — Data Pipeline Orchestration
 
@@ -2264,7 +2264,7 @@ with DAG('data_pipeline', schedule_interval='@daily') as dag:
 
 </details>
 
-**Lesson**: Airflow proved that DAG-based workflows with clear task dependencies are the gold standard for data pipelines.
+**Bài học rút ra**: Airflow chứng minh rằng workflow kiểu DAG — task nào phụ thuộc task nào viết ra thật rõ — là chuẩn vàng cho data pipeline.
 
 ### 9.3. Temporal — Durable Workflow Execution
 
@@ -2283,15 +2283,15 @@ Compensation (reverse):
   1. ReleaseInventory()
 ```
 
-**Lesson**: Temporal's key insight — workflows should survive process crashes via durable state and automatic retry with compensation.
+**Bài học rút ra**: ý tưởng cốt lõi của Temporal là workflow phải sống sót qua cả crash — nhờ lưu trạng thái bền vững (durable state), tự động thử lại, và có bước bù (compensation) khi cần.
 
 ---
 
 ### 9.4. DeepSeek Harness — Cordis Micro-Kernel Plugin Architecture
 
-**Bối cảnh**: DeepSeek Harness sử dụng **Cordis** — một micro-kernel plugin engine được thiết kế theo triết lý **"Agent = Model + Harness"** và **"Everything is a plugin"**. Cordis cung cấp lightweight kernel (~2KB gzipped) quản lý toàn bộ lifecycle của agent qua plugin system, với dependency injection qua Context service registry.
+**Bối cảnh**: DeepSeek Harness dùng **Cordis** — một micro-kernel cắm plugin được xây theo triết lý **"Agent = Model + Harness"** và **"cái gì cũng là plugin"**. Cordis là một kernel rất nhẹ (core nén lại chỉ ~2KB), lo toàn bộ vòng đời của agent thông qua hệ plugin, còn việc tìm nhau giữa các plugin thì nhờ Context — một chỗ đăng ký service chung (service registry) để inject dependency.
 
-Nói dễ hiểu: kernel giống một hệ điều hành tí hon, các plugin giống các app cài vào đó — app chỉ cần khai báo "tôi cần dịch vụ gì" (consumes) và "tôi cung cấp dịch vụ gì" (provides), hệ điều hành lo phần kết nối giúp chúng chạy đúng thứ tự.
+Nói cho dễ hình dung: kernel giống một hệ điều hành tí hon, còn các plugin giống những app cài thêm vào đó — mỗi app chỉ cần khai báo "tôi cần xài dịch vụ gì" (consumes) và "tôi cung cấp dịch vụ gì" (provides), hệ điều hành sẽ tự lo phần nối dây để các app chạy đúng thứ tự.
 
 <details>
 <summary><b>TypeScript Architecture (Click to expand/collapse)</b></summary>
@@ -2954,30 +2954,30 @@ interface TrajectoryQuery {
 
 </details>
 
-**Key Architectural Innovations**:
+**Những điểm hay nhất trong kiến trúc này**:
 
-1. ✅ **Micro-Kernel Design** — Kernel chỉ ~2KB, mọi thứ là plugin. Load on demand, hot-reloadable.
+1. ✅ **Thiết kế micro-kernel** — kernel chỉ ~2KB, mọi chức năng đều là plugin. Cần gì load nấy, thay nóng (hot-reload) được.
 
-2. ✅ **Lifecycle Management** — 4 phases: `init` → `attach` → `ready` → `detach`. Deterministic startup/shutdown.
+2. ✅ **Quản lý vòng đời rõ ràng** — 4 chặng: `init` → `attach` → `ready` → `detach`. Khởi động và tắt máy theo trình tự cố định, đoán được.
 
-3. ✅ **Context Service Registry** — `ctx.provide()` / `ctx.inject()` / `ctx.get()` cho dependency injection. Plugins declare `provides`/`consumes` cho auto-wiring.
+3. ✅ **Chỗ đăng ký service qua Context** — muốn chia sẻ thì `ctx.provide()`, muốn xài thì `ctx.inject()` / `ctx.get()`. Plugin khai báo `provides`/`consumes` là tự nối dây (auto-wiring).
 
-4. ✅ **Event Bus** — Pub/sub cho inter-plugin communication. Loose coupling, extensible.
+4. ✅ **Event bus** — các plugin nói chuyện với nhau kiểu pub/sub. Nhờ vậy plugin này không cần biết plugin kia, muốn mở rộng cũng dễ.
 
-4. ✅ **4 Runtime Modes** (cung cấp bởi `runtime-mode` plugin):
-   - **Standard** — Full agent, all tools, process isolation
-   - **Code** — `@deepseek-ai/dsh` SDK, single-turn, batched, VM sandbox, 70-90% latency reduction
-   - **Benchmark** — Minimal (bash + editor only), container isolation, deterministic for SWE-bench
-   - **Creator** — Visual timeline, presets, time-travel debugging, fork/replay
+4. ✅ **4 chế độ chạy (runtime modes)** (do plugin `runtime-mode` cung cấp):
+   - **Standard** — agent đầy đủ, xài mọi tool, cách ly ở mức process
+   - **Code** — SDK `@deepseek-ai/dsh`, chạy script gói gọn trong một lượt, gom batch, sandbox kiểu VM, giảm độ trễ 70-90%
+   - **Benchmark** — gọn nhẹ (chỉ có bash + editor), cách ly bằng container, chạy ổn định để chấm SWE-bench
+   - **Creator** — có timeline trực quan, preset sẵn, debug kiểu du hành thời gian (time-travel), fork/replay
 
-5. ✅ **Trajectory Traceability** (bởi `trajectory-recorder` plugin):
-   - Append-only Session Event Stream
-   - `replayToStep()`, `forkSession()`, `resumeSession()`
-   - Event search by type, time, step
+5. ✅ **Ghi vết hành trình (trajectory)** (do plugin `trajectory-recorder` lo):
+   - Luồng event của session, chỉ ghi thêm (append-only)
+   - Có `replayToStep()`, `forkSession()`, `resumeSession()`
+   - Tìm event theo loại, theo thời gian, theo bước
 
-6. ✅ **Plugin Composition** — DeepSeek Harness = composition of plugins. Easy to swap, extend, test.
+6. ✅ **Ráp harness bằng cách ghép plugin** — DeepSeek Harness thực chất là nhiều plugin ghép lại. Muốn thay, muốn thêm, muốn test riêng từng mảnh đều dễ.
 
-**Cordis vs Traditional Frameworks**:
+**So sánh Cordis với framework truyền thống**:
 
 | Aspect | LangGraph / AutoGen | Cordis (DeepSeek Harness) |
 |--------|---------------------|---------------------------|
@@ -2990,7 +2990,7 @@ interface TrajectoryQuery {
 | **Runtime Modes** | Single | 4 distinct modes |
 | **Trajectory** | External logging | Built-in plugin |
 
-**File Reference**: Chi tiết implementation xem [`cordis-kernel-plugin.md`](cordis-kernel-plugin.md)
+**Đọc thêm code chi tiết**: xem [`cordis-kernel-plugin.md`](cordis-kernel-plugin.md)
 
 ---
 
@@ -3004,25 +3004,25 @@ interface TrajectoryQuery {
 
 ### 10.1 SOLID Cho Workflows
 
-**1. Single Responsibility**
-- Mỗi step = 1 việc rõ ràng
-- Không combine parse + validate + transform trong 1 step
+**1. Single Responsibility (mỗi bước một việc)**
+- Mỗi step chỉ làm đúng một việc, tên gọi là hiểu ngay
+- Đừng nhét cả parse + validate + transform vào chung một step
 
-**2. Open/Closed**
-- Mở cho thêm steps mới
-- Đóng cho sửa đổi existing workflow logic
+**2. Open/Closed (dễ thêm, ngại sửa)**
+- Muốn thêm step mới thì cứ thêm vào, workflow vẫn chạy
+- Hạn chế đụng chạm logic cũ đang chạy ổn
 
-**3. Liskov Substitution**
-- Có thể thay step A bằng step B (cùng interface)
-- Conditional branches có thể swap
+**3. Liskov Substitution (thay được cho nhau)**
+- Step A thay bằng step B vẫn chạy, miễn là cùng interface (đầu vào/đầu ra giống nhau)
+- Các nhánh rẽ (conditional branches) cũng đổi qua lại được
 
-**4. Interface Segregation**
-- Step input/output schemas tách biệt
-- Không dùng shared mutable state
+**4. Interface Segregation (ai cần gì cho nấy)**
+- Đầu vào/đầu ra của từng step tách bạch, theo schema riêng
+- Đừng xài chung một cục state mà bước nào cũng sửa được
 
-**5. Dependency Inversion**
-- Workflow engine phụ thuộc vào Step abstraction
-- Không hardcode step implementations
+**5. Dependency Inversion (phụ thuộc vào trừu tượng)**
+- Workflow engine chỉ biết tới cái khung chung (Step abstraction)
+- Đừng viết cứng (hardcode) cách làm cụ thể của từng step vào engine
 
 ### 10.2 6 Design Principles
 
@@ -3071,27 +3071,27 @@ Sáu nguyên tắc dưới đây là "kim chỉ nam" khi thiết kế bất kỳ
 
 ### 11.1 DO ✅
 
-- **Define clear input/output for each step**: Easier to test and debug
-- **Add structured logging at every step**: JSON logs with timestamps
-- **Implement retry with exponential backoff**: Handle transient failures
-- **Use circuit breakers for external services**: Prevent cascade failures
-- **Design for idempotency**: Safe to replay any step
-- **Add timeout for every step**: Prevent hanging workflows
-- **Use saga pattern for distributed transactions**: Compensate on failure
-- **Track metrics**: Latency, success rate, error rate per step
-- **Validate DAG structure**: Detect cycles before execution
-- **Add checkpointing**: Resume from last successful step
+- **Viết rõ đầu vào/đầu ra cho từng bước**: test và debug đỡ cực hẳn
+- **Ghi log có cấu trúc ở mọi bước**: log dạng JSON kèm thời gian để dễ lọc
+- **Thử lại với backoff tăng dần**: lỗi thoáng qua (transient failures) thì chờ rồi thử lại, đừng bỏ cuộc ngay
+- **Dùng circuit breaker cho service bên ngoài**: một chỗ sập thì ngắt ra, đừng để sập cả dây chuyền
+- **Thiết kế sao cho chạy lại an toàn (idempotency)**: chạy lại bước nào cũng không gây tác dụng phụ
+- **Đặt timeout cho mọi bước**: bước nào cũng phải có giới hạn thời gian, tránh treo
+- **Giao dịch phân tán thì dùng saga**: bước nào fail thì có bước bù (compensate) để cuộn ngược
+- **Theo dõi metrics**: độ trễ, tỷ lệ thành công, tỷ lệ lỗi — tính theo từng bước
+- **Kiểm tra cấu trúc DAG trước khi chạy**: phát hiện vòng lặp (cycle) từ sớm
+- **Có checkpoint**: lưu điểm đã xong để lỗi thì chạy tiếp từ đó, khỏi chạy lại từ đầu
 
 ### 11.2 DON'T ❌
 
-- **Đừng share mutable state between steps**: Use immutable data passing
-- **Đừng skip error handling**: Every step can fail
-- **Đừng use infinite loops**: Always set max iterations
-- **Đừng ignore timeout**: A hanging step = stuck workflow
-- **Đ hardcode step dependencies**: Use DAG configuration
-- **Đừng skip testing**: Unit test each step independently
-- **Đừng use blocking calls in parallel steps**: Use async/executor
-- **Đừng forget compensation logic**: Every forward action needs a rollback
+- **Đừng xài chung state sửa được (mutable) giữa các bước**: truyền dữ liệu kiểu bất biến (immutable) từ bước này sang bước kia
+- **Đừng bỏ qua xử lý lỗi**: bước nào cũng có thể fail, nên chừa đường lui
+- **Đừng để vòng lặp vô hạn**: lúc nào cũng đặt số lần lặp tối đa (max iterations)
+- **Đừng bơ timeout**: một bước treo là cả workflow đứng hình
+- **Đừng viết cứng quan hệ phụ thuộc giữa các bước**: khai báo bằng cấu hình DAG cho dễ đổi
+- **Đừng bỏ qua testing**: test riêng từng bước một cách độc lập
+- **Đừng gọi blocking trong các bước chạy song song**: dùng async/executor để không nghẽn nhau
+- **Đừng quên logic bù (compensation)**: việc nào tiến tới được thì cũng phải có đường lui (rollback)
 
 ---
 
@@ -3105,30 +3105,30 @@ Sáu nguyên tắc dưới đây là "kim chỉ nam" khi thiết kế bất kỳ
 
 ### 12.1 Xu Hướng 2026-2028
 
-**1. AI-Generated Workflows**
-- Agent tự generate workflow từ task description
-- Auto-optimize workflow structure based on execution history
-- Self-healing workflows
+**1. Workflow do AI tự sinh**
+- Agent đọc mô tả task rồi tự vẽ ra workflow
+- Tự tối ưu cấu trúc workflow dựa trên lịch sử chạy trước đó
+- Workflow tự chữa (self-healing) khi gặp lỗi quen thuộc
 
-**2. Serverless Workflow Engines**
-- Workflow-as-code (no infrastructure management)
-- Auto-scaling per step
-- Pay-per-execution pricing
+**2. Engine chạy kiểu serverless**
+- Viết workflow như viết code (workflow-as-code), khỏi lo hạ tầng
+- Mỗi bước tự co giãn (auto-scaling) theo tải
+- Trả tiền theo lượt chạy (pay-per-execution)
 
-**3. Cross-Platform Workflow Portability**
-- Standard workflow definition format (CNCF WASM?)
-- Portable across Temporal, Airflow, Step Functions
-- Universal workflow marketplace
+**3. Workflow mang đi đâu cũng chạy**
+- Có định dạng workflow chuẩn chung (kiểu CNCF WASM?)
+- Mang qua lại giữa Temporal, Airflow, Step Functions đều được
+- Có chợ (marketplace) chia sẻ workflow dùng chung
 
-**4. Real-time Adaptive Workflows**
-- Dynamic step adjustment based on runtime metrics
-- ML-based bottleneck prediction
-- Auto-parallelization
+**4. Workflow tự thích ứng theo thời gian thực**
+- Tự chỉnh bước đi dựa trên metrics lúc đang chạy
+- Dùng ML để đoán trước chỗ nghẽn (bottleneck)
+- Tự tách bước nặng ra chạy song song (auto-parallelization)
 
-**5. Workflow Observability 2.0**
-- AI-powered root cause analysis
-- Predictive alerting
-- Automated incident response
+**5. Quan sát workflow kiểu 2.0**
+- AI tự tìm nguyên nhân gốc (root cause) khi có lỗi
+- Cảnh báo trước khi sự cố xảy ra (predictive alerting)
+- Tự xử lý sự cố thường gặp (automated incident response)
 
 ---
 
@@ -3145,11 +3145,11 @@ Sáu nguyên tắc dưới đây là "kim chỉ nam" khi thiết kế bất kỳ
 
 ### 13.2 Checkpoint-Resume (Tiếp Tục Sau Khi Khởi Động Lại)
 
-Write-ahead log: `append({seq, stepId, inputHash, status, outputRef})` + snapshot nguyên tử mỗi N step. Khi khởi động: `load snapshot → replay log tail → skip completed (idempotent) → resume pending`. Snapshot lưu vào JSON/SQLite cục bộ; output >64KB đưa vào artifact store theo ref. Giữ `runId` ổn định qua các lần khởi động lại.
+Hãy hình dung mỗi step làm xong là mình "chốt sổ" một dòng: ghi log trước đã (`append({seq, stepId, inputHash, status, outputRef})` — gọi là write-ahead log), rồi cứ mỗi N step lại chụp một tấm snapshot nguyên tử. Khi khởi động lại, engine làm đúng 4 việc theo thứ tự: `load snapshot → replay log tail → skip completed (idempotent) → resume pending` — tức nạp snapshot, chạy lại phần đuôi log, step nào xong rồi thì bỏ qua (nhờ idempotent), step nào còn dở thì chạy tiếp. Snapshot cất ở JSON/SQLite ngay trên máy; output nào to hơn 64KB thì không nhét vào log mà gửi ra artifact store, trong log chỉ giữ ref. Và nhớ giữ `runId` cố định qua mọi lần khởi động lại, đừng đổi.
 
 ### 13.3 Idempotency + Backpressure + Deadline Theo Từng Step
 
-Idempotency store: `Map<idempotencyKey, resultRef>` có TTL; thao tác ghi (mutation) bắt buộc có key, thao tác đọc thì không. Backpressure: `Semaphore(maxParallel=4–8)` toàn cục, mỗi step giới hạn độ dài hàng đợi (ví dụ 100); `enqueue` ném `BackpressureError` khi đầy — bên gọi retry với jitter. Deadline: một `deadlineAt` duy nhất cho mỗi run; mỗi step nhận `remaining = deadlineAt - now()` (trừ buffer); lan truyền qua `AbortSignal.timeout(remaining)`. Không bao giờ âm thầm nới deadline.
+Về idempotency: có một kho `Map<idempotencyKey, resultRef>` kèm TTL — cứ thao tác ghi (mutation) là bắt buộc phải có key, còn thao tác đọc thì khỏi cần. Về backpressure (chống quá tải): đặt một `Semaphore(maxParallel=4–8)` chung cho toàn engine, mỗi step giới hạn độ dài hàng đợi (ví dụ 100); khi hàng đợi đầy, `enqueue` sẽ ném `BackpressureError` — bên gọi cứ retry kèm jitter là được. Về deadline: mỗi run chỉ có một `deadlineAt` duy nhất; step nào cũng nhận `remaining = deadlineAt - now()` (đã trừ buffer hao hụt), rồi lan truyền xuống qua `AbortSignal.timeout(remaining)`. Nguyên tắc sắt: không bao giờ âm thầm nới deadline.
 
 ### 13.4 Node Phê Duyệt / Tạm Dừng-Tiếp Tục Của Con Người
 
@@ -3200,14 +3200,14 @@ export class DurableEngine {
 
 </details>
 
-Resume: gọi lại `run()` với cùng `runId`; các key đã xong trúng `done()`/store nên được bỏ qua. Pause: bắt `PAUSED:*`, lưu trạng thái UI, phê duyệt rồi chạy lại.
+Muốn chạy tiếp (resume): gọi lại `run()` với đúng `runId` cũ — key nào đã xong (trúng `done()`/store) sẽ tự được bỏ qua. Muốn tạm dừng (pause): bắt lỗi `PAUSED:*`, lưu trạng thái lên UI, đợi phê duyệt xong rồi chạy lại.
 
 ### 13.5 Checklist
 
-- [ ] Checkpoint sau mỗi step (log + snapshot); kiểm thử khởi động lại đạt (kill -9 giữa run)?
-- [ ] Mọi step ghi dữ liệu đều dùng idempotency key; chạy kép không gây tác dụng phụ?
-- [ ] Đã đặt `maxParallel` + giới hạn hàng đợi; deadline lan truyền tới signal của mọi step?
-- [ ] Node phê duyệt lưu trạng thái `WAITING_APPROVAL`; các nhánh approve/reject/timeout đều tiếp tục đúng?
+- [ ] Đã checkpoint sau mỗi step (log + snapshot) chưa; đã thử kill -9 giữa run rồi chạy lại mà vẫn đạt chưa?
+- [ ] Step nào ghi dữ liệu cũng có idempotency key chưa; chạy trùng hai lần cũng không gây tác dụng phụ chứ?
+- [ ] Đã đặt `maxParallel` + giới hạn độ dài hàng đợi chưa; deadline đã lan truyền tới signal của mọi step chưa?
+- [ ] Node phê duyệt đã lưu trạng thái `WAITING_APPROVAL` chưa; các nhánh approve/reject/timeout đều chạy tiếp đúng chứ?
 
 ---
 
@@ -3241,6 +3241,10 @@ Resume: gọi lại `run()` với cùng `runId`; các key đã xong trúng `done
 
 ---
 
+> **Phụ lục Oct-2026:** muốn đặt "bảo vệ ở các cửa" cho agent thì đọc
+> [`hooks-standard.md`](./hooks-standard.md) nhé. Nôm na là mỗi mốc vòng đời
+> (`preToolUse`, `postToolUse`...) gắn một script kiểm tra: cho qua, hỏi người, hay cấm hẳn.
+
 *Tài liệu: VII. Workflow — HARNESS ENGINEERING EDITION*
-*Ngày cập nhật: 19/07/2026*
+*Ngày cập nhật: 16/10/2026*
 *Tác giả: AI Knowledge Repository*

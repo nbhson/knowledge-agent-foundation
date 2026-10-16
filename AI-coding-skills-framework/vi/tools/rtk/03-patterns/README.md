@@ -1,6 +1,6 @@
 # 🧩 03. Bốn Pattern Sử Dụng RTK
 
-> Đây là **4 pattern sử dụng RTK** phổ biến và hữu ích nhất khi làm việc với AI coding agents. Mỗi pattern trả lời: dùng khi nào, lệnh nào, mức giảm output, và lưu ý.
+> Đây là **4 pattern dùng RTK** phổ biến và đáng tiền nhất khi làm việc với AI coding agents. Mỗi pattern trả lời gọn: dùng khi nào, xài lệnh nào, giảm được bao nhiêu output, và cần lưu ý gì.
 
 ## Bảng Tổng Hợp
 
@@ -41,7 +41,7 @@ What hurts right now?
 
 ## First Pattern Recommendation
 
-Nếu mới bắt đầu, hãy bật **Git Speedup** trước — nó an toàn, dễ verify (`git status` → `rtk git status`), và áp dụng cho mọi phiên làm việc với git.
+Nếu mới bắt đầu, bạn cứ bật **Git Speedup** trước — vừa an toàn, vừa dễ kiểm chứng (`git status` → `rtk git status`), lại dùng được cho mọi phiên làm việc với git.
 
 ## Cách Dùng Một Pattern
 
@@ -51,7 +51,7 @@ Nếu mới bắt đầu, hãy bật **Git Speedup** trước — nó an toàn, 
 4. **Đo lường**: `rtk gain` để xem token đã tiết kiệm (xem [04-savings](../04-savings/)).
 5. **Tinh chỉnh**: thêm `exclude_commands` trong `config.toml` nếu lệnh nào bị rewrite không mong muốn.
 
-> **Quy tắc vàng**: RTK rewrite là transparent — nếu một lệnh quan trọng cần output đầy đủ, thêm nó vào `exclude_commands` thay vì tắt hẳn hook.
+> **Quy tắc vàng**: RTK rewrite chạy ngầm trong suốt — nếu lệnh nào quan trọng cần giữ nguyên output đầy đủ, bạn thêm nó vào `exclude_commands` thay vì tắt hẳn cả hook.
 
 ---
 

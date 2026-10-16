@@ -31,7 +31,7 @@
 
 ## 1. Giới Thiệu
 
-Trong kỷ nguyên RAG (2023-2025), chúng ta đã chứng minh: **chỉ cần đưa đúng context vào LLM, model nhỏ cũng thắng model lớn**. Nhưng RAG dựa trên vector search có một điểm mù chí mạng: nó chỉ tìm **"đoạn văn giống câu hỏi"** — không tìm được **"mối quan hệ giữa các thực thể"**.
+Thời RAG (2023-2025) đã chứng minh một điều: **chỉ cần đưa đúng context, model nhỏ cũng có thể vượt model lớn**. Nhưng RAG chạy bằng vector search có một điểm mù đáng chú ý: nó chỉ tìm được **"đoạn văn giống câu hỏi"** — chứ chưa thấy được **"mối quan hệ giữa các thực thể"**.
 
 **Ví dụ:**
 - Hỏi: *"Ai là người phê duyệt hợp đồng của dự án X, và người đó báo cáo cho ai?"*
@@ -42,11 +42,11 @@ Trong kỷ nguyên RAG (2023-2025), chúng ta đã chứng minh: **chỉ cần �
 
 Năm 2024, Microsoft Research công bố **GraphRAG**: dùng LLM trích xuất Knowledge Graph từ toàn bộ corpus, rồi community detection + hierarchical summarization. Kết quả: **tăng 30-40% comprehensiveness và diversity** so với vanilla RAG trên các câu hỏi tổng hợp (global sensemaking).
 
-Cùng lúc, Neo4j, NebulaGraph, và FalkorDB đưa graph databases vào production AI stacks. Kiến thức dạng đồ thị từ "nice-to-have" trở thành **substrate bắt buộc** cho agents cần reasoning đa bước.
+Cùng lúc, Neo4j, NebulaGraph và FalkorDB đưa graph database vào stack AI production. Tri thức dạng đồ thị từ "có thì tốt" thành **lớp nền bắt buộc** cho agent cần suy luận nhiều bước.
 
 ### Mục Đích
 
-Tài liệu này cung cấp cái nhìn toàn diện về Graph Engineering:
+Tài liệu này giúp bạn có cái nhìn toàn diện về Graph Engineering:
 
 - Định nghĩa, triết lý, và so sánh với Vector/RAG thuần
 - Phân tích 3 giai đoạn tiến hoá: Keyword → Vector → Graph
@@ -61,7 +61,7 @@ Tài liệu này cung cấp cái nhìn toàn diện về Graph Engineering:
 
 ### Định Nghĩa
 
-**Graph Engineering** là kỹ thuật xây dựng và vận hành **hệ thống tri thức dạng đồ thị** làm nền tảng cho AI Agents — bao gồm trích xuất thực thể/quan hệ, lưu trữ đồ thị, embeddings, truy vấn, reasoning, và tích hợp vào pipeline RAG/Workflow.
+**Graph Engineering** là cách xây dựng và vận hành **hệ tri thức dạng đồ thị** làm nền cho AI Agents — từ trích xuất thực thể/quan hệ, lưu trữ đồ thị, embeddings, truy vấn, suy luận, tới ghép vào pipeline RAG/Workflow.
 
 Nói đơn giản:
 - **Vector DB** trả lời: *"Đoạn nào giống câu hỏi nhất?"*
@@ -72,7 +72,7 @@ Nói đơn giản:
 
 > *"Mỗi khi LLM hallucinate vì thiếu liên kết, bạn không viết prompt dài hơn — bạn xây một cạnh (edge) mới trong đồ thị."*
 
-1. **Relationships over Chunks**: Tri thức thực sự nằm ở **quan hệ**, không phải đoạn văn cô lập. Chunking chia nhỏ văn bản; graph **nối lại** chúng.
+1. **Relationships over Chunks**: tri thức thật nằm ở **quan hệ**, không nằm ở đoạn văn lẻ. Chunking xé nhỏ văn bản; graph **nối chúng lại**.
 2. **Structure over Similarity**: Similarity tìm cái giống; structure tìm **cái liên quan qua trung gian** (multi-hop).
 3. **Explainability over Black-box**: Mỗi câu trả lời có thể truy về **path** trong đồ thị — audit được, citation được.
 
@@ -88,7 +88,7 @@ Nói đơn giản:
 | **Cập nhật** | Re-index | Re-embed | Thêm node/edge (incremental) |
 | **Ví dụ** | Tìm "BHYT" | Tìm "bảo hiểm y tế ≈ BHYT" | `BHYT —covers→ Bệnh tim —treated_at→ BV Chợ Rẫy` |
 
-> **Insight:** Graph không thay thế Vector — Graph **bao bọc và khuếch đại** Vector. Hệ thống tốt nhất là **Hybrid: Vector cho recall, Graph cho precision + reasoning**.
+> **Insight:** Graph không thay thế Vector — Graph **bọc ngoài và khuếch đại** Vector. Combo hiệu quả nhất là **Hybrid: Vector lo phần recall, Graph lo phần precision + reasoning**.
 
 ---
 
@@ -125,7 +125,7 @@ Nói đơn giản:
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-Mỗi giai đoạn **bổ sung**, không thay thế:
+Mỗi chặng **kế tiếp**, không thay thế:
 - Bạn vẫn cần **BM25** cho exact match (mã hợp đồng, số hiệu).
 - Bạn vẫn cần **Vector** cho semantic recall (paraphrase, synonym).
 - Bạn cần thêm **Graph** cho multi-hop, aggregation, và global sensemaking.
@@ -497,7 +497,7 @@ my-graph-project/
 
 ### 11.3. Lời Khuyên
 
-> **"Bắt đầu với 100 documents, 3 node types, 5 edge types. Đừng cố xây Wikipedia Graph ngày đầu."**
+> **Bắt đầu với 100 documents, 3 node types, 5 edge types. Đừng cố xây đồ thị cỡ Wikipedia ngay từ ngày đầu nhé.**
 
 ---
 

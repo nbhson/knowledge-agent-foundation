@@ -2901,24 +2901,24 @@ function uuid(): string {
 ### 12.1 SOLID for Tools
 
 **1. Single Responsibility**
-- Each tool = one clear job
-- Don't combine search + write in one tool
+- Each tool does one clear job, like one kitchen gadget per task
+- Don't mash search + write into a single tool
 
 **2. Open/Closed**
-- Open for adding new tools (register)
-- Closed for modifying existing tools
+- Stay open to new tools: just register them
+- Keep shipped tools steady instead of rewriting them
 
 **3. Liskov Substitution**
-- All tools implement the same interface
-- Any tool can be swapped for another
+- Every tool speaks the same shared interface
+- So one tool can step in for another without surprises
 
 **4. Interface Segregation**
-- Tool definitions separated from execution
-- Permission checker separated from executor
+- Keep tool definitions apart from running them
+- Keep permission checks apart from the executor
 
 **5. Dependency Inversion**
-- Tools depend on the ToolRegistry abstraction
-- Don't hardcode tool implementations
+- Tools lean on the shared ToolRegistry idea
+- Never hard-wire one tool's code into another
 ---
 
 ## 13. Best Practices
@@ -2933,27 +2933,31 @@ function uuid(): string {
 
 ### 13.1 DO ✅
 
-- **Validate parameters before execution**: Prevent errors
-- **Use exponential backoff for retries**: Don't hammer failing services
-- **Log all tool calls**: For debugging and optimization
-- **Set timeouts**: Prevent hanging calls
-- **Implement permission checks**: Security first
-- **Track cost per call**: Budget management
-- **Provide clear tool descriptions**: LLM needs to understand tools
-- **Support both rule-based and LLM-based intent**: Best of both worlds
-- **Cache tool lists**: Don't re-fetch on every call
-- **Use fallback tools**: If primary fails, try alternative
+Healthy habits for a tool system that stays fast and safe:
+
+- **Check parameters before running**: it stops silly errors early
+- **Retry with exponential backoff**: don't pound a failing service
+- **Write down every tool call**: logs make debugging and tuning possible
+- **Always set a timeout**: so no call hangs forever
+- **Check permissions first**: security comes before convenience
+- **Watch the cost per call**: small fees add up without a budget
+- **Describe each tool plainly**: the LLM can only pick what it understands
+- **Keep both rule-based and LLM-based intent**: quick rules plus smart fallback is the best mix
+- **Cache the tool list**: no need to re-fetch it on every call
+- **Keep a backup tool in mind**: when the first choice fails, try the next
 
 ### 13.2 DON'T ❌
 
-- **Don't skip parameter validation**: Invalid params = crashes
-- **Don't ignore rate limits**: API bans are real
-- **Don't hardcode tool paths**: Use registry
-- **Don't forget error handling**: Every tool call can fail
-- **Don't use vague tool descriptions**: LLM can't guess
-- **Don't allow unlimited retries**: Set max retries
-- **Don't execute dangerous tools without permission**: Always check auth
-- **Don't ignore deprecated tools**: Gracefully migrate users
+Easy-to-make mistakes that break tool systems — dodge them from day one:
+
+- **Don't skip parameter checks**: bad inputs mean crashes
+- **Don't blow past rate limits**: API bans hurt
+- **Don't hard-wire tool paths**: let the registry look them up
+- **Don't assume calls always work**: every tool call can fail, so handle it
+- **Don't write fuzzy tool blurbs**: the LLM can't guess what you meant
+- **Don't retry forever**: always cap your retries
+- **Don't run risky tools unchecked**: always confirm auth first
+- **Don't leave old tools rotting**: migrate users off deprecated tools gently
 
 ---
 
@@ -3272,7 +3276,11 @@ any code that spawns a subprocess.
 
 ### 17.3 MCP Production Rules
 
-1. Pin `protocolVersion`; cache `tools/list` 5–15 min; on `426`/unknown-tool invalidate immediately.
+> **Oct-2026:** the stateless spec `2026-07-28` is the latest.
+> Step-by-step move in [`2026-07-28-migration.md`](./2026-07-28-migration.md).
+> The old `initialize` handshake and `Mcp-Session-Id` are gone.
+
+1. Pin `protocolVersion` **per request** (`_meta` + `MCP-Protocol-Version` header, default `"2026-07-28"`, keep `"2025-06-18"` compat shim); cache `tools/list` per `ttlMs/cacheScope` (fallback 5–15 min); on `426`/unknown-tool/`UnsupportedProtocolVersionError` invalidate immediately.
 2. Auth: OAuth2 bearer with refresh + least-scope; rotate keys; never log tokens (redact `Bearer`).
 3. Caps: `timeout 30s`, `result ≤128KB`, `args ≤32KB`, schema-validate args pre-send.
 4. Streaming: forward `content` chunks as they arrive, enforce total cap + idle timeout (10s); abort on client cancel.
@@ -3282,7 +3290,7 @@ any code that spawns a subprocess.
 
 ```typescript
 const memo = new Map<string, { at: number; val: any }>();
-export async function callMcp(url: string, token: string, tool: string, args: object, v = "2025-06-18") {
+export async function callMcp(url: string, token: string, tool: string, args: object, v = "2026-07-28") { // compat: "2025-06-18"; see 2026-07-28-migration.md
   const key = `${tool}:${JSON.stringify(args)}`; const m = memo.get(key);
   if (m && Date.now() - m.at < 60_000) return { ...m.val, memoHit: true };
   const r = await fetch(`${url}/tools/call`, { method: "POST", signal: AbortSignal.timeout(30_000),
@@ -3360,5 +3368,5 @@ consent UX**, because a tool definition is where the approver learns what they a
 ---
 
 *Document: VI. Decide Tools / MCP Calls — HARNESS ENGINEERING EDITION*
-*Last updated: 19/07/2026*
+*Last updated: 16/10/2026 (stateless 2026-07-28: see 2026-07-28-migration.md)*
 *Author: AI Knowledge Repository*

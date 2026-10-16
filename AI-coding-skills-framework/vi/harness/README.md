@@ -1,13 +1,14 @@
 # Kiến Trúc Harness — Toàn Cảnh (01–15)
 
-> Mỗi folder nằm ở đâu trong một harness thật? File README này là bản đồ.
-> Lý thuyết đầy đủ ở `../HARNESS_ENGINEERING.md`; implementation ở `01/`–`15/`.
-> Modules `01–11` là các stage pipeline; `12–15` là modules cross-cutting bọc mọi stage.
+> Coi file này như tấm bản đồ xưởng: mỗi thư mục nằm ở đâu trong một harness thật, đi đường nào cho khỏi lạc.
+> Muốn đọc lý thuyết gốc thì mở `../HARNESS_ENGINEERING.md`; muốn xem code tay thì vào `01/`–`15/`.
+> Các modules `01–11` là từng chặng trên dây chuyền; `12–15` là lớp bao ngoài, chặng nào cũng chạm tới.
 
 ## 1. Harness Là Gì, Trong Một Sơ Đồ
 
-Harness là **mọi thứ xung quanh LLM** biến một lần gọi đơn lẻ
-`prompt → completion` thành một hệ thống đáng tin cậy
+Nếu gọi LLM một phát ăn ngay giống như hỏi đường người lạ — nhanh nhưng hên xui,
+thì harness là **cả bộ máy dựng quanh LLM** để biến một câu hỏi lẻ
+`prompt → completion` thành một kết quả có kiểm chứng, đi được tới nơi tới chốn:
 `request → verified outcome`.
 
 ```
@@ -38,15 +39,15 @@ Harness là **mọi thứ xung quanh LLM** biến một lần gọi đơn lẻ
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Inner loop (harness runtime sở hữu, ví dụ Claude Code / opencode):
+Nói nôm na có hai vòng quay lồng nhau. Vòng trong (mấy tool như Claude Code / opencode lo giùm bạn):
 `LLM → tool_call → observation → LLM → … → stop`.
-Outer loop (bạn sở hữu, loop engineer):
+Vòng ngoài (việc của bạn, người thiết kế loop):
 `plan → execute → validate → fix → persist → evaluate`.
 
 ## 2. Map 7 Components → 15 Modules
 
-Harness có 7 thành phần logic. Repo này chia thành 11 modules stage hands-on
-cộng 4 modules cross-cutting để mỗi phần học và test độc lập được.
+Về mặt logic, harness chỉ có 7 mảnh ghép. Repo này chẻ ra thành 11 modules theo chặng
+cộng thêm 4 modules bao ngoài, để mỗi phần học riêng, test riêng cho đỡ rối.
 
 | # | Thư mục module | Component harness | Trả lời câu hỏi |
 |---|----------------|-------------------|-----------------|
@@ -66,47 +67,46 @@ cộng 4 modules cross-cutting để mỗi phần học và test độc lập đ
 | 14 | `14-compaction-context/` | **Cross-cutting: context** | Run dài sống sót qua trần token thế nào? Policy 70%, pruning, contract memory, prompt compaction-safe. |
 | 15 | `15-approval-gates/` | **Cross-cutting: kiểm soát** | Ai duyệt hành động không đảo ngược? Risk tier, gate payload, timeout-deny, pause/resume, audit. |
 
-Guardrails + Permissions **không phải một stage** — chúng bọc mọi mũi tên
-trong sơ đồ trên (check input, approve tool, validate output).
+Nhớ một ý này là đủ: Guardrails + Permissions **không phải một chặng đứng riêng** — nó như lớp bảo vệ
+bọc quanh mọi mũi tên trong sơ đồ trên (soi đầu vào, duyệt lúc gọi tool, chấm lại đầu ra).
 
 ## 3. Lifecycle Của Một Request, End to End
 
-Ví dụ request coding *"Fix login bug"*:
+Lấy ví dụ gần gũi là request *"Fix login bug"* — khách báo không đăng nhập được, mình lần theo từng chặng xem harness làm gì:
 
-1. **Retrieve (01).** Embed query, hybrid-search vector DB + BM25,
-   rerank top-k. Output: chunks có score. Có fallback khi rỗng.
-2. **Build context (02).** Merge system instructions + task goal + chunks
-   retrieved + conversation summary + files hiện tại vào token budget
-   (ví dụ 100k). Cắt phần ưu tiên thấp trước. Đánh dấu untrusted content.
-3. **Plan (04) → Task graph (08).** Sinh DAG task:
-   `reproduce → locate → patch → test`. Mỗi task có id, input, budget,
-   timeout, cờ approval.
-4. **Build prompt (05).** Render prompt từng task từ template có version,
-   gắn few-shot examples, kèm output schema.
-5. **Decide tools (06).** Intent classifier chọn tools
-   (`read_file`, `run_tests`, …). Check permission: task này có được ghi
-   ngoài `src/` không? Op nguy hiểm → pause xin approval.
-6. **Execute workflow (07).** Chạy DAG. Nối tiếp chỗ phụ thuộc, song song
-   chỗ độc lập. Retry backoff, circuit-break khi fail liên tục, saga
-   compensation khi thành công một phần.
-7. **Inner tool loop.** LLM gọi tools, harness chạy trong sandbox, trả
-   observation. Memoize call giống nhau, cap size kết quả.
-8. **Validate (11).** Check syntax, chạy test, chấm rubric LLM-judge,
-   đo trajectory metrics (số step, tool precision, recovery). Fail → replan
-   hoặc escalate.
-9. **Persist (03).** Ghi lại cái đáng giữ: success pattern, fact mới,
-   summary file. Có version. Bỏ noise ephemeral.
-10. **Automate (10) / Scale out (09) — optional.** Schedule regression, hoặc
-    fan-out cho reviewer/tester agents dùng shared memory.
+1. **Retrieve (01).** Mang câu hỏi đi embed, lục cả kho vector lẫn BM25 kiểu lai,
+    rồi xếp hạng lại để lấy top-k. Kết quả là mấy đoạn chunks có điểm số. Trường hợp tìm không ra gì thì có đường dự phòng.
+2. **Build context (02).** Gom hết đồ nghề vào một giỏ token (ví dụ 100k): lời dặn hệ thống + mục tiêu task + chunks
+    mới tìm được + tóm tắt đoạn hội thoại trước + mấy file đang mở. Cái nào ít quan trọng thì bỏ trước. Nội dung lạ, chưa tin được thì dán nhãn riêng.
+3. **Plan (04) → Task graph (08).** Chẻ việc lớn thành sơ đồ DAG dễ kiểm từng bước:
+    `reproduce → locate → patch → test`. Mỗi task có id, đầu vào, ngân sách,
+    timeout, cờ báo có cần duyệt không.
+4. **Build prompt (05).** Với từng task, đổ prompt ra từ template đã chốt version,
+    kèm vài ví dụ mẫu, kèm luôn khung output phải theo.
+5. **Decide tools (06).** Bộ phân loại ý định chọn xem task này xài tool nào
+    (`read_file`, `run_tests`, …). Rồi soát quyền: task này có được ghi
+    ra ngoài `src/` không? Gặp thao tác nguy hiểm thì dừng lại xin người duyệt.
+6. **Execute workflow (07).** Cho DAG chạy. Việc nào dính nhau thì chạy nối tiếp, việc nào độc lập
+    thì chạy song song. Lỗi thì thử lại kiểu backoff, hỏng liên tục thì ngắt mạch, dở dang một nửa
+    thì có cơ chế đền bù kiểu saga.
+7. **Inner tool loop.** LLM gọi tools, harness cho chạy trong sandbox rồi trả
+    kết quả quan sát về. Cuộc gọi nào giống nhau thì lấy từ cache, kết quả trả về quá to thì cắt bớt.
+8. **Validate (11).** Soi lại: cú pháp ổn không, test có xanh không, chấm theo rubric bằng LLM-judge,
+    đo thêm chỉ số đường chạy (bao nhiêu bước, gọi tool chuẩn không, tự phục hồi tốt không). Rớt thì quay lại lập kế hoạch
+    hoặc đẩy lên người xử lý.
+9. **Persist (03).** Cái gì đáng nhớ thì cất vào kho: mẹo làm đúng, fact mới biết,
+    tóm tắt file. Có đánh version. Mấy thứ linh tinh, dùng một lần thì bỏ.
+10. **Automate (10) / Scale out (09) — optional.** Muốn thì hẹn lịch chạy regression định kỳ, hoặc
+     tách team reviewer/tester cùng xài chung trí nhớ.
 
-Mỗi bước phát ra **trajectory events** (xem §4), nên một run replay, fork,
-audit lại được (`03-update-memory-store/trajectory-fork-replay.md`).
+Vì mỗi chặng đều nhả ra **trajectory events** (xem §4), nên một lần chạy đều tua lại, rẽ nhánh thử,
+hay lôi ra kiểm toán được (`03-update-memory-store/trajectory-fork-replay.md`).
 
 ### 3.1. RAG Pipeline Nằm Ở Đâu
 
-RAG pipeline kinh điển (retrieve → re-rank → build context → LLM) chính là
-**phần đầu của lifecycle** — nó kết thúc ở lần gọi LLM đầu tiên, harness
-tiếp tục từ đó:
+Pipeline RAG quen thuộc (tìm → xếp hạng lại → dựng context → gọi LLM) thực ra chỉ là
+**mấy bước mở màn của lifecycle** — nó dừng ngay ở lần gọi LLM đầu tiên, còn harness
+thì chạy tiếp từ đó về sau:
 
 ```mermaid
 flowchart TD
@@ -154,16 +154,16 @@ flowchart TD
 | ③ Build context (concat + system + compress) | `02-build-context` (+ `05-prompt-builder` render) | Merge system/goal/chunks/history/immediate vào token budget, đánh dấu untrusted content |
 | 🧠 LLM | Inner tool loop (`06` → `07` → `08`) | RAG kết thúc ở đây; vòng harness (plan → execute → validate → persist) tiếp quản |
 
-Điểm mấu chốt: RAG **không chạy một lần**. Nó chạy lại mỗi task / mỗi vòng
-inner-loop khi query đổi (replan ở `04` → retrieve lại ở `01`). Chỉ có RAG
-thì được chatbot trả lời tốt một lần; muốn agent làm end-to-end thì cần phần
-còn lại của lifecycle.
+Chỗ này dễ hiểu nhầm nên nhấn mạnh: RAG **không phải làm một lần cho xong**. Cứ mỗi task mới, mỗi vòng
+lặp trong mà câu hỏi đổi (ví dụ `04` lập lại kế hoạch → `01` đi tìm lại) là RAG chạy lại.
+Chỉ có RAG không thì được con chatbot trả lời một câu cho hay; còn muốn agent làm trọn gói từ đầu tới cuối
+thì phải có nốt phần còn lại của lifecycle.
 
 ## 4. Ba Contract Dùng Chung
 
-Nếu 11 modules không share gì khác, hãy share 3 shapes này:
+Nếu các modules chẳng thống nhất được gì khác, thì ít nhất hãy thống nhất 3 hình dạng này:
 
-**A. Trajectory event** — source of truth duy nhất để debug:
+**A. Trajectory event** — cuốn sổ cái duy nhất để lần ra lỗi:
 
 ```typescript
 interface TrajectoryEvent {
@@ -178,7 +178,7 @@ interface TrajectoryEvent {
 }
 ```
 
-**B. Context object** — 02 build, 05 render:
+**B. Context object** — bên 02 dựng lên, bên 05 mang đi nấu thành prompt:
 
 ```typescript
 interface BuiltContext {
@@ -191,7 +191,7 @@ interface BuiltContext {
 }
 ```
 
-**C. Task node** — 04 tạo, 07 chạy, 08 track:
+**C. Task node** — bên 04 đẻ ra, bên 07 cho chạy, bên 08 ngồi theo dõi:
 
 ```typescript
 interface TaskNode {
@@ -207,13 +207,13 @@ interface TaskNode {
 
 ## 5. Đọc Thư Mục Này Thế Nào
 
-- **Mới học harness?** Đọc theo thứ tự: `08` → `07` → `02` → `06` →
-  `01` → `03` → `04` → `05` → `11` → `10` → `09`, rồi cross-cutting:
+- **Mới làm quen harness, chưa biết bắt đầu đâu?** Cứ đi theo lối này cho nhẹ đầu: `08` → `07` → `02` → `06` →
+  `01` → `03` → `04` → `05` → `11` → `10` → `09`, rồi tới nhóm bao ngoài:
   `12` → `13` → `14` → `15`.
-- **Build harness minimal?** `02 + 05 + 06 + 07 + 11` là đủ.
-  Thêm `01/03` khi cần memory, `04/08` khi task phức tạp, `09/10` cuối cùng.
-- **Debug run dở?** Bắt đầu từ trajectory (`03/trajectory-fork-replay.md`),
-  rồi check `02` (sai context?), `06` (sai tool?), `11` (sai rubric?).
+- **Muốn ráp một harness gọn nhẹ xài được ngay?** Ghép `02 + 05 + 06 + 07 + 11` là đủ chạy.
+  Khi nào cần nhớ lâu thì thêm `01/03`, việc rắc rối hơn thì thêm `04/08`, `09/10` để dành cuối cùng.
+- **Kẹt ở một lần chạy dở dang, không biết mò từ đâu?** Mở cuốn băng trajectory trước (`03/trajectory-fork-replay.md`),
+  rồi lần tiếp: coi chừng `02` nấu context sai không, `06` chọn tool trật không, `11` chấm điểm lệch không.
 
 ## 6. Docs Đi Kèm
 
@@ -227,7 +227,7 @@ interface TaskNode {
 
 ## 7. Gap Đã Biết (Welcome Contributions)
 
-Các gap cross-cutting trước đây giờ đã có nhà: sandbox → `12`, trajectory → `13`,
-compaction → `14`, approval → `15`. Còn lại chưa module nào sở hữu: pipeline
-scrub PII/secret, tenant isolation, SLO cost-per-task. Gap từng module nằm trong
-mục bổ sung của mỗi README.
+Mấy lỗ hổng bao ngoài hồi trước giờ đã có chỗ ở mới: sandbox dọn qua `12`, trajectory qua `13`,
+compaction qua `14`, approval qua `15`. Còn mấy món chưa ai nhận: lọc PII/secret trong pipeline,
+cách ly tenant cho sạch, trần chi phí tính theo task (SLO cost-per-task). Còn gap lẻ của từng module
+thì nằm trong mục bổ sung ở README của module đó.

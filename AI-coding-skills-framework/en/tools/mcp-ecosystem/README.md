@@ -14,22 +14,22 @@
 
 ### The Opening Story
 
-`harness/06-decide-tools-mcp` teaches you **which tool to use** — but the next question is *"how do I connect them into the harness?"*
+`harness/06-decide-tools-mcp` teaches you **which tool to pick** — but the next question is *"how do I plug it into my harness?"*
 
-Before MCP, every AI app had to write its own integration for each tool: one adapter for GitHub, one for the database, one for the file system... Repeated countless times, each one different.
+Before MCP, every AI app had to build its own link for each tool: one connector for GitHub, one for the database, one for files... The same work was repeated again and again, each time a little different.
 
 > *"MCP is the USB-C of AI tools — one standard, every device."*
 
-**MCP (Model Context Protocol)** — the open protocol released by Anthropic — standardizes how AI apps connect to external tools and data. Instead of writing N integrations, you write **one server**, and **every MCP-compatible client** (Cline, Claude, VS Code...) can use it.
+**MCP (Model Context Protocol)** — the open standard from Anthropic — sets one common way for AI apps to reach outside tools and data. Instead of writing many one-off links, you write **one server**, and **every MCP-friendly client** (Cline, Claude, VS Code...) can use it.
 
 ### Why MCP Matters?
 
 | # | Reason | Explanation |
 |---|--------|-------------|
-| 1 | **Standardization** | One protocol (JSON-RPC) for every tool/dataset — no more scattered manual integrations |
-| 2 | **Seamless scaling** | Adding a tool = adding an MCP server — the harness/06 registry easily registers new tools |
-| 3 | **Already in the repo** | `MCP_SETUP.md` has the GitHub MCP server pre-configured — ready to use |
-| 4 | **Harness/06 is the "brain"** | `harness/06` decides *which tool to use* — MCP is the *connection infrastructure* that executes that decision |
+| 1 | **Standardization** | One shared protocol (JSON-RPC) for all tools and data — no more scattered hand-made links |
+| 2 | **Seamless scaling** | A new tool is just a new MCP server — the harness/06 list can add it easily |
+| 3 | **Already in the repo** | `MCP_SETUP.md` already sets up the GitHub MCP server — ready to try |
+| 4 | **Harness/06 is the "brain"** | `harness/06` picks *which tool to use* — MCP is the *wiring* that runs that choice |
 
 ### Relationship to the Harness
 
@@ -58,18 +58,18 @@ Harness Tool Pipeline (harness/06):
 
 ### What Is MCP?
 
-**Model Context Protocol** — an open protocol that lets AI applications connect to external tools and data sources through a common standard:
+**Model Context Protocol** — an open standard that lets AI apps reach outside tools and data in the same way:
 
 | Concept | Role |
 |---------|------|
-| **MCP Server** | Provides tools + resources (e.g., the GitHub MCP server) |
-| **MCP Client** | The consuming AI application (Cline, Claude Desktop, VS Code...) |
-| **Tools** | Actions the server performs — the agent calls them like functions |
-| **Resources** | Data the server exposes — context for the agent |
+| **MCP Server** | Offers tools + resources (for example, the GitHub MCP server) |
+| **MCP Client** | The AI app that uses them (Cline, Claude Desktop, VS Code...) |
+| **Tools** | Actions the server can run — the agent calls them like functions |
+| **Resources** | Data the server shares — background info for the agent |
 
 ### GitHub MCP Server (from MCP_SETUP.md)
 
-This repo already has the GitHub MCP server configured in `MCP_SETUP.md`:
+This repo already sets up the GitHub MCP server in `MCP_SETUP.md`:
 
 ```json
 {
@@ -84,7 +84,7 @@ This repo already has the GitHub MCP server configured in `MCP_SETUP.md`:
 }
 ```
 
-**Capabilities**: manage repositories, issues & PRs, GitHub Actions, code security, projects, discussions, gists, notifications...
+**Capabilities**: manage repos, issues and PRs, GitHub Actions, code security, projects, discussions, gists, notifications...
 
 ```text
 Examples:

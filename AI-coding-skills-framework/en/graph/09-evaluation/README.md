@@ -27,9 +27,9 @@ The boss asks 3 questions:
 2. *"Who approved Phoenix?"* → Answer: "Alice" ✅ (correct, but confidence is 0.6 — low!)
 3. *"How many people are on the AI team?"* → Answer: "15 people" ❌ (the doc says 10 — the LLM hallucinated)
 
-Without an evaluation framework, you **don't know** what % your GraphRAG is correct, what % is hallucination, and **why** it's wrong (bad extraction? bad retrieval? bad generation?).
+Without a good way to measure, you **don't know** how often your GraphRAG is right, how often it makes things up, and **why** it goes wrong (bad extraction? bad lookup? bad writing?).
 
-**Evaluation is how you turn a "cool demo" into "production you can trust."**
+**Evaluation is how you turn a fun demo into something you can trust in production.**
 
 ### Why Is Evaluation Important?
 

@@ -94,7 +94,7 @@ The model has no long-term memory across separate turns or sessions. Every missi
 
 **What to do**
 
-1. Write it **once** into a `SKILL.md` plus scripts or references. A skill is durable memory of *intent*: project conventions, "we don't do it this way because of incident X", build/test/lint commands, review criteria, domain knowledge.
+1. Write it **once** into a `SKILL.md` plus `scripts/`/`references/`/`assets` (spec: `harness/05-prompt-builder/agent-skills-spec.md`, https://agentskills.io/specification). A skill is durable memory of *intent*: project conventions, "we don't do it this way because of incident X", build/test/lint commands, review criteria, domain knowledge.
 2. Cover the boring operational facts first — the actual build command, the actual test command, the actual lint command. These are the ones that get guessed wrongly and they are written in `AGENTS.md` or in the skill so every run reads them.
 3. Record the **negative knowledge**: the approaches that failed and why. This is the part nobody writes and the part that saves the most rework.
 4. Write skills so they **auto-trigger**: skill descriptions should be boring and specific, because a vague description does not get selected when it is needed.

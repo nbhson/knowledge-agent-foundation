@@ -237,7 +237,7 @@ print(ontology.validate_edge("MANAGES", "Project", "Person"))  # (False, ...)
 >
 > **Analogies:** Giống bạn đọc hợp đồng và bôi đen: tên người, tên dự án, tên tổ chức, tên tài liệu.
 >
-> **4 cách trích, từ "khô" đến "thông minh":**
+> **4 cách trích xuất, từ đơn giản tới thông minh dần:**
 > - **Rule-based (regex)**: luật cố định như "C-2024" là mã hợp đồng — chính xác cao nhưng chỉ xử lý pattern đã biết.
 > - **NER (spaCy/BERT)**: model học sẵn nhận diện Person/Location/Org — nhanh, chuẩn cho thể loại thông dụng.
 > - **LLM extract đơn vòng**: gọi LLM 1 lần lấy JSON entities — linh hoạt nhưng dễ **bỏ sót** khi văn bản dài (LLM "quên" phần sau).
@@ -247,7 +247,7 @@ print(ontology.validate_edge("MANAGES", "Project", "Person"))  # (False, ...)
 
 ```
 ┌──────────────────┬──────────┬──────────┬──────────────────────────────┐
-│ Phương pháp      │ Precision│ Recall   │ Best For                     │
+│ Phương pháp      │ Precision│ Recall   │ Phù hợp nhất khi             │
 ├──────────────────┼──────────┼──────────┼──────────────────────────────┤
 │ Rule-based (regex)│ ⭐⭐⭐⭐⭐ │ ⭐⭐     │ Pattern cố định (mã HĐ, ngày)│
 │ NER (spaCy, BERT)│ ⭐⭐⭐⭐  │ ⭐⭐⭐   │ Person, Org, Location        │

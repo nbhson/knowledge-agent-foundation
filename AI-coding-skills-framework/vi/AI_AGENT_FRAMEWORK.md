@@ -1,6 +1,6 @@
 # 🧠 Memory & Context trong AI — Hướng Dẫn Học Tập
 
-> **Framework này hướng dẫn cách XÂY DỰNG AI AGENT** — từ thiết kế bộ nhớ, xử lý context, lập kế hoạch, phối hợp đa agent, đến tự động hóa và đánh giá. Đây KHÔNG phải hướng dẫn cách sử dụng AI thông thường.
+> **Framework này giúp bạn TỰ TAY XÂY AI AGENT** — từ thiết kế bộ nhớ, xử lý context, lập kế hoạch, phối hợp nhiều agent, cho tới tự động hoá và đánh giá. Đây không phải kiểu hướng dẫn dùng AI thông thường đâu nhé.
 
 ---
 
@@ -34,20 +34,25 @@
 # Cài Ollama (chạy LLM & Embedding local)
 curl -fsSL https://ollama.com/install.sh | sh
 
-# Tải model
-ollama pull gemma3:12b        # LLM chính
+# Tải model (ví dụ Jul-2026 — xem ghi chú Oct-2026 bên dưới)
+ollama pull gemma3:12b        # LLM chính (ví dụ)
 ollama pull nomic-embed-text  # Embedding model
 ```
+
+> **Ghi chú Oct-2026.** Hai dòng `ollama pull` trên chỉ là ví dụ hồi Jul-2026 thôi,
+> bạn đổi model khác vẫn chạy đúng pattern. Một số lựa chọn mới:
+> `qwen3.6`, `deepseek-v4-flash/pro (context tới 1M)`, `gemma4 26B-A4B`, `gpt-oss:20b/120b (nhẹ nhờ MXFP4)`,
+> `muse-glimmer 30b`, `minimax-m3`, `glm-5.2`, `granite4.2`. Nhớ dùng Ollama bản mới (>=0.6) nhé.
 
 </details>
 
 ### Bước 2: Học theo lộ trình
-Bắt đầu từ **Phase 1** (Core Skills) và tiến dần đến **Phase 6** (Evaluation). Mỗi module có README.md chi tiết với code examples.
+Bắt đầu từ **Phase 1** (Core Skills) rồi học dần lên **Phase 6** (Evaluation) nhé. Mỗi module đều có README riêng kèm code mẫu để bạn vừa đọc vừa làm theo.
 
 ### Bước 3: Thực hành
-- Clone repo và chạy thử code examples trong từng module
-- Thay đổi parameters để quan sát kết quả
-- Kết hợp các modules để build pipeline hoàn chỉnh
+- Clone repo về rồi chạy thử code mẫu trong từng module nhé
+- Thử chỉnh parameters xem kết quả thay đổi ra sao
+- Cuối cùng ghép các module lại với nhau thành một pipeline hoàn chỉnh
 
 ## ⚡ Quick Reference
 
@@ -319,11 +324,11 @@ AI/
 | 11.6 | [Reporting & Dashboards](harness/11-evaluation/README.md#6-reporting--dashboards) | Markdown/JSON reports |
 
 ### Mặt Phẳng Kiểm Soát (Harness Modules 12–15)
-> Làm sao chạy, quan sát, kiểm soát và uỷ quyền cho công việc agent không tin cậy?
+> Làm sao chạy, quan sát, kiểm soát và xin phép người dùng khi giao việc cho agent?
 
-Module `12`–`15` **không phải giai đoạn pipeline**. Chúng là nền tảng xuyên module mà mọi
-module ở trên đều phụ thuộc vào. Mỗi module là chuẩn cho câu hỏi của riêng nó; các module khác
-chỉ trỏ tới chứ không lặp lại.
+Modules `12`–`15` **không phải bước trong pipeline**. Chúng là lớp nền mà mọi
+module ở trên đều dựa vào. Mỗi module chuẩn hoá đúng một câu hỏi của nó; các module khác
+chỉ trỏ tới chứ không làm lại.
 
 | # | Chủ đề | Mô tả |
 |---|-------|-------|
@@ -332,8 +337,8 @@ chỉ trỏ tới chứ không lặp lại.
 | 14 | [Compaction & Context](harness/14-compaction-context/README.md) | Trigger nén, pin set, pruning, khối resume |
 | 15 | [Approval Gates](harness/15-approval-gates/README.md) | Risk tier, payload cổng, timeout-deny, phán quyết con người, audit trail |
 
-> Nhãn Roman `Part XII`/`XIII` ở phần dưới thuộc namespace phần của framework (Loop, Graph).
-> Chúng không liên quan gì tới đánh số module harness.
+> Nhãn Roman `Part XII`/`XIII` ở dưới thuộc cách chia phần của framework (Loop, Graph).
+> Hai nhãn này không liên quan tới số thứ tự module harness.
 
 ### Part XII: Loop Engineering
 > Làm sao thiết kế vòng lặp tự duy trì cho AI agents?
@@ -367,9 +372,9 @@ chỉ trỏ tới chứ không lặp lại.
 
 ## 🧠 Hiểu Framework Này
 
-> **Framework này là "bộ não orchestration" — còn AI model là "bộ não suy luận".**
+> **Framework này giống như "bộ máy điều phối" — còn AI model chỉ lo phần "suy nghĩ".**
 
-Framework dạy bạn **cách ghép các mảnh lại** — model chỉ là 1 mảnh trong puzzle. Bạn có thể dùng **Ollama chạy local miễn phí** hoặc **API trả phí** tùy budget.
+Framework giúp bạn hiểu **cách ráp các mảnh lại với nhau** — model chỉ là một mảnh trong đó thôi. Bạn có thể chạy **Ollama miễn phí ngay trên máy mình** hoặc **gọi API trả phí**, tùy ngân sách của bạn.
 
 ### Flow minh họa: RAG Chatbot cần gì?
 
@@ -432,16 +437,16 @@ Tài liệu của bạn (PDF, docs, DB)
 
 ### Tóm lại
 
-- **~60% framework** = code thuần, không cần model (search, workflow, orchestration)
-- **~40% framework** = cần model (embedding + generate)
+- **~60% framework** là code thuần, không cần model (search, workflow, orchestration)
+- **~40% framework** mới cần tới model (embedding + sinh câu trả lời)
 
-Framework dạy bạn **cách ghép các mảnh lại** — model chỉ là 1 mảnh trong puzzle. Bạn có thể dùng **Ollama chạy local miễn phí** hoặc **API trả phí** tùy budget.
+Nói ngắn gọn: framework giúp bạn **biết cách ráp các mảnh lại với nhau** — model chỉ là một mảnh trong đó. Cứ chạy **Ollama miễn phí trên máy** cho tiết kiệm, hoặc **gọi API trả phí** khi cần mạnh hơn, tùy túi tiền của bạn.
 
 ---
 
 ## 🚀 Sau Khi Học Xong — Dự Án Thực Tế
 
-Với **11 modules** b覆盖 toàn diện từ Retrieval, Context, Memory, Planning, Prompting, Tooling, Workflow, Task Management, Multi-Agent, Automation đến Evaluation — bạn có thể xây dựng **hàng chục dự án thực tế**. Dưới đây là **20 dự án** được phân theo cấp độ và lĩnh vực.
+Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Planning, Prompting, Tooling, Workflow, Task Management, Multi-Agent, Automation tới Evaluation — bạn có thể làm được **rất nhiều dự án thực tế**. Dưới đây là **20 dự án** chia theo cấp độ và lĩnh vực để bạn tham khảo dần.
 
 ---
 
@@ -508,7 +513,7 @@ Với **11 modules** b覆盖 toàn diện từ Retrieval, Context, Memory, Plann
 
 ### 🟢 Cấp Độ Daily-Use — Hữu Ích Mỗi Ngày (Module 01-10)
 
-> **Đây là các dự án nhỏ, có thể build trong 1-3 ngày, nhưng dùng MỖI NGÀY tại công việc.**
+> **Đây là các dự án nhỏ, làm trong 1-3 ngày nhưng xài MỖI NGÀY ở công việc thật.**
 
 #### 6. 📋 Auto Daily Work Log
 
@@ -554,7 +559,7 @@ Với **11 modules** b覆盖 toàn diện từ Retrieval, Context, Memory, Plann
 - **Mô tả**: Tự động generate câu trả lời standup (What did you do? What will you do? Blockers?) từ dữ liệu real
 - **Tech Stack**: LLM + Git + Jira API + Calendar
 - **Module áp dụng**:
-  - Module 01 — Retrieve昨天 activities from multiple sources
+  - Module 01 — Retrieve hoạt động hôm qua từ nhiều nguồn
   - Module 05 — Prompt Builder (standup template), Chain-of-Thought (summarize)
   - Module 10 — Scheduled Tasks (cron mỗi sáng 9:00)
 - **Flow**:
@@ -576,11 +581,11 @@ Với **11 modules** b覆盖 toàn diện từ Retrieval, Context, Memory, Plann
 
 #### 8. 📧 AI Email/Message Drafter
 
-- **Mô tả**: Tạo email drafts từ bullet points — professional, appropriate tone,多语言
+- **Mô tả**: Tạo email nháp từ gạch đầu dòng — giọng chuyên nghiệp, đúng mực, đa ngôn ngữ
 - **Tech Stack**: LLM + Gmail API / Slack API
 - **Module áp dụng**:
   - Module 05 — Prompt Builder (email templates, tone control), Few-shot Examples
-  - Module 02 — Context Window (保持 email thread context)
+  - Module 02 — Context Window (giữ ngữ cảnh cả chuỗi email)
 - **Flow**:
   ```
   User: "draft email to boss: project delayed 2 weeks, need more resources, will update timeline"
@@ -792,7 +797,7 @@ Với **11 modules** b覆盖 toàn diện từ Retrieval, Context, Memory, Plann
 
 #### 19. 🤖 AI Coding Agent (Tự Xây Dựng)
 
-- **Mô tả**: Tự xây dựng agent类似 Cline/Cursor — đọc code, phân task, viết code, review, test, commit
+- **Mô tả**: Tự xây agent kiểu Cline/Cursor — đọc code, chia task, viết code, review, test, commit
 - **Tech Stack**: LLM + MCP Servers + Git + File System + Terminal
 - **⏱️ Thời gian build**: 4-6 tuần (MVP đọc + viết code), 2-3 tháng (full pipeline review + test + commit)
 - **Module áp dụng**:
@@ -930,7 +935,7 @@ Với **11 modules** b覆盖 toàn diện từ Retrieval, Context, Memory, Plann
   - Module 07 — Workflow (plan → generate → validate → apply → verify)
   - Module 10 — CI/CD for infrastructure, Monitoring
 - **Tính năng**: "Deploy a scalable web app" → Generate Terraform + Docker + K8s + CI/CD configs
-- **Kết quả**: Infrastructure provisioning tự động,遵循 best practices
+- **Kết quả**: Dựng hạ tầng tự động, đúng best practices
 
 ---
 
@@ -963,7 +968,7 @@ Với **11 modules** b覆盖 toàn diện từ Retrieval, Context, Memory, Plann
 
 ### 🗺️ Ma Trận Module → Dự Án
 
-> Mỗi module phục vụ bao nhiêu dự án — cho thấy giá trị của từng phần kiến thức.
+> Mỗi module giúp được bao nhiêu dự án — nhìn vào là bạn thấy ngay phần kiến thức nào đáng học nhất.
 
 | Module | Tên Module | Số dự án sử dụng | Dự án tiêu biểu |
 |--------|-----------|------------------|-----------------|
@@ -993,7 +998,7 @@ Tuần 3-4:  #2 Document Q&A Chatbot
            → Học: Chunking, Embedding, Context Building, Prompt Templates
            
 Tuần 5-6:  #3 Hybrid Search Engine
-           → Học: BM25 + Vector融合, Re-ranking, Context Compression
+           → Học: BM25 + Vector kết hợp, Re-ranking, Context Compression
 
 ───────────────────────────────────────
 
@@ -1192,4 +1197,4 @@ Trả lời:"""
 
 ---
 
-> **Ghi chú**: Mỗi module trong framework đều có README.md chi tiết với code examples. Bạn có thể đọc từng module riêng lẻ hoặc học theo lộ trình từ Phase 1 đến Phase 6.
+> **Ghi chú**: Mỗi module đều có README riêng kèm code mẫu. Bạn có thể đọc lẻ từng module, hoặc học lần lượt từ Phase 1 tới Phase 6 đều được.

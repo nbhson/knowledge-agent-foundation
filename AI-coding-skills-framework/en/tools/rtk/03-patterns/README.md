@@ -1,6 +1,6 @@
 # 🧩 03. Four Patterns for Using RTK
 
-> These are the **4 most common and useful RTK patterns** when working with AI coding agents. Each pattern answers: when to use it, which command, the output reduction level, and caveats.
+> These are the **4 most common and handy RTK patterns** for working with AI coding agents. Each one covers: when to use it, which command to run, how much shorter the output gets, and what to watch out for.
 
 ## Summary Table
 

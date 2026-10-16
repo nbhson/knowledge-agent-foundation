@@ -92,8 +92,8 @@ Knowledge Graph
 > **Traversal = "đi thăm" graph** — bắt đầu từ 1 node, lần lượt ghé qua các nodes khác theo mối quan hệ. Giống như "theo dõi" ai đó trên mạng xã hội: bắt đầu từ mình, xem bạn bè của mình → rồi xem bạn bè của bạn mình → tiếp tục...
 >
 > **3 kiểu đi:**
-> - **BFS (Breadth-First)** = "Đi theo vòng tròn" — thăm tất cả nodes cách 1 hop trước, rồi 2 hops, rồi 3 hops... **Analogies:息多社会然后去半圈** (đổ nước trên mạng — nước lan đều trước khi sâu hơn)
-> - **DFS (Depth-First)** = "Đi hết 1 nhánh trước" — đi sâu nhất 1 đường, quay lại, rồi đi đường khác. **Analogies: 走单线** (đi một đường hết rồi mới quay)
+> - **BFS (Breadth-First)** = "Đi theo vòng tròn" — thăm tất cả nodes cách 1 hop trước, rồi tới 2 hops, 3 hops... **Ví von:** như đổ nước lên mặt lưới — nước lan đều ra xung quanh trước khi thấm sâu hơn
+> - **DFS (Depth-First)** = "Đi hết một nhánh trước" — đi sâu tới cùng một đường, quay lại rồi mới rẽ sang đường khác. **Ví von:** như đi một con đường cho tới cuối rồi mới quay lại ngã rẽ
 > - **Constrained** = BFS/DFS có điều kiện — chỉ đi qua nodes/edges thỏa điều kiện (ví dụ: chỉ qua `MANAGES` edges, chỉ đến Person nodes)
 
 ### 1.1 BFS vs DFS vs Constrained

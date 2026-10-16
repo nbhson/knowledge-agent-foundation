@@ -14,20 +14,20 @@
 
 ### The Opening Story
 
-AutoGen models multi-agent as a conversation — but sometimes you want a clearer structure: **each agent one role, each role one task, and agents coordinated inside a crew**. Like a company where the planner makes plans, the executor executes, and the reviewer approves — everyone has one job, and nobody talks over anyone.
+AutoGen treats multi-agent work like a conversation — but sometimes you want something more clear and organized: **each agent has one role, each role has one task, and they all work together in a crew**. It is like a small company where the planner makes the plan, the builder builds it, and the reviewer checks it — everyone has one job, and no one talks over anyone else.
 
 > *"CrewAI is the org chart for your harness — roles, tasks, and a crew that ships."*
 
-**CrewAI** is a role-based multi-agent framework: you define an `Agent` (role, goal, backstory), a `Task` (description, expected_output, agent), and a `Crew` (agents, tasks, process). Crucially, sample code already exists in HARNESS_ENGINEERING.md section 9.1.
+**CrewAI** is a role-based framework for teams of agents: you set up an `Agent` (role, goal, backstory), a `Task` (description, expected_output, agent), and a `Crew` (agents, tasks, process). You can already find example code in section 9.1 of HARNESS_ENGINEERING.md.
 
 ### Why CrewAI Matters?
 
 | # | Reason | Explanation |
 |---|--------|-------------|
-| 1 | **Clear role-based** | Each agent has a role/goal/backstory — easy to map onto harness components |
-| 2 | **Task-first** | `Task` is the unit of work — exactly the harness/04 philosophy (task decomposition) |
-| 3 | **Process orchestrates** | `Process.sequential` / `Process.hierarchical` — control of execution order |
-| 4 | **Human-in-the-loop** | The `human_input` flag allows interjection between steps |
+| 1 | **Clear role-based** | Each agent has a role, goal, and backstory — easy to match with harness parts |
+| 2 | **Task-first** | `Task` is the basic unit of work — much like the harness/04 idea of breaking tasks down |
+| 3 | **Process orchestrates** | `Process.sequential` / `Process.hierarchical` controls the order of work |
+| 4 | **Human-in-the-loop** | The `human_input` flag lets a person step in between steps |
 
 ### Relationship to the Harness
 
@@ -90,7 +90,7 @@ harness = Crew(
 )
 ```
 
-`Process.hierarchical` is exactly **harness/09-multi-agent** — a manager orchestrates like a harness orchestrator. `Process.sequential` maps to the **harness/07-workflow** pipeline.
+`Process.hierarchical` matches **harness/09-multi-agent** — a manager guides the work like a harness organizer. `Process.sequential` matches the **harness/07-workflow** pipeline.
 
 ## Learning Roadmap (Directory Structure)
 

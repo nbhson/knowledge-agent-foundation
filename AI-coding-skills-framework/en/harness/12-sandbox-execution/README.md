@@ -127,8 +127,8 @@ sample that misgeneralized from three lines of context.
 > - **Analogy:** A containment lab. The subject (model output) is genuinely dangerous — not malicious, but capable. The gloves, the sealed room, the decontamination shower (redaction), the airlock (approval) exist so that a containment breach is survivable.
 > - **Why it matters:** An agent that can read your SSH keys, reach the internet, and run forever is a loaded gun with a hair trigger. Sandboxing turns "total loss" into "failed run".
 
-**Sandbox Execution** is the practice of running every piece of untrusted, model-generated
-code inside a constrained environment whose only job is to make failure survivable.
+**Sandbox Execution** is the habit of running every piece of untrusted, model-generated
+code inside a small, limited space whose one job is to keep failures small and survivable.
 
 ```
 ┌─────────────────────────── HOST (trusted) ───────────────────────────┐
@@ -1231,5 +1231,5 @@ transparency logs, and continuous escape-drill suites running in production.
 
 *Document: Harness 12. Sandbox Execution — HARNESS ENGINEERING EDITION*
 *Cross-cutting module · canonical home for the sandbox concept*
-*Last updated: 19/07/2026*
+*Last updated: 16/10/2026*
 *Author: AI Knowledge Repository*

@@ -8,7 +8,7 @@
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Calibration (tính được hiệu chỉnh) nghĩa là **xác suất bạn báo ra khớp với tần suất thực tế**. Nếu Jev nói "câu này đúng với xác suất 0.8" trên hàng nghìn câu hỏi, thì khoảng ~80% trong số đó thực sự đúng. Đây là *"epistemically honest probabilities"* — xác suất trung thực với những gì mô hình thực sự biết.
+> **Khái niệm:** Calibration (hiệu chỉnh xác suất) nghĩa là **con số xác suất đưa ra khớp với tần suất đúng ngoài thực tế**. Nếu Jev nói "câu này đúng với xác suất 0.8" trên hàng nghìn câu hỏi, thì khoảng ~80% trong số đó thực sự đúng. Đây chính là *"epistemically honest probabilities"* — xác suất nói thật với những gì mô hình thực sự biết.
 > **Ẩn dụ/so sánh:** Giống **một người thợ đo may có thước đo đúng chuẩn** — khi anh ta nói "cái này dài 10cm", kiểm lại thì đúng 10cm. Người đo tệ (overconfidence) thì nói "10cm" nhưng thực tế dao động 6–14cm: nghe tự tin nhưng không đáng tin.
 > **Vì sao quan trọng:** Mọi downstream logic — auto-act khi tự tin, escalate khi mơ hồ — đều đứng trên giả định "số 0.8 nghĩa là 0.8". Nếu xác suất không calibrate, toàn bộ pipeline thresholding trở thành ảo giác.
 

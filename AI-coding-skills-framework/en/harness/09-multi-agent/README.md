@@ -61,13 +61,13 @@
 
 ### Opening Story
 
-Have you ever watched a **heist** movie like *Ocean's Eleven*? The crew of 11, each with a specialty: one person makes the plan (Danny Ocean), one picks locks (Basher), one does disguises (Saul), one drives (Terry). None of them could have **pulled it off alone** — but together, they executed the perfect heist.
+Remember the fun of a **heist** movie like *Ocean's Eleven*? Eleven friends, eleven superpowers: Danny plans, Basher cracks locks, Saul masters disguises, Terry drives the getaway. Ask any one of them to pull the whole job solo and they would laugh — but together? Pure movie magic.
 
 **AI Multi-Agent works exactly the same way.**
 
-A single AI agent can be good at many things, but when a task gets complex enough — like *"Implement a payment system with tests, docs, and a security review"* — one agent will **overload**. The context window gets wasted having to hold knowledge for every domain, there's no peer review to catch mistakes, and worst case: **the agent confirms its own mistakes**.
+One AI agent is like one talented friend who says "I can do it all!" — and for small favors, that is true. But hand them a monster job like *"Build our payment system, with tests, docs, and a security review"* and watch them **burn out**. Their notebook overflows with five jobs' worth of notes, nobody double-checks their work, and worst of all, **they end up nodding along to their own mistakes**.
 
-**The solution**: Multi-Agent Architecture — each agent is a **specialist in one domain**, coordinated through a communication protocol, with checks & balances to guarantee quality.
+**The friendly fix**: a Multi-Agent crew — each agent becomes a **specialist in just one craft**, they chat through a shared walkie-talkie protocol, and they double-check each other like good teammates, so quality stays high.
 
 ### Why Is Multi-Agent Important?
 
@@ -99,7 +99,7 @@ Each agent = **a specialist in one domain**. Like a multi-specialty hospital —
 > - **Analogy/comparison:** Like a hospital — the general practitioner does the initial exam, the cardiology specialist handles heart issues, the pharmacist prescribes medication. No one does everything, but the coordination produces the correct outcome.
 > - **Why it matters:** A single agent easily overloads and "confirms its own mistakes" on complex tasks — multi-agent adds cross-checks (checks & balances).
 
-**Multi-Agent Systems** in AI coding are an architecture of **multiple AI agents working together**, where each agent has a specialized role and they cooperate to complete complex tasks that a single agent would struggle to handle.
+**Multi-Agent Systems** in AI coding simply mean **a small team of AI friends building something together** — each friend owns one specialty, and by chatting and double-checking each other they finish big jobs that would exhaust any solo agent.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -159,7 +159,7 @@ Each agent = **a specialist in one domain**. Like a multi-specialty hospital —
 
 ### 1.1 Agent Role Taxonomy
 
-Here is a complete map of agent roles, organized into 4 tiers: **Coordination**, **Execution** (doing the work), **Quality** (quality control) and **Support**. Read it like a company org chart — the top tier makes decisions, the lower tiers do the work and cross-check each other. The metaphor: this is the team's "job description board" — everyone knows what they are supposed to do.
+Think of the picture below as the team's bulletin board with everyone's name tag on it, grouped into 4 friendly floors: **Coordination** (the planners), **Execution** (the builders), **Quality** (the checkers), and **Support** (the helpers). Read it like a small company org chart — the top floor steers, the lower floors build and double-check each other. No mystery about "who does what" anymore.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -193,7 +193,7 @@ Here is a complete map of agent roles, organized into 4 tiers: **Coordination**,
 
 ### 1.2 Detailed Agent Definitions
 
-This code defines each agent role in Python: every role has its **own system prompt** (behavioral instructions), a **limit on the number of agents that can run concurrently**, **average token usage**, and the **list of tools** it is allowed to use. The code block is large, but it is essentially a "job card" listing who does what and what they are allowed to use. The goal: standardize things so agents don't work outside their scope.
+The big code card below is basically a stack of employee badges: each role gets its **own pep-talk instructions** (system prompt), a **cap on how many clones can run at once**, a rough **token appetite**, and the **toolbox** it may touch. Yes, it looks long — but just read each badge as "who is this, and what may they touch?" That clarity keeps everyone happily inside their own lane.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -370,7 +370,7 @@ AGENT_DEFINITIONS = {
 
 ### 2.1 Communication Patterns Overview
 
-This section compares 6 ways agents "talk" to each other: sequential passing (pipeline), splitting work in parallel (fan-out), sharing a common state board (blackboard), direct question-answer (request-reply), work assignment management (hierarchical), and publishing events through a bus (pub/sub). Each has its own pros (✓) and cons (✗) — you read them to pick the right style for your problem. The metaphor: a pipeline is an assembly line, a blackboard is the company's shared bulletin board.
+Think of this section as six ways friends can keep in touch: passing notes down a line (pipeline), splitting chores and regrouping (fan-out), scribbling on the same fridge whiteboard (blackboard), chatting back and forth (request-reply), letting a team lead hand out jobs (hierarchical), or shouting into a group chat channel (pub/sub). Each style has its shiny ✓ upsides and its honest ✗ trade-offs — a pipeline feels like an assembly line, a blackboard feels like the office fridge door. Pick the vibe that fits your job.
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │              AGENT COMMUNICATION PATTERNS                         │
@@ -445,7 +445,7 @@ This section compares 6 ways agents "talk" to each other: sequential passing (pi
 
 ### 2.2 Message Protocol
 
-This code standardizes the "letter envelope" that agents exchange: every message has a **sender, a recipient, a message type** (task handoff, completion report, information request...), a **payload** (content), a timestamp, a priority, and a time-to-live. The `MessageRouter` function acts as the post office: it receives letters, queues them per agent, and broadcasts when needed. The metaphor: without a standard format, if agent A "writes by hand" while agent B "reads numbers", the information will fall apart.
+Think of the snippet below as designing the perfect inter-office envelope: every letter carries **who sent it, who should read it, what kind of news it is** (new job, job done, quick question…), plus the **letter itself** (payload), a timestamp, a priority sticker, and an expiry date. The `MessageRouter` is our cheerful post office — it collects, sorts into pigeonholes, and shouts across the room when everyone needs to hear. Without a shared envelope, it would be like one friend handwriting cursive while the other only reads spreadsheets — lost in translation.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -614,7 +614,7 @@ A table comparing 6 orchestration strategies, with columns for **when to use** a
 
 ### 3.2 Orchestrator Implementation
 
-This code is a working implementation of an orchestrator: it **takes a task list and orders them by their dependencies** (which task must wait for which), **routes to the right agent** by task type, **retries on failure**, and tracks token consumption. The `_resolve_execution_order` function is like an automated "work schedule" that figures out which job goes first. The metaphor: an orchestrator is a project manager — scheduling, delegating, checking off each item.
+Meet the team's kind project manager in code form: it **lines up your to-do list by who-waits-for-whom**, **walks each chore to the right specialist**, **gives it another try when it stumbles**, and keeps an eye on the token piggy bank. The little `_resolve_execution_order` helper is the auto-scheduler scribbling "you first, you next" on the whiteboard. In short: schedule, delegate, check off, repeat.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -866,7 +866,7 @@ class AgentOrchestrator:
 
 ### 4.1 Memory Architecture
 
-The diagram shows two memory tiers: **Global Memory** (the shared whiteboard: project context, task queue, state, decision log) and each agent's **Agent Memory** (private context + its own working memory). The idea: anything that needs to be shared goes on the common board; anything private stays in your own drawer. The metaphor: like an office that shares a work board, while each person still has a personal notebook.
+Picture two cozy memory corners: the big **Global Memory** whiteboard in the middle of the room (project notes, the to-do queue, shared facts, the "why did we decide that?" diary) plus each agent's own **Agent Memory** journal (private thoughts + scratch paper). Rule of thumb: if everyone needs it, pin it on the board; if it is just your doodles, keep it in your drawer — just like a real office with a shared wall and private notebooks.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -900,7 +900,7 @@ The diagram shows two memory tiers: **Global Memory** (the shared whiteboard: pr
 
 ### 4.2 Shared Memory Manager
 
-This code implements a safe "whiteboard" for many agents to read/write at the same time without stepping on each other — thanks to a `Lock` (synchronization lock), no write operation can be interrupted mid-write by another agent. Besides global memory, it also stores **artifacts** (files, test results) and a **change log** recording who changed what. The metaphor: like a bank vault — every open/close must happen in order, and every transaction is written in the ledger.
+This snippet builds that shared whiteboard with bumpers on: many hands can reach for it at once, but a gentle `Lock` makes sure nobody scribbles over anyone mid-sentence. Alongside the board it keeps a treasure chest of **artifacts** (files, test results) and a diary of "who changed what." Think bank vault: one person inside at a time, every visit written in the ledger.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1030,7 +1030,7 @@ class SharedMemoryManager:
 
 ### 5.1 Conflict Types & Resolution
 
-The diagram lists 5 common conflict types between agents — same-file edits, opposing approaches, resource contention, reading inconsistent state, contradictory outputs — along with the resolution strategy for each type. How to read it: identify which type your conflict is and apply the ready-made solution. The metaphor: like traffic rules — with rules in place, two cars that meet each other instantly know who has priority.
+Think of the chart below as the team's traffic-light handbook for its 5 classic fender-benders: editing the same file, disagreeing on approach, fighting over the same tool, reading stale notes, or shouting different answers. Spot which bump you just hit, then follow the ready-made "what to do" lane beside it — just like drivers who instantly know who yields at a crossing once they know the rules.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1076,7 +1076,7 @@ The diagram lists 5 common conflict types between agents — same-file edits, op
 
 ### 5.2 Conflict Resolution Manager
 
-This code implements the "peacekeeping" mechanism between agents: file locking (no other agent may edit while one is in use), scoring approaches when two agents disagree, and logging every conflict that is resolved. The `_score_approach` function grades the arguments — the more specific a rationale is (contains "because", "trade-off", "tested"), the more likely it wins. The metaphor: like a referee who scores debate entries to pick the more persuasive speaker.
+Think of this snippet as the team's friendly referee with a whistle: it hands out file locks ("one writer at a time, please!"), scores competing ideas when two agents disagree, and writes every call in the match log. The `_score_approach` helper is the scorecard — the clearer the reasoning (a good "because…", an honest "trade-off…", a proud "we tested…"), the more points it earns. May the clearest argument win!
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1200,7 +1200,7 @@ class ConflictResolutionManager:
 
 ### 6.1 When to Use Multi-Agent
 
-This is a question-branch decision diagram: start from the task, answer each question (can a single agent handle it? are the jobs independent? is there a clear pipeline? is discussion needed? many sub-tasks?), and every "Yes" leads to a suitable architecture. At the bottom of the diagram is a token estimation table for each system type. The metaphor: like a "which exit to take" quiz — each answer sends you down the right turn.
+Treat the flowchart below like a "which exit should I take?" road-trip quiz. Start with your task up top, answer each friendly yes/no question (can one friend handle it alone? are the chores independent? is there an obvious assembly line? do we need a good debate? lots of sub-jobs?), and each "Yes!" parks you at the right architecture. The little price table at the bottom shows the token toll for each route.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1260,7 +1260,7 @@ This is a question-branch decision diagram: start from the task, answer each que
 
 ### 7.1 Code Review Pipeline
 
-This code builds an automated review pipeline the way a software company would: collect changed files → review code → security review → performance review → merge feedback. How to "read" it: each task in the `tasks` list has a `depends_on` field that decides which job must wait for which. The metaphor: like a real merge-request workflow where 2-3 reviewers have to click Approve before the merge.
+This snippet sets up the review line just like a real software team does: gather the changed files → read the code → invite security → invite performance → gather all the notes into one kind letter. To "read" it, just follow the `depends_on` tags — they whisper "wait for me first." It feels exactly like a merge request where two or three teammates must hit Approve before the big green merge button.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1351,7 +1351,7 @@ class CodeReviewPipeline:
 
 ### 7.2 Feature Development Team
 
-This code simulates a complete feature development team in **hierarchical** style: the Architect designs first → multiple Coders work on independent modules in parallel → the Tester writes tests → the Reviewer finalizes quality. Notable point: `implement-core` and `implement-api` both depend on `design` but not on each other, so they can run in parallel. The metaphor: like a house-building crew — the electrician and the plumber work at the same time, but both wait for the blueprints.
+Welcome to the feature dream team, organized **family-style** with a lead at the top: the Architect sketches the blueprints first → two Coders build different rooms at the same time → the Tester checks every door and window → the Reviewer does the final walkthrough. Notice the cute detail: `implement-core` and `implement-api` both wait for `design`, but not for each other — so they happily hammer away side by side. Just like real builders: the electrician and the plumber work in parallel, but both wait for the same blueprint.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1429,7 +1429,7 @@ class FeatureDevTeam:
 
 ### 7.3 Debug Squad
 
-This code assembles a 4-step sequential "incident response team": the Debugger finds the root cause → the Coder fixes it → the Tester runs regression tests → the Reviewer rechecks quality. Each step depends on the previous one (via `depends_on`), so the flow runs in the correct order: catch the bug, patch it, verify, approve. The metaphor: like an incident-handling process in a company — support diagnoses, the engineer fixes, QA confirms, the lead approves.
+Think of this snippet as speed-dialing your 4-person rescue squad in order: the Debugger plays detective and finds the culprit → the Coder patches it up → the Tester makes sure nothing else broke → the Reviewer gives the warm thumbs-up. The `depends_on` chain holds hands tightly so nobody runs ahead — catch, patch, verify, approve. Just like a real on-call rotation: support spots it, engineering fixes it, QA confirms it, the lead signs it off.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1508,7 +1508,7 @@ class DebugSquad:
 
 ### 8.1 Debug Strategy
 
-This diagram is a multi-agent "diagnostic manual": for each symptom (agent not responding, task routed to the wrong agent, infinite loop, conflicting results, poor quality) it lists the steps to check ("Check") and then points to the remedy ("Fix"). How to use it: match the symptom you're seeing, follow the check branch until you find the root cause. The metaphor: like a mechanic diagnosing a car — out of oil? Out of gas? Bad spark plug? Eliminate possibilities one by one.
+Keep this diagram taped to the garage wall like a mechanic's cheat sheet. For each familiar groan — an agent gone quiet, a job sent to the wrong teammate, a loop that never ends, two answers that clash, work that feels sloppy — it lists gentle "have you checked…?" steps and then the "here is the fix" remedy. Match your symptom, walk the checklist, cross suspects off one by one — out of gas? loose spark plug? — until the engine hums again.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐

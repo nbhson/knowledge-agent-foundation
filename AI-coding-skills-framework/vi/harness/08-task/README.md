@@ -40,17 +40,17 @@
 
 ### Câu Chuyện Mở Đầu
 
-Hãy tưởng tượng bạn là **quản lý một bệnh viện đa khoa**. Mỗi ngày, hàng trăm bệnh nhân đến: người đau bụng cấp tính, người cần khám định kỳ, người muốn tiêm vaccine. Nếu bạn **không phân loại** — bệnh nhân cấp cứu phải xếp sau người khám thường — hậu quả sẽ là **thảm họa**.
+Hãy thử tưởng tượng một buổi sáng bạn làm **quản lý ở một bệnh viện đông nghẹt**. Ngoài cổng thì có người đau bụng cấp tính đang ôm bụng chờ, trong sảnh có bác tới khám định kỳ, góc bên kia lại có bạn nhỏ tới tiêm vaccine. Nếu mình cứ ai tới trước khám trước, không chịu **phân loại xem ai cần cứu ngay**, thì ca cấp cứu kẹt cứng sau ca khám thường — nghe thôi đã thấy toát mồ hôi, đúng không?
 
-**AI Agent cũng gặp vấn đề tương tự khi không có Task Management.**
+**AI Agent mà thiếu Task Management thì cũng rối y như vậy.**
 
-Khi user gửi một yêu cầu phức tạp như *"Refactor module auth, thêm test, update docs, rồi deploy"* — agent nhận **tất cả cùng lúc** nhưng không biết bắt đầu từ đâu, cái nào ưu tiên, cái nào có thể song song. Kết quả: làm lộn xộn, bỏ sót bước, hoặc worse — **deploy code chưa test**.
+Bạn thử nhờ agent một câu kiểu *"Refactor giùm module auth, viết thêm test, cập nhật docs, rồi deploy luôn nhé"* — agent nghe một lèo hết mọi việc mà chẳng biết nên bắt đầu từ đâu, việc nào gấp, việc nào làm song song được. Thế là dễ làm lộn xộn, quên mất một bước, tệ nhất là **mang code chưa test đi deploy**.
 
-**Giải pháp**: Structured Task Management — một hệ thống phân loại, ưu tiên, phân nhỏ, và theo dõi tasks để agent **làm đúng việc, đúng lúc, đúng thứ tự**.
+**Cách gỡ rối** chính là Structured Task Management — tức là mình chịu khó phân loại, xếp thứ tự ưu tiên, chẻ nhỏ việc ra rồi theo dõi từng việc một, để agent cứ **làm đúng việc, đúng lúc, đúng thứ tự**.
 
 ### Tại Sao Task Management Quan Trọng?
 
-> *"Agent không quản lý task giống như đầu bếp nhận 100 món cùng lúc — nhận hết nhưng nấu không kịp, món nào cũng dở."*
+> *"Agent mà không quản lý task thì giống anh đầu bếp ôm một lúc 100 món — món nào cũng nhận mà món nào cũng nấu không tới."*
 
 #### 3 Bằng Chứng Khoa Học
 
@@ -66,21 +66,21 @@ Khi user gửi một yêu cầu phức tạp như *"Refactor module auth, thêm 
 Task = Analyze → Classify → Prioritize → Decompose → Execute → Track → Report
 ```
 
-**Analogies**: Task management giống quản lý bệnh viện — phân loại bệnh nhân (classify), ưu tiên cấp cứu (prioritize), kê toa (plan), theo dõi điều trị (track), và xuất viện (complete).
+**Nói cho dễ nhớ:** task management cũng giống cách bệnh viện vận hành — tiếp nhận rồi phân loại bệnh nhân (classify), ca nặng cho vào trước (prioritize), bác sĩ kê toa (plan), theo dõi điều trị mỗi ngày (track), khỏi thì cho xuất viện (complete).
 
-**Nếu bỏ qua**: Agent overwhelm bởi quá nhiều tasks, deliver sai thứ tự, lãng phí compute resources, và user frustration.
+**Còn nếu mình bỏ qua bước này thì sao?** Agent sẽ ngợp vì quá nhiều việc dồn một lúc, làm sai thứ tự, đốt tài nguyên vô ích, và cuối cùng là bạn bực mình vì việc chẳng tới đâu.
 
 ## Tổng Quan
 
 > ## 📌 Khái Niệm Cơ Bản
 >
-> **Khái niệm:** Task Management trong AI coding là quá trình phân loại, chia nhỏ, ưu tiên và theo dõi các tác vụ lập trình để agent làm đúng việc, đúng lúc, đúng thứ tự.
+> **Khái niệm:** Task Management trong AI coding là cách mình phân loại, chẻ nhỏ, xếp thứ tự ưu tiên rồi theo dõi các việc lập trình, để agent cứ đúng việc, đúng lúc, đúng thứ tự mà làm.
 >
-> **Ẩn dụ/so sánh:** Giống quản lý một bệnh viện bận rộn — phải xếp ca cấp cứu trước, hẹn khám thường sau, phân kíp trực rõ ràng thì bệnh nhân mới không bị bỏ sót.
+> **Ẩn dụ/so sánh:** Cứ hình dung bạn điều hành một bệnh viện giờ cao điểm — ca cấp cứu phải cho vào trước, lịch khám thường xếp sau, kíp trực chia rõ ràng thì mới không bỏ sót bệnh nhân nào.
 >
-> **Vì sao quan trọng:** Không quản lý task, agent dễ bị quá tải, làm sai thứ tự và lãng phí tài nguyên.
+> **Vì sao quan trọng:** Không có người điều phối, agent rất dễ bị ngợp, làm lộn thứ tự và đốt tài nguyên vô ích.
 
-**Task Management** trong AI coding là quá trình **phân tích, chia nhỏ, ưu tiên và theo dõi** các tác vụ coding. Task tốt giúp AI agent tập trung vào đúng việc, tránh overload, và deliver kết quả chất lượng.
+**Task Management** trong AI coding chính là việc **phân tích, chẻ nhỏ, xếp ưu tiên rồi theo dõi** các tác vụ coding. Task được sắp xếp gọn gàng thì AI agent mới tập trung đúng chỗ, không bị quá tải, và trả về kết quả đàng hoàng.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -109,11 +109,11 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 
 > ## 📌 Khái Niệm Cơ Bản
 >
-> **Khái niệm:** Đây là mục lục của toàn module — mười chủ đề chính của Task Management được trình bày từ nhận diện task (phân loại, phân rã), điều hành (ưu tiên, trạng thái, phụ thuộc) đến quản lý nguồn lực (ước lượng, token budget).
+> **Khái niệm:** Đây là tấm bản đồ của cả module — mười chủ đề chính của Task Management, từ lúc nhận diện việc (phân loại, phân rã) tới lúc điều hành (ưu tiên, trạng thái, phụ thuộc) rồi tới chuyện cân đối nguồn lực (ước lượng, token budget).
 >
-> **Ẩn dụ/so sánh:** Giống bản đồ tuyến tàu điện ngầm — nhìn trước là biết có những ga nào và nên xuống ở đâu cho mục tiêu của bạn.
+> **Ẩn dụ/so sánh:** Cứ coi như bản đồ tuyến tàu điện ngầm — liếc qua là biết có những ga nào, mình cần xuống ở ga nào cho đúng việc mình đang cần.
 >
-> **Vì sao quan trọng:** Mỗi chủ đề giải quyết một phần của cùng một bài toán, nên nắm tổng thể sẽ dễ định hướng việc cần học.
+> **Vì sao quan trọng:** Mỗi chủ đề gỡ một nút thắt trong cùng một bài toán, nên nắm được toàn cảnh thì bạn sẽ dễ định hướng hơn hẳn.
 
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
@@ -134,15 +134,15 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 
 > ## 📌 Khái Niệm Cơ Bản
 >
-> **Khái niệm:** Task Classification là bước "chẩn đoán" task trước khi xử lý — đọc yêu cầu, nhận diện task thuộc loại nào (viết code mới, sửa bug, refactor, viết test v.v.) và độ phức tạp ra sao (1 file hay nguyên module), rồi chọn chiến lược phù hợp.
+> **Khái niệm:** Task Classification là bước "bắt bệnh" trước khi chữa — đọc kỹ yêu cầu, xem task này thuộc loại nào (viết code mới, sửa bug, refactor, viết test...) và nặng nhẹ cỡ nào (vài dòng hay cả module), rồi mới chọn cách xử lý cho hợp.
 >
-> **Ẩn dụ/so sánh:** Giống bác sĩ cấp cứu phân loại bệnh nhân (triage) trước khi điều trị — chẩn đoán đúng thì mới xử lý đúng, còn chẩn đoán sai thì mọi bước tiếp theo đều lệch.
+> **Ẩn dụ/so sánh:** Y như bác sĩ trực cấp cứu phân loại bệnh nhân (triage) trước khi đưa vào phòng mổ — chẩn đoán đúng thì các bước sau mới suôn sẻ, chẩn đoán sai là cả dây chuyền trật theo.
 >
-> **Vì sao quan trọng:** Phân loại đúng giúp agent chọn đúng cách tiếp cận, tiết kiệm token và giảm sai sót ngay từ đầu.
+> **Vì sao quan trọng:** Phân loại trúng ngay từ đầu thì agent chọn đúng cách làm, đỡ tốn token mà cũng ít sai vặt hơn.
 
 ### 1.1 Phân Loại Task Coding
 
-Sơ đồ dưới tóm tắt hệ thống phân loại task coding theo 5 nhóm chính — mỗi nhóm là một "chuyên khoa" khác nhau (viết code mới, sửa code, phân tích code, tài liệu, test). Hãy đọc như một cây phân cấp: từ nhóm lớn ở trên, theo nhánh xuống loại task cụ thể, để biết task bạn đang gặp nằm ở đâu.
+Sơ đồ dưới đây gom các kiểu task coding thành 5 nhóm lớn — mỗi nhóm như một "chuyên khoa" riêng (viết code mới, sửa code, mổ xẻ code, viết tài liệu, viết test). Bạn cứ đọc như cây gia phả: từ nhóm lớn ở trên, lần theo nhánh xuống loại task cụ thể, là biết việc mình đang cầm thuộc họ nào.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -183,7 +183,7 @@ Sơ đồ dưới tóm tắt hệ thống phân loại task coding theo 5 nhóm 
 
 ### 1.2 Task Classification Engine
 
-Đoạn code dưới là bộ máy phân loại thật sự: nó nhận vào mô tả task bằng ngôn ngữ tự nhiên, dò keyword patterns (ví dụ thấy chữ "fix" hay "bug" thì xếp vào nhóm MODIFICATION), rồi ước lượng độ phức tạp để trả về một đối tượng Task đầy đủ thông tin. Chạy thử với một câu mô tả bất kỳ để xem cách agent "hiểu" yêu cầu như thế nào.
+Đoạn code dưới đây chính là bộ máy phân loại chạy thật: nó đọc mô tả task bằng ngôn ngữ thường ngày, soi keyword (ví dụ thấy chữ "fix" hay "bug" thì xếp vào nhóm MODIFICATION), rồi áng chừng độ phức tạp để nhả ra một đối tượng Task đầy đủ thông tin. Bạn cứ thử quăng vào một câu mô tả bất kỳ là thấy ngay cách agent "hiểu" yêu cầu ra sao.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -339,7 +339,7 @@ class TaskClassifier:
 
 ### 1.3 Decision Tree: Chọn Strategy Xử Lý Task
 
-Sơ đồ dưới mô tả luật ra quyết định khi một task được giao tới: nếu yêu cầu chưa rõ thì phải hỏi rõ trước, nếu nhỏ hơn 500 tokens thì làm luôn, còn nếu lớn thì phân rã thành sub-task rồi chọn chiến lược chạy tuần tự, song song hay theo TDD. Đi theo các mũi tên từ trên xuống để biết agent sẽ "đi cửa nào" cho từng loại task.
+Sơ đồ này là luật ra quyết định khi có task mới gõ cửa: nếu yêu cầu còn mù mờ thì phải hỏi lại cho rõ trước, nếu việc gọn dưới 500 tokens thì làm luôn một lèo, còn việc to thì chẻ thành sub-task rồi chọn kiểu chạy nối tiếp, song song hay theo TDD. Bạn cứ đi theo mũi tên từ trên xuống là biết agent sẽ "rẽ cửa nào" cho từng kiểu task.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -376,15 +376,15 @@ Sơ đồ dưới mô tả luật ra quyết định khi một task được gia
 
 > ## 📌 Khái Niệm Cơ Bản
 >
-> **Khái niệm:** Task Decomposition là kỹ thuật chia một task lớn, khó nuốt thành nhiều subtask nhỏ, mỗi subtask có input/output gần như độc lập và có thể giao cho agent phù hợp xử lý riêng.
+> **Khái niệm:** Task Decomposition là mẹo chẻ một việc to đùng, khó nuốt thành nhiều subtask nhỏ — mỗi subtask có đầu vào, đầu ra gần như độc lập nên dễ giao cho agent xử lý riêng từng miếng.
 >
-> **Ẩn dụ/so sánh:** Giống xây nhà — không ai đổ cả căn nhà một lần, mà phải làm móng, dựng khung, lợp mái theo từng giai đoạn; mỗi giai đoạn là một việc nhỏ dễ kiểm soát.
+> **Ẩn dụ/so sánh:** Y như xây nhà — chẳng ai đổ cả căn nhà trong một buổi, mà phải làm móng, dựng khung rồi mới lợp mái; mỗi giai đoạn là một việc nhỏ dễ kiểm soát.
 >
-> **Vì sao quan trọng:** Task lớn dễ làm agent mất context và bỏ sót bước; chia nhỏ giúp giảm tải context và tăng xác suất hoàn thành.
+> **Vì sao quan trọng:** Việc to dễ làm agent rối trí, quên trước quên sau; chẻ nhỏ ra thì nhẹ đầu hơn hẳn mà tỉ lệ xong việc cũng cao hơn.
 
 ### 2.1 Patterns Phân Rã Task
 
-Sơ đồ dưới liệt kê 6 kiểu phân rã task phổ biến. Điểm khác nhau nằm ở cách các subtask liên hệ với nhau: chạy nối tiếp theo thứ tự bắt buộc (sequential), chạy song song rồi gộp kết quả (parallel, map-reduce), hay phân cấp cha-con (hierarchical). Nhìn các mũi tên trong hình để chọn pattern phù hợp với loại việc bạn đang làm.
+Sơ đồ dưới đây liệt kê 6 kiểu chẻ task hay gặp nhất. Khác nhau cốt ở chỗ các subtask liên hệ với nhau ra sao: chạy nối đuôi theo thứ tự bắt buộc (sequential), chạy song song rồi gom kết quả lại (parallel, map-reduce), hay xếp theo cây cha-con (hierarchical). Bạn cứ nhìn các mũi tên trong hình là biết kiểu nào hợp với việc mình đang làm.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -448,7 +448,7 @@ Sơ đồ dưới liệt kê 6 kiểu phân rã task phổ biến. Điểm khác
 
 ### 2.2 Task Decomposer
 
-Đây là code triển khai bộ phân rã: đối tượng TaskDecomposer nhận vào một Task và tự chọn chiến lược phân rã (feature, layer, file, TDD, vertical slice, spike) rồi trả về danh sách SubTask có thứ tự, dependency, token ước lượng và tiêu chí kiểm tra. Nếu không biết chọn gì, nó tự gợi ý dựa trên loại và độ phức tạp của task.
+Đây là code của bộ chẻ việc: đối tượng TaskDecomposer ôm một Task rồi tự chọn kiểu chẻ cho hợp (theo feature, theo tầng, theo file, theo TDD, vertical slice, spike), sau đó nhả ra danh sách SubTask có thứ tự, dependency, token dự kiến và tiêu chí kiểm tra. Bí quá không biết chọn kiểu nào thì nó cũng tự gợi ý dựa trên loại và độ khó của task.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -725,17 +725,17 @@ class TaskDecomposer:
 
 > ## 📌 Khái Niệm Cơ Bản
 >
-> **Khái niệm:** Priority & Scheduling là cơ chế quyết định task nào làm trước, task nào làm sau dựa trên mức khẩn cấp, tầm quan trọng, công sức cần bỏ ra và lượng token tiêu thụ.
+> **Khái niệm:** Priority & Scheduling là cách mình quyết định việc nào làm trước, việc nào xếp sau — dựa trên độ gấp, độ quan trọng, công sức phải bỏ ra và lượng token sẽ tốn.
 >
-> **Ẩn dụ/so sánh:** Giống xếp hàng ở bệnh viện — ca cấp cứu vào trước, ca khám thường chờ sau; việc nhỏ mà giá trị cao (quick win) cũng được ưu tiên như giải quyết món nợ nhỏ để giải phóng ngân quỹ.
+> **Ẩn dụ/so sánh:** Y như xếp hàng ở bệnh viện — ca cấp cứu cho vào trước, ca khám thường chịu khó chờ; còn mấy việc nhỏ mà giá trị cao (quick win) thì tranh thủ làm sớm cho gọn, kiểu trả món nợ nhỏ để nhẹ ví.
 >
-> **Vì sao quan trọng:** Làm sai thứ tự sẽ khiến việc quan trọng bị trễ, tốn token và dễ bỏ sót yêu cầu của user.
+> **Vì sao quan trọng:** Xếp sai thứ tự là việc quan trọng bị trễ, token thì đội lên, mà bạn lại phải đi nhắc agent từng chút một.
 
 ### 3.1 Priority Model
 
-Đoạn code dưới thể hiện cách tính điểm ưu tiên cho từng task bằng công thức kiểu Eisenhower Matrix: mỗi task được chấm urgency (khẩn cấp), importance (quan trọng), effort (công sức cần bỏ ra), rồi cộng thêm khoản bonus nếu đó là việc nhỏ dễ làm (quick win) hoặc nhiều task khác đang phụ thuộc nó. TaskScheduler sau đó xếp tasks vào từng batch vừa đúng thứ tự vừa không vượt ngân sách token mỗi phiên.
+Đoạn code dưới đây cho thấy cách chấm điểm ưu tiên cho từng task theo kiểu Eisenhower Matrix: mỗi task được chấm urgency (độ gấp), importance (độ quan trọng), effort (độ tốn công), rồi cộng thêm điểm bonus nếu đó là việc nhỏ dễ xơi (quick win) hoặc đang có nhiều task khác trông chờ vào nó. TaskScheduler sau đó xếp task vào từng batch sao cho vừa đúng thứ tự vừa không lố ngân sách token của phiên.
 
-Nói nôm na, đây giống thang điểm xếp hàng: việc khẩn cấp và quan trọng thì điểm cao, việc to mà không gấp thì xếp sau, việc nho nhỏ dễ làm được ưu tiên để "quét bàn" cho nhanh.
+Nói nôm na, đây là thang điểm xếp hàng: việc vừa gấp vừa quan trọng thì lên top, việc to mà chưa gấp thì xếp sau, còn mấy việc be bé làm vèo cái xong thì ưu tiên "quét" sớm cho gọn bàn.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -835,17 +835,17 @@ class TaskScheduler:
 
 > ## 📌 Khái Niệm Cơ Bản
 >
-> **Khái niệm:** Task State Management là cách theo dõi vòng đời của từng task qua các trạng thái như pending, running, blocked, done — kèm cơ chế lưu lại và khôi phục trạng thái để lúc nào cũng biết "công việc đang dở đến đâu" khi bị gián đoạn.
+> **Khái niệm:** Task State Management là cách mình dõi theo vòng đời của từng task qua các trạng thái như pending, running, blocked, done — kèm cơ chế lưu lại để lúc bị gián đoạn vẫn biết "việc đang dở tới đâu" mà làm tiếp.
 >
-> **Ẩn dụ/so sánh:** Giống cuốn sổ trực của bệnh viện — ca trực nào cũng đọc được tai nạn nói gì, bệnh nhân đang ở giai đoạn nào, rồi làm tiếp từ đó thay vì hỏi lại từ đầu.
+> **Ẩn dụ/so sánh:** Y như cuốn sổ trực ở bệnh viện — kíp sau đọc là biết kíp trước đã làm gì, bệnh nhân đang ở giai đoạn nào, rồi cứ thế làm tiếp chứ không phải hỏi lại từ đầu.
 >
-> **Vì sao quan trọng:** Nếu không biết task đang ở trạng thái nào, agent không thể tiếp tục công việc sau khi gián đoạn và dễ làm lặp hoặc bỏ sót công đoạn.
+> **Vì sao quan trọng:** Không nắm được task đang ở đâu thì agent khó mà làm tiếp sau khi bị ngắt, rất dễ làm trùng hoặc sót bước.
 
 ### 4.1 Task Lifecycle
 
-Sơ đồ dưới là bản đồ trạng thái của một task từ lúc sinh ra đến lúc kết thúc: PENDING → PLANNING → IN_PROGRESS → TESTING → REVIEW → DONE. Ngoài nhánh chính còn có các lối rẽ đặc biệt — BLOCKED (bị chặn thì quay về chờ), FAILED (thất bại thì làm lại), CANCELLED (hủy). Đọc theo mũi tên để hiểu task đi từ trạng thái nào sang trạng thái nào là hợp lệ.
+Sơ đồ dưới đây là tấm bản đồ trạng thái của một task, từ lúc mới sinh ra tới lúc kết thúc: PENDING → PLANNING → IN_PROGRESS → TESTING → REVIEW → DONE. Ngoài đường chính còn có mấy lối rẽ đặc biệt — BLOCKED (kẹt thì quay về chờ), FAILED (hỏng thì làm lại), CANCELLED (hủy). Bạn cứ lần theo mũi tên là biết task được đi từ trạng thái nào sang trạng thái nào.
 
-Nói cho dễ hình dung, đây là "hành trình một task qua các khoa": vừa tạo là chờ khám (PENDING), được lên kế hoạch (PLANNING), đang điều trị (IN_PROGRESS), đang xét nghiệm (TESTING), đang hội chẩn (REVIEW), rồi xuất viện (DONE).
+Nói cho vui thì đây là "hành trình một task đi khám bệnh": mới tạo là ngồi chờ khám (PENDING), được lên phác đồ (PLANNING), vào điều trị (IN_PROGRESS), đi xét nghiệm (TESTING), đem ra hội chẩn (REVIEW), rồi khỏe thì xuất viện (DONE).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -885,7 +885,7 @@ Nói cho dễ hình dung, đây là "hành trình một task qua các khoa": v�
 
 ### 4.2 Task State Manager
 
-Đây là code quản lý trạng thái: TaskStateManager giữ "sổ theo dõi" cho mọi task, chỉ cho phép chuyển trạng thái khi hợp lệ (valid transitions), ghi lại thời gian bắt đầu, số lần thử, lỗi cuối cùng và phát sự kiện để phần khác của hệ thống biết mà phản hồi. Nếu bạn cố chuyển trạng thái trái phép (ví dụ TESTING → PENDING), code sẽ báo lỗi ngay — giống lệ phòng khám không cho làm liều.
+Đây là code giữ "cuốn sổ theo dõi" cho mọi task: TaskStateManager chỉ cho chuyển trạng thái khi đúng luật (valid transitions), ghi lại giờ bắt đầu, số lần thử, lỗi gần nhất rồi bắn sự kiện cho các phần khác trong hệ thống cùng biết. Bạn mà cố chuyển ẩu (ví dụ từ TESTING nhảy về PENDING), code sẽ chặn lại ngay — cũng nghiêm như quy định ở phòng khám, không cho làm liều.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1016,15 +1016,15 @@ class InvalidTransitionError(Exception):
 
 > ## 📌 Khái Niệm Cơ Bản
 >
-> **Khái niệm:** Dependency Management là cách mô hình hóa quan hệ "task này phải xong trước task kia" bằng một đồ thị phụ thuộc (dependency graph), từ đó tính ra thứ tự thực thi đúng và phát hiện vòng lặp chết (deadlock).
+> **Khái niệm:** Dependency Management là cách mình vẽ ra quan hệ "việc này phải xong trước thì việc kia mới làm được" bằng một đồ thị phụ thuộc (dependency graph), rồi từ đó tính ra thứ tự làm cho đúng và bắt mấy vòng chờ nhau chết cứng (deadlock).
 >
-> **Ẩn dụ/so sánh:** Giống thứ tự nấu một bữa ăn nhiều món — phải ninh canh trước, xào sau, vì món này cần nguyên liệu của món kia; làm ngược thứ tự thì bữa ăn vỡ trận.
+> **Ẩn dụ/so sánh:** Y như nấu một bữa cơm nhiều món — canh phải ninh trước rồi mới rảnh tay đi xào, vì món này mượn nguyên liệu của món kia; nấu ngược thứ tự là bữa cơm vỡ trận.
 >
-> **Vì sao quan trọng:** Làm sai thứ tự hoặc để hai task chờ nhau vô hạn sẽ làm agent tắc nghẽn và không bao giờ hoàn thành.
+> **Vì sao quan trọng:** Xếp sai thứ tự hoặc để hai task đứng chờ nhau mãi thì agent kẹt cứng, việc chẳng bao giờ xong.
 
 ### 5.1 Task Dependency Graph
 
-Đoạn code dưới triển khai DAG (Directed Acyclic Graph) để quản lý dependency. Quy ước đọc rất đơn giản: "A → B" nghĩa là task A phải xong trước task B mới được bắt đầu. Lớp này hỗ trợ kiểm tra vòng lặp (cycle detection), sắp xếp thứ tự thực thi (topological sort) và tách các nhóm task chạy được song song (parallel groups).
+Đoạn code dưới đây dựng một DAG (Directed Acyclic Graph) để trông coi dependency. Cách đọc rất đơn giản: "A → B" nghĩa là task A phải xong trước thì task B mới được bắt đầu. Lớp này lo mấy việc khó nhằn giùm bạn: soi xem có vòng lặp luẩn quẩn không (cycle detection), xếp thứ tự làm cho đúng (topological sort) và tách ra các nhóm task chạy song song được (parallel groups).
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1839,7 +1839,7 @@ class TokenBudgetManager:
 
 ## 11. Tích Hợp Harness (TS)
 
-Liên kết các task với trục thực thi: mỗi `TaskNode` mang `trajectoryId`, `idempotencyKey`, `permissions`, `budget`. Engine phát ra các event để tầng workflow/observability tiêu thụ.
+Cứ hình dung mỗi task như một kiện hàng gửi đi — trên nhãn phải ghi rõ mã vận đơn (`trajectoryId`), mã chống trùng (`idempotencyKey`), quyền được mở (`permissions`) và cước phí (`budget`). Đoạn code dưới là "băng chuyền" gom các kiện hàng (`TaskNode`) vào trục thực thi, rồi phát ra event để các tầng workflow/observability cùng nghe thấy.
 
 <details>
 <summary>TypeScript Code — Task Engine (Click to expand/collapse)</summary>
@@ -1869,27 +1869,31 @@ export function makeTaskEngine(): TaskEngine {
 
 </details>
 
-Quy tắc: task `elevated` yêu cầu phê duyệt; `trajectoryId` nối các log prompt/tool/workflow; `idempotencyKey` khử trùng lặp khi retry.
+Mấy luật chơi nhớ giùm nhé: task nào gắn mác `elevated` thì phải xin phê duyệt mới được chạy tiếp; `trajectoryId` là sợi dây nối các log prompt/tool/workflow lại với nhau; còn `idempotencyKey` giúp khử trùng lặp khi bạn retry.
 
 ## 12. Ngữ Nghĩa Thực Thi
 
-Mỗi task: `timeoutMs` (mặc định 60s, abort + đánh dấu `failed:timeout`), `maxRetries` với backoff mũ + jitter (chỉ retry task idempotent hoặc đã checkpoint), `cancel()` đặt `cancelled` và hủy signal — các task con phụ thuộc vào nó chuyển thành `blocked`. Pipeline lỗi: `failed → classify(transient|perm|budget) → transient: retry | perm: park + emit task.failed | budget: compact + re-estimate → continue DAG`. Không bao giờ tự retry thao tác ghi non-idempotent.
+Cứ coi mỗi task như một món ăn đặt giờ trên bếp — bạn hẹn `timeoutMs` (mặc định 60s), hết giờ mà chưa chín thì tắt bếp và ghi `failed:timeout`. Gặp món hỏng thì xem lại công thức `maxRetries` với backoff mũ + jitter, nhưng chỉ retry khi task idempotent hoặc đã checkpoint. Bấm `cancel()` là dọn bếp ngay: task thành `cancelled`, còn task con trông chờ vào nó thì chuyển thành `blocked`. Còn pipeline xử lỗi thì đi theo đường này: `failed → classify(transient|perm|budget) → transient: retry | perm: park + emit task.failed | budget: compact + re-estimate → continue DAG`. Nhớ một điều cấm kỵ: không bao giờ tự retry thao tác ghi non-idempotent.
 
 ## 13. Đồng Thời (Concurrency)
 
-Scheduler: batch theo topo (ready = mọi dep đều `done`), giới hạn semaphore (4–8) + cổng token-budget (bỏ qua batch nếu `sum(budgetTokens) > remaining`). `race([primary, fallback])` cho thao tác đọc nhạy latency; `join(all)` cho hợp nhất fan-in. Giới hạn tài nguyên: tối đa task/run (ví dụ 50), tối đa token/session, độ sâu hàng đợi 1 cho mỗi task. Chống deadlock: fail nếu một batch không tiến triển trong 2 vòng (thiếu dep/vòng lặp).
+Đoạn này giống chuyện xếp xe qua cầu: Scheduler chia xe thành từng batch theo topo (xe nào mà mọi xe đi trước đều `done` thì mới được lăn bánh), rồi dựng trạm gác semaphore (4–8) kèm cổng token-budget (batch nào mà `sum(budgetTokens) > remaining` thì mời đứng chờ). Muốn nhanh với thao tác đọc nhạy latency thì dùng `race([primary, fallback])`, còn muốn gom kết quả fan-in thì dùng `join(all)`. Để khỏi kẹt cầu, mình giới hạn tài nguyên: tối đa task/run (ví dụ 50), tối đa token/session, độ sâu hàng đợi 1 cho mỗi task. Còn chống deadlock thì cứ thẳng tay: batch nào 2 vòng liền không tiến triển (do thiếu dep/vòng lặp) là cho fail.
 
 ## 14. Case Studies
 
-1. **Refactor auth (12 file, 4 tầng):** phân loại MODIFICATION/COMPLEX → phân rã theo tầng (db→svc→api→ui→test). Batch 1 (db) chặn svc/api; cổng budget hoãn tài liệu UI sang session 2. Một `write_file:elevated` dừng chờ phê duyệt kèm xem trước diff; idempotency key ngăn migration kép khi retry sau timeout. Kết quả: 1 retry, 0 ghi trùng.
-2. **Phân loại E2E flaky (30 test):** map-reduce — 30 shard `run_tests` song song (sem=6), mỗi shard timeout 90s, `race(unit-shard, cached-baseline)` để bỏ qua nhánh xanh. 3 lỗi transient được retry qua idempotency cache; 1 lỗi perm đánh dấu `failed` mà không chặn báo cáo merge. Join tổng hợp pass/fail + liên kết trajectory.
+Kể hai câu chuyện đi ca thực tế cho dễ hình dung:
+
+1. **Refactor auth (12 file, 4 tầng):** ca này khám xong xếp loại MODIFICATION/COMPLEX, nên bác sĩ cho mổ theo tầng (db→svc→api→ui→test). Kíp 1 (db) phải xong thì kíp svc/api mới được vào; cổng budget thì mời phần tài liệu UI dời sang session 2 cho khỏi quá tải. Giữa ca có một lệnh `write_file:elevated` phải dừng chờ phê duyệt kèm xem trước diff; nhờ idempotency key mà lần retry sau timeout không bị chạy migration hai lần. Kết quả: 1 lần retry, 0 lần ghi trùng.
+2. **Phân loại E2E flaky (30 test):** ca này đông bệnh nhân nên chia theo kiểu map-reduce — 30 shard `run_tests` chạy song song (sem=6), mỗi shard hẹn timeout 90s, chỗ nào nhạy thì cho `race(unit-shard, cached-baseline)` để nhánh nào xanh thì đi tiếp. Có 3 lỗi transient được retry qua idempotency cache; 1 lỗi perm thì ghi `failed` gọn gàng chứ không chặn báo cáo merge. Cuối ca dùng join gom kết quả pass/fail + gắn liên kết trajectory.
 
 ## 15. Thực Hành (Hands-On Lab)
 
-**Bài tập (30 phút):** cài đặt `schedule + execute` cho 6 task (A→B, A→C, B+D→E, C→F) với budget `[2k,3k,3k,5k,2k,2k]`, trần session 10k, `D: elevated`, `E: timeout 5s`.
-1. Viết các batch topo; chỉ ra batch nào dừng chờ phê duyệt và batch nào hoãn vì budget.
-2. Chèn lỗi: E timeout một lần — áp dụng retry bằng idempotency-key, log event `trajectoryId` + `transition`.
-3. Thêm `race()` cho C (cache so với live) và `join()` cho E/F. Sản phẩm: bảng batch + event log + 1 đoạn văn nêu điều gì chuyển sang session 2 và vì sao.
+Tới giờ thực tập rồi — coi như ca trực 30 phút của bạn:
+
+**Bài tập (30 phút):** thử làm bác sĩ trực với `schedule + execute` cho 6 ca bệnh (A→B, A→C, B+D→E, C→F), trong đó budget là `[2k,3k,3k,5k,2k,2k]`, trần session 10k, `D: elevated`, `E: timeout 5s`.
+1. Chia các batch theo topo; chỉ ra batch nào phải đứng chờ phê duyệt và batch nào bị hoãn vì cạn budget.
+2. Giả vờ E timeout một lần — hãy retry bằng idempotency-key, rồi ghi lại event `trajectoryId` + `transition`.
+3. Gắn thêm `race()` cho C (so kèo cache với live) và `join()` cho E/F. Nộp bài gồm: bảng batch + event log + 1 đoạn văn ngắn kể lại điều gì phải dời sang session 2 và vì sao.
 
 ---
 

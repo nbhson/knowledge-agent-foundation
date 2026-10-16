@@ -95,7 +95,7 @@ The answer lies in **Harness Engineering** - a discipline that does not focus on
 
 ### Background
 
-When Mitchell Hashimoto (founder of HashiCorp, author of Terraform) declared that *"Prompt Engineering is dead"* and introduced the concept of **Harness Engineering**, he opened a new chapter in how we think about building AI applications. Instead of worrying about writing the perfect prompt, we need to focus on building a complete system that lets AI operate effectively.
+When Mitchell Hashimoto (founder of HashiCorp, creator of Terraform) said *"Prompt Engineering is dead"* and introduced **Harness Engineering**, he opened a fresh chapter in how we think about building AI apps. Instead of fussing over the perfect prompt, we focus on building a full setup that helps AI do its job well.
 
 ### Purpose of This Document
 
@@ -2809,5 +2809,5 @@ Start today - you don't need perfection, you just need to begin. Build, measure,
 
 ---
 
-**Last updated:** 13/07/2026  
+**Last updated:** 16/10/2026  
 **Author:** AI Knowledge Repository

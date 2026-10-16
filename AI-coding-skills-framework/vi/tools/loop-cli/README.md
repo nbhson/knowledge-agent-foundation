@@ -14,9 +14,9 @@
 
 ### Câu Chuyện Mở Đầu
 
-Bạn đã thiết kế xong một harness hoàn chỉnh trong `harness/` — context, memory, guardrails, evaluation. Bạn phát hiện ra loop là cách vận hành đúng. Nhưng mỗi loop cần **scaffold thủ công**: tạo `STATE.md`, `LOOP.md`, budget files, safety config, worktree isolation...
+Hãy hình dung thế này: bạn đã dựng xong một harness chỉn chu trong `harness/` — đủ context, memory, guardrails, evaluation. Bạn cũng đã tin loop là cách vận hành đúng. Nhưng ngặt một nỗi là mỗi loop lại phải **dựng tay từ đầu**: tạo `STATE.md`, `LOOP.md`, budget files, safety config, worktree isolation...
 
-Có một vấn đề âm thầm: mỗi dự án mới bạn **viết lại cùng một cấu trúc bằng tay**, và các loop chạy tùy tiện — không có chấm điểm, không có drift detection, không có gate cưỡng chế. Khi có nhiều loop chạy song song, chúng giẫm chân nhau.
+Có một nỗi đau thầm lặng ở đây: dự án mới nào bạn cũng **gõ lại cùng một bộ khung**, rồi thả cho các loop chạy tự do — không chấm điểm, không phát hiện drift, không có gate bắt buộc. Tới lúc nhiều loop chạy song song là chúng giẫm chân lên nhau ngay.
 
 > *"Loops don't need to be hand-coded from scratch — there's an open-source CLI ecosystem supporting each phase."*
 
@@ -70,7 +70,7 @@ npx @cobusgreyling/loop-init .
 npx @cobusgreyling/loop init . --with-foundry
 ```
 
-`loop init` scaffold skills + state + budget files rồi in **Loop Ready score** và lệnh loop đầu tiên. `loop doctor` gộp audit + sync + file checks thành **top-3 next actions**. Đổi `--tool` sang `claude`, `codex`, hoặc `opencode`.
+`loop init` dựng sẵn skills + state + budget files rồi in ra **Loop Ready score** kèm lệnh loop đầu tiên để bạn chạy thử. `loop doctor` gom audit + sync + file checks thành **top-3 việc nên làm tiếp theo**. Muốn đổi tool thì chỉnh `--tool` sang `claude`, `codex` hoặc `opencode`.
 
 ### 2. `loop audit` — Loop Readiness Score
 
@@ -78,7 +78,7 @@ npx @cobusgreyling/loop init . --with-foundry
 npx @cobusgreyling/loop audit . --suggest
 ```
 
-Chấm điểm **Loop Readiness** (L0→L3) — con số từ ~10 lên 100 khi scaffold đúng. Gồm constraints + governance + **Harness Runtime** (v1.7). Cap **L3** cho đến khi đủ `loop-budget.md`, `loop-run-log.md`, và LOOP.md budget section.
+Chấm **Loop Readiness** (L0→L3) — scaffold càng chuẩn thì điểm càng nhích dần từ ~10 lên 100. Chấm cả constraints + governance + **Harness Runtime** (v1.7). Muốn chạm **L3** thì cần có đủ `loop-budget.md`, `loop-run-log.md` và budget section trong LOOP.md.
 
 ### 3. `loop cost` — Ước Lượng Token
 
@@ -86,7 +86,7 @@ Chấm điểm **Loop Readiness** (L0→L3) — con số từ ~10 lên 100 khi s
 npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
 ```
 
-Ước lượng token spend **trước khi schedule** — tránh bị sốc bill tuần sau.
+Áng chừng token sẽ tốn **trước khi bạn đặt lịch chạy** — để tuần sau khỏi giật mình nhìn bill.
 
 ### 4. `loop sync` — Phát Hiện Drift
 
@@ -94,7 +94,7 @@ npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
 npx @cobusgreyling/loop sync .
 ```
 
-Phát hiện drift giữa `STATE.md` và `LOOP.md` — hai file có thể lệch nhau theo thời gian.
+Soi chỗ lệch giữa `STATE.md` và `LOOP.md` — hai file này chạy một thời gian là rất dễ trôi khỏi nhau.
 
 ### 5. `loop context` — Memory + Circuit Breaker
 
@@ -102,7 +102,7 @@ Phát hiện drift giữa `STATE.md` và `LOOP.md` — hai file có thể lệch
 npx @cobusgreyling/loop context --check --ledger run.json
 ```
 
-Stateful memory manager + circuit breaker cho long runs. Quản lý context không phình vô hạn qua nhiều iterations.
+Một memory manager có trạng thái kèm circuit breaker cho các run dài hơi. Hiểu đơn giản là giữ cho context khỏi phình vô hạn sau nhiều vòng lặp.
 
 ### 6. `loop worktree` — Cô Lập Thay Đổi
 
@@ -110,7 +110,7 @@ Stateful memory manager + circuit breaker cho long runs. Quản lý context khô
 npx @cobusgreyling/loop-worktree create --run-id <id> --pattern <p>
 ```
 
-Quản lý isolated git worktrees — mỗi attempt một worktree, theo dõi trong manifest, dọn khi reject/escalate. Kèm `lock`/`unlock` cho multi-loop coordination.
+Đứng ra quản lý các git worktree cách ly — mỗi attempt một worktree riêng, theo dõi qua manifest, xong việc (reject/escalate) thì dọn. Có kèm `lock`/`unlock` để nhiều loop khỏi giành nhau.
 
 ### 7. `loop gate` — Cưỡng Chế Cơ Học
 
@@ -118,7 +118,7 @@ Quản lý isolated git worktrees — mỗi attempt một worktree, theo dõi tr
 npx @cobusgreyling/loop gate check --action auto-merge --paths <f1,f2,...>
 ```
 
-Cưỡng chế **cơ học** path denylist + auto-merge allowlist từ `gate.yaml`. Exit `2` = escalate, `0` = proceed — cùng convention `loop-context --check` nên chain được.
+Bắt buộc **bằng cơ chế** path denylist + auto-merge allowlist đọc từ `gate.yaml`. Exit `2` là escalate, `0` là cho đi tiếp — cùng convention với `loop-context --check` nên bạn chain chúng lại được.
 
 ### 8. `loop sandbox` & `loop swarm` — Cô Lập + Consensus
 

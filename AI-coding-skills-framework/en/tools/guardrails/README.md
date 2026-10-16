@@ -14,9 +14,9 @@
 
 ### The Opening Story
 
-Your harness can call `write_file`, `execute_python`, `send_notification`, `sql_query`. One time the agent misreads the prompt and calls `write_file` with the path... `/etc/passwd`. Or `send_notification` 100 times. Or `execute_python` running a command that deletes data.
+Your harness can call `write_file`, `execute_python`, `send_notification`, `sql_query`. One day the agent misunderstands the prompt and calls `write_file` with a path like... `/etc/passwd`. Or it sends the same notification 100 times. Or it runs a command that deletes data.
 
-LLMs have no concept of "unwanted side effect" — they just generate text. **Guardrails are the control layer that stops the harness from doing what it shouldn't**, before the action happens.
+LLMs have no built-in sense of "bad side effects" — they just produce text. **Guardrails are the safety layer that stops the harness from doing things it should not do**, before the action happens.
 
 > *"The model proposes. The guardrail disposes."*
 
@@ -26,10 +26,10 @@ LLMs have no concept of "unwanted side effect" — they just generate text. **Gu
 
 | # | Reason | Explanation |
 |---|--------|-------------|
-| 1 | **Block side effects** | Stop `write_file` into forbidden areas, `execute_python` with dangerous commands |
-| 2 | **Permission enforcement** | A tool with `requires_permission="elevated"` → needs approval |
-| 3 | **Rate limiting** | `rate_limit_per_minute=60` — stops an agent from spamming tool calls |
-| 4 | **Output validation** | Check whether the output violates the rules before it goes back into context |
+| 1 | **Block side effects** | Stop `write_file` in forbidden folders, or `execute_python` with risky commands |
+| 2 | **Permission enforcement** | A tool with `requires_permission="elevated"` needs approval first |
+| 3 | **Rate limiting** | `rate_limit_per_minute=60` — stops an agent from calling tools too many times |
+| 4 | **Output validation** | Check the output for rule breaks before it goes back into context |
 
 ### Relationship to the Harness
 

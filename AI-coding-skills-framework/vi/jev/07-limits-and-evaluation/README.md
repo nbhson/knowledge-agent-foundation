@@ -10,7 +10,7 @@
 >
 > **Khái niệm:** Jev là **System One Model** cho quyết định có schema biết trước — nó **không sinh text, không giải thích, không viết tool args, không đọc file, không xử lý ảnh**, và các bài toán **arithmetic / counting / date comparison** nên giữ trong code.
 > **Ẩn dụ/so sánh:** Jev là **đèn giao thông**, không phải **người hướng dẫn** — đèn sáng xanh/vàng/đỏ cực nhanh và đáng tin trong phạm vi đèn, nhưng không thể chỉ đường cho bạn hay giải thích vì sao đèn chuyển màu.
-> **Vì sao quan trọng:** Mỗi lần giao sai việc cho Jev (đòi nó viết, tính, giải thích) bạn sẽ thất bại theo cách khó debug nhất: API vẫn trả kết quả *hợp lệ* nhưng **vô nghĩa cho việc đó** — vì nó không sinh text, chỉ trả typed result.
+> **Vì sao quan trọng:** Mỗi lần giao nhầm việc cho Jev (bắt nó viết, tính toán, giải thích) bạn sẽ gặp lỗi khó gỡ nhất: API vẫn trả về kết quả *đúng định dạng* nhưng **không có ý nghĩa cho việc đó** — vì Jev không sinh text, chỉ trả quyết định có kiểu.
 
 ### 1.1 Bảng Giới Hạn Lớn
 

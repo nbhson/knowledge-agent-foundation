@@ -29,13 +29,13 @@ Alice —[MANAGES]→ Bob —[WORKS_ON]→ Phoenix
 
 You ask: *"Does anyone on Alice's team work on AI?"*
 
-This is **not** a lookup question — it is **reasoning**:
+This is **not** a simple lookup question — it takes a bit of **reasoning**:
 
 1. Is `MANAGES` transitive? Alice manages Bob — is Bob in "Alice's team"?
 2. Does `WORKS_ON → Atlas` count as "working on AI"? Does Atlas have the property `domain: AI`?
 3. Do I need to traverse `Alice → Bob → Phoenix → Atlas` (3 hops) to connect them?
 
-**Graph Reasoning** turns these vague questions into **executable logic**: rules, path constraints, and inference chains that can be verified.
+**Graph Reasoning** turns these fuzzy questions into **clear steps you can run**: rules, path limits, and chains of logic you can check.
 
 ### Why Does Graph Reasoning Matter?
 

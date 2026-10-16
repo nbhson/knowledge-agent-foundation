@@ -83,17 +83,17 @@ Knowledge Graph (từ 02)
 
 > **📌 Khi nào cần Graph DB?** Khi câu hỏi của bạn là **"thực thể này liên quan đến ai/as thế nào?"** (traversal multi-hop), SQL phải JOIN nhiều lần rất chậm — graph DB đi qua edges trực tiếp. **Dấu hiệu cần graph DB:** truy vấn của bạn luôn có pattern `A —[...]→ B —[...]→ C` (2+ hops).
 >
-> **Q&A nhanh để chọn:**
-> - Bạn đang học/prototype? → **Kuzu / NetworkX** (không cần cài Docker)
-> - Cần production ổn định, ecosystem lớn? → **Neo4j** (Community → Aura khi scale)
-> - Hàng ngàn tỷ edges? → **NebulaGraph** (scale-out)
-> - Cần phản hồi dưới mili giây? → **FalkorDB / Memgraph** (in-memory)
+> **Chọn nhanh theo nhu cầu:**
+> - Đang học hoặc làm prototype? → **Kuzu / NetworkX** (không cần cài Docker)
+> - Cần hệ thống ổn định lâu dài, cộng đồng lớn? → **Neo4j** (đi từ Community lên Aura khi cần mở rộng)
+> - Graph tới hàng nghìn tỷ cạnh? → **NebulaGraph** (mở rộng ngang)
+> - Cần phản hồi dưới một mili giây? → **FalkorDB / Memgraph** (chạy trong bộ nhớ)
 
 ### 1.1 So Sánh Chi Tiết
 
 ```
 ┌────────────────┬──────────┬──────────┬──────────┬────────────────────────────┐
-│ Database       │ Type     │ Scale    │ Query    │ Best For                   │
+│ Database       │ Kiểu     │ Quy mô   │ Truy vấn │ Phù hợp nhất khi           │
 ├────────────────┼──────────┼──────────┼──────────┼────────────────────────────┤
 │ Neo4j          │ Property │ Billions │ Cypher   │ Production, ecosystem lớn  │
 │ (Community/Ent)│ Graph    │ nodes    │ GQL      │ Full-text, GDS, Aura cloud │

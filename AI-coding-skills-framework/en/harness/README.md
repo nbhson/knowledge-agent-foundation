@@ -7,7 +7,7 @@
 ## 1. What Is a Harness, in One Diagram
 
 A harness is **everything around the LLM** that turns a single
-`prompt → completion` call into a reliable `request → verified outcome` system.
+`prompt → reply` call into a reliable `request → checked result` system.
 
 ```
 ┌──────────────────────────── REAL HARNESS LIFECYCLE ────────────────────────────┐

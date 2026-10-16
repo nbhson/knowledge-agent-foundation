@@ -14,13 +14,13 @@
 
 ### The Opening Story
 
-You've designed a complete harness — tools, memory, context, guardrails — and you've written loops that triage and verify on their own. But there's a quiet problem: **every time the agent runs `ls`, `cat`, `git status`, `cargo test`... it gets hundreds of lines of output back**, which gobbles up the context window, and in that pile of noise the agent easily misses the one most important error line.
+You have built a full harness — tools, memory, context, guardrails — and you have loops that check work on their own. But one quiet problem remains: **every time the agent runs `ls`, `cat`, `git status`, or `cargo test`... it gets back hundreds of lines**, which fill up the context window, and the one error line that matters gets lost in the noise.
 
 > *"Input tokens are the currency of agent reasoning. Don't spend them on bash noise."*
 
-**Harness Engineering** teaches you to design the environment around AI. **Tools** is where the concrete execution tooling lives — the software you install and configure — that makes that theory work in a real environment.
+**Harness Engineering** teaches you how to shape the environment around AI. **Tools** is where the hands-on tooling lives — the apps and helpers you install and set up — that make those ideas work in real life.
 
-This directory gathers the tooling that realizes **each component of the harness**, grouped by role: **Tool** (RTK, Loop CLI), **Framework** (LangChain, AutoGen, CrewAI), **Vector DBs** (memory/RAG), and **MCP Ecosystem** (connecting tools via MCP) — plus the **Security** (guardrails) and **Quality** (observability, evaluation) layers.
+This folder gathers the tooling behind **each part of the harness**, grouped by role: **Tool** (RTK, Loop CLI), **Framework** (LangChain, AutoGen, CrewAI), **Vector DBs** (memory/RAG), and **MCP Ecosystem** (linking tools through MCP) — plus the **Security** (guardrails) and **Quality** (observability, evaluation) layers.
 
 ### Why Tools Matter?
 
@@ -30,13 +30,13 @@ This directory gathers the tooling that realizes **each component of the harness
 
 | # | Reason | Explanation |
 |---|--------|-------------|
-| 1 | **The harness needs "materialization"** | The modules in `harness/` teach *how to build* (context compression, tool design...). Tools like RTK are *ready-to-use things*, not code you write yourself. |
-| 2 | **Immediate token savings** | Installing RTK once can cut 40-90% of tokens for repetitive bash commands — exactly the "Cut Costs 40-60%" goal in HARNESS_ENGINEERING.md. |
-| 3 | **Separate knowledge from tooling** | Keep `harness/` purely knowledge (documentation, labs), `loop/` purely loops, and `tools/` for supporting binaries/CLIs/plugins — each branch with a clear role. |
+| 1 | **The harness needs "materialization"** | The `harness/` guides teach *how to build* (context sizing, tool design...). Tools like RTK are *ready to use* — you install them instead of writing them. |
+| 2 | **Immediate token savings** | Installing RTK once can cut 40-90% of tokens from repeated bash commands — a direct win toward the "Cut Costs 40-60%" goal in HARNESS_ENGINEERING.md. |
+| 3 | **Separate knowledge from tooling** | Keep `harness/` for ideas and guides, `loop/` for loops, and `tools/` for ready-made binaries, CLIs, and plugins — each folder with a clear job. |
 
 ## Overview (The Tools Group)
 
-**Tools** is the third branch of the framework, parallel to `harness/` (knowledge) and `loop/` (loops). Each tool is a subdirectory with its own tutorial, following the same convention: an `README.md` overview + learning roadmap + numbered topics.
+**Tools** is the third branch of the framework, next to `harness/` (ideas) and `loop/` (loops). Each tool has its own folder with a guide, following the same style: an `README.md` overview plus a learning path with numbered topics.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -50,11 +50,11 @@ This directory gathers the tooling that realizes **each component of the harness
 
 ## Directory Structure Across 4 Groups
 
-The tools are grouped by **architectural role** — so you know exactly which tool solves which problem in the harness:
+The tools are grouped by **what job they do** — so you can quickly see which tool solves which harness problem:
 
 ### 🔧 Group 1 — Tool (AI environment optimization tools)
 
-> Directly installed binaries/CLIs that help optimize how the agent interacts with the environment.
+> Ready-to-install binaries and CLIs that help the agent work better with its environment.
 
 ```
 tools/
@@ -72,7 +72,7 @@ tools/
 
 ### 🏗️ Group 2 — Framework (Building harness orchestration)
 
-> Programming frameworks to materialize the harness into real code.
+> Coding frameworks that turn harness ideas into real working code.
 
 ```
 tools/
@@ -88,7 +88,7 @@ tools/
 
 ### 🗄️ Group 3 — Vector DBs (Memory & Retrieval)
 
-> Storage and retrieval of semantic memory for harness/01-03.
+> Storage and lookup for long-term memory in harness/01-03.
 
 ```
 tools/
@@ -98,7 +98,7 @@ tools/
 
 ### 🔌 Group 4 — MCP Ecosystem (Connecting Tools ↔ AI)
 
-> The protocol that standardizes how AI apps connect to external tools & data (harness/06).
+> The shared standard that links AI apps with outside tools and data (harness/06).
 
 ```
 tools/
@@ -108,7 +108,7 @@ tools/
 
 ### 🛡️ Security Layer (Safe tool calls)
 
-> The control layer before the agent acts — preventing unwanted side effects.
+> The safety check before the agent acts — so it avoids harmful side effects.
 
 ```
 tools/
@@ -118,7 +118,7 @@ tools/
 
 ### 📊 Quality Layer (Measurement & monitoring)
 
-> Blocking regressions, tracking cost/latency, ensuring the harness runs correctly & cheaply.
+> Tools that block regressions, track cost and speed, and keep the harness healthy and cheap.
 
 ```
 tools/
@@ -223,7 +223,7 @@ Stage 6 — Automate:
 
 ### 1. RTK — Eating Its Own Dogfood
 
-The `rtk-ai/rtk` repo itself is a harness engineering case study: it supports **16 AI coding tools** through different hook/plugin mechanisms:
+The `rtk-ai/rtk` repo itself shows harness ideas in action: it supports **16 AI coding tools** through different hook and plugin setups:
 
 | AI Tool | Integration method | Level |
 |---------|-------------------|-------|
@@ -309,8 +309,8 @@ loop-cli/      → loop gate + worktree isolation for automation (harness/10)
 | Layer | Tool | Role | Link |
 |-------|------|------|------|
 | 🛡️ Security | **Guardrails** (AI, NeMo, LlamaGuard) | Safe tool calls | [guardrails/](guardrails/) |
-| 📊 Quality | **Observability** (LangSmith, Helicone, OpenLLMetry, W&B) | Monitor cost + latency | [observability/](observability/) |
-| 📊 Quality | **Evaluation** (PromptFoo, Deepeval, Ragas) | Measure response quality | [evaluation/](evaluation/) |
+| 📊 Quality | **Observability** (LangSmith, Helicone, OpenLLMetry, W&B) | Monitor cost + latency | [observability](observability/) |
+| 📊 Quality | **Evaluation** (PromptFoo, Deepeval, Ragas) | Measure response quality | [evaluation](evaluation/) |
 
 ### Links to Other Branches
 

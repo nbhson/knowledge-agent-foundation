@@ -14,13 +14,13 @@
 
 ### Câu Chuyện Mở Đầu
 
-`harness/06-decide-tools-mcp` dạy bạn **quyết định nên dùng tool nào** — nhưng câu hỏi tiếp theo là *"kết nối chúng vào harness bằng cách nào?"*
+`harness/06-decide-tools-mcp` chỉ bạn **nên xài tool nào** — nhưng câu hỏi tiếp theo mới nhức đầu: *"cắm chúng vào harness bằng cách nào?"*
 
-Trước MCP, mỗi AI app phải tự viết integration cho từng tool: một adapter cho GitHub, một adapter cho database, một adapter cho file system... Lặp lại vô số lần, mỗi lần mỗi khác.
+Hồi chưa có MCP, mỗi AI app phải tự viết integration cho từng tool: một adapter cho GitHub, một adapter cho database, một adapter cho file system... Cứ lặp đi lặp lại, mỗi chỗ một kiểu khác nhau.
 
 > *"MCP is the USB-C of AI tools — one standard, every device."*
 
-**MCP (Model Context Protocol)** — protocol mở do Anthropic phát hành — chuẩn hóa cách AI apps kết nối với external tools và data. Thay vì viết N integrations, bạn viết **một server**, và **mọi MCP-compatible client** (Cline, Claude, VS Code...) đều dùng được.
+**MCP (Model Context Protocol)** — protocol mở do Anthropic phát hành — đứng ra chuẩn hóa cách AI app bắt tay với tools và data bên ngoài. Thay vì viết N integration, bạn chỉ viết **một server**, rồi **mọi client tương thích MCP** (Cline, Claude, VS Code...) đều xài được.
 
 ### Tại Sao MCP Quan Trọng?
 
@@ -58,7 +58,7 @@ Harness Tool Pipeline (harness/06):
 
 ### MCP Là Gì?
 
-**Model Context Protocol** — giao thức mở, cho phép AI applications kết nối với external tools và data sources thông qua một chuẩn chung:
+**Model Context Protocol** — một giao thức mở để AI app kết nối với tools và data bên ngoài qua cùng một chuẩn chung:
 
 | Khái niệm | Vai trò |
 |-----------|---------|

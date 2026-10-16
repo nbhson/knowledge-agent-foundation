@@ -14,11 +14,11 @@
 
 ### Câu Chuyện Mở Đầu
 
-Harness của bạn đã có tools, memory, context — nhưng có một kẻ ngốn context âm thầm: **bash output**. Mỗi lần agent chạy `git status`, `cargo test`, hay `ls`, nó nhận về hàng trăm dòng noise — và trong đống noise đó, agent dễ bỏ lỡ chính dòng lỗi cần sửa.
+Hãy hình dung thế này: harness của bạn đã có đủ tools, memory, context — nhưng vẫn còn một kẻ ngốn context thầm lặng: **bash output**. Mỗi lần agent chạy `git status`, `cargo test` hay `ls`, nó mang về hàng trăm dòng noise — rồi ngụp lặn trong đó tới mức trôi mất đúng dòng lỗi cần sửa.
 
-**RTK (Rust Token Killer)** là một CLI proxy viết bằng Rust, chèn mình vào giữa agent và shell command, cắt tới **90% bash output** trước khi nó chạm vào LLM context. Một binary duy nhất, hỗ trợ 100+ commands, overhead <10ms.
+**RTK (Rust Token Killer)** là một CLI proxy viết bằng Rust, đứng chen vào giữa agent và shell command để gọt tới **90% bash output** trước khi nó chui vào LLM context. Chỉ một binary duy nhất, cân 100+ commands, overhead dưới 10ms.
 
-> __RTK là một phần của hệ sinh thái harness — nó là công cụ hiện thực hóa `harness/02-build-context`, nằm trong `tools/rtk/`.__ Không phải là component trong `harness/`, và giờ `tools/` đã là nơi tập trung đầy đủ các công cụ hỗ trợ hiện thực hóa toàn bộ 7 components của harness.
+> __RTK là một phần của hệ sinh thái harness — nó là công cụ hiện thực hóa `harness/02-build-context`, nằm trong `tools/rtk/`.__ Nó không phải component trong `harness/`, mà `tools/` giờ là chỗ gom đầy đủ đồ nghề giúp bạn biến cả 7 components của harness thành hàng thật.
 
 ---
 
@@ -26,7 +26,7 @@ Harness của bạn đã có tools, memory, context — nhưng có một kẻ ng
 
 ### ✅ **CÓ — về mặt khái niệm.**
 
-Theo [HARNESS_ENGINEERING.md](../../HARNESS_ENGINEERING.md), harness gồm **7 components**. RTK thuộc **Component #3 — Context Management** (nhánh Context Optimization / Token Reduction), và liên quan phụ tới **Tools** (#1) và **Evaluation**:
+Theo [HARNESS_ENGINEERING.md](../../HARNESS_ENGINEERING.md), harness gồm **7 components**. RTK nằm ở **Component #3 — Context Management** (nhánh Context Optimization / Token Reduction), rồi liên quan thêm một chút tới **Tools** (#1) và **Evaluation**:
 
 | Component | Vai trò | RTK liên quan? |
 |-----------|---------|----------------|
@@ -42,7 +42,7 @@ Theo [HARNESS_ENGINEERING.md](../../HARNESS_ENGINEERING.md), harness gồm **7 c
 | `harness/06-decide-tools-mcp` | 🟡 Phụ | Tool proxy design |
 | `harness/11-evaluation` | 🟡 Phụ | `rtk gain` / `rtk discover` |
 
-> **Phân biệt**: RTK là **công cụ thực thi cụ thể** (Rust binary), KHÔNG phải knowledge module như `harness/01-11` — nên nó sống trong nhánh `tools/`, cùng convention với `harness/` và `loop/`.
+> **Phân biệt cho dễ nhớ**: RTK là **đồ nghề chạy được thật** (Rust binary), KHÔNG phải module kiến thức như `harness/01-11` — nên nó ở trong nhánh `tools/`, chung nếp với `harness/` và `loop/`.
 
 ### Tại Sao RTK Quan Trọng?
 
@@ -56,7 +56,7 @@ Theo [HARNESS_ENGINEERING.md](../../HARNESS_ENGINEERING.md), harness gồm **7 c
 
 ## Tổng Quan
 
-RTK intercept shell commands và nén output bằng **4 chiến lược**:
+Cách RTK làm cũng đơn giản: chặn shell commands rồi nén output bằng **4 chiến lược**:
 
 | # | Chiến lược | Ví dụ |
 |---|------------|-------|
@@ -116,7 +116,7 @@ Bước 6: 05-troubleshooting/ — khi có sự cố
 
 ## Case Studies Thực Tế
 
-Repo `rtk-ai/rtk` tự dogfood — hỗ trợ 16 AI tools với các cơ chế tích hợp khác nhau:
+Vui là repo `rtk-ai/rtk` tự mình ăn "dogfood" — hỗ trợ tới 16 AI tools, mỗi tool một kiểu tích hợp khác nhau:
 
 | AI Tool | Phương thức | Level |
 |---------|-------------|-------|

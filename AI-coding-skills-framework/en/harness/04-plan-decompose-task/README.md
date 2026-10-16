@@ -2002,25 +2002,27 @@ class CursorPlanner {
 
 ### 8.1 SOLID for Planning Systems
 
+Think of SOLID as five house rules that keep your planner tidy as it grows:
+
 **1. Single Responsibility**
-- Each planner handles only one kind of task (code, research, deploy)
-- Each decomposition strategy handles one specific pattern
+- Each planner takes care of only one kind of job (code, research, deploy)
+- Each way of splitting work handles just one pattern
 
 **2. Open/Closed (Open for Extension, Closed for Modification)**
-- Open to new planning strategies
-- Closed to modifying the core decomposition logic
+- Feel free to add new planning ideas later
+- But keep the core splitting logic steady so nothing breaks
 
 **3. Liskov Substitution**
-- Planners can substitute for one another
-- Same interface, different implementations (ToT, Plan-and-Solve, ReWOO)
+- Planners can cover for each other, like substitute players
+- Same shared interface, different playing styles (ToT, Plan-and-Solve, ReWOO)
 
 **4. Interface Segregation**
-- Do not force a planner to handle every type
-- Split planners by domain
+- Don't make one planner juggle every task type
+- Split planners by topic area so each stays focused
 
 **5. Dependency Inversion**
-- The planner depends on the Task abstraction, not on a concrete implementation
-- Easy to swap decomposition strategies
+- The planner talks to the general Task idea, not one fixed implementation
+- That way you can swap splitting styles easily
 
 ### 8.2 The 10 Commandments of Task Planning
 
@@ -2073,25 +2075,29 @@ These are the 10 "commandments" that pack the whole module's experience into sho
 
 ### 9.1 DO ✅
 
-- **Decompose tasks by granularity**: broad → medium → fine-grained
-- **Identify dependencies before executing**: use a DAG to represent them
-- **Set a timeout and retries for each task**: prevents infinite loops
-- **Checkpoint before each important operation**: so you can roll back
-- **Re-plan when a failure occurs**: don't retry exactly the same way
-- **Track token usage per task**: so you can optimize cost
-- **Validate the result of each step**: fail fast
-- **Parallelize independent tasks**: saves time
+Good habits that keep planning smooth and safe:
+
+- **Break work into layers**: start broad, then medium, then small and concrete
+- **Map dependencies first**: draw them as a DAG so the order is clear
+- **Give each task a timeout and retries**: this stops endless loops
+- **Save a checkpoint before each big step**: so you can roll back
+- **Make a fresh plan when something fails**: don't just rerun the same broken step
+- **Watch token use per task**: so you can keep costs in check
+- **Check each step's result right away**: catch problems early (fail fast)
+- **Run independent tasks at the same time**: it saves a lot of waiting
 
 ### 9.2 DON'T ❌
 
-- **Don't execute the whole task in one go**: too risky
-- **Don't ignore failures**: analyze the cause
-- **Don't over-decompose**: a task that is too small = big overhead
-- **Don't forget to update state**: state sync is very important
-- **Don't hardcode the task order**: it should be computed from dependencies
-- **Don't skip validation**: unverified output = not done
-- **Don't allocate a token budget that is too large**: prevents waste
-- **Don't use a single agent for complex tasks**: multi-agent is better
+Common traps that burn time and tokens — steer around them:
+
+- **Don't swallow a whole task in one bite**: it's too risky, slice it up
+- **Don't brush failures aside**: pause and find the root cause
+- **Don't slice work too thin**: tiny tasks add big overhead
+- **Don't forget to update state**: keeping state in sync matters a lot
+- **Don't hardcode the task order**: let dependencies decide the order
+- **Don't skip checking results**: unchecked output means the job isn't done
+- **Don't hand out oversized token budgets**: they invite waste
+- **Don't send one lone agent at a giant task**: a team (multi-agent) fits better
 
 ### 9.3 Token Budget Management
 
@@ -2801,5 +2807,5 @@ def is_transient(e: Exception) -> bool:
 ---
 
 *Document: IV. Plan & Decompose Task — HARNESS ENGINEERING EDITION*
-*Updated: 13/07/2026*
+*Updated: 16/10/2026*
 *Author: AI Knowledge Repository*

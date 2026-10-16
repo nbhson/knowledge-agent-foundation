@@ -14,9 +14,9 @@
 
 ### The Opening Story
 
-Your harness already has tools, memory, context — but there's a quiet context glutton: **bash output**. Every time the agent runs `git status`, `cargo test`, or `ls`, it gets hundreds of lines of noise back — and in that pile of noise, the agent easily misses the very error line it needs to fix.
+Your harness already has tools, memory, and context — but one quiet eater keeps filling up the context: **bash output**. Every time the agent runs `git status`, `cargo test`, or `ls`, it gets back hundreds of noisy lines — and buried in that noise, it can easily miss the one error line it really needs.
 
-**RTK (Rust Token Killer)** is a CLI proxy written in Rust that inserts itself between the agent and the shell command, cutting up to **90% of bash output** before it reaches the LLM context. A single binary, 100+ supported commands, overhead <10ms.
+**RTK (Rust Token Killer)** is a small CLI proxy written in Rust. It sits between the agent and the shell command and trims up to **90% of bash output** before it reaches the LLM. Just one binary, 100+ supported commands, and less than 10ms of overhead.
 
 > __RTK is part of the harness ecosystem — it's the tooling that materializes `harness/02-build-context`, and it lives in `tools/rtk/`.__ It is not a component inside `harness/`, and now `tools/` has become the fully centralized place for the supporting tooling that materializes all 7 components of the harness.
 

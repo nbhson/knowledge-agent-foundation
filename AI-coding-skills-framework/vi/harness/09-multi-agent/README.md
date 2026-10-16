@@ -1877,7 +1877,7 @@ Checklist này chia 3 giai đoạn trước khi hệ thống multi-agent lên pr
 
 ### 12.1 Claude Code — Anthropic's Multi-Agent Architecture
 
-Claude Code sử dụng multi-agent pattern phức tạp với planner, coder, và reviewer agents phối hợp thông qua shared context.
+Hãy hình dung Claude Code như một nhóm ba người bạn cùng làm một bài tập lớn: một bạn lên dàn ý (planner), một bạn viết bài (coder), và một bạn soát lỗi (reviewer) — cả ba cùng nhìn chung một tờ nháp (shared context).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1925,7 +1925,7 @@ Claude Code sử dụng multi-agent pattern phức tạp với planner, coder, v
 
 ### 12.2 Devin — Autonomous Software Engineering Agent
 
-Devin (Cognition AI) sử dụng multi-agent pattern với specialized modules:
+Devin của Cognition AI thì làm theo kiểu một kỹ sư tự chủ nhiều "ngăn não" chuyên biệt — mỗi module chuyên lo một việc riêng, nhưng phối hợp nhịp nhàng với nhau:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -2871,7 +2871,7 @@ for est in COST_ESTIMATES:
 
 ## 16. Chịu Lỗi, Messaging & Isolation
 
-Ở quy mô production, agent có thể crash, treo, ghi trùng và rò rỉ secret. Section này bổ sung lớp gia cố còn thiếu: phát hiện lỗi + giao lại việc, đảm bảo messaging rõ ràng, quy tắc nhất quán bộ nhớ, và sandbox cho từng agent. Ẩn dụ: như đội bếp — nếu một đầu bếp gục xuống, người khác tiếp quản ticket của anh ta (reassignment), order có số thứ tự (ordering), chỉ một đầu bếp trình bày món ăn (write conflict), và nhân viên vệ sinh không được vào két sắt (secret containment).
+Khi mang ra production, chuyện "có bạn lăn ra ốm" là bình thường: agent có thể crash, treo máy, ghi trùng nhau hay vô tình để lộ secret. Vì vậy section này đóng vai trò như lớp áo giáp gia cố thêm: phát hiện lỗi rồi giao lại việc, nhắn tin cho nhau rõ ràng, thống nhất quy tắc dùng chung bộ nhớ, và nhốt mỗi agent trong sandbox riêng. Cứ hình dung như một đội bếp ăn — nếu một đầu bếp gục xuống, bạn khác tiếp quản ngay ticket của anh ấy (reassignment), mỗi order đều có số thứ tự (ordering), chỉ một đầu bếp được trình bày món ăn (write conflict), và nhân viên vệ sinh thì không được bén mảng tới két sắt (secret containment).
 
 ### 16.1 Chịu Lỗi — Phát Hiện Crash / Timeout / Treo
 
@@ -2888,7 +2888,7 @@ REASSIGNMENT:
 QUORUM (judges/voters): 2f+1 agents tolerate f faults; require majority (e.g. 2/3)
 ```
 
-Quy tắc: mỗi task có `lease_id + deadline + max_attempts`; supervisor phi trạng thái + backed by queue (Redis/BullMQ); ưu tiên worker idempotent để giao lại việc retry an toàn.
+Nói cho dễ nhớ: mỗi task đều có một "vé giữ chỗ" gồm `lease_id + deadline + max_attempts`; supervisor thì không giữ trạng thái trong bụng mà tựa vào hàng đợi (queue như Redis/BullMQ); và hãy ưu tiên viết worker theo kiểu idempotent để khi giao lại việc thì retry vẫn an toàn.
 
 ### 16.2 Đảm Bảo Messaging — Thứ Tự, Phân Phối, Giới Hạn Payload
 
@@ -2902,31 +2902,31 @@ Quy tắc: mỗi task có `lease_id + deadline + max_attempts`; supervisor phi t
 
 ### 16.3 Nhất Quán Bộ Nhớ — Dùng Chung hay Riêng, Xung Đột Ghi
 
-- **Riêng tư theo mặc định:** mỗi agent có scratchpad riêng; chỉ công bố diff/fact lên blackboard dùng chung.
-- **Dùng chung qua key có phiên bản:** `blackboard.write(key, value, expectedVersion)` — ngữ nghĩa CAS; khi lệch phiên bản thì đọc lại + merge, không bao giờ ghi đè mù.
-- **Một writer cho mỗi artifact:** orchestrator gán quyền sở hữu file/section (ví dụ chỉ `coder` được ghi `auth.ts`); reviewer chỉ nêu comment, không sửa trực tiếp.
-- **Cô lập theo từng agent:** key theo namespace `agent_id/task_id/*`; đọc chéo giữa các agent đi qua projection trong allow-list (không rò prompt/secret thô).
+- **Riêng tư là mặc định, chia sẻ có chọn lọc:** mỗi agent giữ một cuốn sổ nháp riêng; chỉ khi có ý hay, fact mới thì mới dán lên tấm bảng chung (blackboard).
+- **Hàng dùng chung thì ghi theo kiểu có phiên bản:** `blackboard.write(key, value, expectedVersion)` — theo ngữ nghĩa CAS; nếu thấy lệch phiên bản thì đọc lại rồi merge, tuyệt đối không ghi đè mù quáng.
+- **Mỗi artifact chỉ một "chủ bút":** orchestrator cắt cử rõ ai được ghi file/section nào (ví dụ chỉ `coder` được ghi `auth.ts`); reviewer chỉ góp ý bằng comment, không xía tay sửa trực tiếp.
+- **Mỗi agent ở một ngăn riêng:** key trong bộ nhớ đặt theo namespace `agent_id/task_id/*`; muốn đọc chéo sang nhà nhau thì phải đi qua projection trong allow-list (để prompt thô hay secret không bị rò rỉ).
 
 ### 16.4 Sandbox Cho Từng Agent + Giữ Secret
 
-**Cơ chế cách ly** — tier cách ly, 5 control bắt buộc, runner đã harden, và ma trận policy
-theo role — thuộc sở hữu của
-[`12-sandbox-execution`](../12-sandbox-execution/README.md) §2–§6. Mục này chỉ bổ sung hai
-thứ riêng của *một đội* agent chứ không phải của một run đơn lẻ:
+**Chuyện cách ly thì sao?** — tier cách ly nào, 5 control bắt buộc nào, runner đã harden ra sao, và ma trận policy
+theo role — tất cả đã có chủ nhà lo, nằm gọn trong
+[`12-sandbox-execution`](../12-sandbox-execution/README.md) §2–§6. Chỗ này mình chỉ kể thêm hai
+nét riêng của chuyện *nhiều agent sống chung một nhà* chứ không phải của một run đơn lẻ:
 
-- **Tool tối thiểu theo role, phân giải qua ma trận role.** `reviewer` chỉ có FS đọc + không
-  shell; `coder` có shell sandbox không net. Thay vì lặp lại các grant này, hãy tra cứu:
-  ma trận policy theo role ở `12` §6 được khoá theo *tên role*, nên run multi-agent và run
-  solo phân giải ra *cùng* policy cho *cùng* một role. Một `reviewer` mà lại chạy được shell
-  trong swarm nhưng không trong solo là bug leo thang đặc quyền.
-- **Secret là lease theo từng agent, không phải theo message.** Agent nhận token ngắn hạn
-  theo phạm vi (5–15 phút) qua env injection, và supervisor redact `sk-*, ghp_*, AWS_*` khỏi
-  log và transcript trước khi ghi. Secret containment bên trong sandbox là `12` §3.5; phần
-  riêng của multi-agent là một secret đã đưa cho agent này không bao giờ được xuất hiện trong
-  context của agent khác qua một projection trên blackboard chung.
-- **Chính sách egress: chặn theo mặc định, allow-list domain cho từng agent.** Mọi I/O tool đều
-  audit kèm `agent_id + lease_id` — đây chính là thứ làm cho việc redact ở trên truy vết được:
-  một token rò rỉ trên blackboard chung sẽ truy được về đúng một lease.
+- **Đồ nghề thì phát theo đúng vai, tra cứu qua ma trận role.** Bạn `reviewer` chỉ được đọc file, không
+  shell; bạn `coder` thì có shell sandbox nhưng bị cắt net. Thay vì liệt kê lại hết các grant này ở đây, mình hẹn nhau cùng tra một chỗ:
+  ma trận policy theo role ở `12` §6 được khóa theo *tên role*, nên run multi-agent hay run
+  solo mà cùng một role thì nhận *cùng* một policy. Nếu một `reviewer` chạy được shell
+  trong swarm mà solo lại không — thì đó là bug leo thang đặc quyền, phải sửa ngay.
+- **Secret là vé thuê theo từng agent, không kẹp chung vào message.** Agent nhận token ngắn hạn
+  đúng phạm vi của mình (5–15 phút) qua env injection, và supervisor sẽ bôi đen `sk-*, ghp_*, AWS_*` khỏi
+  log và transcript trước khi ghi sổ. Chuyện nhốt secret trong sandbox thì `12` §3.5 đã lo; phần
+  riêng của đội multi-agent là: secret đã trao tay agent này thì đừng bao giờ lọt sang
+  context của agent khác qua một projection trên bảng chung.
+- **Cửa ra mạng: đóng mặc định, mở theo allow-list domain cho từng agent.** Mọi lần tool gọi ra ngoài đều
+  ghi audit kèm `agent_id + lease_id` — chính nhờ dòng audit này mà việc bôi đen secret ở trên mới truy vết được:
+  lỡ có token nào rò trên bảng chung thì lần một phát ra ngay nó thuộc về lease nào.
 
 <details>
 <summary>TypeScript Code — Heartbeat + Reassignment (Click to expand/collapse)</summary>
@@ -2967,9 +2967,9 @@ async function handleFault(agentId: string, lease: TaskLease, reason: string,
 
 ### 16.5 Checklist + Ví Dụ Thực Tế
 
-**Checklist:** [ ] đã nối heartbeat + deadline + detector treo [ ] fencing token khi requeue [ ] max_attempts + đường escalate [ ] FIFO theo từng task + khử trùng `msg_id` [ ] giới hạn payload + artifact ref [ ] ghi CAS + quyền single-writer [ ] allow-list tool theo role + secret ngắn hạn theo phạm vi + redaction.
+**Checklist bỏ túi:** [ ] đã nối heartbeat + deadline + detector treo [ ] có fencing token mỗi lần requeue [ ] có max_attempts + đường escalate rõ ràng [ ] nhắn tin FIFO theo từng task + khử trùng bằng `msg_id` [ ] giới hạn payload, cái to thì gửi artifact ref [ ] ghi kiểu CAS + một artifact một chủ bút [ ] tool phát theo allow-list role + secret ngắn hạn đúng phạm vi + bôi đen log.
 
-**Thực tế:** subagent của Claude Code chạy cô lập với quyền tool giới hạn; khi subagent treo, orchestrator kill process, tăng task lease và khởi động lại với transcript rút gọn — reviewer bỏ phiếu 2-of-3 (quorum) nên một voter crash không bao giờ chặn merge.
+**Chuyện đời thường:** subagent của Claude Code chạy cách ly, mỗi bạn chỉ có ít quyền tool trong tay; lỡ bạn nào treo thì orchestrator kill process, tăng task lease rồi khởi động lại với bản transcript rút gọn — còn reviewer thì bỏ phiếu kiểu 2-of-3 (quorum) nên một voter có crash cũng không bao giờ kẹt được nút merge.
 
 **Tham chiếu file**: Spec đầy đủ về sub-agent (vòng đời, contract spawn, vai trò, budget, kiểm thử), xem [`SUBAGENT.md`](SUBAGENT.md)
 

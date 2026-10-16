@@ -14,13 +14,13 @@
 
 ### Câu Chuyện Mở Đầu
 
-Bạn đã thiết kế một harness hoàn chỉnh — tools, memory, context, guardrails — và bạn đã viết những vòng lặp (loops) tự triage, tự verify. Nhưng có một vấn đề âm thầm: **mỗi lần agent chạy `ls`, `cat`, `git status`, `cargo test`... nó nhận về hàng trăm dòng output**, ngốn hết context window, và trong đống noise đó agent dễ bỏ lỡ chính dòng lỗi quan trọng nhất.
+Hãy tưởng tượng thế này: bạn đã dựng xong một harness rất chỉn chu — đủ tools, memory, context, guardrails — rồi viết thêm mấy vòng loop biết tự đi tìm việc, tự kiểm tra lại. Mọi thứ chạy êm, cho tới khi bạn để ý một chuyện nhỏ mà hao khá nhiều: **mỗi lần agent gọi `ls`, `cat`, `git status`, `cargo test`... nó bê về cả trăm dòng output**, lấp đầy context window, rồi vô tình trôi mất đúng cái dòng lỗi mình cần tìm nhất.
 
 > *"Input tokens are the currency of agent reasoning. Don't spend them on bash noise."*
 
-**Harness Engineering** dạy bạn thiết kế môi trường xung quanh AI. **Tools** là nơi chứa những công cụ thực thi cụ thể — phần mềm bạn cài đặt và cấu hình — để hiện thực hóa lý thuyết đó trong môi trường thật.
+Nếu **Harness Engineering** là bản vẽ chỉ cách sắp xếp góc làm việc quanh AI cho gọn gàng, thì **Tools** chính là thùng đồ nghề bạn mở ra dùng ngay — những phần mềm đã được cài sẵn, chỉnh sẵn — để biến bản vẽ đó thành chỗ làm việc thật.
 
-Thư mục này tập hợp các công cụ hiện thực hóa **từng component của harness**, được phân nhóm theo vai trò: **Tool** (RTK, Loop CLI), **Framework** (LangChain, AutoGen, CrewAI), **Vector DBs** (memory/RAG), và **MCP Ecosystem** (kết nối tools qua MCP) — cùng các tầng **Security** (guardrails) và **Quality** (observability, evaluation).
+Trong thư mục này, mình gom lại các món đồ nghề ứng với **từng món trong harness**, rồi xếp thành từng ngăn cho dễ tìm: **Tool** (RTK, Loop CLI), **Framework** (LangChain, AutoGen, CrewAI), **Vector DBs** (chỗ cất memory/RAG), và **MCP Ecosystem** (cách cắm tools vào AI qua MCP) — kèm thêm hai tầng **Security** (đồ bảo hộ guardrails) và **Quality** (đồ đo đạc observability, evaluation).
 
 ### Tại Sao Tools Quan Trọng?
 
@@ -36,7 +36,7 @@ Thư mục này tập hợp các công cụ hiện thực hóa **từng componen
 
 ## Tổng Quan (Nhóm Tools)
 
-**Tools** là nhánh thứ ba của framework, song song với `harness/` (kiến thức) và `loop/` (vòng lặp). Mỗi công cụ là một thư mục con với tutorial riêng, bắt chước cùng convention: `README.md` tổng quan + lộ trình học + các chuyên đề đánh số.
+Nói nôm na, **Tools** là ngăn thứ ba trong tủ đồ, nằm cạnh `harness/` (ngăn lý thuyết) và `loop/` (ngăn vòng lặp). Mỗi món đồ nghề có một thư mục riêng với hướng dẫn đi kèm, đều theo cùng một nếp: `README.md` giới thiệu chung + lộ trình học + các bài chuyên đề đánh số.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -50,11 +50,11 @@ Thư mục này tập hợp các công cụ hiện thực hóa **từng componen
 
 ## Cấu Trúc Thư Mục Theo 4 Nhóm
 
-Các công cụ được nhóm theo **vai trò kiến trúc** — giúp bạn biết chính xác công cụ nào giải quyết vấn đề nào trong harness:
+Mình xếp đồ nghề theo **việc mà nó phụ trách trong ngôi nhà harness** — nhìn vào là biết ngay món nào giải quyết nỗi đau nào:
 
 ### 🔧 Nhóm 1 — Tool (Công cụ tối ưu môi trường AI)
 
-> Các binary/CLI cài trực tiếp, giúp tối ưu cách agent tương tác với môi trường.
+> Mấy món binary/CLI cài một lần là xài ngay, giúp agent đỡ vất vả khi gõ lệnh trong máy.
 
 ```
 tools/
@@ -72,7 +72,7 @@ tools/
 
 ### 🏗️ Nhóm 2 — Framework (Xây dựng harness orchestration)
 
-> Các framework lập trình để hiện thực hóa harness thành code thật.
+> Mấy bộ khung lập trình để biến ý tưởng harness trên giấy thành code chạy được thật.
 
 ```
 tools/
@@ -88,7 +88,7 @@ tools/
 
 ### 🗄️ Nhóm 3 — Vector DBs (Memory & Retrieval)
 
-> Lưu trữ và truy xuất memory ngữ nghĩa cho harness/01-03.
+> Cái kho để cất và lục lại trí nhớ dài hạn của agent, dùng cho harness/01-03.
 
 ```
 tools/
@@ -98,7 +98,7 @@ tools/
 
 ### 🔌 Nhóm 4 — MCP Ecosystem (Kết nối Tools ↔ AI)
 
-> Giao thức chuẩn hóa cách AI apps kết nối external tools & data (harness/06).
+> Ngôn ngữ chung để app AI bắt tay với tools và dữ liệu bên ngoài (harness/06).
 
 ```
 tools/
@@ -108,7 +108,7 @@ tools/
 
 ### 🛡️ Tầng Security (An toàn tool calls)
 
-> Lớp kiểm soát trước khi agent hành động — ngăn side effects không mong muốn.
+> Lớp người gác cửa đứng trước mỗi hành động của agent — chặn mấy cú bấm nhầm gây hậu quả.
 
 ```
 tools/
@@ -118,7 +118,7 @@ tools/
 
 ### 📊 Tầng Quality (Đo lường & giám sát)
 
-> Chặn regression, theo dõi cost/latency, đảm bảo harness chạy đúng & rẻ.
+> Mấy món giúp bạn soi xem harness có chạy đúng, chạy rẻ không, để lỗi cũ không quay lại.
 
 ```
 tools/
@@ -175,7 +175,7 @@ tools/
     └── README.md
 ```
 
-> Mỗi thư mục chứa một `README.md` — đồng nhất với convention của `harness/` và `loop/`.
+> Mỗi thư mục đều có một `README.md` riêng — đúng cùng nếp với `harness/` và `loop/`, nên bạn mở ngăn nào cũng thấy quen tay.
 
 ## Lộ Trình Học
 
@@ -223,7 +223,7 @@ Giai đoạn 6 — Tự động hóa:
 
 ### 1. RTK — Eat Its Own Dogfood
 
-Repo `rtk-ai/rtk` chính là một harness engineering case study: nó hỗ trợ **16 AI coding tools** thông qua cơ chế hook/plugin khác nhau:
+Chuyện vui là repo `rtk-ai/rtk` tự nó đã là một ví dụ harness engineering sống động: để xài được với **16 AI coding tools**, nó phải biết len lỏi qua đủ kiểu hook/plugin khác nhau:
 
 | AI Tool | Phương thức tích hợp | Level |
 |---------|---------------------|-------|
@@ -235,6 +235,8 @@ Repo `rtk-ai/rtk` chính là một harness engineering case study: nó hỗ tr�
 | Cursor | preToolUse hook (hooks.json) | Transparent rewrite |
 
 ### 2. Stack Hoàn Chỉnh Cho Một Harness Production (Theo Nhóm)
+
+Thử hình dung bạn ráp một bộ harness đi làm thật, đủ đồ nghề từ đầu tới cuối thì nó sẽ trông như vầy:
 
 ```
 🔧 TOOL
@@ -261,6 +263,8 @@ loop-cli/      → loop gate + worktree isolation cho automation (harness/10)
 ```
 
 ### 3. Kết Quả Đo Lường RTK
+
+Và đây là con số đo thực tế khi cho RTK ra tay gọn bớt output — nhìn cột cuối là thấy đáng công cài ngay:
 
 | Command | Output thô | Output RTK | Giảm |
 |---------|-----------|------------|------|

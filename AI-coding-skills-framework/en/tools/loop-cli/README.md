@@ -14,13 +14,13 @@
 
 ### The Opening Story
 
-You've finished designing a complete harness in `harness/` — context, memory, guardrails, evaluation. You've discovered that loops are the right way to operate it. But each loop needs **manual scaffolding**: creating `STATE.md`, `LOOP.md`, budget files, safety config, worktree isolation...
+You have finished designing a full harness in `harness/` — context, memory, guardrails, evaluation. You have learned that loops are the right way to run it. But each loop still needs **setup by hand**: making `STATE.md`, `LOOP.md`, budget files, safety settings, isolated worktrees...
 
-There's a quiet problem: for every new project you **rewrite the same structure by hand**, and the loops run ad hoc — no scoring, no drift detection, no enforced gate. When several loops run in parallel, they trample on each other.
+Here is the quiet pain: for every new project you **set up the same files again by hand**, and the loops run in an ad-hoc way — no scoring, no drift checks, no firm gate. When several loops run at the same time, they get in each other's way.
 
 > *"Loops don't need to be hand-coded from scratch — there's an open-source CLI ecosystem supporting each phase."*
 
-**Loop CLI** (`@cobusgreyling/loop-*`) is the command-line toolset that materializes the entire loop theory: from init scaffolding, readiness scoring, token estimation, drift detection, to mechanical enforcement and sandbox isolation.
+**Loop CLI** (`@cobusgreyling/loop-*`) is the command-line toolkit that turns the whole loop idea into real commands: from starter scaffolding, readiness scoring, token estimates, and drift checks, to firm enforcement and safe isolation.
 
 ### Why Loop CLI Matters?
 
@@ -28,10 +28,10 @@ There's a quiet problem: for every new project you **rewrite the same structure 
 
 | # | Reason | Explanation |
 |---|--------|-------------|
-| 1 | **Standardized scaffolding** | `loop init` creates the correct skills/state/budget files structure — no more "writing from scratch" on every project |
-| 2 | **Measurable** | `loop audit` scores Loop Readiness L0→L3; `loop cost` estimates tokens before running |
-| 3 | **Mechanical enforcement** | `loop gate` enforces the path denylist/allowlist from config — it doesn't depend on whether the agent reads the safety file |
-| 4 | **Safe multi-loop** | `loop worktree` + `loop sandbox` isolate each attempt, `loop swarm` requires consensus before accepting edits |
+| 1 | **Standardized scaffolding** | `loop init` builds the right skills, state, and budget files — no need to start from zero each time |
+| 2 | **Measurable** | `loop audit` gives a Loop Readiness score from L0 to L3; `loop cost` predicts tokens before you run |
+| 3 | **Mechanical enforcement** | `loop gate` applies the allow/deny path rules from config — it works even if the agent skips the safety file |
+| 4 | **Safe multi-loop** | `loop worktree` + `loop sandbox` keep each try separate, and `loop swarm` asks for agreement before accepting edits |
 
 ### Relationship to the Harness
 
@@ -70,7 +70,7 @@ npx @cobusgreyling/loop-init .
 npx @cobusgreyling/loop init . --with-foundry
 ```
 
-`loop init` scaffolds skills + state + budget files, then prints the **Loop Ready score** and the first loop command. `loop doctor` merges audit + sync + file checks into **top-3 next actions**. Switch `--tool` to `claude`, `codex`, or `opencode`.
+`loop init` creates the skills, state, and budget files, then shows the **Loop Ready score** and the first loop command. `loop doctor` combines audit, sync, and file checks into the **top-3 next steps**. Change `--tool` to `claude`, `codex`, or `opencode`.
 
 ### 2. `loop audit` — Loop Readiness Score
 
@@ -78,7 +78,7 @@ npx @cobusgreyling/loop init . --with-foundry
 npx @cobusgreyling/loop audit . --suggest
 ```
 
-Scores **Loop Readiness** (L0→L3) — the number goes from ~10 up to 100 when the scaffold is correct. Includes constraints + governance + **Harness Runtime** (v1.7). Capped at **L3** until you have `loop-budget.md`, `loop-run-log.md`, and the LOOP.md budget section.
+It scores **Loop Readiness** (L0 to L3) — the number climbs from around 10 toward 100 when the setup is correct. It covers constraints, governance, and the **Harness Runtime** (v1.7). You stay capped at **L3** until you have `loop-budget.md`, `loop-run-log.md`, and the LOOP.md budget section.
 
 ### 3. `loop cost` — Token Estimation
 
@@ -86,7 +86,7 @@ Scores **Loop Readiness** (L0→L3) — the number goes from ~10 up to 100 when 
 npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
 ```
 
-Estimates token spend **before you schedule** — avoids being shocked by the bill next week.
+It predicts token spend **before you set up a schedule** — so next week's bill does not surprise you.
 
 ### 4. `loop sync` — Drift Detection
 
@@ -94,7 +94,7 @@ Estimates token spend **before you schedule** — avoids being shocked by the bi
 npx @cobusgreyling/loop sync .
 ```
 
-Detects drift between `STATE.md` and `LOOP.md` — the two files can diverge over time.
+It spots drift between `STATE.md` and `LOOP.md` — those two files can slowly grow apart over time.
 
 ### 5. `loop context` — Memory + Circuit Breaker
 
@@ -102,7 +102,7 @@ Detects drift between `STATE.md` and `LOOP.md` — the two files can diverge ove
 npx @cobusgreyling/loop context --check --ledger run.json
 ```
 
-A stateful memory manager + circuit breaker for long runs. Keeps context from growing unboundedly across many iterations.
+A memory manager with a circuit breaker for long runs. It keeps context from growing without limit over many rounds.
 
 ### 6. `loop worktree` — Isolating Changes
 
@@ -110,7 +110,7 @@ A stateful memory manager + circuit breaker for long runs. Keeps context from gr
 npx @cobusgreyling/loop-worktree create --run-id <id> --pattern <p>
 ```
 
-Manages isolated git worktrees — each attempt in its own worktree, tracked in a manifest, cleaned up on reject/escalate. Comes with `lock`/`unlock` for multi-loop coordination.
+It manages separate git worktrees — each try gets its own worktree, tracked in a list, and cleaned up when rejected or escalated. It includes `lock`/`unlock` so several loops can work side by side.
 
 ### 7. `loop gate` — Mechanical Enforcement
 
@@ -118,7 +118,7 @@ Manages isolated git worktrees — each attempt in its own worktree, tracked in 
 npx @cobusgreyling/loop gate check --action auto-merge --paths <f1,f2,...>
 ```
 
-Mechanically enforces the path denylist + auto-merge allowlist from `gate.yaml`. Exit `2` = escalate, `0` = proceed — same convention as `loop-context --check`, so it can be chained.
+It strictly applies the path denylist and auto-merge allowlist from `gate.yaml`. Exit `2` means escalate, `0` means go ahead — the same style as `loop-context --check`, so you can chain them.
 
 ### 8. `loop sandbox` & `loop swarm` — Isolation + Consensus
 
@@ -126,8 +126,8 @@ Mechanically enforces the path denylist + auto-merge allowlist from `gate.yaml`.
 npx @cobusgreyling/loop-sandbox run -- <cmd>   # Ephemeral worktree isolation + patch capture
 ```
 
-- **loop-sandbox**: captures changes into reviewable patch files before applying them.
-- **loop-swarm**: multi-agent consensus — requires **byte-identical patch consensus** across runs.
+- **loop-sandbox**: saves changes as reviewable patch files before applying them.
+- **loop-swarm**: team agreement — it needs **byte-identical patches** across runs before accepting them.
 
 ### 9. Loop MCP Server
 
@@ -135,7 +135,7 @@ npx @cobusgreyling/loop-sandbox run -- <cmd>   # Ephemeral worktree isolation + 
 npx @cobusgreyling/loop-mcp-server
 ```
 
-Patterns/skills/state/budget/safety docs as MCP resources — reduces prompt stuffing. Reference config: `examples/mcp/loop-engineering.mcp.json`.
+Patterns, skills, state, budget, and safety docs become MCP resources — so prompts stay small. Example config: `examples/mcp/loop-engineering.mcp.json`.
 
 ## Learning Roadmap (Directory Structure)
 

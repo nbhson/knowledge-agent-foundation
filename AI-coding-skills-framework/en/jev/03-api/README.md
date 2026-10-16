@@ -1,6 +1,6 @@
 # 🔌 03. API & Integrations
 
-> This section covers **the endpoint and authentication**, the **request & response shapes** with a full JSON example, the **official SDKs**, and the four integration surfaces — **Pydantic AI** (`TypeSafeModel`), **LangChain** (`TypeSafeClassifier`), **OpenRouter**, and the **limits & errors** you must handle before production. Read [README.md](../README.md) for context and [02-primitives](../02-primitives/) for Choice / Score / Noul semantics.
+> This section covers **the endpoint and sign-in**, **what requests and replies look like** with a full JSON example, **the official SDKs**, and the four ways to connect — **Pydantic AI**, **LangChain**, **OpenRouter**, plus the **limits and errors** to handle before you ship. See [README.md](../README.md) for context and [02-primitives](../02-primitives/) for what Choice / Score / Noul mean.
 
 ---
 

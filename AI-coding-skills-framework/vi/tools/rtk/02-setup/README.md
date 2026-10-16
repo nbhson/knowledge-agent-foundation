@@ -1,6 +1,6 @@
 # 🔧 02. Cài Đặt & Tích Hợp RTK
 
-> Hướng dẫn cài đặt RTK vào máy và tích hợp vào AI coding tool bạn đang dùng. Sau bước này, các lệnh bash của agent sẽ tự động được rewrite qua RTK.
+> Ở đây mình sẽ cài RTK vào máy rồi cắm vào AI coding tool bạn đang dùng. Xong bước này là các lệnh bash của agent sẽ tự động được rewrite qua RTK.
 
 ## Cài Đặt
 
@@ -39,7 +39,7 @@ rtk gain        # Nên mở dashboard tiết kiệm token
 
 ## Tích Hợp Vào AI Coding Tool
 
-Chạy lệnh tương ứng với tool bạn dùng:
+Chạy đúng lệnh ứng với tool bạn đang dùng:
 
 ```bash
 # Hook-based (transparent rewrite — khuyến nghị)
@@ -60,7 +60,7 @@ rtk init --agent kimi           # Kimi AI
 rtk init --agent hermes         # Hermes
 ```
 
-Sau khi cài **khởi động lại AI tool**, rồi test:
+Cài xong thì **khởi động lại AI tool**, rồi test nhanh:
 
 ```bash
 git status  # Sẽ tự động được rewrite thành "rtk git status"

@@ -1,6 +1,6 @@
 # 🛠️ 05. Troubleshooting — Handling Failures
 
-> Common failures when using RTK, how to diagnose and fix them. Includes failure modes, exclude rules, and when you should turn RTK off.
+> Common hiccups you might hit with RTK, how to figure out what went wrong, and how to fix it. Covers failure modes, exclude rules, and when it is better to turn RTK off.
 
 ## Failure Modes & Mitigations Table
 

@@ -104,8 +104,8 @@ Subject   Predicate         Object
 | **Node / Vertex** | Thực thể — bất kỳ "thứ gì" bạn muốn mô tả | Người (Alice), Dự án (Phoenix), Tài liệu (Hợp đồng C-2024) |
 | **Edge / Relation** | Mối quan hệ giữa 2 nodes — **có hướng** hoặc **vô hướng** | Alice **→ MANAGES →** Bob (có hướng: Alice quản lý Bob, không ngược lại) |
 | **Label** | "Nhãn" phân loại — giống kiểu dữ liệu trong programming | `Person` (loại node), `MANAGES` (loại edge) |
-| **Property** | Thuộc tính附加 (key-value) trên node hoặc edge | `Person{name: "Alice", role: "CTO", age: 35}` |
-| **Degree** | Số lượng edges nối với 1 node —越多 degree =越多 kết nối | Alice có 3 edges → degree = 3 |
+| **Property** | Thuộc tính (key-value) gắn trên node hoặc edge | `Person{name: "Alice", role: "CTO", age: 35}` |
+| **Degree** | Số cạnh nối với một node — degree càng lớn nghĩa là node càng nhiều kết nối | Alice có 3 cạnh nối → degree = 3 |
 | **Path** | Chuỗi nodes nối liên tiếp bởi edges — giống "con đường" đi từ A đến B | `Alice → Bob → Carol` là path độ dài 2 (2 hops) |
 | **Neighbor** | Nodes kề trực tiếp (1-hop) — "xóm giềng" | Neighbors của Alice = {Bob, Contract} |
 | **Subgraph** | Một phần của graph — lấy 1 node và tất cả nodes xung quanh | Subgraph 1-hop của Phoenix = Phoenix + tất cả nodes nối trực tiếp |
@@ -138,7 +138,7 @@ Subject   Predicate         Object
 
 ### 2.1 Phân Loại Chi Tiết
 
-> **📌 Hiểu nhanh:** "Loại graph" = câu trả lời cho câu hỏi *"Quan hệ của bạn có đặc điểm gì?"* Có hướng không? Có trọng số không? Có nhiều loại thực thể không? Mỗi khi bạn chọn wrong type, bạn sẽ viết code không đúng hoặc truy vấn sai.
+> **📌 Hiểu nhanh:** "Loại graph" chính là câu trả lời cho câu hỏi *"Quan hệ của bạn có đặc điểm gì?"* — Có hướng không? Có trọng số không? Có nhiều loại thực thể không? Nếu chọn sai loại ngay từ đầu, bạn rất dễ viết code lệch và truy vấn cho ra kết quả sai.
 
 ```
 ┌─────────────────┬─────────────────────────────────────────┬──────────────────┐
@@ -156,7 +156,7 @@ Subject   Predicate         Object
 └─────────────────┴─────────────────────────────────────────┴──────────────────┘
 ```
 
-#### Giải thích từng loại — dễ hiểu nhất:
+#### Giải thích từng loại theo cách dễ hiểu:
 
 | Loại | "Dịch ra tiếng người" | Khi nào thì gặp? | Ví dụ cụ thể |
 |------|----------------------|-------------------|--------------|
@@ -170,7 +170,7 @@ Subject   Predicate         Object
 | **Hypergraph** | Một edge nối **nhiều hơn 2 nodes** cùng lúc, như một cuộc họp nhiều người | Họp bàn, teamwork | Meeting: {Alice, Bob, Carol} cùng tham dự → 1 edge nối cả 3 |
 | **Knowledge Graph** | **"Bản đồ tri thức"** — kết hợp mọi loại trên: có hướng, nhiều loại, có nhãn | Enterprise KG, GraphRAG | `Person -[MANAGES]→ Person -[BELONGS_TO]→ Project` |
 
-#### Tại sao phải hiểu rõ loại graph? (Nếu bạn chọn sai)
+#### Vì sao cần hiểu rõ loại graph? (Chuyện gì xảy ra nếu chọn sai)
 
 ```
 ❌ Chọn Undirected khi thực tế là Directed:
@@ -255,7 +255,7 @@ Cách 3 — Edge List (danh sách cạnh):     giống "danh sách cặp đôi"
 
 ### 3.1 So Sánh Chi Tiết
 
-| Representation | Memory (bộ nhớ) | Traversal (đi thăm) | Dễ hiểu như | Best For |
+| Cách biểu diễn | Tốn bộ nhớ | Duyệt graph | Hình dung nôm na | Phù hợp nhất khi |
 |----------------|------------------|----------------------|-------------|----------|
 | **Adjacency List** | O(V + E) — nhỏ gọn | O(degree) — nhanh | Danh bạ "ai quen ai" | Sparse graphs (hầu hết KG) |
 | **Adjacency Matrix** | O(V²) — tốn khi graph thưa | O(1) lookup — cực nhanh | Bảng ✓/✗ đầy đủ | Dense graphs, matrix ops |
@@ -334,7 +334,7 @@ Bạn có bao nhiêu nodes?
 └── Cần ETL, export, streaming    → Edge List (parquet / csv)
 ```
 
-**Nguyên tắc vàng cho người mới:** Bắt đầu bằng **Adjacency List** (NetworkX). Chỉ chuyển sang cách khác khi bạn *đo được* vấn đề (chậm, tốn bộ nhớ). Đừng tối ưu sớm khi chưa biết vấn đề thực sự.
+**Gợi ý cho người mới bắt đầu:** cứ dùng **Adjacency List** (NetworkX) trước. Chỉ đổi sang cách khác khi bạn đã *đo được* vấn đề cụ thể (chạy chậm, tốn bộ nhớ). Đừng tối ưu sớm khi chưa rõ vấn đề thực sự nằm ở đâu.
 
 ---
 
@@ -344,7 +344,7 @@ Bạn có bao nhiêu nodes?
 
 ### 4.1 Metrics Quan Trọng
 
-> **Bắt đầu từ 3 metrics Basics trước:** `Degree` (ai kết nối nhiều), `Path Length` (các node cách nhau bao xa), `Clustering` (bạn bè có quen nhau không). Hiểu 3 cái này rồi mới học đến `Centrality` và `Modularity` (khó hơn).
+> **Nên bắt đầu từ 3 metrics cơ bản trước:** `Degree` (ai có nhiều kết nối), `Path Length` (các node cách nhau bao xa), `Clustering` (bạn bè của một node có quen nhau không). Nắm chắc 3 khái niệm này rồi hãy học tiếp `Centrality` và `Modularity` (khó hơn).
 
 | Metric | Ý nghĩa "tiếng người" | Ví dụ minh họa |
 |--------|------------------------|----------------|
@@ -398,7 +398,7 @@ print(f"Modularity: {modularity:.3f}, Communities: {len(set(partition.values()))
 
 ### 4.3 Khi Nào Dùng Metric Nào?
 
-> **Nguyên tắc:** Chọn metric theo **câu hỏi bạn đang muốn trả lời**, không phải theo "metric nào hay".
+> **Nguyên tắc:** hãy chọn metric theo **câu hỏi bạn đang muốn trả lời**, chứ không phải theo kiểu "metric nào nghe hay".
 
 | Mục đích | Metric | Câu hỏi ví dụ |
 |----------|--------|---------------|
@@ -427,7 +427,7 @@ print(f"Modularity: {modularity:.3f}, Communities: {len(set(partition.values()))
 └─────────────────────────┴──────────────────────────────────┴──────────────────────────────────┘
 ```
 
-**Khuyến nghị cho AI Coding Skills Framework:** Dùng **Property Graph** (Neo4j/Kuzu/NetworkX). RDF chỉ khi làm việc với linked open data hoặc yêu cầu OWL reasoning.
+**Gợi ý cho AI Coding Skills Framework:** hãy dùng **Property Graph** (Neo4j/Kuzu/NetworkX). Chỉ dùng RDF khi bạn làm việc với linked open data hoặc thật sự cần suy luận kiểu OWL.
 
 Ví dụ Property Graph (Cypher):
 

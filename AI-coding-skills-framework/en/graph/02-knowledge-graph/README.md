@@ -25,9 +25,9 @@ You have 1,000 documents: contracts, reports, emails. You hire 3 interns to read
 - Intern B extracts: `(Alice N., approves, Contract C-2024)` — different abbreviation
 - Intern C extracts: `(Alice Nguyen, reports_to, Bob)` — different diacritics
 
-Result: three different "Alice" nodes in the graph that don't connect to each other → the graph is **fragmented**, queries fail.
+Result: three different "Alice" nodes in the graph that don't link to each other → the graph is **broken into pieces**, and queries fail.
 
-**Knowledge Graph Construction** solves this problem: **consistent extraction, normalization, and linking** of knowledge from raw text into a queryable graph.
+**Knowledge Graph Construction** fixes this: it pulls knowledge out of raw text in a **steady, consistent way** and links it up so you can query it easily.
 
 ### Why Is KG Construction Important?
 

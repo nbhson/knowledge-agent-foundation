@@ -1,6 +1,6 @@
 # 🧭 05. Production Patterns
 
-> This section catalogs the **five production patterns** for Jev — routing & triage, classification at scale, gating agent actions, verifying LLM output, and ranking & filtering — mapped onto the **four supported workloads**, each with a core-concept card, code, and a thresholds/notes table. Read [README.md](../README.md) first for the overall context of Module XIV — Jev & System One Models.
+> This section walks through the **five go-to ways to use Jev** — routing & triage, sorting at scale, guarding agent actions, checking LLM output, and ranking & filtering — matched to the **four jobs** Jev does best, each with a short explainer, code, and tips on limits. Start with [README.md](../README.md) for the big picture of Module XIV — Jev & System One Models.
 
 ---
 

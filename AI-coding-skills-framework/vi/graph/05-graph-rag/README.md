@@ -27,7 +27,7 @@ Bạn có 1,000 báo cáo tài chính. Bạn hỏi:
 
 **GraphRAG**: trước khi có câu hỏi, đã trích KG + phát hiện communities (ví dụ: community "AI Investment" gồm 200 entities, community "AI Regulation" gồm 150 entities) + tóm tắt từng community bằng LLM. Khi hỏi, **map-reduce trên community summaries** → trả lời toàn diện với **comprehensiveness + diversity** cao hơn 30-40% (Microsoft, 2024).
 
-**GraphRAG không thay thế RAG. GraphRAG làm RAG thông minh hơn bằng cấu trúc đồ thị.**
+**GraphRAG không thay thế RAG. GraphRAG giúp RAG thông minh hơn nhờ khai thác cấu trúc đồ thị.**
 
 ### Tại Sao GraphRAG Quan Trọng?
 

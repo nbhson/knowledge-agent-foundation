@@ -1,12 +1,12 @@
 # 🛡️ 03. Safety & Loop Design Checklist
 
-> Loops khuếch đại judgment — cả tốt lẫn xấu. Phần này gồm: **Loop Design Checklist** (rubric sẵn sàng production) và **Safety & Guardrails** (mức tối thiểu cho loops production chạm vào code hoặc external systems).
+> Loop giúp khả năng phán đoán của bạn lan rộng ra — cả điểm tốt lẫn điểm chưa tốt. Phần này gồm hai thứ: **Loop Design Checklist** (bảng chấm điểm xem loop đã đủ cứng để lên production chưa) và **Safety & Guardrails** (mức an toàn tối thiểu cho loop production có đụng tới code hay hệ thống bên ngoài).
 
 ---
 
 ## 1. Loop Design Checklist
 
-Dùng trước khi bật loop trong production. Chấm điểm **thành thật** — một loop thiếu verification chưa sẵn sàng để chạy unattended.
+Bạn cứ chấm điểm **thật lòng** trước khi cho loop chạy production. Loop nào còn thiếu khâu kiểm chứng thì chưa đủ điều kiện chạy mà không có người trông.
 
 ### §1 Purpose & Scope
 - [ ] **Mục tiêu duy nhất rõ ràng** — một câu: loop này hoàn thành điều gì?
@@ -82,12 +82,12 @@ Dùng trước khi bật loop trong production. Chấm điểm **thành thật**
 
 ### Quick Red Flags
 
-Dừng và sửa trước khi tiếp tục nếu:
-- Cùng PR có > 3 lần auto-fix attempt không tiến triển
-- Verifier là **cùng agent session** với implementer
-- Không có state file — loop mất trí nhớ mỗi lần chạy
-- Notifications trên mọi run bất kể findings
-- Auto-merge bật mà không có path allowlist
+Bạn khoan làm tiếp mà lo sửa trước nếu gặp mấy dấu hiệu này:
+- Cùng một PR mà auto-fix tới > 3 lần vẫn không tiến triển
+- Verifier lại **chính là agent session** đã viết code
+- Không có state file — mỗi lần chạy là loop quên sạch lần trước
+- Run nào cũng ping người, có việc hay không cũng ping
+- Đã bật auto-merge mà không có path allowlist
 
 ---
 
@@ -95,7 +95,7 @@ Dừng và sửa trước khi tiếp tục nếu:
 
 ### 2.1 Path Denylist
 
-Loop **không bao giờ** được auto-edit các paths này nếu không có sự đồng ý của con người:
+Loop **tuyệt đối không** tự sửa các đường dẫn này nếu chưa có người đồng ý:
 
 ```
 .env
@@ -112,11 +112,11 @@ payments/**
 billing/**
 ```
 
-Encode trong `minimal-fix` và implementer skills:
+Ghi thẳng vào `minimal-fix` và implementer skills:
 
 > Do not modify files matching the denylist. Escalate to human with context.
 
-Tool `loop-gate` cưỡng chế denylist này **một cách cơ học** từ `gate.yaml` (không dựa vào việc loop đã đọc file này chưa):
+Tool `loop-gate` chặn cứng denylist này **bằng máy** dựa trên `gate.yaml` (không trông chờ vào việc loop có đọc file này hay chưa):
 
 ```bash
 npx @cobusgreyling/loop gate check --action auto-merge --paths <changed files>
@@ -127,7 +127,7 @@ npx @cobusgreyling/loop gate check --action auto-merge --paths <changed files>
 
 **Mặc định: không auto-merge.**
 
-Nếu bạn cho phép auto-merge cho loops trivial:
+Nếu bạn cho phép auto-merge với những việc lặt vặt:
 
 | Được phép | Không được phép |
 |-----------|-----------------|
@@ -136,9 +136,9 @@ Nếu bạn cho phép auto-merge cho loops trivial:
 | Import ordering | Lockfile changes |
 | Config trong allowlisted `docs/` paths | Bất kỳ denylist path nào |
 
-Document allowlist trong `AGENTS.md` hoặc `loop-auto-merge-allowlist.md`.
+Ghi allowlist vào `AGENTS.md` hoặc `loop-auto-merge-allowlist.md`.
 
-> 🔑 **Highlight Policy / Permission:** đây là **policy quyền merge** — default-deny auto-merge, chỉ allowlist tường minh mới là đường ngoại lệ. Coi file allowlist như policy-as-code: versioned, reviewed, và được `gate check` kiểm tra trước mọi merge.
+> 🔑 **Highlight Policy / Permission:** đây là **policy quyền merge** — mặc định cấm auto-merge, chỉ allowlist ghi rõ ràng mới được ngoại lệ. Bạn cứ coi file allowlist như policy-as-code: có version, có review, và được `gate check` kiểm tra trước mọi lần merge.
 
 ### 2.3 MCP Connector Least Privilege
 
@@ -149,40 +149,40 @@ Document allowlist trong `AGENTS.md` hoặc `loop-auto-merge-allowlist.md`.
 | Slack | channel history | post vào `#loop-escalations` only |
 | Database | — | không production write từ loops |
 
-Dùng bot accounts / tokens riêng với scopes tối thiểu.
+Bạn nên dùng bot account / token riêng, chỉ mở đúng scope tối thiểu cần thiết.
 
-> 🔑 **Highlight Policy / Permission (connector):** đây là **policy permission theo connector** (least privilege từng integration) — mỗi MCP connector chỉ nhận đúng scope read/write cần thiết, trên identity riêng. Soi chiếu `12-sandbox-execution` §6 (ma trận theo role) và `06` §8 (các mức RBAC).
+> 🔑 **Highlight Policy / Permission (connector):** đây là **policy permission theo từng connector** (mỗi integration chỉ được đúng quyền tối thiểu) — mỗi MCP connector chỉ nhận đúng scope read/write cần thiết, trên identity riêng. Bạn có thể đối chiếu với `12-sandbox-execution` §6 (ma trận theo role) và `06` §8 (các mức RBAC).
 
 ### 2.4 Human Gates
 
-Luôn yêu cầu human cho:
+Mấy việc sau lúc nào cũng cần người duyệt qua:
 - Security, authentication, authorization
 - Payments, billing, PII handling
 - Infrastructure / Terraform / K8s prod
 - Dependency upgrades (supply chain risk)
-- Changes chạm > N files (gợi ý N=10)
-- Lần thứ ba thất bại trên cùng item
-- Token budget extension: agents **không thể** tự nâng caps trong `loop-budget.md` — human phải approve và tự sửa. (L3 loops dùng `budget-negotiator` skill để *request* thêm budget.)
+- Thay đổi đụng > N files (gợi ý N=10)
+- Thất bại lần thứ ba trên cùng một item
+- Muốn nới token budget: agent **không được** tự nâng caps trong `loop-budget.md` — phải có người duyệt và tự sửa. (Loop L3 thì dùng skill `budget-negotiator` để *xin* thêm budget.)
 
 ### 2.5 Secrets in Prompts & Logs
 
-- Không bao giờ dán API keys vào scheduler prompts
-- CI logs có thể chứa secrets — triage skill nên redact trước khi ghi state
-- State files thường được commit — **không credentials trong `STATE.md`**
+- Đừng bao giờ chèn API key vào prompt của scheduler
+- Log CI có thể lộ secret — skill triage nên che bớt trước khi ghi vào state
+- State file hay được commit lên git — **đừng để credential lọt vào `STATE.md`**
 
 ### 2.6 Flake & Test Safety
 
-- Không disable tests để làm CI xanh
-- Không tăng timeouts mù quáng mà không có root-cause note
-- Quarantine flakes qua ticket tường minh + human approval
+- Đừng tắt test chỉ để CI xanh cho xong chuyện
+- Đừng tăng timeout bừa khi chưa ghi rõ nguyên nhân gốc
+- Muốn cách ly test chập chờn thì mở ticket hẳn hoi và nhờ người duyệt
 
 ### 2.7 Incident Response
 
-Nếu loop merge code xấu:
-1. **Pause tất cả loops ngay** (`scheduler_list` → delete)
-2. Revert merge
-3. Ghi trong state + `stories/`
-4. Tighten verifier hoặc shrink scope trước khi restart
+Nếu loop merge nhầm code xấu, bạn xử lý theo các bước sau:
+1. **Dừng mọi loop ngay** (`scheduler_list` → delete)
+2. Revert cú merge đó
+3. Ghi lại trong state + `stories/`
+4. Siết chặt verifier hoặc thu hẹp phạm vi rồi mới chạy lại
 
 ### 2.8 Pre-Flight Safety Check (trước L3)
 
@@ -194,8 +194,8 @@ Nếu loop merge code xấu:
 
 ### 2.9 Worktree Isolation & Consensus Sandboxing
 
-- **`loop-sandbox`**: Ephemeral git worktree isolation cho single agent runs. Bắt changes thành reviewable patch files trước khi apply.
-- **`loop-swarm`**: Multi-agent consensus sandboxing qua các `loop-sandbox` runs tuần tự. Yêu cầu **byte-identical patch consensus** giữa các runs trước khi accept edits.
+- **`loop-sandbox`**: Chạy từng agent riêng lẻ trong git worktree tạm, tách biệt hẳn. Mọi thay đổi được gom thành file patch để bạn review trước khi áp vào.
+- **`loop-swarm`**: Cho nhiều agent chạy sandbox nối tiếp nhau để đối chiếu kết quả. Chỉ nhận sửa đổi khi các lượt chạy cho ra patch **giống nhau từng byte**.
 
 ---
 

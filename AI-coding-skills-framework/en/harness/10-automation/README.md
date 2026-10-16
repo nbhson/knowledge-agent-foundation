@@ -59,7 +59,7 @@ Have you ever **repeated the same action** more than 10 times in a single day? T
 
 **That is exactly the problem Automation solves.**
 
-In AI coding, automation is not just the CI/CD pipeline — it covers **everything repetitive**: writing boilerplate, running tests, reviewing code, deploying, monitoring, and even **self-repairing when something breaks**. When you automate correctly, the team stops doing manual labor and starts **thinking work**.
+In AI coding, automation is not just the CI/CD pipeline — it covers **everything repetitive**: writing boilerplate, running tests, reviewing code, deploying, monitoring, and even **fixing things on its own when something breaks**. When you get automation right, the team spends less time on manual chores and more time on **creative, thinking work**.
 
 **The solution**: the Automation Pipeline — manual → scripted → triggered → self-healing → predictive — which lets teams **deploy hundreds of times a day** instead of a few times a week.
 
@@ -90,7 +90,7 @@ Automation = Repetition → Rule → Script → Self-Healing Pipeline
 
 **Analogy**: Automation is like a production line — at first every step is done by hand, then the conveyor belt runs by itself, then robots assemble automatically, and finally the factory operates 24/7 on its own.
 
-**If you skip it**: manual steps = bottlenecks, human errors on every repetition, and the team spends 40% of its time on repetitive tasks instead of innovation.
+**If you skip it**: every manual step slows you down, small human mistakes pile up, and the team ends up spending about 40% of its time redoing boring tasks instead of building new things.
 
 ## Overview
 
@@ -102,7 +102,7 @@ Automation = Repetition → Rule → Script → Self-Healing Pipeline
 >
 > **Why it matters:** The team frees itself from "manual labor" and puts that energy into thinking and creating.
 
-**Automation** in AI coding is **automating repetitive workflows** — from code generation, testing, and deployment to monitoring. The goal: reduce human intervention, increase speed, and guarantee consistency.
+**Automation** in AI coding means **letting machines handle the boring, repeated work** — code generation, testing, deployment, and monitoring. The goal is simple: less hands-on busywork for people, faster delivery, and the same good result every time.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐

@@ -49,7 +49,7 @@
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Latency & cost nhắc lại**: 70–500ms mỗi decision; $0.042/1M input tokens, free output; thêm questions hầu như không đổi latency (cộng dồn parallel trong một pass). Nhờ rẻ + nhanh mà các pattern classification-at-scale mới khả thi.
+**Nhắc lại về độ trễ và chi phí**: mỗi quyết định mất 70–500ms; giá $0.042 cho 1M input tokens, output miễn phí; thêm câu hỏi gần như không làm tăng độ trễ (vì chạy song song trong một lượt). Chính nhờ rẻ và nhanh mà các pattern phân loại ở quy mô lớn mới khả thi.
 
 ---
 

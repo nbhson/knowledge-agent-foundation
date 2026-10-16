@@ -14,11 +14,11 @@
 
 ### Câu Chuyện Mở Đầu
 
-AutoGen mô hình hóa multi-agent như một cuộc trò chuyện — nhưng đôi khi bạn muốn cấu trúc rõ ràng hơn: **mỗi agent một vai (role), mỗi vai một nhiệm vụ (task), và agents phối hợp trong một crew**. Giống một công ty nơi planner lên kế hoạch, executor thực thi, reviewer kiểm duyệt — mỗi người một việc, không ai nói leo.
+AutoGen xem multi-agent như một cuộc trò chuyện — nhưng nhiều lúc bạn muốn mọi thứ rõ vai rõ việc hơn: **mỗi agent một vai (role), mỗi vai một nhiệm vụ (task), rồi cả bọn phối hợp trong một crew**. Giống một công ty nhỏ: planner lên kế hoạch, executor xắn tay làm, reviewer ngồi duyệt — ai làm việc nấy, không ai nói leo.
 
 > *"CrewAI is the org chart for your harness — roles, tasks, and a crew that ships."*
 
-**CrewAI** là framework role-based multi-agent: bạn định nghĩa `Agent` (role, goal, backstory), `Task` (description, expected_output, agent), và `Crew` (agents, tasks, process). Crucially, code mẫu đã có trong HARNESS_ENGINEERING.md section 9.1.
+**CrewAI** là framework multi-agent chia theo vai: bạn định nghĩa `Agent` (role, goal, backstory), `Task` (description, expected_output, agent), rồi gom lại thành `Crew` (agents, tasks, process). Tiện một chỗ là code mẫu đã có sẵn trong HARNESS_ENGINEERING.md section 9.1, bạn mở ra là thấy ngay.
 
 ### Tại Sao CrewAI Quan Trọng?
 
@@ -90,7 +90,7 @@ harness = Crew(
 )
 ```
 
-`Process.hierarchical` chính là **harness/09-multi-agent** — một manager điều phối like harness orchestrator. `Process.sequential` map với **harness/07-workflow** pipeline.
+Hiểu đơn giản: `Process.hierarchical` chính là **harness/09-multi-agent** — có một manager đứng ra điều phối như harness orchestrator. Còn `Process.sequential` thì ứng với pipeline **harness/07-workflow**.
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 

@@ -133,7 +133,7 @@ Model không có trí nhớ dài hạn qua các lần gọi. Phần ý định c
 
 **Làm gì**
 
-1. **Ghi quy ước vào một skill** (thường là file `SKILL.md` cùng script và tài liệu tham chiếu): cách đặt tên, lệnh build/test/lint, tiêu chuẩn review.
+1. **Ghi quy ước vào một skill** (`SKILL.md` cùng `scripts/`/`references/`/`assets` theo spec https://agentskills.io/specification, xem `harness/05-prompt-builder/agent-skills-spec.md`): cách đặt tên, lệnh build/test/lint, tiêu chuẩn review.
 2. **Ghi cả những thứ không làm**: "chúng tôi không làm theo cách X vì sự cố Y".
 3. **Skill là bộ nhớ ý định** — viết một lần, đọc mọi lần chạy. Thiếu nó thì loop tự suy ra mọi thứ từ đầu ở mỗi lần chạy.
 4. **Đo lại** bằng cách xem còn bao nhiêu việc phải sửa tay sau mỗi lần chạy.

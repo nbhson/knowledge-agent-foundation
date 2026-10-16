@@ -13,9 +13,9 @@
 
 ### Opening Story
 
-You hire a new chef. On the first day, he cooks a dish — you taste it and say *"Too salty"*. The next day, he cooks again — you taste it and say *"Less salty, but it needs more sweetness"*. On the third day, the dish is nearly perfect.
+You hire a new chef. On the first day, he cooks a dish — you taste it and say *"Too salty"*. The next day, he cooks again — you taste it and say *"Less salty, but it could use a little more sweetness"*. On the third day, the dish is almost perfect.
 
-Now imagine that you had to stand in the kitchen **every single meal**, whispering instructions to the chef. You would be exhausted — and that is exactly how most people are using AI coding agents: **type a prompt, wait, read, fix the prompt, type it again.**
+Now imagine having to stand in the kitchen **for every single meal**, telling the chef each step. That would wear you out — and yet that is how many people use AI coding agents today: **type a prompt, wait, read the answer, fix the prompt, and repeat.**
 
 > *"You shouldn't be prompting coding agents anymore. You should be designing loops that prompt your agents."*
 > — **Peter Steinberger**
@@ -23,7 +23,7 @@ Now imagine that you had to stand in the kitchen **every single meal**, whisperi
 > *"I don't prompt Claude anymore. I have loops running that prompt Claude and figure out what to do. My job is to write loops."*
 > — **Boris Cherny** (Head of Claude Code, Anthropic)
 
-**Loop Engineering** is the craft of designing **control systems** — systems that discover the work to do on their own, assign the work on their own, verify on their own, and maintain their own state — instead of you typing each prompt. The leverage point has shifted: from *writing prompts* to *designing loops*.
+**Loop Engineering** is the craft of building **control systems** — systems that find the work on their own, assign it on their own, check it on their own, and keep their own state — so you no longer have to type each prompt by hand. The leverage point has moved: from *writing prompts* to *designing loops*.
 
 ### Why Loop Engineering Matters?
 
@@ -51,15 +51,15 @@ Harness       = The environment one agent runs in (tools, context, permissions)
 Loop          = Harness + schedule + state + verification chain (runs repeatedly, self-maintaining)
 ```
 
-**Analogies**: Loop Engineering is like a **manufacturing plant** — you don't assemble every product yourself; you design the production line (scheduler), the machinery (agents), the inspection equipment (verifiers), and the warehouse (state). And **Cognitive Surrender** is when you stand watching the line run and forget that you are the one who designed it.
+**Analogies**: Loop Engineering is like a **manufacturing plant** — you don't build every product yourself; you design the production line (scheduler), the machines (agents), the inspection tools (verifiers), and the storage room (state). And **Cognitive Surrender** is when you stand and watch the line run and forget that you are the one who designed it.
 
-**If you skip this**: You spend hours typing the same prompts over and over, agents repeat the same mistakes, tokens are wasted, and you never get a reusable system.
+**If you skip this**: you spend hours typing the same prompts again and again, agents keep making the same mistakes, tokens go to waste, and you never get a system you can reuse.
 
 ## Overview
 
-**Loop Engineering** is the design of **structured loops** so that AI agents discover work, execute it, verify it, and improve — on a regular cadence, across sessions, with **durable state** that lives outside any single conversation.
+**Loop Engineering** is about designing **structured loops** so AI agents can find work, do the work, check the work, and improve — on a regular schedule, across sessions, with **durable state** that lives outside any single conversation.
 
-Unlike Module VII (Workflow), which organizes a pipeline, Loop Engineering focuses on **self-maintaining loops**: the agent not only finishes a task, but also **decides which task is worth doing, verifies the outcome, and learns from it** for the next run.
+Unlike Module VII (Workflow), which organizes a pipeline, Loop Engineering focuses on **self-maintaining loops**: the agent not only finishes a task, but also **figures out which task is worth doing, checks the result, and learns from it** for next time.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -93,7 +93,7 @@ Unlike Module VII (Workflow), which organizes a pipeline, Loop Engineering focus
 
 ## Learning Path (Directory Structure)
 
-Module XII is split into **dedicated files** so it is easy to learn one part at a time — mirroring the documentation structure of the `loop-engineering` repo:
+Module XII is split into **focused files** so you can learn one part at a time — matching the documentation structure of the `loop-engineering` repo:
 
 ```
 loop/
@@ -153,7 +153,7 @@ Step 7: 07-tools/ — use the CLI scaffold, audit, monitoring
 
 ### 1. Reference Repo — Eating Its Own Dogfood
 
-The `loop-engineering` repo runs its own patterns on itself:
+The `loop-engineering` repo runs its own patterns on itself, as a friendly real-life example:
 
 | Loop | Level | Automation | Notes |
 |------|-------|------------|-------|
@@ -168,7 +168,7 @@ The `loop-engineering` repo runs its own patterns on itself:
 
 ### 2. Real Stories (Honest Wins and Failures)
 
-The repo has a `stories/` directory recording both wins and failures — the most valuable lesson:
+The repo has a `stories/` folder with both wins and honest failures — the most helpful lesson is:
 
 - **CI Sweeper: Infinite Flaky Test** — `stories/ci-sweeper-infinite-flaky-test.md`: the lesson about not auto-fixing flakes.
 - **Why We Killed CI Sweeper** — `stories/why-we-killed-ci-sweeper.md`: when to kill a loop.

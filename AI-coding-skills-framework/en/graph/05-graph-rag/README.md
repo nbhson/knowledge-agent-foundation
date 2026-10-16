@@ -23,11 +23,11 @@ You have 1,000 financial reports. You ask:
 
 > *"What are the standout trends in the AI market in 2024?"*
 
-**Vanilla RAG**: chunk 1,000 reports → embed → find the top-5 chunks most similar to the question → feed to the LLM. Result: 5 disconnected passages about "AI trends" but **no big picture** — each chunk only covers one aspect.
+**Vanilla RAG**: chop 1,000 reports into pieces → embed them → pick the 5 chunks closest to the question → hand them to the LLM. You get back 5 separate passages about "AI trends" but **no big picture** — each chunk only covers one small angle.
 
 **GraphRAG**: before the question even arrives, it has extracted a KG + detected communities (e.g. an "AI Investment" community of 200 entities, an "AI Regulation" community of 150 entities) + summarized each community with an LLM. When asked, it **map-reduces over the community summaries** → a comprehensive answer with **30–40% higher comprehensiveness + diversity** (Microsoft, 2024).
 
-**GraphRAG does not replace RAG. GraphRAG makes RAG smarter using graph structure.**
+**GraphRAG does not replace RAG. It makes RAG smarter by using the shape of the graph.**
 
 ### Why Does GraphRAG Matter?
 
@@ -686,7 +686,7 @@ def rrf_score(ranked_lists: list[list[str]], k: int = 60) -> dict[str, float]:
 > - **Global/sensemaking over the whole corpus**: original `GraphRAG`
 > - **Complex queries that need to rethink**: `DRIFT`
 >
-> In this learning framework, **understanding the mechanisms (index + retrieve + community summary)** matters most — the variants are just refinements of those three stages.
+> In this learning framework, **knowing the mechanisms (index + retrieve + community summary)** matters most — the variants are just refinements of those three stages.
 
 ---
 

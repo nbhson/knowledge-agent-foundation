@@ -1,6 +1,6 @@
-# ❓ FAQ — AI Coding Skills Framework (Real Stories, Plain Language)
+# ❓ FAQ — AI Coding Skills Framework (Real Stories, Plain and Friendly Language)
 
-If a question is unclear, read the section in the named file (named in brackets).
+If a question feels unclear, open the section named in brackets — it points you to the right file.
 
 ---
 

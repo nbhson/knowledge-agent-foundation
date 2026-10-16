@@ -1,6 +1,6 @@
 # 🛠️ 05. Troubleshooting — Xử Lý Sự Cố
 
-> Các sự cố thường gặp khi dùng RTK, cách chẩn đoán và khắc phục. Bao gồm failure modes, quy tắc exclude, và khi nào nên tắt RTK.
+> Các sự cố thường gặp khi dùng RTK, cách chẩn đoán và khắc phục — gồm failure modes, quy tắc exclude, và khi nào nên tắt RTK.
 
 ## Bảng Failure Modes & Mitigations
 

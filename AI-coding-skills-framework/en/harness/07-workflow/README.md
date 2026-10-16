@@ -44,13 +44,13 @@
 
 ### Opening Story
 
-Imagine an **automotive factory**. Every car passes through hundreds of stations: frame assembly → engine mounting → painting → quality inspection → packaging. Without a **standardized process** — with each worker doing whatever they feel like — the result would be a disaster: missing bolts, streaky paint, missed inspections.
+Picture an **car factory** on a busy Monday morning. Every car rolls through hundreds of small stations: frame assembly → engine mounting → painting → quality inspection → packaging. Now imagine there is **no shared checklist** — everyone just does what feels right that day. You can guess the ending: missing bolts, streaky paint, skipped inspections.
 
 **An AI Agent is exactly the same when it lacks a Workflow.**
 
-Many developers write agents that are just **a chain of consecutive function calls** — no state management, no error recovery, no checkpoints. For simple tasks, it works. But for complex tasks — **every failure means running again from the start**.
+Many of us start out building agents the same way: just **one function call after another** — no saved state, no plan for errors, no checkpoints along the way. That is fine for a tiny demo. But on a real, multi-step job, **one small failure means starting all over again from zero**.
 
-**The solution**: Structured Workflow — a system that manages the **entire lifecycle** of a task, from trigger to feedback, with the ability to **recover, checkpoint, and observe** at every step.
+**The friendly fix**: a Structured Workflow — think of it as a caring tour guide for your task. It walks with the job through its **whole journey**, from the starting trigger to the final feedback, and at every stop it can **pick up after a fall, save your place, and show you what is happening**.
 
 ### Why Is a Workflow Important?
 
@@ -84,7 +84,7 @@ Every step must have **state management**, **error recovery**, and **observabili
 > - **Analogy:** Like a restaurant kitchen: a chef (agent) with good ingredients still needs a recipe and a service routine (workflow) to deliver dishes on time, at the right quality, every time.
 > - **Why it matters:** Without a workflow, an agent works on instinct — slow, hard to reproduce results, and any mid-way failure means starting over from scratch.
 
-**Workflow** is the process of **designing and organizing execution steps** to complete a complex coding task. In Harness Engineering, the Workflow Engine is the **"dispatch center"** — managing the entire flow from trigger → plan → execute → validate → deploy, with observability, error recovery, and state management.
+**Workflow** is simply the art of **laying out the steps** that finish a tricky coding job. Inside Harness Engineering, the Workflow Engine is the friendly **"dispatch center"** — it waves each job through from trigger → plan → execute → validate → deploy, while keeping an eye on everything (observability), catching falls (error recovery), and remembering where everyone is (state).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -153,7 +153,7 @@ Every step must have **state management**, **error recovery**, and **observabili
 
 ### 1.1 Sequential Workflow (In Order)
 
-Like cooking a dish from a recipe: finish step 1 before moving to step 2, no skipping, no reordering. This is the simplest pattern — easy to write, easy to debug, but a bit slow because every step queues up behind the previous one. Use it when a later step must depend on the result of an earlier step. The diagram below illustrates the 5-step flow Parse → Analyze → Build → Test → Deploy:
+Think of following a favorite home recipe: you finish step 1 before touching step 2 — no skipping, no shuffling. That is the whole idea here, and it is the simplest pattern to learn: easy to write, easy to debug, just a little slow because every step patiently waits in line. Reach for it when a later step truly needs what the earlier step made. The little map below shows the classic 5-stop trip Parse → Analyze → Build → Test → Deploy:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -284,7 +284,7 @@ class SequentialWorkflow:
 
 ### 1.2 Parallel Workflow (Concurrent)
 
-Like cooking a party with several helpers: at the same time one person washes the vegetables, one cooks the rice, one fries the meat — only after everything is done do they gather and clear the table. This pattern is fast because many steps run at once, but the hard part is gathering (fan-in) the results. Use it when the steps are independent of each other and don't need to wait on one another:
+Think of cooking a big family dinner with friends helping out: while you wash the vegetables, someone else cooks the rice and another friend fries the main dish — then you all meet back at the table to serve. That teamwork is why this pattern feels fast: lots of things happen at once. The tricky part is the reunion at the end (fan-in), where you gather every dish together. Use it when the jobs do not really need each other to finish first:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -415,7 +415,7 @@ class ParallelWorkflow:
 
 ### 1.3 DAG Workflow (Directed Acyclic Graph)
 
-Like a sports tournament bracket: the semifinal has to wait for both quarterfinals, but the two quarterfinals are played in parallel. A DAG is the most flexible pattern — each node runs only after the nodes it depends on (dependencies) have completed, one "level" at a time, with absolutely no loops. Example below: A and B run in parallel → C waits for A, D waits for B → E waits for C, F waits for D:
+Think of a weekend sports bracket: the semifinal cannot start until both quarterfinal games are done, but those two quarterfinals happily run side by side. A DAG works just like that — it is the most flexible playbook. Each small job runs as soon as the jobs it depends on are finished, level by level, and the rules simply say "no going in circles." In the sketch below, A and B play at the same time → C waits for A, D waits for B → E waits for C, F waits for D:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -598,7 +598,7 @@ class DAGWorkflow:
 
 ### 1.4 Event-Driven Workflow
 
-Like a fire alarm control center: wherever the bell rings (event), the on-duty team (handler) responds there, and each response can trigger a new alarm. Unlike the patterns above, the flow is not predefined from the start — the workflow reacts to each event as it occurs, making it very flexible for unpredictable systems:
+Think of a friendly neighborhood fire station: wherever the bell rings (that is your event), the crew on duty (the handler) rolls out — and what they find there can ring the next bell. Unlike the tidy step-by-step recipes above, you do not plan every turn in advance here. The workflow simply listens and reacts as things happen, which makes it a lovely fit for busy, unpredictable real life:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -750,7 +750,7 @@ class EventDrivenWorkflow:
 
 ### 2.1 Data Pipeline with Branching
 
-This is the "work line" for data: each stage is a stage (transform, filter, branch, fan_out, validator, sink), and data flows through the stages just like a product through a production line. The special part is branching — a stage checks a condition and then diverts the data into two different branches, like a conveyor belt with a diverting gate. The code below shows how to assemble and run a complete pipeline:
+Think of this as the friendly assembly line for your data: every station has one clear job (transform, filter, branch, fan_out, validator, sink), and your data rides the belt from one station to the next, just like a parcel in a post office. The fun twist is branching — at one station you peek at the parcel and flip a switch that sends it left or right, like a railway junction. The code sample right below shows how you snap those stations together and press "go" on the whole line:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -982,7 +982,7 @@ class PipelineMetrics:
 
 ### 3.1 Hierarchical State Machine
 
-This is the "upgraded" version of a state machine: besides conditional state transitions, it also supports parent/child states (hierarchical), guards that block illegal transitions, automatic timeouts, and iteration limits — safe enough to drive a whole AI coding agent. The code below simulates an agent moving through the state chain IDLE → THINKING → PLANNING → READING_CODE → WRITING_CODE → RUNNING_TESTS → DONE:
+Think of this as the state machine all grown up: on top of the usual "if this, then go there" moves, it also understands parent-and-child rooms (hierarchical states), friendly bouncers at the door (guards that stop illegal moves), alarm clocks (automatic timeouts), and a cap on how many laps you can run. That makes it steady enough to chauffeur a whole AI coding agent. The code sample below is a little play where our agent walks the hallway IDLE → THINKING → PLANNING → READING_CODE → WRITING_CODE → RUNNING_TESTS → DONE:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1161,7 +1161,7 @@ class HierarchicalStateMachine:
 
 ### 4.1 Retry Strategies
 
-Like pressing "resend" on an email when the network is flaky — but done scientifically: retry with increasing wait intervals (1s → 2s → 4s) so you don't overload the service, and add jitter (random noise) so clients don't all rush in at once like a stampede (thundering herd). The code below is a retry decorator that works for both sync and async functions:
+We have all tapped "resend" when the wifi hiccups — this is that same instinct, just done with a little science. You wait a bit longer each time (1s → 2s → 4s) so you do not overwhelm the service, and you sprinkle in a touch of randomness (jitter) so a crowd of clients does not all stampede back at the exact same second. The tiny helper below wraps any function — sync or async — with that patient retry habit:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1247,7 +1247,7 @@ def async_retry(
 
 ### 4.2 Circuit Breaker Pattern
 
-Like a fuse in a house: when the fault current gets too heavy the fuse blows, cutting the power to protect the whole system. Here, when a service keeps failing past the threshold, the circuit switches from CLOSED (closed, still calling) to OPEN (open, blocking calls); after a recovery period, it tries again in the HALF_OPEN state to see whether the service is healthy again:
+Think of the fuse box in your home: when too much faulty current rushes in, the fuse pops and cuts the power to save the whole house. Our circuit breaker is that same caring fuse. When a service keeps stumbling past the limit, we flip from CLOSED (calls flowing normally) to OPEN (pause — stop calling for a while); after a short rest we peek through the door in HALF_OPEN to ask, "are you feeling better yet?"
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1353,7 +1353,7 @@ class CircuitOpenError(Exception):
 
 ### 4.3 Saga Pattern
 
-Like processing a package tour booking: if something breaks midway at the "book flight tickets" step, you have to cancel the steps that already succeeded — refund the hotel, refund the insurance. Sagas are used for business processes spanning multiple services: every step has a compensation (compensating step) to roll back when any step fails:
+Think of booking a group vacation: hotel booked, insurance paid — then the flights fall through. You do not just walk away; you kindly undo what already worked: refund the hotel, cancel the insurance. That undo-everything-neatly idea is the Saga. For jobs that stretch across many services, every step brings its own "sorry, let me undo that" companion step, so if any stop fails, the whole trip unwinds gracefully:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1472,7 +1472,7 @@ class SagaOrchestrator:
 
 ### 5.1 Distributed Tracing
 
-Like a "tracing order" that follows an entire journey: each request is assigned a unique trace_id, and however many services it passes through, each hop is recorded as spans (parent span, child span) — that way you can reconstruct the whole journey of a request and pinpoint exactly which step is slow or broken:
+Think of tucking a little travel diary onto every request: it gets a unique trace_id at the door, and every service it visits stamps the page (those stamps are called spans — parents and children). Later you can open the diary and replay the whole adventure, spotting exactly where it lingered or tripped:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1609,7 +1609,7 @@ class Tracer:
 
 ### 5.2 Structured Logging + Metrics
 
-Like a machine's thermometer + logbook: one side (structured logging) records each event as structured JSON that's easy to filter and search, the other side (metrics) counts and aggregates numbers — run counts, success rates, p50/p95/p99 latencies. The code below contains two layers, WorkflowLogger and MetricsCollector:
+Think of a cozy kitchen thermometer plus a notebook: one side (structured logging) jots down every event as tidy JSON you can easily search later, the other side (metrics) keeps the scoreboard — how many runs, how many wins, and how slow the slowest bites were (p50/p95/p99). The sample below gives you both companions, WorkflowLogger and MetricsCollector:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2054,7 +2054,7 @@ if __name__ == "__main__":
 
 ### 8.1 TypeScript Interfaces
 
-This is the "contract" between the Workflow module and the rest of the Harness framework — declaring the standard methods such as createWorkflow, execute, pause, resume, cancel, getTrace, getMetrics, so everyone knows what the engine provides and how to use it:
+Think of this as the friendly handshake agreement between the Workflow module and the rest of the Harness family — a short list of promises like createWorkflow, execute, pause, resume, cancel, getTrace, getMetrics. Once everyone agrees on the same handshake, any module knows exactly how to ask the engine for help:
 
 <details>
 <summary><b>8.1 TypeScript Interfaces (Click to expand/collapse)</b></summary>
@@ -2202,7 +2202,7 @@ class HarnessWorkflowEngine implements WorkflowEngine {
 
 ### 9.1. GitHub Actions — Event-Driven CI/CD
 
-A familiar example for most developers: a YAML file that describes CI/CD that runs on push or pull request. You'll immediately see the event-driven trigger (on:) combined with job dependencies — deploy waits for build, build waits for lint and test:
+Here is one you have probably met in real life: a short YAML file that runs your CI/CD every time you push or open a pull request. Notice the two friendly ideas living side by side — the doorbell that starts it all (the `on:` trigger) plus polite waiting in line (deploy patiently waits for build, build waits for lint and test):
 
 <details>
 <summary><b>9.1. GitHub Actions — Event-Driven CI/CD (Click to expand/collapse)</b></summary>
@@ -2241,11 +2241,11 @@ jobs:
 
 </details>
 
-**Lesson**: GitHub Actions uses DAG-based workflow execution with event triggers and dependency resolution.
+**Takeaway**: GitHub Actions is a lovely real-life DAG — a doorbell (event trigger) rings, jobs fan out and wait their turn (dependency resolution), and the whole party flows in order.
 
 ### 9.2. Apache Airflow — Data Pipeline Orchestration
 
-Airflow is famous for declaring pipelines as Python DAGs in just a few lines: declare the tasks (extract, transform, load, validate) and use the >> operator to chain the order. This approach makes the whole process visible like a map and easy to reorder:
+Airflow feels like writing a recipe card in plain Python: you simply name your chores (extract, transform, load, validate) and link them with the little `>>` arrows to say who goes first. The whole journey lays out like a subway map on the fridge — easy to read, easy to reshuffle:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2266,11 +2266,11 @@ with DAG('data_pipeline', schedule_interval='@daily') as dag:
 
 </details>
 
-**Lesson**: Airflow proved that DAG-based workflows with clear task dependencies are the gold standard for data pipelines.
+**Takeaway**: Airflow showed the world why clear "who waits for whom" DAGs became the gold standard for data pipelines — draw the map once, and everyone can follow it.
 
 ### 9.3. Temporal — Durable Workflow Execution
 
-The key point of Temporal: a workflow must "survive" even when the server crashes — state is stored durably (durable) with automatic retry, plus compensation. The example below is an order flow in Saga style: reserve stock → charge payment → ship order; if the shipping step fails, it cancels in reverse:
+Temporal has one big heart-warming promise: your workflow should "survive" even if the server takes a nap halfway through — progress is saved safely (durable), retries happen on their own, and there is always an undo plan. The little story below is a shop order told Saga-style: reserve stock → charge payment → ship order; if shipping stumbles, we gently walk backward and refund:
 
 ```
 Temporal pattern: Saga with compensating transactions
@@ -2285,7 +2285,7 @@ Compensation (reverse):
   1. ReleaseInventory()
 ```
 
-**Lesson**: Temporal's key insight — workflows should survive process crashes via durable state and automatic retry with compensation.
+**Takeaway**: Temporal's big heart-warming lesson — a good workflow naps safely through a crash (durable state), wakes up and retries on its own, and always knows how to undo things kindly (compensation).
 
 ---
 
@@ -2293,7 +2293,7 @@ Compensation (reverse):
 
 **Context**: DeepSeek Harness uses **Cordis** — a micro-kernel plugin engine designed around the philosophy **"Agent = Model + Harness"** and **"Everything is a plugin"**. Cordis provides a lightweight kernel (~2KB gzipped) that manages the entire agent lifecycle through a plugin system, with dependency injection via a Context service registry.
 
-Put simply: the kernel is like a tiny operating system, and the plugins are like apps installed on it — an app only needs to declare "what service I need" (consumes) and "what service I provide" (provides), and the operating system handles the wiring so they run in the right order.
+In plain everyday words: the kernel is a tiny operating system, and each plugin is an app on your phone — every app just says "here is what I need" (consumes) and "here is what I share" (provides), and the phone quietly plugs the wires together so everything starts in the right order.
 
 <details>
 <summary><b>TypeScript Architecture (Click to expand/collapse)</b></summary>
@@ -3028,7 +3028,7 @@ interface TrajectoryQuery {
 
 ### 10.2 6 Design Principles
 
-The six principles below are the "compass" when designing any workflow — from safe re-runs (idempotency) to storing state outside memory (state externalization) so you can resume from a checkpoint:
+Meet your pocket compass for workflow design — six little stars to steer by. They range from "it is safe to press replay" (idempotency) all the way to "keep your notes outside your head" (state externalization), so you can always pick up where you left off:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -3243,6 +3243,10 @@ Resume: re-invoke `run()` with same `runId`; completed keys hit `done()`/store a
 
 ---
 
+> **Oct-2026 addendum:** want "guards at the doors" for your agent? Read
+> [`hooks-standard.md`](./hooks-standard.md). In short: each lifecycle point
+> (`preToolUse`, `postToolUse`...) gets a check script — allow, ask a human, or block.
+
 *Document: VII. Workflow — HARNESS ENGINEERING EDITION*
-*Last updated: 07/19/2026*
+*Last updated: 16/10/2026*
 *Author: AI Knowledge Repository*

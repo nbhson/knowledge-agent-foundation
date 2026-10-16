@@ -2,11 +2,11 @@
 
 > **📌 Core Concept**
 >
-> **Definition:** A "production pattern" is **a proven loop template** — a ready-made frame including the scheduler, skills, state, verification approach, and human handoff. Instead of inventing a loop from scratch, you pick a suitable pattern and scaffold it with `loop init`.
-> **Analogy:** Like **dishes on a restaurant menu** — you don't have to reinvent the recipe; the chef (the loop-engineering repo) has tested them, served real customers, and noted "this one is spicy (high cost), this one is safe for beginners (L1)". Your job is to pick the dishes that fit your taste.
-> **Why it matters:** These patterns have been "dogfooded" on a real repo — meaning every detail (cadence, token cost, failure mode) is experience bought with real money, not theory. You reuse the lessons, avoiding stumbling 7 times like the person before you.
+> **Definition:** A "production pattern" is **a proven loop template** — a ready-made setup with the scheduler, skills, state, verification approach, and human handoff already figured out. Instead of building a loop from scratch, you pick a fitting pattern and scaffold it with `loop init`.
+> **Analogy:** Think of **dishes on a restaurant menu** — you don't need to invent the recipe yourself. The chef (the loop-engineering repo) has already tested them with real customers, and marked which ones are spicy (high cost) and which ones are beginner-friendly (L1). You just pick what suits you.
+> **Why it matters:** These patterns have been "dogfooded" on a real repo, so every detail (cadence, token cost, failure mode) comes from real experience, not theory. You get to reuse those lessons instead of making the same 7 mistakes yourself.
 
-> These are **7 loop patterns** proven to run in real environments. Each pattern answers: what problem does it solve, at what cadence, with which skills/state, how does it verify, how does it hand off to a human, and what are the tool-specific notes.
+> These are **7 loop patterns** proven to run in real environments. Each pattern explains: what problem it solves, how often it runs, which skills and state it uses, how it verifies its work, how it hands off to a human, and any tool-specific notes.
 
 ## Summary Table
 
@@ -22,7 +22,7 @@
 
 ## Pattern Picker — Which Loop?
 
-> **Easy way to read it:** The table below is an **auto-answer machine** - you just answer one question "what hurts right now?" and follow the branch. If two things hurt at once, read the `Overlap Rules` below to see which loops can run together.
+> **Easy way to read it:** The diagram below answers things for you automatically — just ask yourself "what hurts right now?" and follow that branch. If two things hurt at the same time, check the `Overlap Rules` below to see which loops can safely run together.
 
 ```
 What hurts right now?
@@ -56,15 +56,15 @@ What hurts right now?
 
 ## First Loop Recommendation
 
-If you're not sure, start with **Daily Triage at L1**. It teaches state discipline without the risk of auto-merge.
+If you are not sure where to begin, start with **Daily Triage at L1**. It helps you learn good state habits without the risk of auto-merge.
 
 ## How to Use a Pattern
 
-1. **Pick the pattern**: see the table above or the decision tree above.
+1. **Pick the pattern**: check the table above or the decision tree above.
 2. **Scaffold**: `npx @cobusgreyling/loop init . --pattern <name> --tool grok` (or `--tool claude` / `--tool opencode` / `--tool codex`).
 3. **Copy the skills** from `templates/` if you need to customize.
 4. **Set up scheduling** (`/loop`, `scheduler_create`, GitHub Action, Codex Automation).
 5. **Run week one at L1 report-only** before enabling fixes.
 6. **Audit**: `npx @cobusgreyling/loop audit . --suggest`.
 
-> **Golden rule**: never skip to L3 for a new pattern on a production repo. See [04-operating](../04-operating/) for the upgrade path.
+> **Golden rule**: never jump straight to L3 with a new pattern on a production repo. See [04-operating](../04-operating/) for the safe upgrade path.

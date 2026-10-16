@@ -1,6 +1,6 @@
 # 🔬 01. Core Concepts — Loop Engineering
 
-> This section explains **what Loop Engineering is**, **the 5 building blocks + memory** that make up every loop, **the anatomy of a loop**, **the L1–L3 autonomy levels**, and **the taxonomy of nested loops**. Read [README.md](../README.md) first for the overall context.
+> This section covers **what Loop Engineering is**, **the 5 building blocks + memory** behind every loop, **how a loop is put together**, **the L1–L3 levels**, and **how loops fit inside each other**. Please read [README.md](../README.md) first for the big picture.
 
 ---
 
@@ -14,7 +14,7 @@
 
 ### 1.1 From Prompt to Loop
 
-The typical way of using an AI coding agent today is *ad-hoc prompting*: you open the agent, type a command, wait for the result. Every time starts from scratch, with no state, no history, and no systematic verification.
+The usual way to use an AI coding agent today is *one-off prompting*: you open the agent, type a command, wait for the result. Every time starts fresh, with no state, no history, and no systematic checking.
 
 Loop Engineering inverts that:
 
@@ -34,11 +34,11 @@ LOOP ENGINEERING:
   MCP / Git / Tickets ◄──── Human Gate? ──► Commit / PR / Escalate
 ```
 
-**Your role changes**: from *prompt typer* to *loop engineer*. You write skills (knowledge), define the state schema, choose the cadence, and keep decision rights at the **human gates**.
+**Your role changes**: from *prompt typer* to *loop designer*. You write skills (knowledge), define the state shape, pick the schedule, and keep decision power at the **human gates**.
 
 ### 1.2 Harness vs Loop
 
-A commonly confused pair of concepts. Harness and Loop are not the same thing:
+A pair of ideas people often mix up. Harness and Loop are not the same thing:
 
 ```
 Harness = single session setup
@@ -48,7 +48,7 @@ Loop    = harness + schedule + state + verification chain
   → a system that orchestrates MANY harness runs over time
 ```
 
-Modules VII–XI in this framework build the pieces of a harness. This Module XII (loop) **orchestrates them over time**: schedules, durable state, and verification chains.
+Modules VII–XI in this framework build the pieces of a harness. This Module XII (loop) **brings them together over time**: schedules, durable state, and checking chains.
 
 ### 1.3 A Loop Is a Recursive Goal
 
@@ -62,7 +62,7 @@ Loop = Define purpose → Iterate → Done / Escalate to human
 
 ## 2. Five Building Blocks + Memory
 
-These are the **primitives** that make up every loop. Actual capability matters more than product names — each primitive has a mapping in different tools (Grok, Claude Code, Codex, Cursor, Opencode, ...).
+These are the **basic parts** that make up every loop. What each part can do matters more than product names — each part has an equivalent in different tools (Grok, Claude Code, Codex, Cursor, Opencode, ...).
 
 | Primitive | Job in the Loop |
 |-----------|----------------|
@@ -96,7 +96,7 @@ These are the **primitives** that make up every loop. Actual capability matters 
 
 ### 2.1 Automations / Scheduling
 
-The heartbeat of the loop. **Without scheduling, you only have one agent running once.**
+The heartbeat of the loop. **Without scheduling, you just have one agent running once.**
 
 Common realizations:
 - `/loop [interval] <prompt>` (Grok, Claude Code)
@@ -125,7 +125,7 @@ Agent B (worktree 2)  ──►  edits fix/issue-1241
 
 Durable memory of **intent**.
 
-A skill (usually a `SKILL.md` + scripts/references) encodes:
+A skill (a `SKILL.md` + `scripts/`/`references/`/`assets/` per the Agent Skills spec — see `harness/05-prompt-builder/agent-skills-spec.md`) encodes:
 - Project conventions
 - "We don't do it this way because of incident X"
 - Build/test/lint commands
@@ -425,9 +425,9 @@ L2 ──► L1: kill switch
 >
 > **Definition:** The loop taxonomy is how **loops nest inside each other** across 5 speed tiers — from the thinking loops inside the agent's head (millisecond/second scale) to loops that improve the whole system (day/week scale). Not 5 separate things; they sit **inside each other** like 5 onion layers.
 > **Analogy:** Like a **conductor leading an orchestra**: the fastest tempo is each musician's bow stroke (inner loop, milliseconds), the next tier is the whole piece replayed if the tempo breaks (execution loop), and the slowest tier is deciding which pieces to play next season (outer loop). The conductor can't control each fingertip — he controls at the tier that needs its own guardrails.
-> **Why it matters:** Guardrails must attach to the right tier: banning infinite retries belongs to the **execution loop** (milliseconds), not the **outer loop** (days). Understanding the taxonomy = knowing which loops are fast and which are slow, which need a verifier, and which only need a human pinned in place.
+> **Why it matters:** Guardrails must attach to the right tier: banning infinite retries belongs to the **execution loop** (milliseconds), not the **outer loop** (days). Knowing the taxonomy = knowing which loops are fast and which are slow, which need a verifier, and which only need a human pinned in place.
 
-At the system-design level, each large loop contains smaller loops. Understanding this taxonomy tells you **which loop needs which guardrail**.
+At the system-design level, each large loop contains smaller loops. Knowing this taxonomy tells you **which loop needs which guardrail**.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐

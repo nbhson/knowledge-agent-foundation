@@ -14,11 +14,11 @@
 
 ### Câu Chuyện Mở Đầu
 
-Harness của bạn ngày càng phức tạp: một agent duy nhất làm mọi thứ — retrieve, plan, code, review. Khi task đủ lớn, agent đơn lẻ trở thành **nút thắt**: context quá tải, một lỗi nhỏ phá hỏng cả chuỗi, và không có sự phân công chuyên môn hóa.
+Hãy hình dung thế này: harness của bạn ngày càng phình ra — lúc đầu chỉ một agent lo hết mọi việc: retrieve, plan, code, review. Nhưng khi task lớn dần, agent đơn lẻ đó dễ thành **nút thắt**: context quá tải, chỉ một lỗi nhỏ là hỏng cả chuỗi, mà cũng chẳng có ai thật sự chuyên sâu việc nào.
 
 > *"One agent doing everything is a monolith. A harness of specialized agents is a microservices architecture for cognition."*
 
-**AutoGen (Microsoft)** giải quyết bằng mô hình **conversation-based multi-agent**: nhiều agent (assistant, user proxy, critic, planner...) trò chuyện với nhau thông qua một `ConversableAgent` abstraction. Mỗi agent có vai trò, hệ thống prompt, và khả năng riêng — như các node chuyên biệt trong harness.
+**AutoGen (Microsoft)** gỡ điểm nghẽn này bằng mô hình **conversation-based multi-agent**: nhiều agent (assistant, user proxy, critic, planner...) trò chuyện qua lại với nhau thông qua một `ConversableAgent` abstraction. Mỗi agent giữ một vai, một hệ prompt và một khả năng riêng — giống như các node chuyên biệt cắm vào harness vậy.
 
 ### Tại Sao AutoGen Quan Trọng?
 
@@ -48,7 +48,7 @@ Harness của bạn ngày càng phức tạp: một agent duy nhất làm mọi 
 
 ### Conversation-Based Multi-Agent
 
-AutoGen dùng kiến trúc **agent-to-agent conversation**. Thay vì một pipeline tuyến tính, các agent trao đổi:
+AutoGen dùng kiến trúc **agent-to-agent conversation**. Thay vì xếp thành một pipeline thẳng đuột, các agent cứ trao đổi qua lại với nhau như thế này:
 
 ```
 User → UserProxyAgent → AssistantAgent (gọi tool) → UserProxyAgent (chạy code)
@@ -75,7 +75,7 @@ harness = UserProxyAgent(
 )
 ```
 
-`human_input_mode="NEVER"` biến UserProxyAgent thành **harness tự điều hành**: tự gọi tools, tự nhận kết quả, tự tiếp tục cho tới khi hoàn thành hoặc chạm giới hạn `max_consecutive_auto_reply`.
+Để `human_input_mode="NEVER"` là UserProxyAgent trở thành một **harness tự chạy**: tự gọi tools, tự đón kết quả, tự đi tiếp cho tới khi xong việc hoặc chạm trần `max_consecutive_auto_reply`.
 
 ### GroupChat — Nhiều Agent
 
@@ -92,7 +92,7 @@ group_chat = GroupChat(
 manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config)
 ```
 
-Đây chính là **harness/09-multi-agent** dưới dạng code — một manager điều phối ai nói khi nào, như một harness orchestrating các workers.
+Nói ngắn gọn, đây chính là **harness/09-multi-agent** viết thành code — một manager đứng ra chia lượt xem ai nói khi nào, giống như harness điều phối mấy worker vậy.
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 
@@ -143,7 +143,7 @@ manager = GroupChatManager(groupchat=group_chat)
 result = manager.run(task="Implement login API with rate limiting")
 ```
 
-Luồng: planner đề xuất → coder implement → critic phát hiện lỗi → quay lại coder sửa → ... cho đến khi critic hài lòng — một **loop/05-multi-loop** code-based.
+Luồng chạy cũng dễ hình dung: planner lên ý tưởng → coder viết theo → critic soi lỗi → quay lại coder sửa → ... cứ thế cho tới khi critic gật đầu — đúng kiểu **loop/05-multi-loop** nhưng viết thành code.
 
 ### 2. Human-in-the-Loop Cho Phép Thay Đổi Nhạy Cảm
 

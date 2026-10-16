@@ -62,13 +62,13 @@
 
 ### Opening Story
 
-Imagine you are a speaker in front of 200 people. There are 200 slides on the table. If you show all 200 slides at once — the audience is overwhelmed, and nobody understands anything. If you show only 3 blank slides — the audience still learns nothing.
+Picture yourself on stage in front of 200 people, with 200 slides stacked on the table. Flash all 200 at once and the audience drowns — nobody learns a thing. Show up with just 3 blank slides and they still learn nothing.
 
-**That is exactly the Build Context problem.**
+**That's the Build Context dilemma in a nutshell.**
 
-You retrieved great information in step 01. But if you **dump everything into the prompt** — the model gets overloaded, loses focus, and answers worse. If you **include too little** — the model lacks information and hallucinates.
+Back in step 01 you dug up great material. But if you **shovel all of it into the prompt**, the model gets overwhelmed, loses the thread, and answers worse. Hand it **too little**, and it starts guessing — and hallucinating.
 
-Build Context is the art of **organizing information the right way, at the right time, in the right amount** — just like a great speaker knows how to select information before speaking.
+Build Context is the craft of **picking the right information, in the right amount, at the right moment** — exactly what a great speaker does before stepping on stage.
 
 ### Why Is Build Context Important?
 
@@ -92,7 +92,7 @@ Build Context is the art of **organizing information the right way, at the right
 >
 > **Why it matters:** With the same amount of knowledge, different ways of organizing it change answer quality dramatically.
 
-**Build Context** is the process of **organizing and managing information** to feed into the LLM's prompt. Good context helps the model understand better, answer more accurately, and avoid hallucination.
+**Build Context** is simply the job of **tidying up everything the model needs to see** — retrieved pages, chat history, tool results — and laying it out as one clean, well-organized prompt. Tidy context in, thoughtful answer out.
 
 ```mermaid
 flowchart LR
@@ -164,9 +164,9 @@ flowchart LR
 
 ### Background
 
-You retrieved great information in step 01. But if you **dump everything into the prompt** — the model gets overloaded, loses focus, and answers worse. If you **include too little** — the model lacks information and hallucinates.
+You already brought home great ingredients in step 01. But toss **everything into the pot at once** and the dish turns to mush — the model gets overloaded, loses focus, and cooks up a worse answer. Use **too little**, and the pot is empty — so the model starts inventing flavors (hallucinating).
 
-Build Context is the art of **organizing information the right way, at the right time, in the right amount** — just like a great speaker knows how to select information before speaking.
+Build Context is the cook's craft of **using the right ingredients, in the right amount, at the right moment** — just like a speaker who picks only the slides the audience truly needs.
 
 ### Core Philosophy
 
@@ -334,9 +334,9 @@ Build Context is the art of **organizing information the right way, at the right
 
 ### 1.1 What Is a Context Window?
 
-The context window is the **temporary memory** of an LLM — all the tokens the model can "see" at one point in time. Managing it effectively is the most important skill.
+Think of the context window as the model's **short-term memory** — everything it can "keep in mind" at one moment. Learning to manage that space well is the single most useful skill in this chapter.
 
-In plain terms: the context window is like the model's desk — the wider the desk, the more paperwork you can put on it, but too much paper makes it hard to find the one sheet you need.
+Or, if you like a homier picture: it's the model's desk. A bigger desk holds more paperwork, but pile on too much and you'll never find the one sheet that matters.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -376,12 +376,13 @@ In plain terms: the context window is like the model's desk — the wider the de
 
 ### 1.2 Token Budget Allocation
 
-**Token Budget Allocation** is the process of **assigning a token count (the unit of measurement for LLMs) to each component** inside the context window: the system prompt, retrieved context, conversation history, tool results, and the user query.
+**Token Budget Allocation** just means **deciding how many tokens (the LLM's unit of measuring text) each part of the prompt gets**: the system instructions, the retrieved pages, the chat history, the tool outputs, and the user's question.
 
-**What it means:**
-- The context window is limited (e.g. 128K tokens) → without allocation, one component "eats up" the space of another, leaving the model without the information it needs.
-- Sensible allocation helps **maximize useful information** while still leaving room for the model's output.
-- **Dynamic** allocation by question type optimizes each situation: simple questions need little retrieved context, retrieval-heavy questions need more.
+**Why it matters in plain language:**
+
+- The desk is only so big (say 128K tokens) — without a plan, one pile of papers sprawls over the others, and the model ends up missing something it truly needed.
+- A sensible split packs in **the most useful information** while always saving breathing room for the model's own answer.
+- And you can **adjust the split per question**: a chit-chat question barely needs retrieved pages, while a research question deserves a bigger share.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -627,12 +628,13 @@ It is like a student who remembers the start and end of a class best, while the 
 
 ### 2.1 The 5 Strategies at a Glance
 
-**Context Construction Strategies** are **strategies for organizing retrieved information into context before it goes into the prompt** — deciding how to arrange, filter, and format the input documents for the LLM.
+**Context Construction Strategies** are simply your **game plans for turning a pile of retrieved pages into a tidy prompt** — how you arrange, filter, and present them to the model.
 
-**What it means:**
-- It is not "retrieved N, so stuff all N into the prompt" — each strategy has its own trade-off between **completeness** and **precision/brevity**.
-- Choosing the wrong strategy leads to: noisy context (lower accuracy), wasted tokens (higher cost), or missing information (hallucination).
-- The **ADAPTIVE** strategy is the modern direction: automatically choose the right strategy based on the question type.
+**In everyday terms:**
+
+- Don't just think "I found 10 pages, so I'll paste all 10 in." Every game plan trades off **completeness** (showing everything) against **sharpness** (showing only the best bits).
+- Pick the wrong plan and you get: noisy context (worse answers), burnt tokens (bigger bills), or missing facts (hallucinations).
+- The **ADAPTIVE** game plan is where things are heading: let the system peek at the question first, then pick the right plan automatically.
 
 The 5 main strategies:
 
@@ -680,9 +682,9 @@ The 5 main strategies:
 
 ### 2.2 Context Building Patterns — Code Examples
 
-**Context Building Patterns** are **specific code patterns that realize context-building strategies in practice** — each pattern solves a typical situation when integrating RAG.
+**Context Building Patterns** are the **ready-to-use recipes** behind those game plans — little code patterns you can copy for everyday RAG situations.
 
-**What it means:**
+**What each recipe is good for, in plain words:**
 - **Citation-based**: Assign source numbers [1], [2]... to each document → the model cites the right source, which is easy to verify (important in legal and medical domains).
 - **Relevance-ranked**: Order documents by relevance → reduces "Lost in the Middle" by placing important information at the start/end.
 - **Categorized**: Group documents by topic → the model can find and synthesize information per category more easily.
@@ -1209,14 +1211,13 @@ Query "How much is the health insurance contribution?"
 
 ### 3.1 Why Compression Is Needed?
 
-**Compression (context compression)** is the process of **reducing the size of the context** by removing redundant information, summarizing, or keeping only the important parts — with the goal of preserving the core meaning while reducing the token count.
+Think of **compression** as packing for a trip: you squeeze the air out, roll up the clothes, and keep only what you'll actually wear — the suitcase ends up half the size, but nothing important got left behind. Same idea here: trim the fluff, summarize, and keep the sentences that carry the real meaning, so the token count shrinks without losing the point.
 
-Easy picture: the dining table (context) has room for only a few dishes — you must choose the main dishes and pack them in neatly, instead of serving up the whole pile of raw ingredients.
+Why bother?
 
-**Why it is needed:**
-- The context window is limited (e.g. 128K tokens), but retrieved documents often far exceed the budget — for example 10 documents × 2K tokens = 20K tokens, but the budget is only 8K.
-- **Every token = money** (API cost) and = processing time (latency). A longer context is not automatically better — more noise makes "Lost in the Middle" more likely.
-- Compression gets **as much useful information as possible into the token budget** instead of cutting the context arbitrarily (losing important information).
+- The model's desk (context window) is only so big — say 128K tokens — while your pile of retrieved pages can easily overflow it. Picture 10 documents × 2K tokens = 20K tokens staring at an 8K budget.
+- **Every token costs money** (API bills) and time (waiting for the reply). And stuffing in more text doesn't help — extra noise just makes the "Lost in the Middle" problem worse.
+- Good compression squeezes **the most useful information into the budget you've got**, instead of chopping pages off at random and hoping the good parts survive.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1244,7 +1245,7 @@ Easy picture: the dining table (context) has room for only a few dishes — you 
 
 ### 3.2 Compression Techniques
 
-**Compression Techniques** are **specific techniques for compressing context**; each has its own strengths depending on the document type and goal:
+There isn't one single way to pack the suitcase — here are the favorite **tricks of the trade**, each shining in a different situation:
 
 | Technique | How it works | Best when |
 |----------|---------------|-------------|
@@ -1641,14 +1642,15 @@ class SmartContextManager {
 
 ### 4.1 Prompt Templates
 
-**Prompt Templates** are **pre-made skeletons for prompts** — a fixed structure for arranging context, system messages, and answer instructions — so you do not have to rewrite the prompt every time.
+**Prompt Templates** are **ready-made outlines for your prompts** — a fixed layout for the context, the instructions, and the answer rules — so you never have to rebuild the prompt from scratch.
 
-Think of a template as a job application form: the frame is already there, you just fill in the specific content, and whoever fills it in gets the same level of completeness.
+Think of a template like a job application form: the boxes are already drawn, you just fill in your details, and everyone who fills it in ends up equally complete.
 
-**What it means:**
-- Guarantees **consistency**: the same prompt structure for every query → stable, predictable results.
-- **Directs LLM behavior**: the template specifies "use only the context", "cite sources [n]", "if information is missing, say so clearly" → less hallucination.
-- **Varies by purpose**: a BASIC template for everyday questions; CHAIN-OF-THOUGHT for analytical questions; SELF-CONSTRAINED for domains needing precision (health insurance, legal); CITATION-HEAVY when strict source citation is required.
+**Why you'll love them:**
+
+- **Consistency**: the same layout for every question → steady, predictable answers.
+- **Good behavior**: the template can say "only use the context below", "cite your sources [1], [2]", "if it's not in the context, say so honestly" — which keeps hallucinations down.
+- **One size doesn't fit all**: keep a BASIC outline for everyday questions, a CHAIN-OF-THOUGHT one for step-by-step analysis, a SELF-CONSTRAINED one for picky domains (health insurance, legal), and a CITATION-HEAVY one when every claim needs a receipt.
 
 5 typical templates:
 
@@ -1930,14 +1932,15 @@ prompt = builder.build_with_guardrails(
 
 ### 5.1 Hierarchical Structure
 
-**Hierarchical Context** is a way of **organizing the context into multiple levels with different priorities** — from immutable information (always present) to ephemeral information (easiest to evict).
+**Hierarchical Context** just means **stacking the context in layers, like shelves with different "do not touch" levels** — from the stuff that must always stay to the stuff you can toss first when space runs out.
 
-Simply put: like a refrigerator — the easiest shelf holds everyday essentials; when it is cramped, clear the less important shelf first, and never toss out the core items.
+Back to the fridge picture: everyday essentials live on the easy-to-reach shelf; when the fridge gets crowded, you clear the leftover shelf first — and you never throw away the family's core groceries.
 
-**What it means:**
-- Not all information is equally important → a hierarchy is needed to **know what to delete first when the context fills up**.
-- **Level 0 (Global)** is never deleted (system prompt, identity); **Level 4 (Focused)** is deleted first (specific details).
-- When the context is full, the standard rule: **delete from the bottom up** (focused → retrieved → recent → session), keeping global intact — so the model always retains its "personality" and mission.
+**In plain terms:**
+
+- Not every piece of information matters equally → so you rank the shelves to **know what goes first when the fridge (context) overflows**.
+- **Level 0 (Global)** never gets tossed (who the assistant is, its mission); **Level 4 (Focused)** goes first (tiny details about one file or section).
+- The house rule when things get tight: **clear from the bottom up** (focused → retrieved → recent → session), and always keep Global — so the model never forgets its "personality" and mission.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1983,7 +1986,7 @@ Simply put: like a refrigerator — the easiest shelf holds everyday essentials;
 
 ### 5.2 Implementation
 
-The code below is a runnable `HierarchicalContext` class: you declare 5 layers (global, session, recent, retrieved, focused), fill each layer with the `set_*` methods, then call `build_prompt()` to assemble the prompt automatically in priority order. When the token budget is exceeded, it evicts the lowest-priority layer first — the exact scenario described in theory in 5.1.
+Below is a ready-to-run `HierarchicalContext` class that puts the idea above into code: you set up 5 shelves (global, session, recent, retrieved, focused), stock each shelf with the `set_*` helpers, then `build_prompt()` assembles everything in priority order. When the token budget runs out, it clears the least important shelf first — exactly the fridge rule you just read about.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2134,14 +2137,15 @@ ctx.report()
 
 ### 6.1 Concept
 
-**Streaming Context** is the technique of **continuously updating the context while the user is entering input** — instead of waiting for the user to finish the question and then building the context once, the system processes each small chunk of the question.
+**Streaming Context** means **building the context bit by bit while the user is still typing** — instead of sitting on your hands until the full question arrives and only then scrambling to gather context, you start working with each little piece as it comes in.
 
-Imagine searching on Google: the moment you type the first few letters, suggestions already appear — streaming context does the same thing for a chatbot.
+It's exactly like Google search: you type the first few letters and suggestions already pop up — streaming context gives a chatbot that same head start.
 
-**What it means:**
-- **Faster responses**: the moment the user types "health insurance", the system has already started retrieving health insurance documents, shortening the wait time.
-- **Context grows with the question**: each extra word adds the matching topic to the context (health insurance → health insurance + finance → health insurance + finance + validity).
-- **Debounce**: the system waits a short interval (500ms) after the user stops typing before processing, avoiding wasteful back-to-back API calls.
+**In plain terms:**
+
+- **Snappier replies**: the moment someone types "health insurance", the system is already fetching the health-insurance pages — so there's far less awkward waiting.
+- **Context that grows with the sentence**: every new word adds its topic to the pile (health insurance → plus finance → plus validity period).
+- **A polite pause (debounce)**: the system waits a beat (about 500ms) after you stop typing before it acts, so it doesn't fire off a dozen wasteful calls while your fingers are still moving.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -2176,7 +2180,7 @@ Imagine searching on Google: the moment you type the first few letters, suggesti
 
 ### 6.2 Implementation
 
-This example implements the idea of "building context while the user is typing": the `StreamingContextManager` class gradually accumulates typed characters and waits for a short pause after typing stops (debounce) before building the prompt; `StreamingRAG` shows how to stream the response token by token from Ollama. Just read and understand the flow — you do not have to run it right away.
+The example below shows "packing the suitcase while the traveler is still choosing clothes": the `StreamingContextManager` class collects keystrokes as they arrive and waits for a short pause (debounce) before assembling the prompt; `StreamingRAG` then streams the answer back piece by piece from Ollama. Just follow the flow for now — no need to run anything yet.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -2830,12 +2834,13 @@ class ProductionRAGContext {
 
 ### 8.1. Context Routing
 
-**Context Routing** is the technique of **automatically classifying questions and choosing the context-building strategy that fits each type** — just as a network router decides which path each packet takes.
+**Context Routing** is like the receptionist in a busy office: **it listens to each question, figures out what kind it is, and sends it down the hallway that fits best** — the same way a network router picks the right path for each packet.
 
-**What it means:**
-- Not every question needs the same context: simple questions need few documents but a lot of conversation history; code questions need context about the open file and conventions; analytical questions need multiple sources + chain-of-thought.
-- Routing **optimizes both tokens and quality**: right question type → right context type → better results at lower cost.
-- Classification can use simple rules (keywords) or the LLM itself.
+**In everyday terms:**
+
+- Different questions need different "luggage": a chit-chat question travels light on documents but heavy on chat history; a coding question needs the open file plus the project's conventions; a research question wants several sources and step-by-step reasoning.
+- Good routing **saves tokens and lifts quality at the same time**: the right question type gets the right context shape → better answers for less money.
+- And the sorting itself can be dead simple (keyword rules) or clever (ask the LLM to classify).
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -3295,11 +3300,12 @@ class MultiTurnContextManager:
 
 ### 9.1. Context Building Best Practices
 
-**Context Building Best Practices** is a **set of the best-practice principles** when building context — the DOs and DON'Ts distilled from practical experience and research.
+**Context Building Best Practices** is your friendly **"do this, not that" checklist** — the habits worth building, distilled from real projects and research.
 
-**What it means:**
-- Avoid common, expensive quality-reducing mistakes: stuffing the whole codebase, keeping unlimited chat history, ignoring "Lost in the Middle", using static context for every question.
-- It is a **quick checklist** to assess whether your context system is good or bad — any missing DO item is where to improve.
+**How to use it:**
+
+- Skim it to dodge the classic wallet-draining mistakes: pasting in the entire codebase, keeping endless chat history, piling key facts in the mushy middle, or serving the exact same static context for every question.
+- Treat it as a **quick health check** for your system — every unchecked box is your next improvement waiting to happen.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -4530,7 +4536,12 @@ Key takeaways:
 
 ---
 
+> **Oct-2026 addendum:** `AGENTS.md` is now an open standard (https://agents.md, AAIF/Linux Foundation) —
+> how to write and split files in [`agents-md-standard.md`](./agents-md-standard.md).
+> Think of it as the house-rules sheet on the door for every new agent. Model names below
+> are just Jul-2026 examples.
+
 *Document: II. Build Context*  
-*Last updated: 07/19/2026*  
+*Last updated: 16/10/2026*  
 *Author: AI Knowledge Repository*  
-*Environment: Ollama (gemma3:12b, nomic-embed-text)*
+*Environment: Ollama (gemma3:12b, nomic-embed-text — Jul-2026 examples, see AI_AGENT_FRAMEWORK.md Oct-2026 note)*

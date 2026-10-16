@@ -56,10 +56,9 @@
 > - [16. Future Trends in Compaction](#16-future-trends-in-compaction)
 > - [References](#references)
 >
-> **Cross-cutting module.** Compaction is the reason an agent can run for hours instead of
-> minutes. It owns the boundary between *transient context* (→ 02) and *durable memory*
-> (→ 03) — the contract between those two is violated more often than any other in
-> production systems.
+> **Cross-cutting module.** Compaction is why an agent can run for hours instead of
+> minutes. It looks after the line between *short-lived context* (→ 02) and *long-lived memory*
+> (→ 03) — that agreement breaks in production more than any other.
 
 ---
 
@@ -67,7 +66,7 @@
 
 It's turn 47. The agent is deep in a refactor: 31 tool calls, four files rewritten, two
 test suites run, one confusing stack trace buried somewhere in the middle. The context
-window is at 96%. The next tool result will be 4,000 tokens and it does not fit.
+window is at 96%. The next tool result will be 4,000 tokens and it doesn't fit.
 
 Now the team has three bad options and no good one:
 
@@ -81,15 +80,15 @@ Now the team has three bad options and no good one:
    The paragraph mentions the stack trace and omits the task definition, so the agent
    solves the wrong problem fluently.
 
-**None of these are "compaction".** Compaction is a *policy*: a trigger, a pin set of
-things that must never be evicted, a utility function for deciding what goes next, and a
-resume block that reconstructs the run's state in a fixed structure. Get those four
-right and turn 47 is boring. Get them wrong and the failure is invisible — the run
-*completes*, it just completes the wrong task.
+**None of these is real "compaction".** Compaction is a friendly but firm *routine*: a trigger, a pin set of
+things you always keep, a simple way to decide what goes next, and a
+resume block that rebuilds the run's state in a fixed shape. Get those four
+right and turn 47 feels boring. Get them wrong and the failure is quiet — the run
+*finishes*, it just finishes the wrong job.
 
 ### Why Is Compaction Non-Optional?
 
-> *"Any agent that cannot survive its own context window is a demo, not a product."*
+> *"Any agent that can't survive its own context window is a demo, not a product."*
 
 #### The Arithmetic
 
@@ -99,17 +98,17 @@ right and turn 47 is boring. Get them wrong and the failure is invisible — the
 | 128k (typical) | ~4k | ~32 | unbounded |
 | 32k (small/local) | ~2k | ~16 | unbounded |
 
-**Unbounded** is the point. Compaction is not an optimization; it is the mechanism that
-converts a fixed-size context into an arbitrarily long run. It is also what makes
-`07-workflow` checkpoint-resume viable (→ 07 §13), `09-multi-agent` sub-agent handoffs
-possible (→ 09 §16.2), and the `10-automation` loop budget enforceable (→ 10 §17.3) —
-each of those needs a run that outlives one context window.
+**Unbounded** is the whole goal. Compaction isn't just a nice speedup; it's what turns
+a fixed-size context into a run that can go as long as you need. It's also what makes
+`07-workflow` checkpoint-resume work (→ 07 §13), `09-multi-agent` sub-agent handoffs
+possible (→ 09 §16.2), and the `10-automation` loop budget doable (→ 10 §17.3) —
+each of those needs a run that lives past one context window.
 
 #### Second-Order Effects
 
 - **Cost.** Compaction reduces per-turn input tokens dramatically on long runs, because a 60 KB resume block replaces 180 KB of history. Teams routinely see 40–70% cost reduction on runs over 30 turns.
-- **Quality.** Compaction *can* hurt quality — that is what §5–7 are about. Done badly it is strictly worse than no compaction, because the model confidently reasons on a lossy summary.
-- **Auditability.** Compaction produces a `compaction` event (→ 13) recording exactly what was kept and evicted. A harness where you cannot reconstruct what the model lost is a harness you cannot debug.
+- **Quality.** Compaction *can* hurt quality — that is what §5–7 are about. Done badly it's strictly worse than no compaction, because the model confidently reasons on a lossy summary.
+- **Auditability.** Compaction produces a `compaction` event (→ 13) recording exactly what was kept and evicted. A harness where you can't reconstruct what the model lost is a harness you can't debug.
 
 ## Overview
 
@@ -119,8 +118,8 @@ each of those needs a run that outlives one context window.
 > - **Analogy:** Packing a small suitcase for a long trip. When it's full you don't toss things at random — you have rules (hygiene kit stays, old receipts go) and you leave a note listing what you removed.
 > - **Why it matters:** Every long agent run dies without compaction: context overflow, lost-in-the-middle accuracy collapse, and a 3–5× token bill from resending dead tool output. Compaction at 70% keeps runs alive indefinitely at flat cost.
 
-**Context Compaction** is what lets a fixed context window support an unbounded run. It
-is the most under-engineered part of most agent harnesses, and the most expensive to
+**Context Compaction** is what lets a small, fixed context window support a long, open-ended run. It's
+the part of most agent harnesses that gets the least attention, and the most painful to
 get wrong.
 
 ```
@@ -228,7 +227,7 @@ prune never pay almost 40% less and keep more information.
 The failure at 90% is specific and common: a single `read_file` of a 30 KB file
 consumes 8% of a 200k window in one step. Trigger at 90%, get one 8% result, and you
 are at 98% — now the *next* result overflows and you compact again, mid-task, with
-less room to summarize. Compaction under pressure is exactly when you cannot afford
+less room to summarize. Compaction under pressure is exactly when you can't afford
 lossy summarization.
 
 **The rule: trigger when you can still afford to summarize well.**
@@ -303,7 +302,7 @@ export function isPinned(span: ContextSpan, pins: PinSet, planState: PlanState):
 }
 ```
 
-**Rule: the pin set is derived, not hand-maintained.** It is computed from the plan, the
+**Rule: the pin set is derived, not hand-maintained.** It's computed from the plan, the
 active loop, and the pending gate list — so it shrinks automatically as work completes
 instead of accumulating.
 
@@ -462,10 +461,10 @@ sequence is:
 ```
 
 Step 3 failing must abort step 5. Not log a warning — abort. A compaction that loses a
-decision has produced a run that cannot be trusted, and the cheapest way to make that
+decision has produced a run that can't be trusted, and the cheapest way to make that
 impossible is to make it fail loudly.
 
-**The verification test** is in §9.2, and it is the single most valuable test in this
+**The verification test** is in §9.2, and it's the single most valuable test in this
 module: kill the memory backend, run a compaction, and assert the run refuses to
 proceed.
 
@@ -766,8 +765,8 @@ it("a cold agent can continue from the resume block alone", async () => {
 });
 ```
 
-The second test is the real acceptance criterion for the whole module. It is also the
-test most teams skip, and it is the one that would have caught the turn-47 failure
+The second test is the real acceptance criterion for the whole module. It's also the
+test most teams skip, and it's the one that would have caught the turn-47 failure
 described at the top.
 
 ### 9.3 Quality Regression Suite
@@ -803,7 +802,7 @@ adopting:
 2. **The user can see and control the budget.** Exposing context utilization makes
    compaction a visible part of the workflow rather than an invisible mutation.
 3. **Compaction is presented as a checkpoint.** Users understand "context was
-   compacted; here's what I remember" because it is phrased like a save point, not a
+   compacted; here's what I remember" because it's phrased like a save point, not a
    hidden truncation.
 
 ### 10.2 Aider — Repository Map + History Digest
@@ -823,7 +822,7 @@ because a diff's value is in its exact bytes.
 Autonomous coding agents running for tens of minutes hit context limits constantly, and
 handle it as an ordinary operation rather than an exception:
 
-- **Task-scoped context.** Each task in the plan gets its own context window; completing a task *is* a compaction boundary. This is the "task-boundary" trigger from §2.2, and it is the cleanest variant when the plan has clear seams.
+- **Task-scoped context.** Each task in the plan gets its own context window; completing a task *is* a compaction boundary. This is the "task-boundary" trigger from §2.2, and it's the cleanest variant when the plan has clear seams.
 - **Progress summaries as artifacts.** Each task produces a summary that is written to the session record, not just kept in context. That artifact is what a human reads to review the run, and what a later run loads if it resumes.
 - **Test output kept structured, not summarized.** The failing test name and assertion are preserved exactly; the surrounding stack frames are dropped.
 
@@ -846,7 +845,7 @@ Liu et al. (2023) showed that transformer performance degrades sharply when rele
 information sits in the middle of a long context, while the beginning and end are
 attended to reliably. Two direct consequences for compaction design:
 
-1. **Header/footer prompt structure** (§7.1) is not superstition — it exploits the
+1. **Header/footer prompt structure** (§7.1) isn't superstition — it exploits the
    measured attention profile.
 2. **Pruning should be front-loaded.** Old content (which lands mid-context after new
    content is appended) is the cheapest thing to drop, which is why `recency` is only
@@ -953,7 +952,7 @@ export interface ColdStartTest {
 1. **Prune before you summarize.** Dropping dead spans is free and lossless; summarizing is expensive and lossy. Doing it in the wrong order costs money and information.
 2. **Pin by derivation, not by hand.** The pin set is computed from the plan, the active loop, and the pending gate list — so it shrinks as work completes instead of growing until it breaks the budget.
 3. **The budget is a hard cap.** 300 tokens for the resume block, 70% to trigger. Both enforced in code, both asserted in tests.
-4. **Persist before evicting, or don't evict.** A compaction that cannot write back aborts. A run that loses a decision silently is worse than a run that stops with an error.
+4. **Persist before evicting, or don't evict.** A compaction that can't write back aborts. A run that loses a decision silently is worse than a run that stops with an error.
 5. **Deterministic policy.** Trigger, pin, and eviction order are computed from measured state. The model never decides what it forgets.
 6. **The contract is with a cold agent.** Accept a resume block only if a fresh agent with an empty context takes the correct next action from it.
 
@@ -977,7 +976,7 @@ export interface ColdStartTest {
 - ❌ Don't trigger at 90% and hope the next result fits. It won't, and you compact under pressure — the worst time to be lossy.
 - ❌ Don't use FIFO/oldest-first eviction. It keeps yesterday's `ls` and drops the task definition.
 - ❌ Don't let the model decide when to compact.
-- ❌ Don't summarize the whole transcript when most of it is dead branches.
+- ❌ Don't summarize the whole transcript when most of it's dead branches.
 - ❌ Don't paraphrase pinned values (numbers, IDs, negative constraints). Paraphrase is where precision dies.
 - ❌ Don't let the pin set grow monotonically. A resolved loop's failure signal must become evictable.
 - ❌ Don't write back to memory "later". Later is after the decision is gone.
@@ -1007,9 +1006,9 @@ export interface ColdStartTest {
 ## 15. Production Checklist
 
 - [ ] **Trigger** — 70% utilization OR 20 turns; deterministic, computed from measured tokens
-- [ ] **Headroom** — 30% reserved; a single large tool result cannot trigger a cascade
+- [ ] **Headroom** — 30% reserved; a single large tool result can't trigger a cascade
 - [ ] **Pin set** — system, goal, schema, invariants, active diffs, last user message, unresolved loop failure, pending approvals
-- [ ] **Pin expiry** — resolved-loop pins become evictable; pin set does not grow monotonically
+- [ ] **Pin expiry** — resolved-loop pins become evictable; pin set doesn't grow monotonically
 - [ ] **Eviction order** — plan-graph reachability weighted ≥ recency; no FIFO
 - [ ] **Retry collapse** — 3+ identical calls collapse to one line with the last error verbatim
 - [ ] **Resume block** — fixed keys, ≤300 tokens, asserted in CI, `evicted[]` for audit
@@ -1047,7 +1046,7 @@ difference between an agent that survives long runs and one that is merely lucky
 
 ### 16.4 Beyond Summarization
 
-- **State externalization.** Move large state (test fixtures, file bodies) to a store and keep only handles in context. The strongest form of compaction is not summarizing the data — it is never putting it there.
+- **State externalization.** Move large state (test fixtures, file bodies) to a store and keep only handles in context. The strongest form of compaction isn't summarizing the data — it's never putting it there.
 - **Tiered residency à la MemGPT**, with the deterministic pin set as the floor beneath the model's paging decisions.
 
 ---
@@ -1095,5 +1094,5 @@ difference between an agent that survives long runs and one that is merely lucky
 
 *Document: Harness 14. Context Compaction — HARNESS ENGINEERING EDITION*
 *Cross-cutting module · what lets a fixed context window support an unbounded run*
-*Last updated: 19/07/2026*
+*Last updated: 16/10/2026*
 *Author: AI Knowledge Repository*

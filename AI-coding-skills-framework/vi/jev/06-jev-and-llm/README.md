@@ -10,7 +10,7 @@
 >
 > **Khái niệm:** *"Jev decides, LLM writes"* — Jev xử lý **quyết định** (chọn option, chấm điểm yes/no trong schema biết trước), LLM xử lý **ngôn ngữ** (sinh text, giải thích, viết code, soạn email). Chiến lược mở rộng: *"Jev routes and verifies, LLM provides the language."*
 > **Ẩn dụ/so sánh:** Giống **bộ não hai nửa**: System One (Jev — nhanh, trực giác, chọn hướng) và System Two ngôn ngữ (LLM — chậm hơn, viết ra lời). Theo Kahneman, Jev là *System One Model* đầu tiên: fast & intuitive; LLM đảm nhận phần slow & deliberate khi cần text.
-> **Vì sao quan trọng:** Jev rẻ ($0.042/1M input, free output) và nhanh (70–500ms) — **hỏi Jev mọi lúc** gần như free. LLM đắt và chậm hơn — **gọi LLM khi thực sự cần text**. Phân chia đúng tiết kiệm chi phí orders of magnitude và giảm latency phần lớn các bước trung gian.
+> **Vì sao quan trọng:** Jev vừa rẻ ($0.042/1M input, output miễn phí) vừa nhanh (70–500ms) — **hỏi Jev thường xuyên** gần như không tốn gì. LLM đắt và chậm hơn — **chỉ gọi LLM khi thật sự cần sinh text**. Chia việc đúng giúp tiết kiệm chi phí gấp nhiều lần và giảm độ trễ ở hầu hết các bước trung gian.
 
 ### 1.1 Bảng Phân Vai
 

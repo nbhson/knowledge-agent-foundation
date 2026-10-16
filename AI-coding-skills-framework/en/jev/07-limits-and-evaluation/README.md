@@ -1,6 +1,6 @@
 # 🛑 07. Limits & Evaluation
 
-> This section draws the **hard boundary of what Jev cannot do**, separates **type-safety from correctness**, and lays out the **evaluation discipline** you need before production: state hygiene, calibration measurement, threshold tuning, observability, anti-patterns, and a decision flowchart for when *not* to use Jev. Read [README.md](../README.md) first for the overall context of Module XIV — Jev & System One Models.
+> This section draws a clear line around **what Jev can't do**, explains why **safe output shape is not the same as a right answer**, and lays out the **simple checklist** you need before you ship: tidy state, checking calibration, setting limits, keeping logs, avoiding common traps, and knowing when *not* to use Jev. See [README.md](../README.md) for the big picture of Module XIV — Jev & System One Models.
 
 ---
 

@@ -13,9 +13,12 @@
 
 ### Câu Chuyện Mở Đầu
 
-Bạn thuê một đầu bếp mới. Ngày đầu tiên, anh ta nấu món — bạn nếm, nói *"Quá mặn"*. Ngày hôm sau, anh ta nấu lại — bạn nếm, nói *"Ít mặn hơn nhưng thiếu ngọt"*. Ngày thứ ba, món ăn gần như hoàn hảo.
+Tưởng tượng bạn mới thuê một anh đầu bếp. Ngày đầu anh ấy nấu hơi mặn — bạn nếm rồi góp ý *"bớt muối chút nhé"*.
+Hôm sau anh ấy nêm vừa hơn nhưng lại nhạt vị ngọt — bạn lại nếm, lại góp ý. Tới ngày thứ ba thì món ăn gần như tròn vị.
 
-Giờ hãy tưởng tượng bạn phải đứng bếp **từng bữa ăn**, thì thầm từng hướng dẫn cho đầu bếp. Bạn sẽ kiệt sức — và đó chính là cách hầu hết mọi người đang dùng AI coding agents: **gõ prompt, chờ, đọc, sửa prompt, gõ lại.**
+Giờ thử đổi cảnh: mỗi bữa ăn bạn đều phải đứng kè kè trong bếp, đọc từng bước cho đầu bếp làm theo.
+Vài hôm là đuối — mà đó lại đúng là cách nhiều người đang xài AI coding agent mỗi ngày:
+**gõ prompt, ngồi chờ, đọc code, sửa prompt, gõ lại từ đầu.**
 
 > *"You shouldn't be prompting coding agents anymore. You should be designing loops that prompt your agents."*
 > — **Peter Steinberger**
@@ -23,7 +26,9 @@ Giờ hãy tưởng tượng bạn phải đứng bếp **từng bữa ăn**, th
 > *"I don't prompt Claude anymore. I have loops running that prompt Claude and figuring out what to do. My job is to write loops."*
 > — **Boris Cherny** (Head of Claude Code, Anthropic)
 
-**Loop Engineering** là kỹ thuật thiết kế **hệ thống điều khiển** — hệ thống tự phát hiện việc cần làm, tự giao việc, tự kiểm chứng, và tự duy trì trạng thái — thay vì bạn phải gõ từng prompt. Điểm đòn bẩy (leverage point) đã dịch chuyển: từ *viết prompt* sang *thiết kế vòng lặp*.
+**Loop Engineering** nôm na là nghề thiết kế **bộ máy tự chạy** — bộ máy biết tự tìm việc cần làm, tự chia việc,
+tự kiểm tra thành phẩm, tự giữ sổ sách — để bạn khỏi phải gõ từng câu lệnh. Điểm ăn tiền đã chuyển chỗ:
+từ *viết prompt cho khéo* sang *vẽ vòng lặp cho khôn*.
 
 ### Tại Sao Loop Engineering Quan Trọng?
 
@@ -51,15 +56,23 @@ Harness       = Môi trường 1 agent chạy (tools, context, permissions)
 Loop          = Harness + schedule + state + verification chain (chạy nhiều lần, tự duy trì)
 ```
 
-**Analogies**: Loop Engineering giống **nhà máy sản xuất** — bạn không tự lắp ráp từng sản phẩm; bạn thiết kế dây chuyền (scheduler), máy móc (agents), thiết bị kiểm định (verifiers), và kho lưu trữ (state). Còn **Cognitive Surrender** là khi bạn đứng nhìn dây chuyền chạy mà quên mất mình là người thiết kế nó.
+Nói theo kiểu đời thường thì Loop Engineering giống **mở một xưởng nhỏ** — bạn không tự tay lắp từng con ốc;
+bạn lo dây chuyền (scheduler), sắm máy móc (agents), đặt máy kiểm hàng (verifiers), dựng kho giữ đồ (state).
+Còn **Cognitive Surrender** là lúc bạn đứng nhìn dây chuyền chạy vù vù mà quên mất mình mới là người vẽ ra nó,
+thấy sai cũng không buồn sửa.
 
-**Nếu bỏ qua**: Bạn dành hàng giờ gõ prompt lặp đi lặp lại, agent lặp lại cùng một sai lầm, token lãng phí, và không bao giờ có hệ thống tái sử dụng được.
+**Nếu không làm thế này**: bạn sẽ kẹt cả buổi trong cảnh gõ đi gõ lại cùng một kiểu prompt, agent thì ngã đúng
+một cái hố hết lần này tới lần khác, token đốt tiền vô ích, mà cuối cùng chẳng đọng lại quy trình nào xài lại được.
 
 ## Tổng Quan
 
-**Loop Engineering** là việc thiết kế các **vòng lặp có cấu trúc** để AI agent tự phát hiện công việc, tự thực thi, tự kiểm chứng, và tự cải thiện — trên nhịp (cadence) định kỳ, qua nhiều phiên (sessions), với **trạng thái bền vững** nằm ngoài bất kỳ cuộc hội thoại nào.
+**Loop Engineering** là cách vẽ ra những **vòng lặp có nề nếp** để AI agent tự phát hiện việc, tự xắn tay làm,
+tự soi lại kết quả, rồi tự khôn lên sau mỗi vòng — chạy đều theo lịch (cadence), kéo dài qua nhiều phiên (sessions),
+với **cuốn sổ cái trạng thái** nằm ngoài bất kỳ đoạn chat nào, tắt máy mở lại vẫn còn.
 
-Khác với Module VII (Workflow) vốn tổ chức một pipeline, Loop Engineering tập trung vào **vòng lặp tự duy trì**: agent không chỉ chạy xong một task, mà còn **quyết định task nào đáng làm, kiểm chứng kết quả, và học từ kết quả** cho lần chạy sau.
+So với Module VII (Workflow) chỉ lo xếp ngay ngắn một đường ống chạy một lần, Loop Engineering lo chuyện dài hơi hơn:
+vòng lặp **tự nuôi sống chính nó** — agent làm xong một task chưa phải xong chuyện, nó còn phải **tự hỏi
+việc nào đáng làm tiếp, tự kiểm hàng, rồi mang bài học đó qua vòng sau**.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -93,7 +106,8 @@ Khác với Module VII (Workflow) vốn tổ chức một pipeline, Loop Enginee
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 
-Module XII được chia thành **các file chuyên đề** để dễ học theo từng phần — tương ứng cấu trúc tài liệu của repo `loop-engineering`:
+Module XII được chẻ thành **từng file chuyên đề** cho dễ nhai từng miếng — cách chia này đi theo cấu trúc
+tài liệu của repo `loop-engineering`:
 
 ```
 loop/
@@ -153,7 +167,7 @@ Bước 7: 07-tools/ — dùng CLI scaffold, audit, giám sát
 
 ### 1. Repo Reference — Eat Its Own Dogfood
 
-Repo `loop-engineering` chạy chính các pattern của mình trên chính nó:
+Repo `loop-engineering` đem chính mấy pattern của mình ra xài trên thân mình, kiểu "nhà trồng được gì ăn nấy":
 
 | Loop | Level | Automation | Notes |
 |------|-------|------------|-------|
@@ -168,7 +182,7 @@ Repo `loop-engineering` chạy chính các pattern của mình trên chính nó:
 
 ### 2. Stories Thực Tế (Thắng Và Thất Bại Trung Thực)
 
-Repo có thư mục `stories/` ghi cả wins lẫn failures — bài học quý nhất:
+Repo có nguyên thư mục `stories/` ghi lại cả pha ăn mừng lẫn pha ngã sấp mặt — phần đáng tiền nhất để học khôn:
 
 - **CI Sweeper: Infinite Flaky Test** — `stories/ci-sweeper-infinite-flaky-test.md`: bài học về việc không auto-fix flakes.
 - **Why We Killed CI Sweeper** — `stories/why-we-killed-ci-sweeper.md`: khi nào kill một loop.
@@ -177,6 +191,8 @@ Repo có thư mục `stories/` ghi cả wins lẫn failures — bài học quý 
 - **The Verifier Problem** — `stories/quant-loop-the-verifier-problem.md`: verifier theater trong thực tế.
 
 ### 3. Example Implementations Theo Tool
+
+Mỗi nhà một kiểu bếp, mỗi tool một cách chạy loop — mở đúng file ví dụ là thấy ngay cách làm:
 
 - **Grok**: `/loop 1d Run loop-triage. Update STATE.md.` — `examples/grok/daily-triage.md`
 - **Claude Code**: `/loop 1d Run $loop-triage...report only` — `examples/claude-code/`
@@ -211,7 +227,7 @@ Repo có thư mục `stories/` ghi cả wins lẫn failures — bài học quý 
 - **loop-sandbox / loop-swarm** — ephemeral isolation + consensus
 - **loop-mcp-server** — patterns/skills/state/budget như MCP resources
 
-Chi tiết từng tool: [07-tools](07-tools/).
+Muốn vọc từng món thì ghé: [07-tools](07-tools/).
 
 ---
 

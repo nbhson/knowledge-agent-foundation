@@ -44,15 +44,15 @@
 
 ### Câu Chuyện Mở Đầu
 
-Hãy tưởng tượng bạn là thủ thư. Mỗi ngày có người đến mượn sách mới, trả sách cũ. Nếu bạn **chỉ nhận sách mới** mà không bao giờ sắp xếp lại kệ, không bao giờ bỏ sách hỏng, không bao giờ cập nhật catalog — thì sau 1 năm, thư viện sẽ trở thành **kho chứa đồ lộn xộn**, chẳng ai tìm được gì.
+Hãy tưởng tượng bạn mới nhận việc trông thư viện phường. Sáng nào cũng có người mang sách mới tới tặng, chiều lại có người trả sách cũ. Nếu bạn cứ hồn nhiên nhận hết rồi chồng bừa lên kệ, chẳng bao giờ xếp lại cho gọn, chẳng dám bỏ cuốn nào đã mục nát, cũng không buồn ghi thêm vào cuốn catalog — thì chỉ một năm sau thôi, thư viện sẽ thành một **kho chứa đồ lộn xộn**, muốn tìm một cuốn truyện cũng phải bới tung cả đống.
 
-**Đó chính xác là vấn đề của AI Memory nếu chỉ "ghi" mà không "cập nhật".**
+**Bộ nhớ của AI cũng y hệt như vậy nếu chỉ biết "ghi vào" mà quên "dọn lại".**
 
-LLM có thể ghi nhớ thông tin mới, nhưng nếu không **consolidate** (gộp), **prune** (loại bỏ cái cũ), và **index** (tổ chức lại) — knowledge base sẽ ngày càng chậm, nhiễu, và không chính xác. Kết quả? Agent lặp lại cùng một lỗi, đưa ra thông tin cũ, và hallucinate vì thiếu factual grounding.
+LLM thì rất ham học cái mới, nhưng nếu mình không giúp nó **consolidate** (gộp cái trùng nhau lại), **prune** (mạnh dạn bỏ cái đã cũ), và **index** (xếp lại cho ngay ngắn để dễ tìm) — thì knowledge base cứ ngày một chậm, ngày một nhiễu, rồi trả lời sai lúc nào không hay. Kết cục quen thuộc là: Agent cứ lặp lại đúng một lỗi cũ, hồn nhiên đưa ra thông tin đã hết hạn, và hallucinate chỉ vì thiếu factual grounding để bám vào.
 
 ### Tại Sao Update Memory Quan Trọng?
 
-> *"It's not about having a bigger brain — it's about keeping it clean and current."*
+> *"Bộ não to chưa chắc đã giỏi — quan trọng là mình có chịu lau chùi, sắp xếp cho gọn gàng, cập nhật thường xuyên hay không."*
 
 #### 3 Bằng Chứng Khoa Học
 
@@ -68,27 +68,27 @@ LLM có thể ghi nhớ thông tin mới, nhưng nếu không **consolidate** (g
 Update Memory = Learn → Consolidate → Preserve → Evolve
 ```
 
-**4 Phases của Memory Update**:
-- **Phase 1: Capture** — Ghi lại interactions, decisions, outcomes
-- **Phase 2: Consolidate** — Merge new info vào existing knowledge (dedup, reconcile)
-- **Phase 3: Prune** — Remove outdated, irrelevant, contradictory information
-- **Phase 4: Index** — Re-organize để retrieval efficient
+**4 chặng đường của Memory Update, kể như chuyện chăm vườn**:
+- **Phase 1: Capture** — Thấy chuyện gì hay, gặp tình huống gì mới là vội ghi vào sổ tay, kẻo quên
+- **Phase 2: Consolidate** — Cuối tuần ngồi lại, gộp mấy mẩu giấy trùng nhau, gạch bớt chỗ mâu thuẫn cho gọn
+- **Phase 3: Prune** — Mạnh dạn tỉa cành khô, bỏ tờ giấy đã ố vàng không còn dùng được nữa
+- **Phase 4: Index** — Dán nhãn, xếp sổ lên kệ ngay ngắn để bữa sau cần là thò tay lấy được ngay
 
-**Analogies**: Update Memory giống librarian — không chỉ nhận sách mới (Capture), mà còn sắp xếp lại kệ (Index), bỏ sách cũ hỏng (Prune), và cập nhật catalog (Consolidate). Without librarian, library trở thành kho chứa đồ lộn xộn.
+**Nói cho dễ nhớ**: Update Memory cũng giống cô thủ thư tận tâm — không chỉ ôm sách mới về (Capture), mà còn chịu khó xếp lại kệ (Index), bỏ sách mục nát (Prune), và ghi lại catalog cho ngay ngắn (Consolidate). Thiếu cô thủ thư ấy, thư viện sớm muộn cũng thành nhà kho bừa bộn.
 
-**Nếu bỏ qua**: Knowledge base stale → agent repeat cùng một lỗi, provide outdated information, hallucinate vì không có factual ground, và cuối cùng trust từ users giảm → adoption giảm.
+**Nếu mình lười cập nhật**: knowledge base sẽ cũ dần như tờ lịch treo tường — agent cứ dùng lịch năm ngoái để hẹn việc năm nay, trả lời sai, đưa tin cũ, rồi hallucinate vì không còn chỗ nào đáng tin để dựa vào, cuối cùng người dùng mất niềm tin và bỏ đi lúc nào không hay.
 
 ## Tổng Quan
 
 > **📌 Khái Niệm Cơ Bản**
 > 
-> **Khái niệm:** Write-back là chiều "viết ngược" — bên cạnh đọc (retrieve) kiến thức, hệ thống còn ghi lại những gì mới học được (sự kiện, fact, feedback) vào memory store, rồi mới đến consolidation và tạo báo cáo.
+> **Khái niệm:** Write-back là chiều "ghi ngược" rất đời thường — nếu retrieve là thò tay lấy kiến thức ra dùng, thì write-back là cẩn thận ghi lại điều mới học được (sự kiện, fact, feedback) vào memory store, rồi mới tính tới consolidation với làm báo cáo.
 > 
-> **Ẩn dụ/so sánh:** Giống thủ thư — retrieve là ra kệ lấy sách, còn write-back là viết thẻ danh mục cho cuốn sách mới mua về.
+> **Ẩn dụ/so sánh:** Như cô thủ thư dễ thương — retrieve là ra kệ lấy sách cho bạn mượn, còn write-back là ngồi nắn nót viết thẻ danh mục cho cuốn sách mới vừa nhập về.
 > 
-> **Vì sao quan trọng:** Nếu chỉ "đọc" mà không "ghi", AI trả lời bằng kiến thức cũ và mỗi phiên trò chuyện lại bắt đầu từ con số 0.
+> **Vì sao quan trọng:** Chỉ đọc mà không chịu ghi, AI sẽ mãi dùng kiến thức cũ mèm và mỗi cuộc trò chuyện lại ngơ ngác bắt đầu lại từ số 0 như chưa từng quen nhau.
 
-Sau khi retrieve và xử lý thông tin, hệ thống cần **ghi ngược lại** vào memory store. Đây là quá trình **write-back** — cập nhật knowledge base, memory systems, và tạo reports.
+Sau khi đã retrieve và xử lý thông tin xong, việc tiếp theo rất tự nhiên là **ghi ngược trở lại** vào memory store. Người ta gọi bước này là **write-back** — viết thêm kiến thức mới vào knowledge base, dọn dẹp lại memory systems, rồi làm báo cáo cho gọn.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -117,41 +117,41 @@ Sau khi retrieve và xử lý thông tin, hệ thống cần **ghi ngược lạ
 
 > **📌 Khái Niệm Cơ Bản**
 > 
-> **Khái niệm:** Update memory là việc "làm mới" bộ não của AI — ghi sự kiện mới, gộp kiến thức trùng lặp (consolidation), và loại bỏ thông tin lỗi thời sao cho kiến thức luôn đúng ở thời điểm hiện tại.
+> **Khái niệm:** Update memory đơn giản là việc "làm mới" bộ não của AI — thấy sự kiện mới thì ghi vào, thấy kiến thức trùng nhau thì gộp lại (consolidation), thấy cái nào hết hạn thì tiễn đi, để lúc nào kiến thức cũng đúng với hiện tại.
 > 
-> **Ẩn dụ/so sánh:** Giống hồ sơ bệnh án — bác sĩ không chỉ đọc hồ sơ cũ mà phải cập nhật kết quả xét nghiệm mới, nếu không chẩn đoán sẽ sai lệch.
+> **Ẩn dụ/so sánh:** Như cuốn hồ sơ bệnh án ở trạm xá — bác sĩ không chỉ giở hồ sơ cũ ra đọc, mà mỗi lần có kết quả xét nghiệm mới là phải kẹp thêm vào, nếu không lần sau khám sẽ chẩn đoán lệch.
 > 
-> **Vì sao quan trọng:** Bộ nhớ không được cập nhật sẽ làm AI trả lời kiến thức cũ, lặp lại lỗi đã rồi, và đánh mất niềm tin của người dùng.
+> **Vì sao quan trọng:** Bộ nhớ mà để mốc meo không dọn, AI sẽ hồn nhiên trả lời bằng kiến thức cũ, ngã đúng cái hố đã ngã hôm qua, rồi dần dần người dùng chẳng còn muốn tin nữa.
 
-> *"Bộ não con người không chỉ là nơi lưu trữ – nó là hệ thống liên tục tổ chức lại, kết nối, và làm mới thông tin. Memory system của AI cũng vậy."*
+> *"Bộ não con người không chỉ là cái kho để nhét đồ – nó suốt ngày tự sắp xếp, nối cái này với cái kia, làm mới liên tục. Memory system của AI cũng phải sống như vậy."*
 
 ### Triết Lý Cốt Lõi
 
-Hãy tưởng tượng một bác sĩ luôn nhớ tất cả hồ sơ bệnh án của bệnh nhân. Nếu ông ấy chỉ **đọc** hồ sơ mà **không bao giờ cập nhật** khi có kết quả xét nghiệm mới, thì sau 1 năm, hồ sơ đó trở nên vô dụng. **Retrieval không đủ — Write-back mới tạo ra giá trị thực.**
+Hãy rủ nhau ra phòng khám quen đầu ngõ chơi. Bác sĩ ở đó nhớ vanh vách bệnh án của cả nhà bạn. Nhưng thử nghĩ xem, nếu bác chỉ chăm chăm **đọc** tờ giấy cũ mà không bao giờ **ghi thêm** kết quả xét nghiệm mới vào, thì chỉ một năm sau, xấp hồ sơ đó còn dùng được gì nữa đâu. **Chỉ retrieve mà không write-back thì chưa đủ để tạo ra giá trị thật.**
 
-Ba nguyên tắc cốt lõi:
+Ba ý cốt lõi cứ nhớ như nhớ lời dặn của mẹ:
 
-1. **Memory là Living System, không phải Static Archive**: Thông tin cũ phải được cập nhật, merge, và đôi khi xóa bỏ. Giống như bộ não con người quên đi những gì không còn relevance.
-2. **Every Interaction is a Learning Opportunity**: Mỗi conversation, mỗi feedback, mỗi quyết định đều tạo ra knowledge mới. Nếu không ghi lại, bạn đang để giá trị rơi ra ngoài.
-3. **Consolidation > Accumulation**: Tích lũy dữ liệu không kiểm soát tạo ra **noise**. Consolidation — quá trình merge, dedupe, update — tạo ra **signal**.
+1. **Memory là một khu vườn sống, chứ không phải cái kho khóa cửa để đấy**: thông tin cũ cũng như lá úa — phải cập nhật, gộp lại, có khi phải tỉa bỏ. Bộ não mình còn tự quên bớt chuyện không còn relevance nữa là.
+2. **Mỗi lần trò chuyện là một lần học nghề**: mỗi conversation, mỗi lời feedback, mỗi quyết định đều rơi rớt ra chút kiến thức mới. Không nhặt lên ghi lại là mình đang để tiền rơi ngoài chợ.
+3. **Gộp gọn ăn đứt ôm đồm**: cứ thấy gì cũng nhét vào thì chỉ tạo ra **noise** ồn ào. Chịu khó consolidation — ngồi lại merge, dedupe, update — mới chắt được **signal** trong veo.
 
 ### Bằng Chứng Nghiên Cûu
 
 #### Google Research (2024): "Memory-Enhanced Agents"
-> Các agent có memory write-back achieve **37% improvement** trên multi-turn tasks so với agents chỉ có retrieval.
+> Mấy bạn agent có chịu khó write-back thì làm multi-turn task ngon hơn hẳn **37%** so với mấy bạn chỉ biết retrieve chay.
 
-Nguyên nhân: Agent không ghi lại context từ các turn trước → phải hỏi lại user → mất thời gian và giảm trải nghiệm.
+Nói dễ hiểu là: bạn agent không ghi lại chuyện mấy turn trước nên cứ hỏi đi hỏi lại người ta, vừa mất thời gian vừa làm người dùng cụt hứng.
 
 #### Anthropic (2025): Claude Code Memory Architecture
-Claude Code sử dụng **3-tier memory system**:
-- **Session Memory** (ephemeral): Ghi lại facts trong session hiện tại
-- **Project Memory** (persistent): Write-back vào CLAUDE.md files
-- **Global Memory** (cross-project): Knowledge transfer giữa các projects
+Claude Code chơi kiểu **memory 3 tầng** rất ra dáng người lớn:
+- **Session Memory** (ngắn hạn như trí nhớ hôm nay): ghi lại facts lượm được trong session hiện tại
+- **Project Memory** (sổ tay dự án): chịu khó write-back vào mấy file CLAUDE.md để bữa sau mở ra vẫn còn
+- **Global Memory** (vốn sống mang theo): kiến thức xài chung được cho nhiều projects khác nhau
 
-Kết quả: Giảm **68% duplicate questions** giữa các sessions.
+Nhờ vậy mà bớt được **68% câu hỏi lặp lại** qua các sessions — đỡ quê cho cả hai bên.
 
 #### IBM Enterprise AI Research (2025)
-> Enterprises không có memory consolidation mất **2.3x thời gian** cho repetitive tasks vì AI phải "học lại" từ đầu mỗi lần.
+> Ở mấy công ty mà không chịu làm memory consolidation, nhân viên mất **gấp 2.3 lần thời gian** cho mấy việc lặp đi lặp lại, chỉ vì con AI cứ như tấm chiếu mới, lần nào cũng phải "học lại từ đầu".
 
 ### Cost-Benefit Analysis
 
@@ -163,27 +163,27 @@ Kết quả: Giảm **68% duplicate questions** giữa các sessions.
 | **Response Quality** | Giảm dần theo thời gian | Cải thiện liên tục qua feedback loop |
 | **User Trust** | Giảm vì phải lặp lại thông tin | Tăng vì agent "nhớ" context |
 
-**ROI cụ thể**: Đầu tư $500/tháng vào memory infrastructure → Tiết kiệm $2,000/tháng chi phí agent work (giảm 75% duplicate queries).
+**Kể chuyện tiền nong cho dễ hình dung**: mỗi tháng bỏ ra $500 nuôi memory infrastructure cho tử tế, thì tiết kiệm được cỡ $2,000 tiền chạy agent lòng vòng (vì bớt được 75% câu hỏi trùng lặp). Đầu tư một, lời ba — ai mà chê.
 
 ### Analogies Minh Họa
 
-**Analogies 1: Bác Sĩ và Hồ Sơ Bệnh Án**
-- **Retrieval** = Bác sĩ mở hồ sơ bệnh án để đọc
-- **Write-back** = Bác sĩ ghi kết quả xét nghiệm mới vào hồ sơ
-- **Consolidation** = Bác sĩ tổng hợp tất cả xét nghiệm, cập nhật chẩn đoán
-- **Nếu không write-back** = Bác sĩ đọc hồ sơ cũ, kê đơn sai vì không biết xét nghiệm mới
+**Chuyện 1: Bác Sĩ Và Cuốn Hồ Sơ Bệnh Án**
+- **Retrieval** = Bác sĩ lật cuốn hồ sơ ra đọc lại
+- **Write-back** = Bác kẹp thêm tờ kết quả xét nghiệm mới vào
+- **Consolidation** = Bác ngồi tổng hợp hết đống giấy tờ, chốt lại chẩn đoán mới nhất
+- **Nếu quên write-back** = Bác kê đơn theo giấy cũ, bệnh nhân uống thuốc trật lất vì thiếu kết quả mới nhất
 
-**Analogies 2: Librarian và Thư Viện**
-- **Retrieval** = Tìm sách trên kệ
-- **Write-back** = Mua sách mới, cập nhật catalog
-- **Consolidation** = Sắp xếp lại kệ, xóa sách lỗi thời, merge edition mới
-- **Nếu không consolidation** = Thư viện đầy sách trùng lặp, tìm một cuốn phải lục 5 bản
+**Chuyện 2: Cô Thủ Thư Và Kệ Sách**
+- **Retrieval** = Ra kệ tìm đúng cuốn mình cần
+- **Write-back** = Nhập sách mới về, viết thêm thẻ catalog
+- **Consolidation** = Cuối tháng xếp lại kệ, bỏ sách mọt ăn, gộp mấy bản in trùng nhau
+- **Nếu lười consolidation** = Thư viện toàn sách trùng, tìm một cuốn mà phải lật tung 5 bản giống nhau
 
-**Analogies 3: Git và Codebase**
-- **Write-back** = Commit code mới
-- **Consolidation** = Merge branches, resolve conflicts
-- **Event Sourcing** = Git history — bạn có thể time-travel về bất kỳ commit nào
-- **Nếu không consolidation** = Hàng trăm branches conflict, không ai merge được
+**Chuyện 3: Dân Code Với Git Quen Thuộc**
+- **Write-back** = Vừa code xong là commit ngay cho nóng
+- **Consolidation** = Ngồi merge branches, gỡ rối conflicts
+- **Event Sourcing** = Cuốn sổ Git log — thích là time-travel về bất kỳ commit nào trong quá khứ
+- **Nếu không consolidation** = Hàng trăm branches chĩa ra tứ phía, không ai dám merge vì sợ toang
 
 ### Evolutionary Context: Từ Simple Storage đến Intelligent Memory
 
@@ -211,29 +211,29 @@ Kết quả: Giảm **68% duplicate questions** giữa các sessions.
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-**Insight quan trọng**: "Việc lưu trữ (storage) thì rẻ, nhưng việc organization và consolidation mới tạo ra giá trị. Một vector store 10,000 documents mà không có consolidation sẽ worst hơn một knowledge graph 100 facts được tổ chức tốt."
+**Điều rút ra rất đời**: "Chỗ để đồ thì rẻ, cái đắt là công ngồi sắp xếp cho gọn." Một cái vector store ôm 10,000 documents mà không bao giờ consolidation thì thua xa một knowledge graph chỉ 100 facts nhưng được chăm chút gọn gàng.
 
-### Nếu Bạn Bỏ Qua Update Memory...
+### Nếu Bạn Kệ Luôn, Không Thèm Update Memory...
 
-**1. Knowledge Staleness (Knowledge Hệ Thống)**
-- Facts cũ không được update → Agent trả lời sai thông tin mới
-- Ví dụ: Luật thuế 2025 đã thay đổi, nhưng memory vẫn giữ luật 2024
+**1. Kiến thức mốc meo (Knowledge Staleness)**
+- Facts cũ không ai buồn update → Agent hồn nhiên trả lời bằng tin hết hạn
+- Kiểu như: luật thuế 2025 đổi rồi mà memory vẫn khư khư giữ luật 2024
 
-**2. Memory Explosion (Phân Bổ Storage)**
-- Chỉ thêm mà không xóa/merge → Storage tăng vô hạn
-- Vector search chậm dần → Performance degrade 30-50% trong 6 tháng
+**2. Kho phình to vô tội vạ (Memory Explosion)**
+- Cứ thêm mà chẳng bao giờ gộp hay xóa → Storage phình như bong bóng
+- Vector search ngày càng ì ạch → Performance rớt 30-50% chỉ sau 6 tháng
 
-**3. Contradiction Accumulation**
-- Facts mâu thuẫn tích lũy → Agent "bối rối", trả lời không nhất quán
-- Ví dụ: "BHYT đóng 4.5%" và "BHYT đóng 5%" cùng tồn tại
+**3. Ông nói gà, bà nói vịt (Contradiction Accumulation)**
+- Mấy facts đá nhau cứ nằm đó không ai xử → Agent trả lời bữa này đá bữa kia
+- Ví dụ dở khóc dở cười: "BHYT đóng 4.5%" và "BHYT đóng 5%" cùng tồn tại song song
 
-**4. Zero Learning (Không Học Từ Kinh Nghiệm)**
-- Agent không ghi lại feedback → Lặp lại sai lầm tương tự
-- User phải hướng dẫn lại từ đầu mỗi session
+**4. Ngã mãi một cái hố (Zero Learning)**
+- Agent không ghi lại feedback → Sai ở đâu, bữa sau sai đúng chỗ đó
+- Người dùng chán vì session nào cũng phải cầm tay chỉ lại từ đầu
 
-**5. Lost Context Between Sessions**
-- Session mới bắt đầu từ zero → User thất vọng vì phải lặp lại thông tin
-- Không có session handoff → Team member khác không biết context trước
+**5. Gặp nhau như người xa lạ (Lost Context Between Sessions)**
+- Session mới mở ra trắng trơn như chưa từng quen → Người dùng tủi thân vì phải kể lại từ đầu
+- Không có session handoff, đồng đội vào sau cũng mù mờ chẳng biết chuyện gì đã xảy ra
 
 ### Best Practices (Và Tại Sao)
 
@@ -1285,13 +1285,13 @@ class EventSourcedMemory:
 > 
 > **Vì sao quan trọng:** Lý thuyết dễ nói, khó làm; case study cho bạn biết pattern nào thực sự hoạt động khi chạy ở quy mô thật.
 
-Các case studies sau đây cho thấy cách các hệ thống production quản lý write-back và memory consolidation.
+Các case studies dưới đây giống như mình đi thăm nhà mấy anh chị đã làm production thật — xem họ xoay xở với write-back và memory consolidation ra sao, để mình khỏi phải tự vấp lại đúng cục đá đó.
 
 ---
 
 ### 6.1. Claude Code — Session Memory & Cross-Session Persistence
 
-**Bối cảnh**: Claude Code (Anthropic) cần nhớ context qua nhiều sessions, biết project structure, và cập nhật knowledge khi user học được điều mới.
+**Chuyện nhà Claude Code**: team Anthropic đau đầu vì Claude hay "quên bài" qua mỗi session mới, không nhớ project đang làm dở kiểu gì. Thế là họ đẻ ra cách nhớ 3 tầng để đi đâu cũng mang theo được.
 
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
@@ -1470,17 +1470,17 @@ ${this.pitfalls.map(p => `- ⚠️ ${p}`).join('\n')}
 
 </details>
 
-**Key Insights**:
-1. ✅ **3-tier memory** — Session (ephemeral) → Project (persistent in CLAUDE.md) → Global (cross-project)
-2. ✅ **Auto-learn from corrections** — User corrections become pitfalls in CLAUDE.md
-3. ✅ **Skill tracking** — Adjusts response detail based on user proficiency
-4. ✅ **Session consolidation** — Important info persists after session ends
+**Mấy điểm hay ho rút ra**:
+1. ✅ **Nhớ 3 tầng** — Session (nhớ tạm trong buổi) → Project (ghi vào CLAUDE.md để hôm sau còn) → Global (mang theo qua project khác)
+2. ✅ **Biến lời chê thành của để dành** — User sửa chỗ nào là ghi ngay thành pitfalls trong CLAUDE.md, lần sau khỏi sai lại
+3. ✅ **Biết người biết ta** — Đoán trình độ user để nói ngắn gọn hay giải thích kỹ
+4. ✅ **Dọn dẹp cuối buổi** — Hết session là chắt lọc cái hay giữ lại, cái vụn thì cho qua
 
 ---
 
 ### 6.2. Mem0 — Production Memory Layer for AI Agents
 
-**Mem0** (formerly EmbedChain) là open-source memory layer cho AI agents:
+**Mem0** (trước đây mọi người biết với tên EmbedChain) là một memory layer open-source cho AI agents, kiểu như có một bạn thư ký cần mẫn ngồi ghi chép hộ mình:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1790,11 +1790,11 @@ Return as JSON array:
 
 </details>
 
-**Key Insights**:
-1. ✅ **Auto-extract facts** — LLM extracts facts from conversations automatically
-2. ✅ **Temporal decay** — Older memories get lower relevance over time
-3. ✅ **Conflict resolution** — Temporal + confidence-based resolution
-4. ✅ **User namespacing** — Multi-user memory isolation
+**Mấy điểm hay ho rút ra**:
+1. ✅ **Tự bóc facts** — Để LLM ngồi nghe hội thoại rồi tự nhặt ra facts, khỏi phải ghi tay
+2. ✅ **Càng cũ càng mờ** — Memories cũ tự giảm độ quan trọng theo thời gian (temporal decay)
+3. ✅ **Dàn xếp mâu thuẫn** — Chấm điểm theo thời gian + độ tin cậy để chọn bên đáng tin hơn
+4. ✅ **Mỗi nhà một sổ riêng** — Chia namespacing theo user nên không sợ lẫn lộn
 
 ---
 
@@ -2008,7 +2008,7 @@ class OpenMemoryServer:
 
 ### 6.4. DeepSeek Harness — Trajectory Fork & Replay Engine
 
-**Bối cảnh**: DeepSeek Harness (được phát triển bởi đội ngũ DeepSeek) là một **agent harness framework** với khả năng **trajectory traceability** vượt trội — theo dõi, replay, fork, và resume mọi session của agent.
+**Chuyện nhà DeepSeek**: team DeepSeek quan niệm "Agent = Model + Harness", nên việc gì agent đã làm đều phải truy vết được — muốn tua lại, rẽ nhánh thử kiểu khác, hay nghỉ giữa chừng rồi chạy tiếp đều được, giống như có camera hành trình gắn cho mọi session.
 
 <details>
 <summary><b>TypeScript Architecture (Click to expand/collapse)</b></summary>
@@ -2349,17 +2349,17 @@ interface FailurePattern {
 
 </details>
 
-**Key Innovations**:
+**Mấy món tủ làm nên tên tuổi**:
 
-1. ✅ **Append-only Session Event Stream** — Mọi prompt, thought, tool call, output đều được ghi log. Không bao giờ mutate history.
-2. ✅ **`replayToStep(n)`** — Khôi phục state chính xác tại step `n`. Dùng cho debugging, time-travel inspection.
-3. ✅ **`forkSession(step, newPrompt)`** — Tạo branch mới từ step bất kỳ. Cho phép "what-if" analysis: *"Nếu lúc đó tôi hỏi khác thì sao?"*
-4. ✅ **`resumeSession(step)`** — Tiếp tục chạy từ checkpoint. Tiết kiệm token cho long-running tasks.
-5. ✅ **Event Search** — Full-text search trên toàn bộ trajectory. Tìm *"mọi lần tool X fail"* hoặc *"tất cả prompt chứa từ Y"*.
-6. ✅ **Cost Tracking** — Mỗi event có `cost_usd`. Cho phép breakdown chi phí per session, per tool, per step.
-7. ✅ **Failure Pattern Detection** — Tự động tìm pattern: tool nào fail nhiều nhất, error type nào phổ biến.
+1. ✅ **Sổ ghi chép không bao giờ tẩy xóa (Append-only Session Event Stream)** — prompt nào, suy nghĩ nào, gọi tool nào, trả lời gì đều ghi lại hết. Tuyệt đối không sửa lịch sử.
+2. ✅ **`replayToStep(n)`** — Thích quay về step `n` xem lúc đó hệ thống đang nghĩ gì là được ngay. Rất hợp để debug với soi lại quá khứ.
+3. ✅ **`forkSession(step, newPrompt)`** — Rẽ một nhánh mới từ step cũ để thử "giá như lúc đó mình hỏi khác đi thì sao?" mà không sợ hỏng mạch chính.
+4. ✅ **`resumeSession(step)`** — Nghỉ giữa chừng rồi chạy tiếp từ checkpoint, đỡ tốn token cho mấy task dài hơi.
+5. ✅ **Tìm kiếm trong hành trình (Event Search)** — Gõ từ khóa là lôi ra được *"mọi lần tool X bị fail"* hay *"mọi prompt có nhắc tới chữ Y"*.
+6. ✅ **Đếm tiền từng bước (Cost Tracking)** — Mỗi event đều dán nhãn `cost_usd`, nên cuối buổi biết ngay tiền đi đâu về đâu theo từng session, từng tool, từng step.
+7. ✅ **Bắt bệnh tự động (Failure Pattern Detection)** — Tự gom lại xem tool nào hay hỏng nhất, lỗi nào hay gặp nhất để còn chữa dứt điểm.
 
-**DeepSeek Harness 4 Runtime Modes**:
+**DeepSeek Harness có 4 chế độ chạy**:
 
 | Mode | Use Case | Tools Available |
 |------|----------|-----------------|
@@ -2368,7 +2368,7 @@ interface FailurePattern {
 | **Minimal Benchmark** | SWE-bench evaluation | `bash`, `editor` isolation |
 | **Creator Inspector** | Visual timeline/presets | Read-only trajectory view |
 
-**File Reference**: Chi tiết implementation xem [`trajectory-fork-replay.md`](trajectory-fork-replay.md)
+**Tài liệu chi tiết**: muốn xem code chạy thật thế nào thì ghé [`trajectory-fork-replay.md`](trajectory-fork-replay.md)
 
 ---
 
@@ -3126,7 +3126,7 @@ print(metrics.report())
 
 ## 12. Bổ Sung Production: Retention, Consolidation, Hợp Đồng Compaction & SLO
 
-> Nối eviction của §02 với persistence của §03: cái gì được bỏ vs cái gì phải giữ.
+> Nói nôm na: nối chuyện "lược bớt" của §02 với chuyện "giữ lại" của §03 — cái gì được bỏ qua, cái gì nhất định phải giữ lại cho bằng được.
 
 ### 12.1 Định nghĩa
 
@@ -3140,13 +3140,13 @@ print(metrics.report())
 
 ### 12.2 Retention / Tuân Thủ
 
-- **TTL mặc định:** `session: 24h → xóa; episodic: 30–90d → archive; semantic fact: không TTL nhưng cần valid_until + nguồn; user profile: tới khi có yêu cầu xóa.` Quét hàng giờ; archive sang cold store trước khi xóa.
-- **Cô lập theo tenant:** `tenant_id` làm khóa phân vùng trên mọi bảng/namespace; query luôn có bộ lọc; đọc liên tenant bị chặn ở API + policy DB (RLS). Khóa mã hóa riêng cho mỗi enterprise tenant.
-- **Xóa GDPR/CCPA:** `DELETE /memory?user=X` → tombstone → xóa vector + KG + log (redact) → vacuum backup ≤30d → trả `deletion_receipt{id, scope, ts}`. SLA 24h.
+- **TTL mặc định, nhớ như hạn dùng của đồ ăn:** `session: 24h là dọn; episodic: 30–90d thì cho vào kho archive; semantic fact: không đặt hạn cứng nhưng phải ghi valid_until + nguồn gốc; user profile: giữ tới khi user bảo xóa.` Có một bạn sweeper chạy hàng giờ để quét; trước khi xóa cứng là phải archive sang cold store đã.
+- **Nhà ai nấy ở theo tenant:** lấy `tenant_id` làm vách ngăn cho mọi bảng/namespace; câu query nào cũng phải kèm bộ lọc; đọc lấn sang nhà hàng xóm là bị chặn ngay ở API + policy DB (RLS). Tenant enterprise nào cũng có chìa khóa mã hóa riêng.
+- **Xóa theo kiểu GDPR/CCPA cho đàng hoàng:** gọi `DELETE /memory?user=X` là đi một vòng tombstone → xóa ở vector + KG + log (redact) → dọn backup trong ≤30d → trả về `deletion_receipt{id, scope, ts}` làm bằng. SLA 24h là xong.
 
 ### 12.3 Trigger Consolidation + Giải Quyết Xung Đột
 
-Chạy consolidation khi **bất kỳ**: `unconsolidated_writes > 500`, cron hàng giờ, `conflict_rate > 5%`, feedback tiêu cực về một fact. Pipeline: dedup (cosine ≥0.9 thì gộp) → phát hiện conflict (cùng subject+predicate, object khác nhau) → giải quyết: `last-writer-wins` chỉ khi độ tin cậy nguồn mới ≥ cũ; nếu không thì `highest-trust-wins`; nếu không thì `escalate_to_user`. Giữ cả hai version + cạnh `supersedes` — không bao giờ ghi đè âm thầm.
+Mình cho chạy consolidation mỗi khi **thấy một trong mấy dấu hiệu này**: `unconsolidated_writes > 500`, tới giờ cron hàng giờ, `conflict_rate > 5%`, hay có feedback chê một fact nào đó. Dây chuyền làm như dọn nhà cuối tuần: dedup (cosine ≥0.9 là gộp) → soi conflict (cùng subject+predicate mà object khác nhau) → dàn xếp: `last-writer-wins` chỉ khi nguồn mới tin cậy bằng hoặc hơn nguồn cũ; không thì theo `highest-trust-wins`; bí quá thì `escalate_to_user` nhờ người phân xử. Lúc nào cũng giữ cả hai version + gắn cạnh `supersedes` — tuyệt đối không lén ghi đè.
 
 ### 12.4 Hợp Đồng Compaction↔Memory
 
@@ -3155,12 +3155,12 @@ Chạy consolidation khi **bất kỳ**: `unconsolidated_writes > 500`, cron hà
 | stdout tool thô, chunk retrieval cũ, diff đã thay thế, tán gẫu | Fact đã ghim, quyết định, TODO mở, preference user, block resume |
 | Được bỏ sau khi tóm tắt resume | Phải sống sót sau compaction; nạp lại được qua retrieve |
 
-Quy tắc: compaction phát `resume_block`; write-back **phải** lưu `resume_block + decisions + open items` trước khi loại chúng khỏi context. Khi khôi phục session, §02 hydrate từ §03 bằng query `tenant+task`.
+Quy tắc nằm lòng: compaction có nhả ra `resume_block` thì write-back **phải** cất kỹ `resume_block + decisions + open items` rồi mới được dọn chúng khỏi context. Tới lúc mở lại session, §02 chỉ việc hydrate từ §03 bằng query `tenant+task` là đủ đồ nghề làm tiếp.
 
 ### 12.5 SLO Đường Ghi
 
-- `p50 write < 80ms, p99 < 300ms`; consolidation bất đồng bộ `p99 < 5min`. Kiểm tra dedup trong đường ghi; merge nặng ra ngoài critical path (hàng đợi write-behind).
-- Durability: chỉ ack sau khi ghi WAL + primary; hàng đợi retry với idempotency key `tenant:doc_hash`. Cảnh báo khi `write_error% > 1%`, `queue_lag > 10k`.
+- Đường ghi phải nhanh như chớp: `p50 write < 80ms, p99 < 300ms`; còn consolidation nặng thì cho chạy nền `p99 < 5min`. Lúc đang ghi thì tranh thủ kiểm tra dedup luôn; mấy vụ merge nặng thì đẩy ra hàng đợi write-behind cho khỏi nghẽn critical path.
+- Độ bền thì chắc như đinh: chỉ dám ack khi đã ghi xong WAL + primary; hàng đợi retry có idempotency key `tenant:doc_hash` chống ghi trùng. Thấy `write_error% > 1%` hay `queue_lag > 10k` là phải kêu lên ngay.
 
 <details>
 <summary>TypeScript Code — Memory Có Version với Consolidation (Click to expand/collapse)</summary>
@@ -3226,11 +3226,11 @@ declare function sim(a: Fact, b: Fact): number;
 
 > **📌 Khái Niệm Cơ Bản**
 > 
-> **Khái niệm:** Nguồn đọc thêm gồm papers khoa học, framework và công cụ, cùng blogs từ những đội thực sự xây dựng memory system cho production.
+> **Khái niệm:** Đây là tủ sách đọc thêm — có papers khoa học, có framework với công cụ, có cả blogs của mấy đội đã lăn lộn làm memory system production thật.
 > 
-> **Ẩn dụ/so sánh:** Giống danh sách "đọc trước khi thi" — nếu muốn đào sâu hơn, đây là nơi nên bắt đầu.
+> **Ẩn dụ/so sánh:** Như tờ giấy thầy cho trước hôm thi — muốn đào sâu hơn thì cứ men theo danh sách này mà đọc.
 > 
-> **Vì sao quan trọng:** Lĩnh vực này thay đổi rất nhanh — tài liệu tham khảo giúp bạn tự cập nhật và kiểm chứng kiến thức.
+> **Vì sao quan trọng:** Nghề này đổi từng tháng, có danh sách này trong tay thì bạn tự kiểm chứng và tự cập nhật được, khỏi sợ học phải đồ cũ.
 
 ### Papers & Research
 
@@ -3255,24 +3255,24 @@ declare function sim(a: Fact, b: Fact): number;
 
 **Kết Luận**
 
-Memory Update & Knowledge Store là quá trình giữ cho "bộ não" của AI luôn chính xác và cập nhật. Ba patterns chính:
+Nói gọn một câu: Memory Update & Knowledge Store là việc chăm cho "bộ não" của AI lúc nào cũng tỉnh táo và đúng hẹn. Có ba chiêu chính cứ nhớ như nhớ đường về nhà:
 
-> **"A system that cannot update its knowledge is a system that learns nothing."**
+> **"Hệ thống nào không biết tự làm mới kiến thức thì coi như chẳng học được gì."**
 
-1. **Event-driven updates** — Khi có sự kiện mới, cập nhật ngay lập tức
-2. **Consolidation pipeline** — Background process dọn dẹp + gộp + giải quyết conflict
-3. **Temporal decay** — Thông tin cũ dần mất ưu tiên, tránh outdated knowledge
+1. **Event-driven updates** — Có chuyện mới là ghi ngay, đừng để mai quên
+2. **Consolidation pipeline** — Cuối ngày có người dọn dẹp, gộp cái trùng, dàn xếp cái lộn xộn
+3. **Temporal decay** — Tin cũ thì nhẹ vía dần đi, để khỏi lấn át tin mới
 
-Key takeaways:
-1. ✅ **Always deduplicate** — before storing new facts
-2. ✅ **Version important memories** — enable rollback
-3. ✅ **Consolidate periodically** — background pipeline
-4. ✅ **Apply temporal decay** — older ≠ more important
-5. ✅ **Track metrics** — write latency, dedup rate, conflicts
+Mấy điều mang về gối đầu giường:
+1. ✅ **Chịu khó dedupe** — trước khi nhét fact mới vào kho thì ngó xem có rồi chưa
+2. ✅ **Fact quan trọng thì đánh số version** — để lỡ sai còn rollback được
+3. ✅ **Siêng consolidation** — cho chạy nền đều đặn như quét nhà
+4. ✅ **Nhớ temporal decay** — cũ không có nghĩa là quý hơn mới
+5. ✅ **Đo đếm đàng hoàng** — soi write latency, dedup rate, conflicts thường xuyên
 
 ---
 
 *Tài liệu: III. Update Memory & Knowledge Store*  
-*Ngày cập nhật: 19/07/2026*  
+*Ngày cập nhật: 16/10/2026*  
 *Tác giả: AI Knowledge Repository*  
 *Môi trường: Ollama (gemma3:12b, nomic-embed-text)*

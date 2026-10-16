@@ -1,6 +1,6 @@
 # 🧠 01. Kiến Trúc RTK — Concepts
 
-> Hiểu cách RTK hoạt động giúp bạn cấu hình đúng, tránh các lỗi cổ điển, và biết khi nào RTK không thể giúp (Claude Code `Read`/`Grep`/`Glob` built-in tools bypass hook).
+> Hiểu RTK chạy ra sao sẽ giúp bạn cấu hình cho chuẩn, tránh mấy lỗi kinh điển, và biết khi nào RTK đành bó tay (ví dụ Claude Code `Read`/`Grep`/`Glob` built-in tools bypass hook).
 
 ## Cách RTK Can Thiệp Vào Luồng Lệnh
 
@@ -13,7 +13,7 @@
     +-----------------------------------+            +------- (filtered) ---+----------+
 ```
 
-RTK chèn mình vào **giữa agent và shell command**. Agent gọi `git status` → hook rewrite thành `rtk git status` → RTK chạy lệnh thật, lọc/nén output → agent chỉ nhận output đã gọn.
+Nói ngắn gọn, RTK đứng chen vào **giữa agent và shell command**. Agent gọi `git status` → hook viết lại thành `rtk git status` → RTK chạy lệnh thật, lọc/nén output → agent chỉ nhận về bản đã gọn nhẹ.
 
 ## Hai Chế Độ Hoạt Động
 
@@ -35,7 +35,7 @@ RTK chèn mình vào **giữa agent và shell command**. Agent gọi `git status
 
 ## Khi Lệnh Fail: Tee Recovery
 
-Một tính năng quan trọng của RTK: khi lệnh fail, RTK lưu **toàn bộ output thô** để agent đọc lại mà không cần chạy lại lệnh:
+Một điểm hay của RTK: khi lệnh fail, nó giữ lại **toàn bộ output thô** để agent đọc lại sau, khỏi phải chạy lại lệnh lần nữa:
 
 ```
 FAILED: 2/15 tests
@@ -82,11 +82,11 @@ Xem thêm cấu hình đầy đủ (env vars, per-project filters) tại [Config
 
 ## Câu Hỏi Thường Gặp (Concepts Level)
 
-**Q: RTK có thay thế được việc tự code context compression?**
-A: Không. RTK tối ưu **tầng Immediate Context** (output command). Các tầng khác (system instructions, task context, domain knowledge, conversation history) vẫn do harness của bạn xử lý — như module `02-build-context`.
+**Q: RTK có thay được việc tự code context compression không?**
+A: Không hẳn. RTK chỉ lo **tầng Immediate Context** (output command). Mấy tầng còn lại (system instructions, task context, domain knowledge, conversation history) vẫn là việc của harness — như module `02-build-context` lo.
 
-**Q: RTK có an toàn với data nhạy cảm?**
-A: RTK không collect source code, file paths, secrets, env vars (telemetry mặc định tắt). Các filters AWS cụ thể còn chủ động strip secrets khỏi output.
+**Q: RTK có an toàn với data nhạy cảm không?**
+A: Có. RTK không thu thập source code, file paths, secrets, env vars (telemetry mặc định đã tắt). Mấy filter AWS còn chủ động strip secrets khỏi output cho bạn yên tâm.
 
 ---
 

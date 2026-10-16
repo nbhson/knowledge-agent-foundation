@@ -45,15 +45,15 @@
 
 ### Câu Chuyện Mở Đầu
 
-Hãy tưởng tượng bạn đến gặp bác sĩ lần thứ 3 trong tuần. Lần đầu bạn kể bệnh sử, lần 2 bạn kể lại, lần 3 bạn kể **lần nữa**. Bác sĩ chẳng nhớ gì — mỗi lần như gặp bệnh nhân mới.
+Hãy hình dung bạn đi khám ở một phòng mạch quen. Tuần này bạn tới lần thứ ba, vậy mà bác sĩ vẫn hỏi lại từ đầu: "Anh bị sao nhỉ? Kể lại giúp tôi nhé". Nghe là thấy nản đúng không? Khám ba lần mà lần nào cũng như lần đầu gặp mặt.
 
-**Đó chính xác là vấn đề của LLM nếu không có Memory & Retrieval.**
+**LLM mà thiếu Memory & Retrieval thì cũng y chang vị bác sĩ đãng trí đó.**
 
-Mỗi lần bạn chat với AI, nếu nó không "nhớ" context trước đó, nó phải bắt đầu từ con số 0. Kết quả? Lặp lại câu hỏi, mất context, và worst of all — **hallucinate** vì thiếu thông tin thực tế.
+Mỗi cuộc trò chuyện mà không "nhớ" được ngữ cảnh trước đó thì coi như bắt đầu lại từ số 0. Hậu quả rất quen thuộc: hỏi đi hỏi lại một câu, lạc mất mạch chuyện, và tệ nhất là — **bịa chuyện (hallucinate)** vì không có dữ liệu thực tế trong tay.
 
 ### Tại Sao Retrieve Memory & Knowledge Quan Trọng?
 
-> *"It's not about having a bigger brain — it's about knowing where to look."*
+> *"Vấn đề không phải là não to hơn — mà là biết cần tìm ở đâu."*
 
 #### 3 Bằng Chứng Khoa Học
 
@@ -65,7 +65,7 @@ Mỗi lần bạn chat với AI, nếu nó không "nhớ" context trước đó,
 
 ## Tổng Quan
 
-Trong AI, việc **truy xuất bộ nhớ và kiến thức** là quá trình lấy thông tin từ các nguồn bên ngoài (tài liệu, cơ sở dữ liệu, đồ thị tri thức) để cung cấp cho LLM, giúp model trả lời chính xác hơn và giảm thiểu hallucination.
+Nói ngắn gọn thế này: **truy xuất bộ nhớ và kiến thức** là cách mình đi "mượn" thông tin từ bên ngoài — tài liệu, cơ sở dữ liệu, đồ thị tri thức — rồi đưa cho LLM đọc trước khi trả lời. Nhờ có "phao cứu trợ" này mà câu trả lời bám sát thực tế hơn hẳn, bớt bịa đặt hẳn đi.
 
 ```mermaid
 flowchart TD
@@ -115,17 +115,17 @@ flowchart TD
 
 ### Bối Cảnh
 
-Khi bạn chat với ChatGPT hoặc Claude, bạn có bao giờ thắc mắc: **Tại sao đôi khi AI trả lời sai về những thông tin mới?** Tại sao AI không biết công ty bạn mới thay đổi chính sách tuần trước? Tại sao AI "bịa" ra những con số không có thật?
+Bạn chat với ChatGPT hay Claude bao giờ gặp cảnh này chưa: hỏi chuyện mới xảy ra gần đây thì AI trả lời trật lất? Công ty bạn vừa đổi chính sách tuần trước mà AI vẫn nói theo luật cũ? Thậm chí có lúc nó còn tự tin đưa ra mấy con số… không hề tồn tại?
 
-Câu trả lời nằm ở **bộ nhớ**. Không có memory retrieval, AI chỉ là một bộ não siêu phàm bị cô lập — thông minh nhưng **không biết gì về thế giới thực**.
+Thủ phạm chính là **bộ nhớ**. Không có memory retrieval, AI giống như một bộ óc rất thông minh nhưng bị nhốt trong phòng kín — giỏi suy luận mà lại **mù tịt về thế giới bên ngoài**.
 
 ### Triết Lý Cốt Lõi
 
-Triết lý của Memory Retrieval xoay quanh 3 nguyên tắc:
+Cách làm Memory Retrieval gói gọn trong 3 câu "thần chú":
 
-1. **Knowledge at Inference Time**: Kiến thức phải được đưa vào tại thời điểm suy luận, không phải train vào model
-2. **Fresh over Familiar**: Thông tin mới luôn quan trọng hơn thông tin quen thuộc
-3. **Relevance over Quantity**: Ít thông tin đúng đắn hơn nhiều thông tin sai lệch
+1. **Knowledge at Inference Time**: Kiến thức phải được nạp vào đúng lúc AI đang suy luận, chứ đừng mong nhồi hết vào model từ lúc train
+2. **Fresh over Familiar**: Tin mới ra lò lúc nào cũng đáng giá hơn tin cũ quen thuộc
+3. **Relevance over Quantity**: Một ít thông tin đúng còn hơn cả đống thông tin lạc đề
 
 ### Tại Sao Không Thể Bỏ Qua?
 
@@ -154,6 +154,8 @@ Triết lý của Memory Retrieval xoay quanh 3 nguyên tắc:
 
 ### Bằng Chứng Nghiên Cứu
 
+Nghe lý thuyết hay là một chuyện, còn đây là những con số từ các nhóm nghiên cứu lớn — đọc để thấy người ta đã đo đếm hẳn hoi, không phải nói suông:
+
 **1. Google Research (2020) — "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"**
 - RAG giảm hallucination **từ 27% xuống còn 3%** trên knowledge-intensive tasks
 - Retrieval precision@10 > 85% là ngưỡng để RAG hiệu quả
@@ -167,6 +169,8 @@ Triết lý của Memory Retrieval xoay quanh 3 nguyên tắc:
 - Organizations deploy RAG báo cáo **giảm 65% factual errors**
 
 ### Cost-Benefit Analysis
+
+Nói chuyện tiền nong cho dễ hình dung — thử đặt lên bàn cân xem có retrieval với không có retrieval khác nhau ra sao:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -192,15 +196,17 @@ Triết lý của Memory Retrieval xoay quanh 3 nguyên tắc:
 
 ### Analogies — Hiểu Dễ Hơn
 
-**Analogies cho Memory Retrieval:**
+**Kể vài câu chuyện đời thường để hình dung cho dễ:**
 
 | Analogies | Giải thích |
 |-----------|------------|
-| **Bộ não + Thư viện** | LLM = bộ não thông minh, Retrieval = ability đi vào thư viện lấy sách. Não mà không đi thư viện = chỉ nhớ những gì học từ bé |
-| **Bác sĩ + Hồ sơ bệnh án** | Bác sĩ thông minh (LLM) vẫn cần đọc hồ sơ bệnh án (retrieval) trước khi kê thuốc. Không đọc = kê sai thuốc |
-| **Điều hướng viên + Bản đồ** | LLM = điều hướng viên thông thạo, Retrieval = bản đồ real-time. Không có bản đồ = rẽ sai đường dù giỏi lái |
+| **Bộ não + Thư viện** | LLM giống như một bộ não rất thông minh, còn Retrieval là đôi chân chịu khó chạy vào thư viện lấy sách. Não mà lười đi thư viện thì chỉ quanh quẩn với mấy kiến thức học từ hồi nhỏ |
+| **Bác sĩ + Hồ sơ bệnh án** | Bác sĩ có giỏi mấy (LLM) thì trước khi kê đơn vẫn phải lật hồ sơ bệnh án (retrieval) ra đọc. Cứ kê bừa không đọc hồ sơ là toa thuốc trật ngay |
+| **Điều hướng viên + Bản đồ** | LLM giống bác tài lái cứng, còn Retrieval là tấm bản đồ giao thông cập nhật liên tục. Không có bản đồ thì tay lái lụa mấy cũng dễ rẽ nhầm đường |
 
 ### Nếu Bạn Bỏ Qua?
+
+Thử tưởng tượng team bạn quyết định "khỏi làm retrieval cho đỡ mệt" — kịch bản thường sẽ diễn ra như thế này:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -223,6 +229,8 @@ Triết lý của Memory Retrieval xoay quanh 3 nguyên tắc:
 ```
 
 ### Evolutionary Context
+
+Nhìn lại chặng đường vài năm qua mới thấy cách làm retrieval "lớn" nhanh thế nào — từ kiểu cầu may ban đầu tới kiểu truy xuất thông minh bây giờ:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -266,6 +274,8 @@ Triết lý của Memory Retrieval xoay quanh 3 nguyên tắc:
 
 ## Nội Dung
 
+Dưới đây là bản đồ toàn bộ chương này — mình sẽ đi từ tìm kiếm ngữ nghĩa cơ bản, qua RAG, tới đồ thị tri thức và hệ thống bộ nhớ. Cứ đi theo thứ tự là vừa đẹp:
+
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
 | 1 | [Semantic Search](#1-semantic-search--vector-search) | Tìm kiếm ngữ nghĩa dựa trên vector embedding |
@@ -281,7 +291,7 @@ Triết lý của Memory Retrieval xoay quanh 3 nguyên tắc:
 
 ### 1.1 Khái Niệm Cơ Bản
 
-**Semantic Search** là phương pháp tìm kiếm dựa trên **ý nghĩa** (semantics) của văn bản thay vì chỉ khớp keyword. Văn bản được chuyển thành **vector embedding** — một mảng số thực nhiều chiều — rồi so sánh khoảng cách trong không gian vector.
+**Semantic Search** là kiểu tìm kiếm theo **ý nghĩa** của câu chữ, chứ không khư khư đếm xem trùng được mấy từ khóa. Cách làm rất đời: mỗi đoạn văn bản được "dịch" thành một **vector embedding** — nôm na là một dãy số dài ngoằng — rồi đem so khoảng cách giữa các dãy số đó. Gần nhau nghĩa là hợp ý nhau.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -309,7 +319,7 @@ Triết lý của Memory Retrieval xoay quanh 3 nguyên tắc:
 
 #### Pipeline Xử Lý Documents
 
-Thứ tự chính xác là:
+Quy trình chuẩn nó chạy như dây chuyền thế này — tài liệu thô đi vào một đầu, vector gọn gàng đi ra đầu kia:
 
 ```
 📄 Documents (PDF, HTML, Markdown...)
@@ -327,7 +337,7 @@ Thứ tự chính xác là:
 ④ SAVE TO VECTOR DB — Lưu vector + text + metadata vào database
 ```
 
-**Giải thích từng bước:**
+**Giải thích từng bước cho dễ nhớ:**
 
 | # | Bước | Input | Output | Ví dụ |
 |---|------|-------|--------|-------|
@@ -339,7 +349,7 @@ Thứ tự chính xác là:
 
 #### Khi User Search
 
-Khi user search thì chạy ngược lại:
+Còn lúc người dùng gõ câu hỏi thì mình chạy quy trình ngược lại — từ câu hỏi ra tới tài liệu liên quan:
 
 ```
 🔍 User Query: "phòng ngừa bệnh tim"
@@ -358,7 +368,7 @@ Khi user search thì chạy ngược lại:
 
 ### 1.2 Vector Embedding — Cách Thức Hoạt Động
 
-Mỗi từ/câu được biểu diễn thành một vector (mảng số) trong không gian nhiều chiều:
+Hình dung mỗi từ, mỗi câu được "nén" thành một dãy số trong không gian nhiều chiều. Hai câu càng giống ý nhau thì hai dãy số càng đứng sát nhau — như hai người bạn thân lúc nào cũng kè kè một chỗ:
 
 ```
 "Bảo hiểm y tế"     → [0.23, -0.45, 0.67, 0.12, ...]  (768 dimensions)
@@ -397,12 +407,12 @@ Không gian 2D minh họa:
 │ voyage-3                │ 1024     │ API       │ ⭐⭐⭐⭐  │ ⭐⭐⭐⭐⭐          │
 └─────────────────────────┴──────────┴───────────┴──────────┴──────────────────┘
 
-Bạn đang dùng: nomic-embed-text (768 dims, 274MB) — phù hợp cho local use
+Bạn đang dùng: nomic-embed-text (768 dims, 274MB) — gọn nhẹ, chạy local khỏe re
 ```
 
 ### 1.4 Chunking Strategies — Chi Tiết
 
-Chunking là quá trình **chia nhỏ documents** thành các đoạn (chunks) trước khi embedding. Chunking tốt ảnh hưởng trực tiếp đến chất lượng search.
+Chunking nôm na là **cắt nhỏ tài liệu** ra từng miếng vừa miệng trước khi đem đi embedding. Cắt khéo hay cắt ẩu quyết định hẳn chất lượng tìm kiếm — cắt ngang câu thì AI đọc cũng như mình đọc sách bị xé đôi trang vậy.
 
 #### Strategy 1: Fixed-Size Chunking
 
@@ -857,7 +867,7 @@ So sánh:
 
 ### 2.1 Khái Niệm
 
-**RAG** = Retrieve + Generate. Thay vì chỉ dựa vào knowledge có sẵn trong model, RAG **truy xuất thông tin từ nguồn bên ngoài** rồi đưa vào context của LLM để generate câu trả lời chính xác hơn.
+**RAG** = Retrieve (đi tìm) + Generate (viết trả lời). Thay vì bắt model tự "nhớ" hết mọi thứ trong đầu, RAG cho phép nó **chạy đi tra cứu nguồn bên ngoài trước**, đọc xong rồi mới viết câu trả lời. Giống như học sinh được mang tài liệu vào phòng thi — điểm cao hơn hẳn mà lại ít "chém gió".
 
 > **📌 RAG Pipeline chi tiết (xem diagram ở [đầu tài liệu](#-i-retrieve-memory--knowledge)):**
 > 1. **① RETRIEVE** — Hybrid Search (Semantic + BM25) + KG Retrieval + Web/DB Search → top-50 docs
@@ -1563,11 +1573,11 @@ class RAGPipeline:
 
 ### 3.1 Khái Niệm
 
-**Knowledge Graph (KG)** là đồ thị biểu diễn tri thức dưới dạng **entities** (đối tượng) và **relationships** (mối quan hệ).
+**Knowledge Graph (KG)** là kiểu lưu tri thức dưới dạng **đồ thị**: các **entities** (nhân vật, sự vật) là những chấm tròn, còn **relationships** (mối quan hệ) là những sợi dây nối chúng lại với nhau.
 
 #### Tại Sao Cần Knowledge Graph? — Graph Khác Vector Search Ở Đâu?
 
-Nhớ lại [Phần 1 — Semantic Search](#1-semantic-search--vector-search) — vector search lưu mỗi chunk như một **"hòn đảo" độc lập** trong không gian embedding:
+Nhớ lại [Phần 1 — Semantic Search](#1-semantic-search--vector-search) nhé — vector search cất mỗi chunk như một **"hòn đảo" riêng lẻ** trôi lềnh bềnh trong không gian embedding:
 
 ```
 Vector DB:
@@ -1577,9 +1587,9 @@ Vector DB:
   (không có "sợi dây" nối giữa chúng)
 ```
 
-Mỗi chunk **không biết** nó liên quan gì đến chunk khác. Nếu câu hỏi cần **nối 2–3 chunk** lại mới trả lời được (multi-hop reasoning), vector search thường fail.
+Mỗi chunk **chẳng biết** chunk bên cạnh là ai. Thế nên gặp câu hỏi kiểu "xâu chuỗi" — phải ráp 2–3 mẩu thông tin mới ra đáp án (multi-hop reasoning) — là vector search hay bó tay.
 
-Knowledge Graph thì ngược lại — nó lưu các **mảnh kiến thức nhỏ** và **nối chúng lại bằng các sợi dây (relationships)**:
+Knowledge Graph chơi kiểu ngược lại — cất các **mẩu kiến thức be bé** rồi **lấy dây (relationships) buộc chúng lại với nhau**:
 
 ```mermaid
 graph LR
@@ -1588,7 +1598,7 @@ graph LR
     C -->|supports| D[qwen2.5-coder:14b]
 ```
 
-Mỗi "mảnh kiến thức" gọi là một **triplet** — khi cùng một entity xuất hiện trong nhiều triplet, nó **tự động tạo ra "sợi dây"** nối giữa các mảnh kiến thức. Vì vậy gọi là *đồ thị*.
+Mỗi "mẩu kiến thức" như vậy gọi là một **triplet** — cứ khi nào cùng một entity ló mặt trong nhiều triplet, nó **tự động thành cái cầu** nối các mẩu lại với nhau. Nhiều cầu nối chằng chịt thì thành *đồ thị*, tên gọi từ đó mà ra.
 
 | | Vector Search | Knowledge Graph Retrieval |
 |---|---|---|
@@ -2358,12 +2368,14 @@ class Reranker:
 │                                │          │          │          │ specific     │
 └────────────────────────────────┴──────────┴──────────┴──────────┴──────────────┘
 
-Lưu ý: Quality scores là approximate, thay đổi tùy evaluation benchmark
+Lưu ý: Quality scores chỉ là con số tham khảo, tùy benchmark đo mà xê dịch ít nhiều
 ```
 
 ---
 
 ## 6. Memory Systems
+
+Tới đây mình chuyển từ chuyện "đi tìm kiến thức bên ngoài" sang chuyện "giữ trí nhớ cho AI" — cũng giống như con người có trí nhớ ngắn hạn, dài hạn, AI cũng cần nhiều loại bộ nhớ phối hợp với nhau:
 
 ### 6.1 Memory Types Chi Tiết
 
@@ -2407,6 +2419,8 @@ Lưu ý: Quality scores là approximate, thay đổi tùy evaluation benchmark
 ```
 
 ### 6.2 Memory Patterns Chi Tiết
+
+Biết có mấy loại bộ nhớ rồi, giờ tới cách dùng chúng trong thực tế — mỗi pattern là một "chiêu" giữ context, chiêu nào cũng có cái được cái mất:
 
 #### Buffer Memory
 
@@ -2904,6 +2918,8 @@ Tóm tắt:"""
 
 ## 7. Labs Thực Hành
 
+Tới phần vui nhất — xắn tay áo lên chạy thử. Ba lab đi từ dễ tới khó: search thử, search lai, rồi ráp cả pipeline RAG hoàn chỉnh:
+
 ### Lab 1: Semantic Search với nomic-embed-text
 
 <details>
@@ -3069,7 +3085,7 @@ for i, doc in enumerate(hybrid[:3]):
 
 ## 8. Bổ Sung Production: Vận Hành Index, Bảo Mật, Sự Cố & Khả Năng Quan Sát
 
-> Lấp khoảng trống prototype→production mà §1–§7 còn bỏ ngỏ.
+> Từ §1 tới §7 mình lo chuyện "chạy được". Sang mục này, mình lo chuyện "chạy bền ở production" — những thứ demo thường bỏ qua nhưng lên thật thì thiếu không được.
 
 ### 8.1 Định nghĩa
 

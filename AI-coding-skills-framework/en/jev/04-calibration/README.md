@@ -1,6 +1,6 @@
 # 🎯 04. Calibration — Honest Probabilities
 
-> This section explains **what calibration means for a System One Model**, why **confidence is not the probability of being correct**, how to **read the full distribution instead of just the winner**, and how to **threshold, band, and log** decisions in production. Read [README.md](../README.md) first for the overall context of Module XIV — Jev & System One Models.
+> This section covers **what "well-calibrated" means for a fast decision model**, why **confidence is not the same as being right**, how to **read the whole result instead of just the top pick**, and how to **set limits and keep track** of decisions in real use. Start with [README.md](../README.md) for the big picture of Module XIV — Jev & System One Models.
 
 ---
 
@@ -66,7 +66,7 @@ RLCD:  "You said 0.7 — was it right 70%?" ──►  calibration (honest proba
 >
 > **Definition:** Jev's `confidence` field (on Choice and Score) measures the **concentration / shape of the distribution** — how peaked vs how spread out it is. It is **not** the probability that the selected answer is correct. For Noul, confidence is the **margin** from the midpoint: `|p − 0.5| × 2`.
 > **Analogy:** Like a **doctor's bedside manner vs a lab test**: confidence is *how firmly the doctor states the diagnosis*; the probability of correctness is *how often that diagnosis is right in cases like this one*. A doctor can be very firm and still wrong.
-> **Why it matters:** Teams routinely set gates on `confidence`, then are surprised when a **wrong in-schema answer arrives with high confidence**. Understanding the distinction is the difference between a working gate and a false sense of safety.
+> **Why it matters:** Teams routinely set gates on `confidence`, then are surprised when a **wrong in-schema answer arrives with high confidence**. Knowing the distinction is the difference between a working gate and a false sense of safety.
 
 ### 2.1 Choice / Score Confidence = Distribution Concentration
 

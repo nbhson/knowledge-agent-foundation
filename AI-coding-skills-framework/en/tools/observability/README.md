@@ -14,22 +14,22 @@
 
 ### The Opening Story
 
-Your harness is running a nightly automation loop. One loop starts costing 50,000 tokens per run instead of 10,000. Another agent calls a tool 10 times before finishing. A new prompt lowers quality but you don't know why.
+Your harness runs a nightly job. One night a loop starts using 50,000 tokens per run instead of 10,000. Another agent calls the same tool 10 times before it finishes. A new prompt makes answers worse, but you cannot tell why.
 
-Without observability, you're **flying at night without lights**. You don't know the cost, you don't know which attempt succeeded, you don't know which tool is slow, you don't know which context got truncated.
+Without observability, you are **flying at night with no lights**. You cannot see the cost, you cannot tell which try worked, you cannot see which tool is slow, and you cannot see which context got cut off.
 
 > *"You can't optimize what you can't measure. You can't fix what you can't see."*
 
-**Observability for AI systems** = tracing every LLM call, every tool call, every token, every latency, every cost — like APM for microservices, but for agent pipes.
+**Observability for AI systems** means tracking every LLM call, every tool call, every token, every delay, and every cost — like health tracking for apps, but for agent workflows.
 
 ### Why Observability Matters?
 
 | # | Reason | Explanation |
 |---|--------|-------------|
-| 1 | **Cost tracking** | Know exactly how many tokens/dollars each session costs |
-| 2 | **Faster debugging** | Trace each tool call, see which chain failed |
-| 3 | **Quality monitoring** | Track feedback, accuracy, do regression detection |
-| 4 | **Partner of harness/11 evaluation** | Eval is meaningless without observing the runtime |
+| 1 | **Cost tracking** | See exactly how many tokens and dollars each run uses |
+| 2 | **Faster debugging** | Follow each tool call, and find which step broke |
+| 3 | **Quality monitoring** | Watch feedback and accuracy, and catch drops early |
+| 4 | **Partner of harness/11 evaluation** | Evals mean little if you cannot see what happens at runtime |
 
 ### Relationship to the Harness
 

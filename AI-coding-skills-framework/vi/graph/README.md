@@ -13,27 +13,27 @@
 
 ### Câu Chuyện Mở Đầu
 
-Bạn có một kho tài liệu 10,000 trang về công ty: hợp đồng, báo cáo, org chart, emails. Bạn hỏi chatbot RAG:
+Hãy tưởng tượng thế này: bạn có cả một kho tài liệu công ty dày tới 10.000 trang — nào là hợp đồng, báo cáo, sơ đồ tổ chức, email qua lại đủ kiểu. Rồi một hôm bạn hỏi con chatbot RAG:
 
 > *"Hợp đồng dự án Phoenix do ai phê duyệt, và người đó từng quản lý dự án nào liên quan đến AI?"*
 
-**Vector RAG** tìm được 5 chunks chứa "Phoenix" — nhưng không chunk nào chứa cả `người phê duyệt` lẫn `dự án AI` cùng lúc. Nó đoán mò, hallucinate một cái tên.
+**Vector RAG** loay hoay lôi ra được 5 mẩu văn bản có chữ "Phoenix" — khổ nỗi, chẳng mẩu nào nói cùng lúc cả `người phê duyệt` lẫn `dự án AI`. Bí quá, nó đành đoán bừa một cái tên cho xong.
 
-**GraphRAG** thì khác. Nó đã trích xuất sẵn:
+**GraphRAG** thì chơi kiểu khác hẳn. Nó đã bóc sẵn mối quan hệ từ trước:
 
 ```
 (Phoenix) —[APPROVED_BY]→ (Nguyễn Văn A) —[MANAGED]→ (Project Atlas - AI Platform)
                   └—[REPORTS_TO]→ (Trần Thị B - CTO)
 ```
 
-Một câu truy vấn `TRAVERSE 2 hops` trả về đáp án chính xác **kèm đường dẫn chứng minh** — không đoán, không bịa.
+Chỉ cần một câu truy vấn `TRAVERSE 2 hops` là ra đáp án đúng phóc, **kèm luôn đường đi chứng minh tại sao đúng** — khỏi đoán mò, khỏi bịa.
 
 > *"Vector search tìm đoạn văn giống nhau. Graph search tìm mối quan hệ ẩn sau đoạn văn."*
 > — **Microsoft Research, GraphRAG (2024)**
 
 > *"Knowledge is not a pile of chunks. It's a web of relationships."*
 
-**Graph Engineering** là kỹ thuật thiết kế **substrate tri thức dạng đồ thị** — để AI không chỉ *tìm* thông tin, mà còn *suy luận* trên thông tin đó qua nhiều bước, có giải thích, có citation.
+Nói dễ hiểu, **Graph Engineering** là cách mình thiết kế **substrate tri thức dạng đồ thị** — để AI không chỉ *đi tìm* thông tin, mà còn biết *lần theo sợi dây* suy luận qua nhiều bước, giải thích được vì sao, trích nguồn được rõ ràng.
 
 ### Tại Sao Graph Engineering Quan Trọng?
 
@@ -65,15 +65,15 @@ Graph DB   = "thực thể nào liên quan qua bao nhiêu bước, với bằng 
 GraphRAG   = Vector (recall) + Graph (precision + reasoning)
 ```
 
-**Analogies**: Graph Engineering giống **bản đồ thành phố** — vector search cho bạn biết "có một nhà hàng gần đây", graph cho bạn biết "nhà hàng đó do ai sở hữu, họ còn sở hữu gì, và con đường ngắn nhất để đến đó là gì". Còn **chunking thuần** giống xé bản đồ thành từng mảnh rồi cố ghép lại khi cần.
+**Analogies**: Nói nôm na cho dễ hình dung, Graph Engineering giống như **cái bản đồ thành phố**. Tìm bằng vector thì giống như hỏi "quanh đây có quán ăn nào không" — nó chỉ cho bạn cái tên. Còn tìm bằng graph thì nó chỉ luôn "quán này của ai mở, chủ quán còn mở thêm quán nào nữa, đường nào đi tới đó nhanh nhất". Ngược lại, **chỉ cắt nhỏ văn bản (chunking thuần)** thì giống như xé tấm bản đồ ra thành từng mảnh vụn, tới lúc cần tìm đường lại loay hoay ghép lại.
 
-**Nếu bỏ qua**: Agent trả lời đúng câu hỏi đơn giản nhưng hallucinate mọi câu hỏi multi-hop, không giải thích được nguồn, và không thể cập nhật tri thức mà không re-embed toàn bộ.
+**Nếu bỏ qua**: Nói thật, con agent vẫn trả lời ngon ơ mấy câu đơn giản, nhưng cứ gặp câu hỏi lòng vòng nhiều bước là lại bịa, hỏi "sao mày biết" thì ú ớ không chỉ được nguồn, muốn thêm tài liệu mới lại phải làm lại từ đầu rất cực.
 
 ## Tổng Quan
 
-**Graph Engineering** là việc thiết kế các **hệ thống tri thức dạng đồ thị** để AI agent lưu trữ, truy vấn, và suy luận trên tri thức có cấu trúc — với khả năng multi-hop traversal, community detection, và grounding có citation.
+Hiểu đơn giản, **Graph Engineering** là chuyện mình xây hẳn một **hệ tri thức dạng đồ thị** để AI agent có chỗ lưu, chỗ hỏi, chỗ suy luận cho đàng hoàng — nào là đi nhiều bước (multi-hop traversal), gom nhóm (community detection), trả lời có trích nguồn đàng hoàng.
 
-Khác với Module 01 (Retrieve Memory & Knowledge) vốn tập trung vào vector/hybrid search trên chunks, Graph Engineering tập trung vào **đồ thị tri thức**: mỗi sự thật là một cạnh (triple), mỗi câu trả lời là một đường đi (path), và mỗi tóm tắt là một community.
+Nó khác với Module 01 (Retrieve Memory & Knowledge) ở chỗ: Module 01 lo chuyện tìm trên mấy đoạn văn bản cắt nhỏ bằng vector/hybrid search, còn ở đây mình chơi với **đồ thị tri thức** hẳn hoi: mỗi sự thật là một cạnh nối (triple), mỗi câu trả lời là một hành trình (path), và mỗi bản tóm tắt là một cụm cộng đồng (community).
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -108,7 +108,7 @@ Khác với Module 01 (Retrieve Memory & Knowledge) vốn tập trung vào vecto
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 
-Module XIII được chia thành **9 modules chuyên đề** — đồng nhất với convention của `harness/` (mỗi module là `NN-name/README.md`).
+Module XIII này được chia thành **9 module nhỏ** — cách chia giống hệt bên `harness/` cho dễ theo dõi (mỗi module là một thư mục `NN-name/README.md`).
 
 ```
 graph/
@@ -124,7 +124,7 @@ graph/
 └── 09-evaluation/               ← Đánh giá: coverage, hallucination, path precision, benchmarks
 ```
 
-> Mỗi thư mục chứa một `README.md` — đồng nhất với convention của `harness/` và `loop/`.
+> Mỗi thư mục đều có một file `README.md` riêng — đúng chuẩn như bên `harness/` và `loop/` thôi, nên bạn mở ra là quen ngay.
 
 ### Lộ Trình Đề Xuất
 
@@ -162,7 +162,7 @@ Bước 7: 08-graph-workflow/ + 09-evaluation/ — pipeline production + đánh 
 
 ### 1. Microsoft GraphRAG — Global Sensemaking
 
-GraphRAG của Microsoft là **reference implementation** cho toàn bộ track này:
+Nói về graph thì phải nhắc tới GraphRAG của Microsoft đầu tiên — đây coi như **bản mẫu chuẩn** cho cả track này:
 
 ```
 Documents ──► LLM Entity/Relation Extraction ──► Knowledge Graph
@@ -189,7 +189,7 @@ Documents ──► LLM Entity/Relation Extraction ──► Knowledge Graph
 
 ### 2. Neo4j + LangChain — Enterprise Stack
 
-Stack production phổ biến nhất 2025-2026:
+Đây là bộ đồ nghề mà nhiều team đem ra chạy production nhất trong giai đoạn 2025-2026:
 
 - **Construction**: `LLMGraphTransformer` (LangChain) → `Neo4jGraph.add_graph_documents()`
 - **Query**: `GraphCypherQAChain` → LLM sinh Cypher từ natural language
@@ -198,11 +198,11 @@ Stack production phổ biến nhất 2025-2026:
 
 ### 3. Trajectory as Graph — DeepSeek Pattern
 
-DeepSeek Harness không lưu trajectory dạng flat log — mà dạng **event graph**: mỗi tool call là node, dependencies là edges → cho phép fork/replay như git branches. Chi tiết: [`harness/03-update-memory-store/trajectory-fork-replay.md`](../harness/03-update-memory-store/trajectory-fork-replay.md). Đây chính là **graph thinking** áp dụng cho agent execution.
+Team DeepSeek làm một chuyện rất hay: thay vì lưu lịch sử chạy của agent kiểu nhật ký dài lê thê (flat log), họ lưu hẳn thành **đồ thị sự kiện (event graph)**: mỗi lần gọi tool là một nút, mối liên quan giữa các lần gọi là cạnh nối — nhờ vậy mới rẽ nhánh, chạy lại ngon lành như dùng git branch vậy. Bạn xem chi tiết ở đây: [`harness/03-update-memory-store/trajectory-fork-replay.md`](../harness/03-update-memory-store/trajectory-fork-replay.md). Nói chung, đây chính là kiểu **tư duy đồ thị** đem áp thẳng vào cách agent chạy.
 
 ### 4. Codebase Knowledge Graph
 
-Ứng dụng graph cho AI coding:
+Còn đây là cách đem graph vào chuyện code để AI hiểu codebase:
 
 ```
 File ─[DEFINES]→ Function ─[CALLS]→ Function ─[TESTED_BY]→ TestFile
@@ -210,7 +210,7 @@ File ─[DEFINES]→ Function ─[CALLS]→ Function ─[TESTED_BY]→ TestFile
   └[IMPORTS]→ Module  └[USES]→ Class ─[INHERITS]→ BaseClass
 ```
 
-Dùng để: "hàm này được gọi ở đâu?", "thay đổi file này ảnh hưởng gì?", "test nào cover function này?" — mà vector search không trả lời được.
+Mấy câu kiểu "hàm này được gọi ở chỗ nào?", "sửa file này thì ảnh hưởng tới đâu?", "test nào đang cover hàm này?" — hỏi kiểu này thì tìm bằng vector chịu chết, chỉ có graph mới lần ra được.
 
 ---
 

@@ -2,17 +2,17 @@
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Operating là "vận hành" — khi loop đã chạy thật trong production, công việc của bạn chuyển từ thiết kế sang **giám sát và điều khiển**: theo dõi token cost, đọc run log, xem metrics, và quyết định khi nào giảm tốc / tạm dừng / giết một loop.
-> **Ẩn dụ/so sánh:** Giống **phi công trên buồng lái** — máy bay (loop) đã cất cánh rồi; việc của bạn không phải sửa động cơ giữa chừng, mà là đọc đồng hồ (metrics), kiểm tra nhiên liệu (token budget), và quyết định có hạ cánh sớm (kill) khi có cảnh báo.
-> **Vì sao quan trọng:** Loop đầu tiên của bạn sẽ đốt tiền token — đó là chuyện bình thường. Phần này dạy bạn **ước lượng trước khi chạy** (tránh sốc bill), **ghi log để debug** ("tại sao nó làm vậy?"), và **dừng đúng lúc** trước khi thiệt hại thành thảm họa.
+> **Khái niệm:** Operating nghĩa là "vận hành" — khi loop đã chạy thật ngoài production, việc của bạn chuyển từ thiết kế sang **trông coi và điều tiết**: canh token cost, đọc run log, xem metrics, rồi quyết định lúc nào nên giảm tốc / tạm dừng / dẹp hẳn một loop.
+> **Hình dung cho dễ:** Như **ngồi trong buồng lái** — máy bay (loop) đã cất cánh; bạn không cần chui xuống sửa động cơ giữa trời, chỉ cần đọc đồng hồ (metrics), canh nhiên liệu (token budget), và quyết định hạ cánh sớm (kill) khi đèn báo đỏ.
+> **Vì sao đáng quan tâm:** Loop đầu tay kiểu gì cũng đốt kha khá token — chuyện đó bình thường. Phần này chỉ bạn **áng chi phí trước khi chạy** (đỡ bất ngờ khi thấy bill), **ghi log để còn biết đường tìm** ("sao nó lại làm vậy?"), và **dừng đúng lúc** trước khi thiệt hại nhỏ thành chuyện lớn.
 
-> Chạy một loop là công việc operations. Phần này bao gồm: **Token Budget**, **Logging**, **Metrics**, và **khi nào pause hoặc kill** một loop.
+> Chạy loop thực chất là làm vận hành. Phần này gồm: **ngân sách token (Token Budget)**, **ghi log (Logging)**, **chỉ số (Metrics)**, và **lúc nào nên giảm tốc, tạm dừng hay dẹp bỏ** một loop.
 
 ---
 
 ## 1. Token & Cost Budgeting
 
-> **Đọc sao cho dễ:** Câu hỏi ở đây là "**loop này sẽ tốn bao nhiêu tiền mỗi ngày?**" — giống tính tiền xăng trước một chuyến đi xa. Bạn dùng `loop cost` để ước lượng, rồi đặt **giới hạn (budget)** và **điểm dừng (kill switch)** nếu vượt quá. Quy tắc nhớ: cadence càng nhanh, sub-agent càng nhiều, chi phí càng cao gấp bội.
+> **Đọc đoạn này thế nào:** Câu hỏi cốt lõi là "**loop này mỗi ngày tốn bao nhiêu tiền?**" — giống như áng tiền xăng trước chuyến đi xa. Bạn dùng `loop cost` để ước lượng, rồi đặt **trần chi tiêu (budget)** và **nút dừng khẩn cấp (kill switch)** phòng khi vượt mức. Nhớ quy tắc: chạy càng dày, đẻ càng nhiều sub-agent thì tiền càng tăng nhanh.
 
 **Ước lượng trước khi schedule:**
 
@@ -21,7 +21,7 @@ npx @cobusgreyling/loop cost --pattern <id> --cadence <interval> --level L1
 npx @cobusgreyling/loop init . --pattern <id>   # scaffold loop-budget.md + loop-run-log.md + loop-budget skill
 ```
 
-`loop-audit` chấm điểm cost observability và **cap L3** cho đến khi có budget + run log + LOOP.md budget section.
+`loop-audit` chấm điểm khả năng quan sát chi phí, và **giữ loop ở L3** cho tới khi có đủ budget, run log và mục budget trong LOOP.md.
 
 ### Các Yếu Tố Ước Lượng
 
@@ -40,7 +40,7 @@ npx @cobusgreyling/loop init . --pattern <id>   # scaffold loop-budget.md + loop
 | CI sweeper (light) | 15m | 96 | ~5M (nếu full — **tránh**) |
 | PR babysitter | 5m | 288 | High — dùng early exit |
 
-> **Best practice**: triage pass rẻ; chỉ spawn sub-agents khi state báo actionable. Empty watchlist → exit trong < 5k tokens.
+> **Mẹo hay**: bạn cứ cho lượt triage chạy thật rẻ; chỉ tạo sub-agent khi state báo có việc đáng làm. Watchlist mà trống thì thoát luôn trong vòng < 5k tokens.
 
 ### Budget Rules
 
@@ -51,15 +51,15 @@ npx @cobusgreyling/loop init . --pattern <id>   # scaffold loop-budget.md + loop
 - Max sub-agent spawns per run: 3
 ```
 
-Encode trong skill hoặc scheduler prompt: *"If no high-priority items, exit immediately."*
+Ghi thẳng vào skill hoặc prompt của scheduler: *"If no high-priority items, exit immediately."*
 
 ---
 
 ## 2. Logging Mỗi Run
 
-> **Đọc sao cho dễ:** Log là "**hộp đen**" của loop — mỗi lần chạy ghi một dòng trả lời: chạy bao lâu? tìm được gì? làm gì? tốn bao nhiêu? Sau này khi thắc mắc "vì sao nó không xử lý X", bạn mở log ra là có câu trả lời. Chuẩn là **append-only**: chỉ thêm, không sửa, không xoá.
+> **Đọc đoạn này thế nào:** Log là "**hộp đen**" của loop — mỗi lần chạy ghi lại ngắn gọn: chạy bao lâu, thấy gì, đã làm gì, tốn bao nhiêu. Sau này nếu thắc mắc "sao nó không xử lý vụ X", bạn mở log ra là có câu trả lời. Chuẩn ở đây là **append-only**: chỉ thêm dòng mới, không sửa, không xóa.
 
-Minimum log entry (append vào `loop-run-log.md` hoặc structured JSON):
+Mỗi run bạn ghi tối thiểu chừng này (lưu vào `loop-run-log.md` hoặc JSON có cấu trúc):
 
 ```json
 {
@@ -74,7 +74,7 @@ Minimum log entry (append vào `loop-run-log.md` hoặc structured JSON):
 }
 ```
 
-Human-readable alternative trong `STATE.md` footer:
+Bản ngắn gọn cho người đọc, đặt ở cuối `STATE.md`:
 
 ```markdown
 ---
@@ -85,9 +85,9 @@ Run log: 2026-06-09 08:15 | 4 findings | 1 worktree opened | 0 escalations
 
 ## 3. Metrics Dashboard
 
-> **Đọc sao cho dễ:** Metrics là "**bảng cân này của loop**" — mỗi tuần bạn nhìn vào và hỏi: loop có thực sự giúp ích không, hay chỉ tốn tiền làm nhiễu? Điền các cột trống trong bảng dưới (runs, findings, escalations, false positives) cho từng pattern để thấy xu hướng, chứ không phải cảm giác.
+> **Đọc đoạn này thế nào:** Metrics là "**sổ theo dõi sức khỏe**" của loop — mỗi tuần bạn mở ra và tự hỏi: loop có thực sự giúp được việc không, hay chỉ tốn tiền và gây nhiễu? Bạn điền số liệu vào bảng dưới (runs, findings, escalations, false positives) cho từng pattern để thấy xu hướng rõ ràng, thay vì đoán theo cảm tính.
 
-Theo dõi hàng tuần (spreadsheet hoặc Notion):
+Theo dõi theo tuần (bằng spreadsheet hoặc Notion):
 
 | Metric | PR Babysitter | Daily Triage | CI Sweeper |
 |--------|---------------|--------------|------------|
@@ -99,38 +99,38 @@ Theo dõi hàng tuần (spreadsheet hoặc Notion):
 | Mean time to human awareness | | | |
 | Token spend (est.) | | | |
 
-Pattern-specific success metrics nằm trong từng [pattern](../02-patterns/).
+Chỉ số thành công riêng của từng pattern nằm trong [02-patterns](../02-patterns/).
 
 ---
 
 ## 4. Khi Nào Slow Down / Pause / Kill
 
-> **Đọc sao cho dễ:** Đây là "**thang đo dầu phanh**" — 3 mức ứng với mức độ nghiêm trọng: **Slow down** (giảm ga vì hết nhiên liệu chút nữa), **Pause** (tạm dừng vì đang có nguy hiểm ngay trước mặt), **Kill** (dừng hẳn vì con đường này không còn đáng đi). Câu hỏi mỗi lần gặp sự cố: đang ở mức nào?
+> **Đọc đoạn này thế nào:** Đây là "**chân ga — chân phanh**" — 3 mức theo độ nghiêm trọng: **Slow down** (giảm ga vì sắp hết nhiên liệu), **Pause** (tạm dừng vì có chướng ngại ngay trước mặt), **Kill** (dẹp luôn vì con đường này không còn đáng đi). Mỗi lần có sự cố, bạn tự hỏi: mình đang ở mức nào?
 
 ### Slow Down
 
 - Token budget > 80% giữa tuần
 - False positive rate > 30% trên triage
-- Cùng item escalated 2+ lần trong 48h
-- Tuần release lớn — pause auto-fix loops, report-only
+- Cùng một item bị escalate 2+ lần trong 48h
+- Tuần release lớn — tạm dừng các loop tự sửa, chỉ để chúng báo cáo
 
 ### Pause
 
-- Production incident đang xảy ra (loop có thể phá hotfix)
-- Breaking schema migration đang diễn ra
-- Human reviewer chính OOO + auto-merge đã bật (đừng)
+- Đang có sự cố production (loop có thể phá hỏng bản hotfix)
+- Đang chạy migration đổi schema kiểu breaking
+- Người review chính đang nghỉ (OOO) mà auto-merge vẫn bật (đừng làm vậy)
 
 ### Kill
 
-- S2 failures liên tục từ [failure catalog](../06-anti-patterns/README.md#2-failure-mode-catalog)
-- Cost > value trong 2 tuần liên tiếp
-- Team mute hết notifications
-- Pattern bị thay thế bởi event-driven alternative (VD: chỉ còn CI Action)
+- Lỗi S2 lặp đi lặp lại, xem [failure catalog](../06-anti-patterns/README.md#2-failure-mode-catalog)
+- Tiền bỏ ra > giá trị thu về suốt 2 tuần liền
+- Cả team tắt hết thông báo
+- Đã có cách làm theo sự kiện gọn hơn thay thế (VD: chỉ giữ lại CI Action)
 
-**Kill checklist**:
-1. `scheduler_delete` / disable Automation / remove Action
-2. Archive state file với `status: retired`
-3. Post-mortem trong `stories/` (optional nhưng giá trị)
+**Các bước dẹp loop**:
+1. `scheduler_delete` / tắt Automation / gỡ Action
+2. Lưu trữ state file với `status: retired`
+3. Viết post-mortem trong `stories/` (không bắt buộc nhưng rất nên làm)
 
 ---
 
@@ -146,7 +146,7 @@ Connectors (L2+) → PRs/tickets tự cập nhật
 Unattended (L3) → chỉ khi có denylist, budget, metrics, human gates
 ```
 
-**Never skip L1** cho một pattern mới trên production repo.
+**Đừng bao giờ bỏ qua L1** khi thử pattern mới trên repo production.
 
 ---
 

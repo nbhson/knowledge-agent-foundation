@@ -14,11 +14,11 @@
 
 ### Câu Chuyện Mở Đầu
 
-Bạn đổi prompt system từ "bạn là assistant hữu ích" sang "bạn là senior engineer". Quality tăng — hay giảm? Bạn nói harness "tốt hơn", nhưng **bằng chứng đâu?** Bạn thêm RAG với top-5 chunks — có thật sự cải thiện answer accuracy hay chỉ tốn thêm token?
+Hãy thử thế này: bạn đổi prompt system từ "bạn là assistant hữu ích" sang "bạn là senior engineer". Chất lượng lên hay xuống? Bạn thấy harness "hình như ngon hơn rồi", nhưng **bằng chứng đâu?** Bạn thêm RAG lấy top-5 chunks — liệu accuracy có khá hơn thật, hay chỉ tốn thêm token?
 
 > *"If you ship prompt changes without evaluation, you're gambling — not engineering."*
 
-**Evaluation (Eval)** là cách biến "cảm giác tốt hơn" thành **con số đo được**: chấm điểm response, so sánh giữa các phiên bản prompt/model, phát hiện regression trước khi nó tới production.
+**Evaluation (Eval)** là cách biến cảm giác "hình như ngon hơn" thành **con số đo được**: chấm điểm response, đặt các bản prompt/model cạnh nhau để so, và bắt regression từ sớm trước khi nó lọt ra production.
 
 ### Tại Sao Evaluation Quan Trọng?
 

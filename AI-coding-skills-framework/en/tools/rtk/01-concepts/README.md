@@ -1,6 +1,6 @@
 # 🧠 01. RTK Architecture — Concepts
 
-> Understanding how RTK works helps you configure it correctly, avoid classic pitfalls, and know when RTK can't help (Claude Code's built-in `Read`/`Grep`/`Glob` tools bypass the hook).
+> Knowing how RTK works makes it easier to set up, avoid common mistakes, and understand when it can't help (Claude Code's built-in `Read`/`Grep`/`Glob` tools bypass the hook).
 
 ## How RTK Intervenes in the Command Flow
 

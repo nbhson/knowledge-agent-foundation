@@ -14,9 +14,9 @@
 
 ### Câu Chuyện Mở Đầu
 
-Harness của bạn có thể gọi `write_file`, `execute_python`, `send_notification`, `sql_query`. Một lần agent hiểu sai prompt và gọi `write_file` với path... `/etc/passwd`. Hoặc `send_notification` 100 lần. Hoặc `execute_python` chạy lệnh xóa dữ liệu.
+Hãy hình dung thế này: harness của bạn đang cầm trong tay cả `write_file`, `execute_python`, `send_notification`, `sql_query`. Chỉ cần agent hiểu sai prompt một chút là có thể gọi nhầm `write_file` vào chỗ như... `/etc/passwd`. Hoặc bắn `send_notification` tới cả trăm lần. Hoặc cho `execute_python` chạy lệnh xóa sạch dữ liệu.
 
-LLM không có khái niệm "side effect không mong muốn" — nó chỉ sinh text. **Guardrails là lớp kiểm soát ngăn harness làm điều không nên làm**, trước khi hành động xảy ra.
+LLM vốn không có khái niệm "lỡ tay là toi" — nó chỉ sinh text. **Guardrails là lớp kiểm soát đứng trước đó**, chặn harness làm điều không nên làm ngay trước khi hành động diễn ra.
 
 > *"The model proposes. The guardrail disposes."*
 

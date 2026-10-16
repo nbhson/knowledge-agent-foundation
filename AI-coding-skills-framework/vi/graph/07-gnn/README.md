@@ -536,7 +536,7 @@ Sau khi có embeddings từ R-GCN, dùng scoring function để predict missing 
 
 ```
 ┌──────────────┬──────────────────────────────────┬──────────────────────┐
-│ Method       │ Score(h, r, t)                   │ Best For             │
+│ Phương pháp  │ Hàm chấm điểm(h, r, t)           │ Phù hợp nhất khi   │
 ├──────────────┼──────────────────────────────────┼──────────────────────┤
 │ TransE       │ -||h + r - t||                   │ Simple, fast         │
 │ DistMult     │ <h, r, t> (trilinear dot)        │ Symmetric relations  │

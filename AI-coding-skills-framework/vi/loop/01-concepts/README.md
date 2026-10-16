@@ -1,6 +1,6 @@
 # 🔬 01. Khái Niệm Cốt Lõi — Loop Engineering
 
-> Phần này giải thích **Loop Engineering là gì**, **5 building blocks + memory** cấu thành mọi loop, **anatomy of a loop**, **mức tự chủ L1–L3**, và **taxonomy các vòng lặp lồng nhau**. Đọc [README.md](../README.md) trước để có bối cảnh tổng quan.
+> Phần này kể cho bạn nghe **Loop Engineering thực ra là gì**, gồm **5 mảnh ghép + memory** nào ráp thành mọi vòng loop, một vòng loop chạy qua những trạm nào, các **mức tự chủ L1–L3**, và cách **mấy vòng loop lồng vào nhau**. Nếu chưa đọc thì ghé [README.md](../README.md) trước để có bức tranh chung nhé.
 
 ---
 
@@ -8,15 +8,15 @@
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Loop Engineering là thiết kế **hệ thống điều khiển** cho AI coding agents — hệ thống tự phát hiện việc cần làm, tự phân công, tự kiểm chứng, tự duy trì trạng thái — thay vì bạn gõ từng prompt một.
-> **Ẩn dụ/so sánh:** Giống **nhà máy sản xuất** — bạn không tự lắp ráp từng sản phẩm; bạn thiết kế dây chuyền (scheduler), máy móc (agents), thiết bị kiểm định (verifiers), và kho lưu trữ (state). Còn **thợ thủ công gõ prompt** là người tự làm từng món một.
-> **Vì sao quan trọng:** Prompting không scale — bạn là bottleneck của mọi tác vụ. Loop giúp agent làm việc liên tục, có kỷ luật, và bạn chỉ tham gia ở các điểm quyết định quan trọng (human gates).
+> **Khái niệm:** Loop Engineering là cách bạn thiết kế **hệ điều khiển** cho AI coding agents — để nó tự biết việc ở đâu, tự chia việc, tự kiểm tra lại, tự nhớ trạng thái — chứ bạn không phải ngồi gõ từng prompt một.
+> **Ẩn dụ/so sánh:** Cứ hình dung một **xưởng may thay vì một bác thợ may**: bác thợ thì tự cắt từng cái áo; còn chủ xưởng thì dựng băng chuyền (scheduler), sắm máy móc (agents), đặt khâu kiểm hàng (verifiers), thuê kho giữ vải (state). Bạn chuyển từ vai bác thợ sang vai người dựng xưởng.
+> **Vì sao quan trọng:** Gõ prompt tay thì vui lúc đầu nhưng nhanh đuối — vì mọi việc đều chờ bạn ra lệnh. Có loop, agent cứ thế làm đều tay, còn bạn chỉ xuất hiện ở mấy ngã ba cần mình gật đầu (human gates).
 
 ### 1.1 Từ Prompt Đến Loop
 
-Cách sử dụng AI coding agent điển hình ngày nay là *ad-hoc prompting*: bạn mở agent, gõ lệnh, chờ kết quả. Mỗi lần bắt đầu từ đầu, không có trạng thái, không có lịch sử, không có kiểm chứng có hệ thống.
+Cách xài AI coding agent quen thuộc hiện nay là kiểu *gõ prompt theo hứng*: mở agent lên, gõ một câu, chờ nó trả lời. Xong việc là xong, lần sau lại bắt đầu từ con số 0 — không nhớ gì, không lưu gì, cũng chẳng có ai kiểm tra lại cho tử tế.
 
-Loop Engineering đảo ngược điều đó:
+Loop Engineering rẽ sang hướng khác hẳn:
 
 ```
 AD-HOC PROMPTING:
@@ -34,11 +34,11 @@ LOOP ENGINEERING:
   MCP / Git / Tickets ◄──── Human Gate? ──► Commit / PR / Escalate
 ```
 
-**Vai trò của bạn thay đổi**: từ *người gõ prompt* thành *kỹ sư thiết kế vòng lặp*. Bạn viết skill (kiến thức), định nghĩa state schema, chọn cadence, và giữ lại quyền quyết định ở các **human gates**.
+**Vai của bạn cũng đổi theo**: trước đây bạn là *người gõ prompt*, giờ bạn thành *người thiết kế vòng lặp*. Bạn viết skill (gom kiến thức lại), vẽ sẵn khung state, chọn nhịp chạy, và giữ cho mình quyền chốt ở mấy **cửa kiểm tra của con người**.
 
 ### 1.2 Harness vs Loop
 
-Một khái niệm thường bị nhầm lẫn. Harness và Loop không giống nhau:
+Chỗ này nhiều bạn hay lẫn lộn, nên mình tách bạch một chút. Harness và Loop là hai thứ khác nhau:
 
 ```
 Harness = single session setup
@@ -48,11 +48,11 @@ Loop    = harness + schedule + state + verification chain
   → hệ thống điều phối NHIỀU harness runs theo thời gian
 ```
 
-Module VII-XI trong framework này xây dựng các thành phần của harness. Module XII này (loop) **điều phối chúng theo thời gian**: lịch chạy, trạng thái bền vững, và chuỗi kiểm chứng.
+Mấy module VII–XI trong framework này lo dựng từng món đồ trong harness. Còn module XII này (loop) lo **xếp chúng chạy đều theo thời gian**: khi nào chạy, nhớ gì qua mỗi lần chạy, và ai kiểm tra chéo ai.
 
 ### 1.3 Loop Là Một Recursive Goal
 
-Một loop là một **mục tiêu đệ quy**: định nghĩa mục đích, để agent tự lặp (với sub-agents và memory ngoài) cho đến khi **hoàn thành hoặc loop leo thang lên con người**.
+Nói gọn, một loop là một **mục tiêu biết tự lặp lại**: bạn nói rõ "đích đến là gì", rồi để agent tự xoay vòng (nhờ sub-agents và trí nhớ ngoài) cho tới khi **xong việc hoặc biết đường nhờ con người**.
 
 ```
 Loop = Define purpose → Iterate → Done / Escalate to human
@@ -62,7 +62,7 @@ Loop = Define purpose → Iterate → Done / Escalate to human
 
 ## 2. Năm Building Blocks + Memory
 
-Đây là các **nguyên khối (primitives)** cấu thành mọi loop. Khả năng thực sự quan trọng hơn tên sản phẩm — mỗi nguyên khối đều có mapping ở các tool khác nhau (Grok, Claude Code, Codex, Cursor, Opencode, ...).
+Đây là mấy **viên gạch nền** mà vòng loop nào cũng có. Tên tool rồi sẽ đổi (hôm nay là Grok, mai là Claude Code, Codex, Cursor, Opencode...), nhưng việc mà từng viên gạch phải làm thì vẫn vậy.
 
 | Primitive | Job trong Loop |
 |-----------|----------------|
@@ -96,22 +96,22 @@ Loop = Define purpose → Iterate → Done / Escalate to human
 
 ### 2.1 Automations / Scheduling
 
-Nhịp đập của loop. **Không có scheduling, bạn chỉ có một agent run một lần.**
+Đây là nhịp tim của loop. **Không có lịch chạy tự động, thì bạn chỉ có một lần chạy lẻ tẻ.**
 
-Các hiện thực phổ biến:
+Mấy kiểu hẹn giờ hay gặp ngoài đời:
 - `/loop [interval] <prompt>` (Grok, Claude Code)
 - Scheduled tasks / cron trong Claude Code
 - GitHub Actions + repository dispatch
 - `/goal` — chạy cho đến khi một điều kiện kiểm chứng được thoả
 - Custom harness schedulers
 
-Các thuộc tính quan trọng: **interval, fire-immediately, recurring vs one-shot, durable (sống sót restart).**
+Lúc chọn cách hẹn giờ, bạn nhớ ngó bốn thứ này: **chạy mỗi bao lâu (interval), có chạy ngay phát đầu không, chạy một lần hay chạy hoài, và có sống sót qua restart không (durable).**
 
 ### 2.2 Worktrees
 
-Song song mà không hỗn loạn.
+Muốn chạy song song mà không dẫm chân nhau thì nhờ món này.
 
-Khi hai agents cùng sửa một file cùng lúc, bạn có merge hell. Git worktrees (hoặc isolated checkout tương đương) cho mỗi agent một **working directory riêng** — chia sẻ lịch sử nhưng không chia sẻ working tree.
+Bạn thử tưởng tượng hai agent cùng thò tay sửa một file một lúc là thấy cảnh rối ngay. Git worktrees (hoặc kiểu checkout cách ly tương tự) cho mỗi agent một **góc làm việc riêng** — xài chung lịch sử, nhưng bàn làm việc thì ai nấy giữ.
 
 ```
 Agent A (worktree 1)  ──►  sửa fix/ci-auth-refresh
@@ -119,20 +119,20 @@ Agent B (worktree 2)  ──►  sửa fix/issue-1241
          └────── cùng chia sẻ history ──────┘
 ```
 
-**Cleanup rất quan trọng** — loop phải xoá worktree khi task xong hoặc bàn giao. Tool `loop-worktree` làm điều này thành cơ chế: một worktree cho mỗi lần thử, theo dõi trong manifest, dọn khi reject hoặc escalate.
+**Dọn dẹp sau khi làm xong quan trọng lắm** — việc xong hay cần nhờ người là phải xóa worktree cho gọn. Tool `loop-worktree` sinh ra để làm việc đó cho chuẩn: mỗi lần thử một worktree riêng, ghi vào manifest để theo dõi, dọn sạch khi bị reject hoặc cần escalate.
 
 ### 2.3 Skills
 
-Bộ nhớ bền vững của **ý định** (intent).
+Nếu ví state là cuốn sổ ghi việc, thì skills là cuốn **sổ ghi ý định** lâu dài.
 
-Một skill (thường là `SKILL.md` + scripts/references) mã hoá:
+Một skill (`SKILL.md` + `scripts/`/`references/`/`assets` theo chuẩn Agent Skills — xem `harness/05-prompt-builder/agent-skills-spec.md`) gói ghém giùm bạn:
 - Quy ước dự án
 - "Chúng tôi không làm theo cách này vì sự cố X"
 - Lệnh build/test/lint
 - Tiêu chuẩn review
 - Kiến thức domain
 
-**Không có skills**, loop tự suy ra mọi thứ từ đầu ở mỗi lần chạy → **intent debt**.
+**Không có skills**, mỗi lần chạy loop lại đoán mò từ đầu → thế là **nợ ý định (intent debt)** chồng chất.
 
 ```
 Skills = "Conventions viết một lần, đọc mọi lần chạy"
@@ -140,22 +140,22 @@ Skills = "Conventions viết một lần, đọc mọi lần chạy"
 
 ### 2.4 Plugins & Connectors (MCP)
 
-Một loop chỉ đọc được filesystem là rất giới hạn.
+Một vòng loop chỉ biết đọc file trong máy thì cũng giống người làm việc mà không có điện thoại — hơi tù.
 
-Connectors cho phép loop:
+Có connectors, loop mới thò tay ra thế giới thật được:
 - Đọc/cập nhật tickets Linear / Jira
 - Đăng lên Slack / Discord
 - Query databases / internal APIs
 - Tạo branch và PR trên GitHub
 - Trigger deploys / runbooks
 
-**MCP (Model Context Protocol)** đã trở thành substrate chung — connectors viết cho tool này thường chạy được ở tool khác.
+Dạo này **MCP (Model Context Protocol)** thành kiểu ổ cắm chung — đồ cắm viết cho tool này thường bê sang tool khác xài được luôn.
 
 ### 2.5 Sub-agents — Maker / Checker Split
 
-**Pattern cấu trúc quan trọng nhất** cho loops đáng tin cậy.
+Đây là kiểu chia vai **đáng tiền nhất** nếu bạn muốn loop chạy mà vẫn tin được.
 
-Agent viết code là một người chấm điểm tệ cho chính tác phẩm của mình. Một agent thứ hai (đôi khi model mạnh hơn, luôn khác instructions) thực hiện việc **kiểm chứng**.
+Người vừa nấu ăn mà tự chấm món mình nấu thì điểm lúc nào chẳng cao. Nên mình cho một agent khác (đôi khi xài model xịn hơn, lúc nào cũng khác hướng dẫn) đứng ra **nếm lại món đó**.
 
 ```
 Implementer (Maker) ──patch──► Verifier (Checker) ──approve/reject──►
@@ -163,23 +163,23 @@ Implementer (Maker) ──patch──► Verifier (Checker) ──approve/reject
    điểm chính mình
 ```
 
-Các split phổ biến:
+Mấy kiểu chia vai hay gặp:
 - Explorer → Implementer → Verifier
 - Implementer → Security reviewer
 - Implementer → Test writer + runner
 
-Trong loops **không người giám sát** (unattended), verifier chính là thứ cho phép bạn rời đi mà vẫn có chút tin tưởng.
+Với mấy loop **chạy lúc không có ai ngó (unattended)**, ông verifier chính là lý do để bạn dám đi ngủ mà vẫn yên tâm phần nào.
 
 ### 2.6 Memory / State
 
-Mô hình không có trí nhớ dài hạn xuyên suốt các turn hay sessions riêng biệt.
+Bản chất model là mau quên — qua turn khác, session khác là quên sạch.
 
-Loop **bắt buộc** phải đọc và ghi vào thứ gì đó bền vững:
+Nên loop **kiểu gì cũng phải có chỗ ghi chép bền** để lần sau quay lại còn nhớ:
 - `STATE.md` hoặc `LOOP-STATE.json` trong repo
 - Một section riêng của Linear board / GitHub Project
 - Một row database nhỏ
 
-State tốt trả lời được:
+Một cuốn sổ state tốt thì mở ra trả lời được ngay:
 - Chúng ta đang làm gì?
 - Lần trước thử gì, kết quả ra sao?
 - Cái gì đang chờ con người?
@@ -192,11 +192,11 @@ State tốt trả lời được:
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Anatomy of a Loop là "cấu tạo một vòng lặp" — danh sách các bước cố định mà một loop đi qua mỗi lần chạy: từ lúc scheduler đánh thức, đến lúc triage phát hiện việc, kiểm chứng trong worktree cô lập, và bàn giao cho human hoặc commit.
-> **Ẩn dụ/so sánh:** Giống **dây chuyền lắp ráp ô tô** — chiếc xe đi qua từng trạm theo thứ tự cố định: nạp linh kiện (context), phân loại (triage), lắp ráp trong khu riêng (worktree), kiểm định (verifier), và cuối cùng xuất xưởng hoặc đưa về kho (commit / escalate). Nếu bỏ qua một trạm, chiếc xe rời xưởng mà chưa qua kiểm tra.
-> **Vì sao quan trọng:** Anatomy là "bản thiết kế" bạn tham chiếu khi thiết kế bất kỳ loop nào. Tụi mình thấy thứ tự các bước quyết định loop đó an toàn hay nguy hiểm — làm việc trong worktree cô lập rồi mới kiểm chứng là thứ tự "bắt buộc" cho loop sửa code.
+> **Khái niệm:** Anatomy of a Loop là "bản vẽ giải phẫu" một vòng lặp — liệt kê các trạm cố định mà lần chạy nào cũng phải đi qua: từ lúc chuông báo thức reo (scheduler), tới lúc phân loại việc (triage), làm trong phòng riêng (worktree), kiểm hàng, rồi giao cho người hoặc bấm nút commit.
+> **Ẩn dụ/so sánh:** Cứ nghĩ tới **dây chuyền ráp xe hơi** — chiếc xe phải đi qua từng trạm đúng thứ tự: nạp đồ (context), phân loại (triage), ráp trong khu riêng (worktree), kiểm định (verifier), rồi mới xuất xưởng hoặc quay về kho (commit / escalate). Bỏ một trạm là xe ra xưởng mà chưa ai kiểm thắng.
+> **Vì sao quan trọng:** Tờ bản vẽ này là thứ bạn lôi ra mỗi lần thiết kế loop mới. Tụi mình thấy chỉ cần đảo thứ tự hai trạm thôi là loop từ an toàn thành nguy hiểm ngay — kiểu như nhất định phải làm trong worktree cách ly rồi mới cho kiểm chứng, không làm ngược lại được.
 
-Một loop cycle hoàn chỉnh có dạng:
+Một vòng chạy đầy đủ thường đi như vầy:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -228,9 +228,9 @@ Một loop cycle hoàn chỉnh có dạng:
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** "Vòng đời một run" là chuỗi trạng thái mà một lần chạy (run) của loop đi qua — từ lúc được scheduler kích hoạt cho đến khi kết thúc bằng một log entry. Đây là "máy trạng thái" ghi nhớ từng bước, để bạn (và loop) biết chính xác run đang ở đâu.
-> **Ẩn dụ/so sánh:** Giống **các điểm đến trên một chuyến bay** — máy bay không thể "nhảy cóc" từ đây đến đích; nó đi qua từng trạm: cất cánh (Scheduled), bay vào vùng nhiễu thì quay lại (RunningTriage → IdleNoop khi không có việc), hạ cánh an toàn (Applied) hoặc bị hoãn chờ con người duyệt (AwaitingHumanGate).
-> **Vì sao quan trọng:** Nhìn trạng thái của run = biết loop đang "bận gì" và **tại sao nó dừng** — đặc biệt khi bạn debug một loop phàn nàn "sao không làm gì hết" (câu trả lời thường là `IdleNoop`).
+> **Khái niệm:** "Vòng đời một run" là hành trình của một lần chạy (run) — từ lúc chuông reo cho tới lúc ghi dòng tổng kết vào sổ. Nó giống cái bảng trạng thái treo trước cửa, nhìn vào là biết run đang đứng ở đâu.
+> **Ẩn dụ/so sánh:** Như **một chuyến bay có nhiều chặng**: máy bay phải đi qua từng điểm — cất cánh (Scheduled), bay vào vùng lặng thì đáp gọn (RunningTriage → IdleNoop khi không có việc), hạ cánh đẹp (Applied) hoặc bay chờ vì cần người cho phép (AwaitingHumanGate). Không có chuyện nhảy cóc.
+> **Vì sao quan trọng:** Nhìn trạng thái là biết loop đang bận gì và **vì sao nó im re** — nhiều khi bạn thắc mắc "sao nó chẳng làm gì", mở ra thấy mỗi chữ `IdleNoop` là hiểu ngay: à, hôm nay không có việc.
 
 Mỗi run được lên lịch đi qua các trạng thái sau, kết thúc bằng một log entry bền vững:
 
@@ -247,15 +247,15 @@ Scheduled → LoadingContext → RunningTriage → WorkingInWorktree → Verifyi
            └──► (mọi trạng thái cuối) → Logged → [*]
 ```
 
-**Điểm then chốt**: `IdleNoop` phải là một nhánh bình thường — loop nên **thoát gọn (< 5k tokens)** khi watchlist rỗng, không phải chạy full sub-agent chain.
+**Chỗ cần nhớ**: `IdleNoop` là chuyện bình thường — thấy watchlist trống thì loop nên **rút lui gọn nhẹ (< 5k tokens)**, chứ đừng lôi cả dàn sub-agent ra chạy cho tốn.
 
 ### 3.2 Loop Orchestration Engine
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Loop Orchestration Engine là "bộ não điều phối" dưới dạng code — một lớp điều khiển đảm bảo mỗi run đi đúng các bước: đọc state, triage, chạy trong worktree với verifier, và ghi log. Đây là **bản mẫu tham chiếu**: bạn không cần viết y hệt, chỉ cần hiểu các quyết định quan trọng nó thực thi.
-> **Ẩn dụ/so sánh:** Giống **bộ điều khiển thang máy** — nó không tự sửa được toà nhà, nhưng nó quyết định: cửa mở khi nào (trigger), đi tầng nào (triage), dừng để ai đó ra vào (human gate), và ghi lại hành trình (log). Mọi thứ đều chảy qua một lối duy nhất nên không có chuyện gì bị bỏ sót.
-> **Vì sao quan trọng:** Code này là "nơi duy nhất" các quy tắc sống: mặc định **REJECT** khi verifier nghi ngờ, **hard cap 3 attempts rồi escalate** (không retry vô hạn), và **ghi log append-only** để về sau bạn trả lời được "tại sao hôm thứ Ba nó làm vậy?". Hãy đọc với 3 câu hỏi: *state đọc ở đâu? ai chấm điểm? khi nào dừng lại?*
+> **Khái niệm:** Loop Orchestration Engine là "bác quản lý" bằng code — một lớp điều phối đứng giữa, đảm bảo lần chạy nào cũng đi đúng bài: mở sổ state ra đọc, phân loại việc, làm trong worktree có người kiểm, rồi ghi sổ lại. Đoạn code dưới là **bản mẫu để học**, bạn không cần chép y chang, chỉ cần nắm mấy chỗ ra quyết định quan trọng.
+> **Ẩn dụ/so sánh:** Như **bác trực thang máy trong tòa nhà**: bác không sửa được tòa nhà, nhưng bác quyết khi nào mở cửa (trigger), đi tầng nào (triage), dừng cho ai ra vào (human gate), và ghi lại ai đã đi đâu (log). Mọi chuyện qua một cửa nên khó lọt sổ.
+> **Vì sao quan trọng:** Mấy luật quan trọng nhất đều nằm ở đây: verifier mà lăn tăn thì **mặc định REJECT**, thử **tối đa 3 lần là phải nhờ người** (không retry tới sáng), và **ghi log kiểu chỉ thêm không xóa** để mai mốt bạn còn trả lời được "sao hôm thứ Ba nó lại làm thế?". Lúc đọc code, bạn chỉ cần tự hỏi 3 câu: *sổ state đọc ở đâu? ai chấm điểm? khi nào thì dừng?*
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -388,11 +388,11 @@ class LoopOrchestrator:
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Mức tự chủ (autonomy level) là thang đo **loop được phép hành động đến đâu** — từ L0 (chỉ ghi ý định), L1 (báo cáo thôi), L2 (tự sửa nhỏ có verifier), đến L3 (chạy không cần bạn nhìn). Đây không phải cấp bậc khen thưởng mà là **giấy phép an toàn** theo mức độ tin cậy.
-> **Ẩn dụ/so sánh:** Giống **lái xe tập sự**: L1 là "ngồi phụ, chỉ báo cáo đường xá" — lái xe chỉ nói "phía trước có ổ gà" chứ không đánh lái; L2 là "tự lái trong khu vực quen thuộc còn có thầy ngồi bên"; L3 là "chạy xuyên tỉnh một mình" — chỉ khi bạn đã tin thầy học viên phán đoán ổn qua nhiều tuần.
-> **Vì sao quan trọng:** Bỏ qua L1 đi thẳng L3 là cách nhanh nhất để loop phá production trước khi bạn kịp hiểu nó. Thang này buộc bạn thu thập **bằng chứng hoạt động tốt** trước khi trao quyền hành động nhiều hơn.
+> **Khái niệm:** Mức tự chủ (autonomy level) là "bằng lái" của loop — cho biết nó được tự làm tới đâu: từ L0 (mới ghi ý định ra giấy), L1 (đi quan sát rồi về báo cáo), L2 (được sửa mấy lỗi nhỏ có người kiểm lại), tới L3 (tự chạy không cần bạn ngó). Đây không phải huy chương để khoe, mà là **giấy phép theo độ tin cậy**.
+> **Ẩn dụ/so sánh:** Như **dạy người mới lái xe**: L1 là "ngồi ghế phụ, chỉ được báo đường" — thấy ổ gà thì nói chứ không được đánh lái; L2 là "tự lái mấy đường quen, có thầy ngồi cạnh"; L3 là "ôm xe chạy tỉnh một mình" — chỉ khi bạn đã thấy tay lái cứng qua nhiều tuần.
+> **Vì sao quan trọng:** Đốt cháy giai đoạn từ L1 lên thẳng L3 là cách nhanh nhất để loop "đốt" luôn production trước khi bạn hiểu nó làm gì. Cái thang này bắt bạn gom đủ **bằng chứng chạy ngon** rồi mới nới tay dần.
 
-Không ai nên bật loop **unattended** từ ngày một. Ba mức tự chủ là một lộ trình có kiểm chứng:
+Đừng ai mở loop **chạy tự do (unattended)** ngay từ ngày đầu tiên. Ba nấc này là lộ trình đi từng bước cho chắc chân:
 
 ```
 L1 REPORT-ONLY ──► L2 ASSISTED ──► L3 UNATTENDED
@@ -408,7 +408,7 @@ L1 REPORT-ONLY ──► L2 ASSISTED ──► L3 UNATTENDED
 | **L2 — Assisted** | Auto-fix nhỏ với verifier | §1–7 |
 | **L3 — Unattended** | Chạy không cần bạn nhìn | Tất cả sections |
 
-**Quy tắc vàng**: đừng bao giờ nhảy lên L3 cho một pattern mới trên production repo.
+**Luật bất thành văn**: pattern nào mới toanh thì đừng thả thẳng lên L3 trên repo production.
 
 ```
 L1 ──► L2: audit score lên + human OK
@@ -423,11 +423,11 @@ L2 ──► L1: kill switch
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Loop taxonomy là cách **các vòng lặp được lồng vào nhau** theo 5 tầng tốc độ — từ vòng suy nghĩ trong đầu agent (nhánh giây/mili-giây) đến vòng cải thiện cả hệ thống (nhánh ngày/tuần). Không phải 5 thứ riêng biệt; chúng nằm **trong nhau** như 5 lớp hành tây.
-> **Ẩn dụ/so sánh:** Giống **nhạc trưởng chỉ huy một buổi hòa nhạc**: nhịp nhanh nhất là tay kéo đàn của từng nghệ sĩ (inner loop, mili-giây), tầng tiếp là cả bài nhạc được cửa lại nếu sai nhịp (execution loop), và tầng chậm nhất là quyết định mùa diễn tới chọn bản nhạc nào (outer loop). Nhạc trưởng không thể điều khiển từng ngón tay — anh ta điều khiển ở tầng nào cần guardrail riêng.
-> **Vì sao quan trọng:** Guardrail phải gắn đúng tầng: cấm retry vô hạn là việc của **execution loop** (mili-giây), không phải của **outer loop** (ngày). Hiểu taxonomy = biết vòng nào nhanh vòng nào chậm, vòng nào cần verifier, vòng nào chỉ cần pin con người.
+> **Khái niệm:** Loop taxonomy là cách mấy vòng lặp **ngồi lồng trong nhau** theo 5 nhịp nhanh chậm — từ vòng nghĩ trong đầu agent (tính bằng mili-giây) tới vòng cải tiến cả hệ thống (tính bằng ngày/tuần). Đừng nhìn chúng như 5 món rời nhau; hãy nhìn như **5 lớp hành tây bọc lấy nhau**.
+> **Ẩn dụ/so sánh:** Như **một buổi hòa nhạc**: ngón tay kéo đàn của từng nghệ sĩ là nhịp nhanh nhất (inner loop, mili-giây), cả bài nhạc đánh lại khi lệch nhịp là tầng giữa (execution loop), còn chuyện mùa sau diễn bản nào là quyết định chậm nhất (outer loop). Nhạc trưởng không kè từng ngón tay — anh chọn tầng nào cần luật riêng của tầng đó.
+> **Vì sao quan trọng:** Luật phải đặt đúng tầng: cấm retry vô hạn là chuyện của **execution loop** (tốc độ mili-giây), chứ không phải của **outer loop** (tốc độ ngày). Hiểu taxonomy là biết vòng nào nhanh, vòng nào chậm, vòng nào cần người chấm, vòng nào chỉ cần người gật đầu.
 
-Ở mức thiết kế hệ thống, mỗi loop lớn chứa các vòng lặp nhỏ hơn. Hiểu taxonomy này giúp bạn biết **vòng lặp nào cần guardrail nào**.
+Nhìn ở tầm thiết kế hệ thống, vòng loop lớn nào cũng chứa mấy vòng nhỏ bên trong. Nắm được taxonomy này, bạn sẽ biết **đặt guardrail ở đâu cho đúng chỗ**.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -455,33 +455,33 @@ L2 ──► L1: kill switch
 
 ### 5.1 Inner Loop
 
-Vòng lặp nhanh nhất — xảy ra trong suy nghĩ của agent. Agent "nói chuyện với chính mình" trước khi hành động: Think → Act → Observe → Reflect.
+Đây là vòng chạy nhanh nhất — diễn ra ngay trong đầu agent. Agent kiểu "lẩm bẩm một mình" trước khi ra tay: Think → Act → Observe → Reflect.
 
-**Đọc sao cho dễ:** Giống **người chơi cờ tính trước khi đi nước cờ** — đánh giá bàn cờ (Think), đi nước cờ (Act), nhìn kết quả (Observe), rút kinh nghiệm (Reflect). Vòng này quá nhanh để bạn can thiệp: không script, không cần guardrail — nó là "bản năng" của agent.
+**Kể cho dễ nhớ:** như **người chơi cờ nghĩ trước khi đặt quân** — ngắm bàn cờ (Think), đi một nước (Act), nhìn đối thủ phản ứng (Observe), rút ra bài học (Reflect). Vòng này nhanh tới mức bạn không chen vào được: không cần viết script, không cần gắn guardrail — nó là "phản xạ" của agent.
 
 ### 5.2 Execution Loop
 
-Xử lý lỗi trong quá trình thực thi — đảm bảo agent không bỏ cuộc quá sớm nhưng cũng **không retry vô hạn**. Các pattern chính: retry with backoff, circuit breaker, timeout. Guardrail then chốt: **hard cap số attempts → escalate**.
+Vòng này lo chuyện "lỡ làm lỗi thì sao" — sao cho agent không bỏ cuộc quá sớm, mà cũng **đừng cố đấm ăn xôi mãi**. Mấy chiêu quen thuộc: thử lại có nghỉ giữa hiệp (retry with backoff), cầu dao ngắt mạch (circuit breaker), hẹn giờ cắt (timeout). Luật quan trọng nhất: **thử quá số lần là phải nhờ người (hard cap → escalate)**.
 
-**Đọc sao cho dễ:** Giống **rút tiền ATM** — máy báo "giao dịch lỗi", bạn bấm lại lần nữa là hợp lý; nhưng bấm 50 lần liên tiếp là điên rồ. Execution loop cho phép vài lần thử có chờ (backoff), rồi cắt cầu dao (circuit breaker) và gọi người ra xử (escalate).
+**Kể cho dễ nhớ:** như **đi rút tiền ATM** — máy báo lỗi thì bấm lại một hai lần là phải; chứ đứng bấm liền 50 lần thì hơi căng. Execution loop cho thử vài lần có nghỉ, rồi ngắt cầu dao (circuit breaker) và gọi người ra coi (escalate).
 
 ### 5.3 Validation Loop
 
-Đảm bảo output của agent **thực sự hoạt động** trước khi được chấp nhận. Write → Test → Fix → Re-test. Trong loop engineering production, điều này nằm ở **verifier sub-agent** chạy tests trong worktree cô lập.
+Vòng này hỏi một câu rất đời: "code chạy thiệt chưa, hay mới chạy trên giấy?". Công thức là Write → Test → Fix → Re-test. Khi chạy production, khâu này nằm ở **ông verifier** — người khác ông viết code — chạy test trong worktree cách ly.
 
-**Đọc sao cho dễ:** Giống **đầu bếp nếm món trước khi dọn ra bàn** — viết xong (Write), nếm thử (Test), sai thì nêm lại (Fix), nếm lần nữa (Re-test). Verifier là "người nếm khác đầu bếp" để không bị mê món mình vừa nấu.
+**Kể cho dễ nhớ:** như **bác đầu bếp nếm món trước khi bưng ra** — nấu xong (Write), nếm thử (Test), mặn thì thêm nước (Fix), rồi nếm lại (Re-test). Nhờ người khác nếm giùm nên không bị kiểu "món mình nấu lúc nào cũng ngon".
 
 ### 5.4 Feedback Loop
 
-Xương sống của loop engineering — kết nối kết quả quá khứ với hành động tương lai. Collect metrics → Analyze → Optimize → Apply. Mỗi run nên ghi **post-run critique**: false positives, items lặp lại, một thay đổi để cải thiện lần sau.
+Đây là sợi dây nối hôm qua với ngày mai — lấy kết quả cũ để lần sau làm khôn hơn. Công thức là Collect metrics → Analyze → Optimize → Apply. Mỗi lần chạy xong nên có dòng **tự kiểm điểm**: cái nào báo nhầm, cái nào lặp lại, lần sau sửa một chỗ nào.
 
-**Đọc sao cho dễ:** Giống **bảng điều khiển nhiệt độ phòng** — đo nhiệt độ (Collect), thấy quá nóng (Analyze), chỉnh điều hòa xuống (Optimize), và ngày mai máy nhớ chọn mức đó từ đầu (Apply). Không có vòng này thì loop chạy mãi nhưng không bao giờ thông minh hơn.
+**Kể cho dễ nhớ:** như **cái máy lạnh có cảm biến nhiệt** — đo phòng mấy độ (Collect), thấy nóng quá (Analyze), chỉnh xuống thêm hai độ (Optimize), mai mốt nhớ mở sẵn mức đó (Apply). Thiếu vòng này thì loop chạy hoài mà không khôn lên chút nào.
 
 ### 5.5 Outer Loop
 
-Chạy ở tần suất thấp (ngày/tuần), tập trung cải thiện **toàn bộ hệ thống**: prompt evolution, pattern learning, metric tracking. Đây là nơi bạn đo "loop có đang tốt lên không".
+Vòng này chạy chậm (ngày/tuần), lo chuyện lớn: **cả hệ thống có đang tốt lên không** — prompt có cần sửa, pattern nào ăn khách, chỉ số đi lên hay đi xuống. Đây cũng là chỗ bạn ghé vào nhiều nhất.
 
-**Đọc sao cho dễ:** Giống **cuộc họp tổng kết hàng tuần của đội bóng** — không sửa từng pha bóng (đó là việc của huấn luyện viên trong trận), mà nhìn cả mùa: chiến thuật nào ăn bàn, cầu thủ nào cần thay. Vòng này là nơi con người tham gia nhiều nhất — và là nơi bạn phát hiện sớm "loop đang làm tệ đi".
+**Kể cho dễ nhớ:** như **buổi họp tổng kết cuối tuần của đội bóng** — không sửa từng cú sút (đó là việc của HLV trong trận), mà nhìn cả mùa: chiến thuật nào ra bàn, ai cần đổi vị trí. Ngồi họp kiểu này đều thì bạn sẽ thấy sớm nếu "đội mình đang đá xuống".
 
 ---
 
@@ -489,31 +489,31 @@ Chạy ở tần suất thấp (ngày/tuần), tập trung cải thiện **toàn
 
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Đây là "từ điển chung" của loop engineering — các khái niệm trừu tượng xuất hiện khắp nơi khi nói về agents: nợ ý định (intent debt), nợ hiểu biết (comprehension debt), buông xuôi nhận thức (cognitive surrender), thuế điều phối (orchestration tax). Biết tên gọi giúp bạn gọi đúng vấn đề khi nó xảy ra.
-> **Ẩn dụ/so sánh:** Giống **các thuật ngữ tâm lý học** — trước khi có từ "burnout", người ta chỉ nói "mệt quá không muốn làm". Có từ chính xác bạn nhận diện được tình trạng sớm hơn và tìm đúng cách xử lý. Đây là những "burnout" của thế giới agent.
-> **Vì sao quan trọng:** Hầu hết các vấn đề loop "khó hiểu" khi debug hóa ra là một trong 5 khái niệm này đang diễn ra. Học phần này trước khi đọc [06 — Anti-Patterns](../06-anti-patterns/) để biết tên kẻ thù trước khi học cách đối phó.
+> **Khái niệm:** Đây là cuốn "từ điển bỏ túi" của dân làm loop — mấy từ trừu tượng nghe đâu cũng gặp khi nói về agents: nợ ý định (intent debt), nợ hiểu biết (comprehension debt), buông xuôi nhận thức (cognitive surrender), thuế điều phối (orchestration tax)... Biết gọi tên thì lúc sự cố tới bạn chỉ mặt được ngay.
+> **Ẩn dụ/so sánh:** Như **mấy từ bên tâm lý học** — ngày xưa chưa có chữ "burnout", ai đuối cũng chỉ biết nói "mệt quá". Có chữ rồi thì nhận ra sớm, chữa đúng bệnh. Mấy khái niệm dưới đây cũng là kiểu "burnout" của thế giới agent vậy.
+> **Vì sao quan trọng:** Nhiều ca debug loop "khó hiểu" thực ra đều rơi vào một trong mấy món này. Học thuộc mặt chúng trước khi sang [06 — Anti-Patterns](../06-anti-patterns/) — kiểu như biết mặt đối thủ trước khi ra sân.
 
 ### 6.1 Intent Debt
 
-Mỗi phiên, agent bắt đầu từ **trạng thái trắng**. Ý định bị thiếu được lấp bằng những suy đoán tự tin — và suy đoán sai. **Skills** là cách trả nợ ý định: quy ước, build steps, "chúng tôi không làm theo cách này" — viết một lần, đọc mọi lần chạy.
+Mỗi phiên mới, agent mở mắt ra với **cái đầu trống rỗng**. Chỗ nào thiếu ý định là nó tự đoán cho đầy — mà đoán thì hay trật, lại còn rất tự tin. **Skills** là cách trả món nợ này: ghi sẵn quy ước, các bước build, mấy kiểu "nhà mình không làm thế" — viết một lần, lần nào chạy cũng lôi ra đọc.
 
 ### 6.2 Comprehension Debt
 
-Khoảng cách giữa những gì tồn tại trong repo và những gì bạn thực sự hiểu. Loops nhanh hơn ship nhiều code bạn không viết — **comprehension debt tăng trừ khi bạn đọc những gì loop tạo ra**.
+Khoảng cách giữa "code đang có trong repo" và "thứ bạn thật sự hiểu". Loop chạy càng nhanh, code đẻ càng nhiều mà không phải tay bạn viết — **món nợ hiểu biết cứ lớn dần nếu bạn không đọc lại đồ loop đẻ ra**.
 
 > *"Velocity up, but no one can explain recent changes; review becomes rubber-stamp."*
 
 ### 6.3 Cognitive Surrender
 
-Cái bẫy để loop chạy trong khi bạn **ngừng có ý kiến**. Thiết kế loop với judgment là liều thuốc; dùng loop để tránh suy nghĩ là chất xúc tác. Cùng một hành động, kết quả ngược nhau.
+Cái bẫy ngọt ngào là để loop chạy riết rồi **mình khỏi cần nghĩ nữa**. Thiết kế loop để nó gánh việc nặng cho mình nghĩ chuyện khó hơn — đó là dùng đúng. Còn dùng loop để khỏi phải nghĩ gì hết — đó là buông xuôi. Cùng một nút bấm, hai kết cục khác nhau.
 
 ### 6.4 Orchestration Tax
 
-Chi phí con người khi phối hợp parallel agents: review bandwidth, merge conflicts, context switching. **Worktrees** loại bỏ va chạm cơ học; bạn vẫn là trần nhà về số loop song song bạn hấp thụ được.
+Cái giá phải trả khi bạn điều nhiều agent chạy song song: sức đọc review, va chạm lúc merge, đầu óc nhảy qua lại giữa các việc. **Worktrees** gỡ được va chạm máy móc; còn trần hấp thụ thì vẫn là bạn — một lúc bạn gánh được bao nhiêu loop cùng chạy.
 
 ### 6.5 Code Agent Orchestra / Adversarial Review
 
-Pattern cấu trúc: các agents khác vai trò (explore, implement, verify). **Implementer không bao giờ tự chấm bài chính mình** — bắt buộc cho loops unattended.
+Kiểu chia vai kinh điển: mỗi agent một việc (đi thám thính, viết code, kiểm tra). Luật sắt là **người viết không được tự chấm bài của mình** — nhất là với mấy loop chạy lúc không ai ngó.
 
 ---
 

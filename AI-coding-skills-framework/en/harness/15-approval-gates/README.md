@@ -59,10 +59,10 @@
 > - [16. Future Trends in Approval](#16-future-trends-in-approval)
 > - [References](#references)
 >
-> **Cross-cutting module.** Approval gates are the only place in the harness where a
-> human participates in the *execution* loop, not just the setup. Every other module
-> assumes the run can decide and act; this one installs the deliberate interruption —
-> the cheapest incident insurance in the whole harness (→ 12 §1.2, → 06 §17.4).
+> **Cross-cutting module.** Approval gates are the one place where a
+> person steps into the *running* loop, not just the setup. Every other part
+> lets the run decide and act on its own; this one adds a thoughtful pause —
+> the cheapest safety net in the whole harness (→ 12 §1.2, → 06 §17.4).
 
 ---
 
@@ -74,24 +74,24 @@ incremental steps," so it constructs a recovery path: `ALTER TABLE users DROP CO
 mfa_secret` — because a downstream check complained the column is `NOT NULL` without a
 default, and the agent's model of "remove the blocker" won.
 
-The column held 2.1M MFA enrollments. There is no backup of it. The action is
+The column held 2.1M MFA enrollments. There's no backup of it. The action is
 irreversible, destructive, and *wrong*.
 
-What separates this from a headline incident is a single decision the harness made
-earlier: **tag `prod-auth` at plan time, freeze the run, and show a human "before"
-evidence, not the model's reasoning.** The gate fires. The human squints at a 12-line
-diff at 3:47 AM, says "no", types a reason, and twenty minutes later the agent replans
-around the change — *without ever having touched the column*.
+What keeps this from becoming a late-night disaster is one kind choice the harness made
+earlier: **tag `prod-auth` at plan time, pause the run, and show a person the "before"
+evidence, not the model's reasoning.** The gate pops up. The human looks at a 12-line
+diff at 3:47 AM, says "no", adds a reason, and twenty minutes later the agent plans
+around the change — *without ever touching the column*.
 
-The gate did not make the agent smarter. It made the harness *safe to be wrong* — which
-is the only property that matters for autonomous systems. Every over-confident action
-that almost happened and the human caught is invisible in metrics, costs nothing, and is
-the entire point.
+The gate didn't make the agent smarter. It made the harness *safe to be wrong* — which
+is the only thing that really counts for self-running systems. Every bold action
+that almost happened and a person calmly stopped is invisible in the metrics, costs nothing, and is
+the whole point.
 
 ### Why Are Approval Gates Non-Optional?
 
 > *"An agent that can confidently ask for production credentials at 3 AM and receive
-> them is not an agent. It is a muzzle-loading cannon."*
+> them isn't an agent. It's a muzzle-loading cannon."*
 
 #### The Math of Confident Failure
 
@@ -106,7 +106,7 @@ Put that against the blast radius of the actions agents are asked to take:
 | `user.delete` / IAM change | rare | permanent, identity + compliance |
 | `git push --force` | low-frequency, high-novelty | shared history rewritten, multi-repo blast |
 
-The failure modes that kill companies are not the frequent ones — they are the rare
+The failure modes that kill companies aren't the frequent ones — they are the rare
 ones whose cost dominates the whole distribution. A gate is a *guard at the expensive
 tail*, and it costs essentially nothing on the frequent cheap tail (`read` tier is
 auto-approved).
@@ -115,15 +115,15 @@ The second, subtler force: **a human-in-the-loop gate changes agent behavior, no
 outcomes.** Models instructed that an irreversible action requires a visible, auditable,
 second-party approval are measurably more conservative in their reasoning — they stop
 "improvising" destructive recovery paths because they know the plan will be *shown*,
-not just executed. The gate is a deterrent before it is a firewall.
+not just executed. The gate is a deterrent before it's a firewall.
 
 #### Core Philosophy
 
-Approval is **not** "ask a human about everything" and **not** "never ask." It is:
-*tag risk at plan time, contain the blast radius with mandatory evidence, and let the
-failure be loud and auditable rather than silent and expensive.* The gate should be the
-point where the system is *designed to fail*, so that when the agent is wrong — and it
-will be — the wrongness is cheap and visible.
+Approval is **not** "ask a person about everything" and **not** "never ask." It's:
+*spot risky work early, show clear evidence for the blast radius, and let
+failures be loud and easy to review instead of quiet and costly.* The gate should be the
+spot where the system is *meant to pause*, so that when the agent is wrong — and it
+will be — being wrong stays cheap and visible.
 
 ## Overview
 
@@ -133,10 +133,10 @@ will be — the wrongness is cheap and visible.
 > - **Analogy:** Like a bank vault requiring two keys — the agent holds one (the plan), the human holds the other (the judgment). Either key alone opens nothing.
 > - **Why it matters:** Agents are wrong with confidence. Without gates, one hallucinated `prod.db.drop()` or `git push --force` at 3 AM becomes an incident. Gates are the cheapest incident insurance in the whole harness.
 
-**Approval Gates** are the control plane for actions whose failure cost exceeds the
-agent's decision confidence. They are the direct complement to sandboxing: the sandbox
-(→ 12) contains *what an agent can do*, the gate decides *what a trustworthy human must
-see before it happens*. One is a technical ceiling; the other is a social contract.
+**Approval Gates** are the friendly control layer for actions where getting it wrong would hurt more
+than the agent's guess is worth. They work hand in hand with sandboxing: the sandbox
+(→ 12) sets *what an agent can touch*, the gate decides *what a trusted person should
+see first*. One is a technical limit; the other is a team agreement.
 
 ```
 AGENT WANTS TO ACT
@@ -169,8 +169,8 @@ AGENT WANTS TO ACT
 
 **The gate has a lifecycle, not a boolean:** one `request()`, three settled outcomes
 (`approved` / `denied` / `expired`), one audit trail, zero silent branches. Any
-implementation that cannot answer "who, what, when, and why *for every irreversibility*"
-is not an approval system — it is a button with extra steps.
+implementation that can't answer "who, what, when, and why *for every irreversibility*"
+isn't an approval system — it's a button with extra steps.
 
 ## Contents
 
@@ -254,7 +254,7 @@ Tiers are assigned **at plan time** (→ 04 §14.3), not at execution time:
 1. The planner emits each task/tool with an explicit `tier` field.
 2. The engine validates the tier against a global risk table before the step even
    builds its payload.
-3. The model cannot self-downgrade — a request to "just run this as `write`" is not a
+3. The model can't self-downgrade — a request to "just run this as `write`" isn't a
    policy path; changing the tag is a policy change that must come from the risktable
    owner.
 
@@ -329,10 +329,10 @@ Every field must be **derived from evidence**, not narrated:
 ### 3.2 The Mandatory-Evidence Rule
 
 > **No dry-run → no gate → action blocked.** The gate refuses to open if any
-> mandatory-evidence field is empty. This is *not* a UX nicety — it is the invariant
+> mandatory-evidence field is empty. This is *not* a UX nicety — it's the invariant
 > that makes approval different from consent.
 
-Implementation-wise it is a validation function that runs *before* `request()` is
+Implementation-wise it's a validation function that runs *before* `request()` is
 called:
 
 ```typescript
@@ -347,7 +347,7 @@ export function validatePayload(r: GateRequest): string[] {
 }
 ```
 
-A `request()` with a non-empty `missing` array throws; the run **cannot** proceed until
+A `request()` with a non-empty `missing` array throws; the run **can't** proceed until
 the evidence exists. Teams that allow "approve anyway" on an invalid payload consistently
 discover that the approve button becomes a *posting medium for un-reviewed actions*.
 
@@ -381,7 +381,7 @@ at runtime (e.g. *"user said ok on Slack"*) is a policy gap, not a feature.
   one exception requiring explicit policy sign-off: a *store-closed, unattended* deploy
   window where the approved-timeout is documented as "expired = rolled back and paged".
 - The expiry timer runs in the *engine*, not in the UI session. Closing the review
-  laptop cannot extend a gate's life.
+  laptop can't extend a gate's life.
 
 ```typescript
 // fail-closed consequence of expiry
@@ -396,7 +396,7 @@ export function onExpire(key: string, g: Gate): void {
 
 ### 4.3 Deny → Replan, Not Retry
 
-- Record `reason` — it is the *most valuable* audit artifact in the whole gate: it
+- Record `reason` — it's the *most valuable* audit artifact in the whole gate: it
   tells future planners what the human rejects, and repeated denials on the same reason
   are a product signal (the agent keeps proposing things the team doesn't want).
 - Trigger replanning that excludes the denied branch (→ 04 §14.2). Never re-ask the
@@ -413,7 +413,7 @@ export function onExpire(key: string, g: Gate): void {
   configurable). The run stays frozen at the checkpoint (→ 07 §13); the checkpoint is the
   safety property that makes escalation free.
 - **Approval delegation** allowed (on-call → secondary) — but *delegation is separate
-  from the two-person rule*: delegating the notification does not turn one approver into
+  from the two-person rule*: delegating the notification doesn't turn one approver into
   two. For `prod-auth`, delegation keeps the two-person requirement (proposer + one
   independent approver); it can change *who* that approver is, never *how many*.
 - Every hop of the escalation chain (`paged_oncall` → `delegated_to:x` → `approved`)
@@ -456,7 +456,7 @@ The engine does **not** "wait." It throws a typed `PAUSED:<key>` after checkpoin
 
 - **Checkpoint first, then throw.** All completed steps are in the idempotency cache
   and trajectory store (→ 07 §13, → 13). Pausing *without* a checkpoint means resume
-  cannot distinguish "never ran" from "ran and half-finished."
+  can't distinguish "never ran" from "ran and half-finished."
 - `PAUSED:<key>` propagates to the driver/CLI/UI as a first-class state, not an error.
   The human's "approve" is a *verdict delivery*, not a restart.
 - **The run object persists.** A gate survives process death: on restart, the
@@ -493,7 +493,7 @@ resume(runId) ──▶ replay cache hit for t1..t214 ──▶ t215 proceeds
   checkpoint sits *before* the action, so resume re-runs the action, not a crossed
   boundary.
 - Idempotency of the *approval*: settling the same key twice is a no-op (`if (!g ||
-  g.verdict) return`). A double-clicked "approve" cannot double-run a migration.
+  g.verdict) return`). A double-clicked "approve" can't double-run a migration.
 
 ### 5.4 Two-Person Rule Enforcement
 
@@ -513,8 +513,8 @@ export function tryApprove(key: string, approverId: string, reason?: string): bo
 ```
 
 The proposer is recorded at `request()` time (the step that spawned the gate). The rule
-is enforced *inside* `tryApprove`, so there is no model path around it. Self-approval
-attempts are not silent — they are audited as a policy event, which is itself a
+is enforced *inside* `tryApprove`, so there's no model path around it. Self-approval
+attempts aren't silent — they are audited as a policy event, which is itself a
 weird-behavior signal worth watching.
 
 ---
@@ -558,8 +558,8 @@ Automated checks over the audit stream:
 Quarterly review cadence: approval rate per tier, median wait, override incidents,
 
 > 🔑 **Policy / Permission highlight:** this section is the **policy-compliance sensor** — it turns the audit log (§6.1) into enforceable policy verdicts (missing dry-run evidence, self-approval, out-of-order approval, deny→retry). Pair with `12-sandbox-execution` (deny-by-default) and `06` §8 (RBAC) for the full policy loop: decide → enforce → audit → detect.
-delegation-chain depth. The point of the review is not policing — it's *design*
-intelligence: a tier with a 98% approval rate and 30-second median wait is not being
+delegation-chain depth. The point of the review isn't policing — it's *design*
+intelligence: a tier with a 98% approval rate and 30-second median wait isn't being
 read, it's being rubber-stamped, and the gate has become theater (→ 14).
 
 ---
@@ -816,7 +816,7 @@ describe("Gatekeeper contract", () => {
 });
 ```
 
-The restart test is the one teams skip, and it is the one that proves a gate is a
+The restart test is the one teams skip, and it's the one that proves a gate is a
 *durable security control* rather than a memory object.
 
 ### 9.3 Regression Suite
@@ -878,7 +878,7 @@ choose to. That's two design decisions every gate loop should copy:
 
 OpenHands (formerly OpenDevin) exposes a fine-grained confirmation strategy for MCP and
 code actions — "confirm on every action" vs "confirm on major changes" vs "never" —
-mapping to `write` and `elevated` gates. The research-y punchline it demonstrates:
+mapping to `write` and `elevated` gates. The research-y punchline it shows:
 per-action confirmation ("confirm every change") is the *worst* ergonomics because it
 trains rubber-stamping; the harness should instead model confirmation at plan-segment
 granularity with batching (→ 7.1), not per tool call.
@@ -1061,7 +1061,7 @@ export interface FatigueMetric { tier: Tier; approvalRate: number; medianWaitMs:
 
 ## 15. Production Checklist
 
-- [ ] **Tiers tagged at plan time** from a risk registry; model cannot self-select tier (→ 2.2)
+- [ ] **Tiers tagged at plan time** from a risk registry; model can't self-select tier (→ 2.2)
 - [ ] **Blast radius enumerated** by registry for every gated action (→ 2.3)
 - [ ] **Payload complete:** diff + blast + dry-run + rollback, each hashable (→ 3.2)
 - [ ] **Fail closed:** expiry → deny with distinct blocked state; no fail-open paths (→ 4.2)
@@ -1159,5 +1159,5 @@ metric (→ 9.3) becomes the product dashboard of the next five years.
 
 *Document: Harness 15. Approval Gates — HARNESS ENGINEERING EDITION*
 *Cross-cutting module · control plane for irreversible actions · human-in-the-loop*
-*Updated: 19/07/2026*
+*Updated: 16/10/2026*
 *Author: AI Knowledge Repository*

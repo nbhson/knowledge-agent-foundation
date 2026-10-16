@@ -68,24 +68,16 @@
 
 ### Opening Story
 
-3 giờ 47 phút sáng. Một run migration đã chạy sáu tiếng. Agent, tự tin và đang ở lượt
-thứ 214, vừa tách một retry `db.migrate` đang treo và cho rằng nó "kẹt ở các bước tăng
-dần," nên nó dựng một lộ trình cứu hộ: `ALTER TABLE users DROP COLUMN mfa_secret` — vì
-một check ở dưới báo column đang `NOT NULL` không có default, và mô hình "gỡ blocker"
-của agent thắng.
+3 giờ 47 phút sáng. Một run migration đã chạy sáu tiếng. Agent đang ở lượt thứ 214, tự tin tách một retry `db.migrate` đang treo vì cho rằng nó "kẹt ở mấy bước tăng dần", rồi tự vẽ ra một lộ trình cứu hộ: `ALTER TABLE users DROP COLUMN mfa_secret` — chỉ vì một check bên dưới báo column đang `NOT NULL` mà không có default, thế là logic "gỡ blocker" trong đầu agent thắng thế.
+
+Column đó chứa 2,1 triệu lượt đăng ký MFA. Không có backup. Hành động này không đảo ngược được, mang tính huỷ diệt, mà lại còn *sai lè*.
 
 Column đó chứa 2,1 triệu enrollment MFA. Không có backup. Hành động đó không đảo ngược
 được, mang tính hủy diệt, và *sai*.
 
-Thứ phân biệt chuyện này với một headline incident là một quyết định harness chọn sớm
-hơn: **tag `prod-auth` lúc plan, đóng băng run, và cho human thấy bằng chứng "trước",**
-không phải suy luận của mô hình. Gate nổ. Human lúc 3:47 sáng nhìn một diff 12 dòng, nói
-"không", gõ một lý do, và hai mươi phút sau agent replan quanh thay đổi đó — *mà chưa
-từng chạm tới column*.
+Thứ cứu cả đội khỏi một headline incident hôm đó chỉ là một quyết định harness chọn từ sớm: **gắn tag `prod-auth` ngay lúc plan, cho run đóng băng, và đưa cho human xem bằng chứng "trước"**, chứ không phải nghe mô hình kể lại. Gate nổ. Anh human trực lúc 3:47 sáng nhìn cái diff 12 dòng, nói "không", gõ thêm lý do, rồi hai mươi phút sau agent tự replan đi đường vòng — *mà chưa từng chạm vào cái column đó*.
 
-Gate không làm agent thông minh hơn. Nó làm harness *an toàn khi sai* — đây là tính
-chất duy nhất đáng có với hệ tự trị. Mọi hành động quá tự tin suýt xảy ra mà human chặn
-lại đều vô hình trong metrics, tốn không xu nào, và là toàn bộ ý nghĩa.
+Gate không làm agent thông minh hơn. Nó giúp cả harness *an toàn ngay cả khi sai* — mà với hệ tự trị, đây là tính chất đáng tiền nhất. Mọi pha hành động quá tự tin suýt gây hoạ mà human chặn kịp đều vô hình trong metrics, chẳng tốn xu nào, và đó chính là toàn bộ ý nghĩa của gate.
 
 ### Vì Sao Approval Gates Là Bắt Buộc?
 
@@ -105,15 +97,9 @@ calibration liên tục cho thấy overconfidence tăng theo độ dài context 
 | `user.delete` / đổi IAM | hiếm | vĩnh viễn, danh tính + compliance |
 | `git push --force` | tần suất thấp, độ mới cao | lịch sử chung bị viết lại, blast đa repo |
 
-Các failure mode giết công ty không phải là loại thường gặp — mà là loại hiếm có chi
-phí áp đảo toàn bộ phân phối. Gate là một *lính gác ở đuôi đắt tiền*, và nó gần như
-không tốn gì trên đuôi rẻ và thường gặp (tier `read` auto-approve).
+Mấy kiểu hỏng làm chết công ty thường không phải loại hay gặp — mà là loại hiếm nhưng một khi dính thì chi phí "gánh" hết cả phân phối. Gate chính là *lính gác cho cái đuôi đắt đỏ đó*, mà lại gần như miễn phí ở cái đuôi rẻ hay gặp (tier `read` thì auto-approve).
 
-Lực thứ hai, tinh tế hơn: **một gate human-in-the-loop thay đổi hành vi agent, không chỉ
-kết quả.** Mô hình được dạy rằng hành động không đảo ngược cần có approval nhìn thấy
-được, audit được, từ bên thứ hai, suy luận sẽ thận trọng hơn một cách đo được — chúng
-ngừng "ứng biến" lộ trình hủy diệt vì biết plan sẽ được *trình ra*, không chỉ thực thi.
-Gate là răn đe trước khi là tường lửa.
+Còn một lực thứ hai, tinh tế hơn: **một gate có human ngồi trong vòng lặp sẽ thay đổi luôn cách agent hành xử, chứ không chỉ đổi kết quả.** Khi mô hình biết hành động không đảo ngược được sẽ có bên thứ hai nhìn vào, audit được, nó sẽ thận trọng hơn thấy rõ — bớt hẳn kiểu tự "ứng biến" ra lộ trình huỷ diệt vì biết plan sẽ bị *mang ra trình*, chứ không phải cứ thế chạy. Gate vừa là hàng rào, vừa là lời răn đe từ trước.
 
 #### Triết lý cốt lõi
 
@@ -130,10 +116,7 @@ to và audit được thay vì lặng lẽ và đắt đỏ.* Gate nên là đi�
 > - **So sánh:** Như két ngân hàng cần hai chìa — agent giữ một (plan), human giữ một (phán đoán). Một chìa không mở được gì.
 > - **Vì sao quan trọng:** Agent sai với vẻ tự tin. Không gate, một `prod.db.drop()` hay `git push --force` hallucinate lúc 3 giờ sáng thành incident. Gate là bảo hiểm incident rẻ nhất cả harness.
 
-**Approval Gates** là control plane cho các hành động có chi phí hỏng hóc vượt độ tin
-cậy quyết định của agent. Chúng bổ trợ trực tiếp cho sandbox: sandbox (→ 12) khoanh
-*agent có thể làm gì*, gate quyết *một human đáng tin phải thấy gì trước khi nó xảy ra*.
-Một là trần kỹ thuật; một là hợp đồng xã hội.
+**Approval Gates** là phòng điều khiển cho những hành động mà "giá của sai lầm" vượt quá "độ tin cậy khi quyết" của agent. Nó đi cặp rất đẹp với sandbox: sandbox (→ 12) khoanh vùng *agent được phép làm gì*, còn gate quyết định *cái gì thì một human đáng tin phải nhìn qua trước khi cho chạy*. Một cái là trần kỹ thuật, một cái là hợp đồng niềm tin.
 
 ```
 AGENT MUỐN HÀNH ĐỘNG
@@ -165,10 +148,7 @@ AGENT MUỐN HÀNH ĐỘNG
        │  -> escalated ────────▶ page on-call, ủy quyền kèm trail
 ```
 
-**Gate có vòng đời, không phải boolean:** một `request()`, ba outcome đã chốt
-(`approved` / `denied` / `expired`), một audit trail, không nhánh lặng lẽ. Bất kỳ
-implementation nào không trả lời được "ai, cái gì, khi nào, vì sao *cho mọi hành động
-không đảo ngược*" đều không phải hệ approval — nó là một nút bấm có thêm bước.
+**Gate có cả một vòng đời, chứ không phải cái nút bấm Có/Không:** một `request()`, ba outcome đã chốt (`approved` / `denied` / `expired`), một audit trail, không có nhánh nào đi chui. Implementation nào không trả lời được "ai, cái gì, khi nào, vì sao cho *mọi hành động không đảo ngược*" thì đó chưa phải hệ approval — mới chỉ là cái nút bấm có thêm bước.
 
 ## Mục Lục Chi Tiết
 
@@ -209,7 +189,7 @@ không đảo ngược*" đều không phải hệ approval — nó là một n�
 
 ### 1.2 Hai Họ Kỹ Thuật: Hard Block vs Advisory Signal
 
-Có hai *cơ chế khác nhau* trông giống nhau và thường bị trộn lẫn, gây hại:
+Có hai *cơ chế khác nhau* trông thì giống nhau mà hay bị trộn lẫn, trộn là đau:
 
 | | **Hard block (gate)** | **Advisory signal** |
 |---|---|---|
@@ -221,10 +201,7 @@ Có hai *cơ chế khác nhau* trông giống nhau và thường bị trộn l�
 | **Chi phí** | attention của human, latency thật | gần trừ không |
 | **Nguy hiểm** | over-gate → approval fatigue (→ 7.1) | under-gate → incident kiểu "chúng tôi đã cảnh báo" |
 
-Cái bẫy là trộn hai thứ: biến advisory signal thành hard block (mỗi `npm install` thành
-một click → human stamp máy móc → gate *thật* bị approve theo muscle memory), hoặc biến
-hard block thành advisory signal ("xác nhận nhưng run vẫn chạy"). Chọn một cho mỗi action.
-Gate là gate là gate.
+Chỗ dễ sập bẫy nhất là xài lẫn hai món: biến advisory signal thành hard block (mỗi `npm install` cũng bắt click một cái → human mỏi tay bấm cho qua → tới gate *thật* cũng bấm theo quán tính), hoặc biến hard block thành advisory signal ("xác nhận cho vui chứ run vẫn chạy"). Nhớ giúp một câu: mỗi action chọn một kiểu. Gate là gate, ra gate.
 
 ---
 
@@ -239,10 +216,7 @@ Gate là gate là gate.
 | `elevated` (cao) | `db.migrate`, `deploy`, `user.delete`, `external.send`, `push --force`, `rm -rf` | Typed confirm + lý do + dry-run + lệnh rollback, hết hạn 30 phút |
 | `prod-auth` (critical) | Đổi IAM, xoay secret, xóa dữ liệu prod, hành động payment/legal | Two-person rule (người đề xuất ≠ người duyệt) + báo kênh incident, 4h + page |
 
-**Tier là thuộc tính của *lớp hành động*, không phải của từng lời gọi.** Push lên feature
-branch là `write`; force-push lên `main` là `elevated`; force-push lên branch `release/*`
-dùng chung là `prod-auth`. Mapping nằm trong bảng permission/risk (`permission.ts`), được
-cập nhật trong review — không bao giờ suy ra từng message bởi mô hình.
+**Tier là tính chất của *lớp hành động*, chứ không phải của từng lời gọi riêng lẻ.** Push lên feature branch là `write`; force-push lên `main` là `elevated`; force-push lên nhánh `release/*` xài chung là `prod-auth`. Bảng map nằm trong permission/risk (`permission.ts`), cập nhật lúc review — không bao giờ để model tự suy ra từng message.
 
 ### 2.2 Tag Tier Lúc Plan
 
@@ -271,9 +245,7 @@ Lúc plan (→ 04)      Lúc dựng (→ 08)          Lúc thực thi (→ 07)
 
 ### 2.3 Liệt Kê Blast Radius
 
-Gate payload chỉ tốt ngang độ chính xác của việc liệt kê blast radius. Hệ thống phải
-liệt kê, từ registry sandbox/policy (→ 12 §6), tập chính xác các tài nguyên action chạm
-tới:
+Gate payload xịn hay dở ăn nhau ở chỗ liệt kê blast radius có chính xác không. Hệ thống phải tự liệt kê từ registry sandbox/policy (→ 12 §6) xem action này chạm đúng vào tài nguyên nào, chứ đừng để model tự kể:
 
 ```
 ACTION:   db.migrate 20260719_add_mfa_cols (tier: elevated)
@@ -309,7 +281,7 @@ ROLLBACK: db.migrate down v48 (lệnh đính kèm, đã test 2h trước)
 COST:     ~$0.40, ~90s                       [Approve] [Deny + reason]
 ```
 
-Mỗi trường phải **suy ra từ bằng chứng**, không phải kể chuyện:
+Mỗi trường trong payload phải **suy ra từ bằng chứng**, chứ đừng để model ngồi kể chuyện:
 
 | Trường | Nguồn | Thiếu → |
 |-------|--------|----------|
@@ -345,8 +317,7 @@ Một `request()` với mảng `missing` không rỗng sẽ ném lỗi; run **kh
 khi bằng chứng tồn tại. Các đội cho phép "approve anyway" trên payload sai consistently
 phát hiện ra rằng nút approve thành *phương tiện đăng bài cho hành động chưa được xem xét*.
 
-Payload bản thân nó là trajectory event (→ 13), nên review sau incident replay đúng cái
-human đã thấy — kể cả output dry-run đã biện minh (hoặc không biện minh được) cho verdict.
+Payload bản thân nó cũng là một trajectory event (→ 13), nên lúc review sau incident bạn replay đúng cái human đã thấy hôm đó — kể cả output dry-run đã biện minh (hoặc không biện minh nổi) cho verdict.
 
 ---
 
@@ -552,8 +523,7 @@ và gate đã thành kịch (→ 14).
 
 ### 7.1 Batching & Mệt Mỏi Ra Quyết Định
 
-Human là tài nguyên khan hiếm và đắt; mục tiêu thiết kế là *tối thiểu token attention của
-con người trên mỗi quyết định an toàn*.
+Human là tài nguyên hiếm và đắt, nên mục tiêu thiết kế gói gọn trong một câu: *tốn ít "token attention" của con người nhất cho mỗi quyết định an toàn*.
 
 - **Một thông báo cho mỗi quyết định**, không phải mỗi action — gộp các edit tier
   `write` thành một diff review được khi chúng thuộc cùng một step.
@@ -715,9 +685,7 @@ export async function runStep(step: Step, ctx: Ctx): Promise<void> {
 }
 ```
 
-Chú ý vòng lặp engine **không có** gì: không nhánh nào model "hỏi cho tử tế" rồi đi
-tiếp. Đường duy nhất qua được throw là verdict đã persist từ Gatekeeper — đó là toàn bộ
-chuyện toàn vẹn.
+Chỗ này engine **không chừa** cửa nào khác: không tồn tại nhánh kiểu model "hỏi cho tử tế" rồi đi tiếp. Con đường duy nhất qua được cú throw là verdict đã persist từ Gatekeeper — toàn bộ chuyện toàn vẹn nằm ở chỗ đó.
 
 ### 8.4 Two-Person Gatekeeper
 
@@ -1140,5 +1108,5 @@ sản phẩm của năm năm tới.
 
 *Tài liệu: Harness 15. Approval Gates — HARNESS ENGINEERING EDITION*
 *Module cross-cutting · control plane cho hành động không đảo ngược · human-in-the-loop*
-*Cập nhật: 19/07/2026*
+*Cập nhật: 16/10/2026*
 *Tác giả: AI Knowledge Repository*

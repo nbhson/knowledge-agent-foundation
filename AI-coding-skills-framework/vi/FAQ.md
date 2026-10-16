@@ -1,6 +1,6 @@
-# ❓ FAQ — AI Coding Skills Framework (chuyện thật, dễ hiểu)
+# ❓ FAQ — AI Coding Skills Framework (hỏi thật, đáp dễ hiểu)
 
-Câu hỏi nào khó hiểu thì đọc phần trong file tên trong ngoặc.
+Câu nào chưa rõ thì bạn mở thêm file ghi trong ngoặc để đọc chi tiết nhé.
 
 ---
 
@@ -10,11 +10,11 @@ Câu hỏi nào khó hiểu thì đọc phần trong file tên trong ngoặc.
 
 **Bạn sẽ thấy**
 
-Bạn clone repo, mở `AI_AGENT_FRAMEWORK.md` (1.195 dòng), thấy ba thư mục con: `harness/` (15 module), `graph/` (9 module), `loop/` (7 phần). Ngay dòng đầu của tài liệu đã nói thẳng: đây là hướng dẫn để **xây** agent, không phải cách **dùng** AI thông thường. Bảng "Phân biệt rộ: Phần nào cần model?" cũng gây bất ngờ: `BM25 Search` ❌, `Prompt Building` ❌, `Workflow` ❌, `CI/CD Automation` ❌ — chỉ `Vector Search` cần embedding model (model biến text thành vector) và `Generate Answer` cần LLM (mô hình ngôn ngữ lớn).
+Bạn clone repo về, mở `AI_AGENT_FRAMEWORK.md` (1.195 dòng), thấy ba thư mục con: `harness/` (15 module), `graph/` (9 module), `loop/` (7 phần). Ngay dòng đầu tài liệu đã nói rõ: đây là hướng dẫn để **xây** agent, không phải cách **dùng** AI thông thường. Bảng "Phân biệt rộ: Phần nào cần model?" cũng gây bất ngờ: `BM25 Search` ❌, `Prompt Building` ❌, `Workflow` ❌, `CI/CD Automation` ❌ — chỉ `Vector Search` cần embedding model (model biến text thành vector) và `Generate Answer` cần LLM (mô hình ngôn ngữ lớn).
 
 **Vì sao**
 
-Tài liệu coi framework là "bộ não orchestration", còn mô hình AI chỉ là "bộ não suy luận" — một mảnh trong puzzle. Chính tài liệu ước tính **~60% framework là code thuần không cần model**, ~40% mới cần. Cảm giác "nhiều quá" thường đến từ việc bạn đếm luôn cả phần không liên quan tới AI.
+Tài liệu coi framework là "bộ máy điều phối", còn mô hình AI chỉ lo phần "suy nghĩ" — một mảnh trong cả puzzle. Tài liệu cũng ước tính **~60% framework là code thuần không cần model**, ~40% còn lại mới cần.
 
 **Làm gì**
 
@@ -39,11 +39,11 @@ ollama pull nomic-embed-text  # model tạo vector, 768 chiều
 
 **Bạn sẽ thấy**
 
-Bạn đứng trước 15 module trong `harness/`, rồi `loop/`, rồi `graph/`. Lộ trình 6 phase trong tài liệu trông rất lộn xộn: Phase 1 là `01 Retrieve Memory → 02 Build Context`, nhưng Phase 2 nhảy sang `05 Prompt Builder ← 06 Decide Tools`, rồi Phase 3 quay lại `03 Update Memory → 04 Plan`.
+Bạn đứng trước 15 module trong `harness/`, rồi `loop/`, rồi `graph/`. Lộ trình 6 phase trong tài liệu trông hơi rối: Phase 1 là `01 Retrieve Memory → 02 Build Context`, nhưng Phase 2 lại nhảy sang `05 Prompt Builder ← 06 Decide Tools`, rồi Phase 3 quay lại `03 Update Memory → 04 Plan`.
 
 **Vì sao**
 
-Hai module đầu là đường ống lấy dữ liệu về — không có gì để đưa vào ngữ cảnh thì phần còn lại vô nghĩa. Lộ trình cố tình xen kẽ để bạn thấy một vòng chạy trọn vẹn (lấy dữ liệu → dựng ngữ cảnh → sinh câu trả lời) trước khi mở rộng sang ghi nhớ và lên kế hoạch. Tài liệu có sẵn lộ trình 26 tuần nếu bạn muốn đi hết, nhưng mục Tips vẫn dạy thẳng: "START SMALL".
+Hai module đầu là đường ống lấy dữ liệu về — chưa có gì để đưa vào ngữ cảnh thì phần còn lại chưa phát huy được. Lộ trình cố tình xen kẽ để bạn thấy một vòng chạy trọn vẹn (lấy dữ liệu → dựng ngữ cảnh → sinh câu trả lời) trước khi mở rộng sang ghi nhớ và lập kế hoạch.
 
 **Làm gì**
 
@@ -363,7 +363,7 @@ Bạn đã viết và test hàm tìm context, chạy tay thì ra đúng 2 đoạ
 
 **Vì sao**
 
-Không có ai tự gọi code của bạn. Bạn phải đứng giữa: chặn (intercept) câu hỏi, tìm context, ghép vào câu hỏi, rồi mới gửi đi. Tài liệu vẽ đúng 4 bước này và đưa ra 4 cách cài đặt.
+Không có ai tự gọi code giúp bạn. Bạn cần đứng ở giữa: chặn (intercept) câu hỏi, tìm context, ghép vào câu hỏi rồi mới gửi đi. Tài liệu vẽ đúng 4 bước này và gợi ý 4 cách làm.
 
 **Làm gì**
 

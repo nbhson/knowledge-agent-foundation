@@ -1,6 +1,6 @@
 # 🔧 02. Installing & Integrating RTK
 
-> How to install RTK on your machine and integrate it into the AI coding tool you use. After this step, the agent's bash commands will be automatically rewritten through RTK.
+> How to install RTK on your machine and connect it to the AI coding tool you use. Once you finish this step, the agent's bash commands will be tidied up through RTK automatically.
 
 ## Installation
 

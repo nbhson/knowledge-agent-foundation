@@ -28,9 +28,9 @@ The following week:
 - **Wednesday**: Schema changes (new edge type `REVIEWS`) → need a migration
 - **Thursday**: A batch ingest fails → need to rollback
 
-Without a workflow, you do it by hand: run scripts, forget checkpoints, break the graph, spend 2 days recovering.
+Without a workflow, you end up doing it by hand: running scripts, forgetting checkpoints, breaking the graph, and spending 2 days fixing it.
 
-**Graph Workflow** is the **automated, checkpointed, rollback-capable, observable** system for every operation on the graph — like CI/CD for code, but for knowledge graphs.
+**Graph Workflow** is the **steady, automatic setup** for everything you do to the graph — with checkpoints, easy rollbacks, and clear logs — a bit like CI/CD for code, but for knowledge graphs.
 
 ### Why Are Graph Workflows Important?
 

@@ -20,11 +20,11 @@
 
 You have a Knowledge Graph with 10,000 nodes. The user asks: *"Find the person most similar to Alice in role and relationships."*
 
-- **Graph traversal**: find the person with the same number of neighbors? Not enough — Alice manages 5 people, Bob also manages 5 people, but completely different teams.
+- **Graph traversal**: find the person with the same number of neighbors? That is not quite enough — Alice manages 5 people, Bob also manages 5 people, but they work with completely different teams.
 - **Text embedding**: embed Alice's `description` and compare? You ignore the whole graph structure.
 - **Graph embedding**: each node becomes a vector **based on its position in the graph** → `cosine(alice_vec, bob_vec)` is high if they have similar roles/structures.
 
-**Graph Embeddings turn graph structure into vectors — so you can use ANN search while still keeping the relationship information.**
+**Graph Embeddings turn the shape of the graph into vectors — so you can use fast search while still keeping the relationship info.**
 
 ### Why Do Graph Embeddings Matter?
 

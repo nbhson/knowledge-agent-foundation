@@ -13,18 +13,18 @@
 
 ### Câu Chuyện Mở Đầu
 
-Hãy tưởng tượng bạn bị trầy đầu gối. Bạn gọi **cả đội phẫu thuật khẩn cấp** — gây mê, bác sĩ chính, y tá, xe cấp cứu — chỉ để... dán một miếng băng cá nhân. Hoặc bạn thuê một **đầu bếp Michelin** chỉ để **đun nước sôi**. Cả hai đều *hiệu quả về mặt kỹ thuật* — và cả hai đều **hoàn toàn phí phạm**.
+Cứ tưởng tượng thế này cho dễ: bạn bị trầy xước đầu gối sơ sơ, mà lại gọi nguyên **ê-kíp mổ cấp cứu** — nào là bác sĩ gây mê, bác sĩ chính, y tá, xe cấp cứu — chỉ để... dán một miếng băng cá nhân. Hay bạn mời hẳn một **đầu bếp Michelin** về chỉ để **đun hộ ấm nước sôi**. Về lý thuyết thì vẫn xong việc — nhưng đúng là vừa tốn kém vừa lãng phí.
 
-Đó chính xác là những gì đang diễn ra trong hàng nghìn hệ thống AI ngày nay: mỗi khi agent cần **phân loại một ticket**, **kiểm tra một điều kiện xác nhận**, hay **chấm điểm một câu trả lời** — nó gọi một **LLM frontier**. Mô hình viết 500 tokens văn xuôi để trả về một danh sách JSON mà regex parse lỗi 5% số lần. Chi phí cao, latency vài giây, và xác suất thì... ai biết được.
+Mà trớ trêu là hàng nghìn hệ thống AI bây giờ cũng đang làm y chang vậy: mỗi lần agent chỉ cần **xếp loại một cái ticket**, **kiểm tra một điều kiện cho qua hay không**, hay **chấm điểm một câu trả lời** — là lại lôi hẳn một **LLM frontier** ra. Con mô hình viết tràng giang 500 tokens văn xuôi chỉ để trả về một danh sách JSON, rồi regex parse trật hết 5% số lần. Vừa đắt, vừa chờ vài giây mới xong, mà độ chắc chắn thì... hên xui.
 
-Khi agent của bạn chạy **hàng nghìn lần mỗi giờ** chỉ để cần *"quyết định này là gì và tự tin bao nhiêu"* — **sinh text là tốn kém**. Bạn không cần một nhà văn. Bạn cần một **hệ thần kinh phản xạ**.
+Nhất là khi agent của bạn chạy **hàng nghìn lần mỗi giờ** mà chỉ cần biết *"quyết định này là gì, chắc chắn tới đâu"* — thì chuyện **bắt nó sinh cả đoạn văn đúng là tốn quá**. Lúc này bạn không cần một nhà văn. Bạn cần một **phản xạ kiểu hệ thần kinh** — nhanh, gọn, trúng.
 
 > *"Frontier intelligence belongs inside function calls — unstructured state in, typed probabilistic decisions out."*
 > — **TypeSafe AI, Introducing System One Models and Jev (2026)**
 
-> *"Jev không viết gì cả. Nó chỉ quyết định — nhanh, đúng chuẩn, và với xác suất bạn dùng được ngay."*
+> *"Jev không viết gì cả. Nó chỉ quyết định — nhanh, đúng chuẩn, và kèm xác suất bạn xài được ngay."*
 
-**Jev** là mô hình đầu tiên thế giới thuộc lớp **System One Models** — được thiết kế riêng cho các **quyết định nhỏ, nhanh, có cấu trúc** (System 1) mà phần mềm tiêu thụ trực tiếp, thay vì sinh văn bản cho con người đọc (System 2).
+Nói gọn, **Jev** là mô hình đầu tiên trên thế giới thuộc lớp **System One Models** — sinh ra để lo mấy **quyết định nhỏ, nhanh, có cấu trúc** (kiểu System 1) mà phần mềm nuốt được ngay, thay vì sinh văn bản dài cho con người đọc (kiểu System 2).
 
 ### Tại Sao Jev & System One Models Quan Trọng?
 
@@ -59,17 +59,17 @@ LLM + Jev = BỔ SUNG nhau, không thay thế:
          Jev decide → LLM viết (code, email, giải thích)
 ```
 
-**Liên hệ framework này**: Nếu Module XII (Loop) là *hệ thống điều phối* và Module XIII (Graph) là *substrate tri thức*, thì **Jev là lớp quyết định (decision layer)** — nơi một Loop gọi model để *phân loại, gate, route, score* trước khi LLM viết (viết code, viết response) hoặc trước khi code tự hành động. Jev là **internal gatekeeper** trong Harness: `state → Jev → typed answer → code acts / escalate`.
+**Liên hệ với framework này cho dễ nhớ**: nếu Module XII (Loop) là *ông điều phối*, Module XIII (Graph) là *cái kho tri thức*, thì **Jev chính là tay quyết định (decision layer)** — chỗ mà Loop gọi tới để *xếp loại, gác cổng, rẽ nhánh, chấm điểm* trước khi để LLM viết (viết code, viết câu trả lời) hoặc trước khi code tự hành động. Jev giống như **người gác cổng bên trong** Harness vậy: `state → Jev → typed answer → code acts / escalate`.
 
-**Analogies**: **LLM là một thư ký giỏi viết văn** — bạn giao việc gì nó cũng viết được, kể cả việc chỉ cần chọn A hay B. **Jev là một con chim bói cá** — ngồi trên cành, nhìn nước, và *tung người bắt cá* trong tích tắc: một phản xạ chuyên biệt, không cần đọc thành bài luận trước khi quyết định. Hoặc: **LLM là hướng dẫn viên du lịch kể chuyện cả ngày** (mệt, đắt, đôi khi bịa); **Jev là đèn giao thông** — đỏ dừng, xanh đi, quyết định trong mili-giây với xác suất gần như luôn đúng.
+**Analogies**: Kể kiểu đời thường thì **LLM giống anh thư ký viết văn rất giỏi** — giao gì cũng viết được, kể cả chuyện chỉ cần khoanh A hay B. Còn **Jev giống con chim bói cá** — đậu yên trên cành, mắt nhìn mặt nước, thấy cá là *lao xuống bắt* trong tích tắc: một cú phản xạ chuyên biệt, khỏi cần viết nguyên bài luận rồi mới quyết. Hay nói kiểu khác: **LLM như anh hướng dẫn viên kể chuyện cả ngày** (vui thì vui, mà mệt, đắt, thỉnh thoảng còn bịa); **Jev như cái đèn giao thông** — đỏ thì dừng, xanh thì đi, quyết trong mili-giây mà gần như lúc nào cũng đúng.
 
-**Nếu bỏ qua**: Bạn trả tiền frontier LLM cho từng classify-ticket nhỏ; agent chờ 3-300s mỗi quyết định; code phải **parse JSON bằng regex** và vẫn fail; và mọi xác suất "tự tin 90%" của LLM đều là **overconfidence không calibrated** — vì chúng được tối ưu theo human preference, không theo outcome.
+**Nếu bỏ qua**: Nói thẳng là bạn sẽ trả tiền frontier LLM cho từng cái ticket con con; agent cứ mỗi quyết định lại bắt chờ 3-300s; code thì phải **lấy regex đi parse JSON** mà vẫn lỗi lên lỗi xuống; và mấy con số kiểu "tự tin 90%" của LLM thực ra toàn là **tự tin ảo chưa qua kiểm chứng** — vì tụi nó được tối ưu theo sở thích con người, chứ không theo kết quả thật.
 
 ## Tổng Quan
 
-**System One Models** là lớp mô hình mới: **không sinh text**, mà nhận **state không có cấu trúc** (string / JSON / array) và trả về **typed probabilistic decisions** — các quyết định có kiểu (Choice / Score / Noul) kèm **phân phối xác suất** và **confidence**, để phần mềm **hành động trực tiếp** không cần parse.
+Kể đơn giản thế này: **System One Models** là một lớp mô hình mới — **không sinh văn bản**, mà nuốt **đầu vào lộn xộn** (string / JSON / array) rồi nhả ra **quyết định có kiểu, kèm xác suất** — tức là các đáp án dạng Choice / Score / Noul, có luôn phân phối xác suất và độ tự tin, để phần mềm **cầm lấy mà chạy luôn**, khỏi cần parse.
 
-Jev là mô hình đầu tiên của TypeSafe AI — dùng **transformers** được train **hoàn toàn trên synthetic data** với **RLCD** (Reinforcement Learning for Calibrated Decisions): xác suất được tối ưu **chống lại outcome**, không chống lại human preference (khác RLHF).
+Còn Jev là mô hình đầu tiên của TypeSafe AI — xài **transformers** được train **toàn bằng synthetic data** với món **RLCD** (Reinforcement Learning for Calibrated Decisions): xác suất của nó được rèn **theo kết quả thật**, chứ không theo kiểu "con người thích câu nào" như RLHF.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -117,11 +117,11 @@ Jev là mô hình đầu tiên của TypeSafe AI — dùng **transformers** đư
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-Điểm mấu chốt: **closed answer space** → Jev **không thể hallucinate ra ngoài schema** (không type errors, không JSON hỏng). Nhưng nó **vẫn có thể chọn sai answer nằm trong schema** — đôi khi với confidence cao. **Type safety ≠ factual correctness** (xem [07-limits-and-evaluation](07-limits-and-evaluation/)).
+Điểm mấu chốt cần nhớ: vì **không gian đáp án đóng kín (closed answer space)** nên Jev **không thể bịa ra thứ nằm ngoài schema** (khỏi lo sai type, hỏng JSON). Nhưng nó **vẫn có thể chọn nhầm đáp án nằm trong schema** — đôi khi còn tự tin hẳn hoi. **Đúng kiểu dữ liệu (type safety) không có nghĩa là đúng sự thật** (xem [07-limits-and-evaluation](07-limits-and-evaluation/)).
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 
-Module XIV được chia thành **7 modules chuyên đề** — đồng nhất với convention của `harness/`, `loop/`, `graph/` (mỗi module là `NN-name/README.md`).
+Module XIV này được chia thành **7 module nhỏ** — cách chia giống hệt bên `harness/`, `loop/`, `graph/` cho dễ theo dõi (mỗi module là một thư mục `NN-name/README.md`).
 
 ```
 jev/
@@ -135,7 +135,7 @@ jev/
 └── 07-limits-and-evaluation/ ← Giới hạn 64k, lỗi, non-goals, cách eval quyết định
 ```
 
-> Mỗi thư mục chứa một `README.md` — đồng nhất với convention của `harness/`, `loop/` và `graph/`.
+> Mỗi thư mục đều có một file `README.md` riêng — đúng chuẩn như bên `harness/`, `loop/` và `graph/` thôi, mở ra là quen ngay.
 
 ### Lộ Trình Đề Xuất
 
@@ -171,7 +171,7 @@ Bước 7: 07-limits-and-evaluation/ — biết Jev không làm được gì, ev
 
 ### 1. LangChain — Agent Routing với TypeSafeClassifier + AutoMode
 
-LangChain tích hợp Jev qua **`TypeSafeClassifier`** — một classifier dùng Jev làm backbone, nhận `state` + `questions` qua `.invoke()`:
+Bên LangChain cắm Jev vào qua **`TypeSafeClassifier`** — hiểu nôm na là một bộ xếp loại xài Jev làm máy, nhận `state` + `questions` qua `.invoke()` là nhả đáp án:
 
 ```
 User message ──► TypeSafeClassifier ──► {intent: "billing", risk: "low", ...}
@@ -185,23 +185,23 @@ User message ──► TypeSafeClassifier ──► {intent: "billing", risk: "l
                 risk=low        → cho phép auto-execute
 ```
 
-**Ý nghĩa**: routing và risk-gating là System One-shaped tasks — Jev trả typed answer trong 70-500ms, thay vì LLM sinh JSON rồi parse.
+**Nói dễ hiểu**: mấy chuyện rẽ nhánh, gác cổng rủi ro vốn là việc kiểu System One — Jev trả đáp án đúng chuẩn chỉ trong 70-500ms, khỏi cần bắt LLM viết JSON rồi parse lại cho mệt.
 
 ### 2. Pydantic AI — Agent Chỉ-Quyết-Định với TypeSafeModel
 
-Pydantic AI tích hợp qua **`TypeSafeModel`**: mỗi **field của `output_type`** trở thành **một question** cho Jev; `field description` là **câu hỏi**; `docstring/instructions` là **framing**. Agent chỉ-decide trả typed object, không sinh text.
+Bên Pydantic AI thì cắm qua **`TypeSafeModel`**: mỗi **field trong `output_type`** coi như **một câu hỏi** dành cho Jev; `field description` chính là **câu hỏi**, còn `docstring/instructions` là **phông nền**. Con agent kiểu này chỉ lo quyết, trả về object đúng kiểu, không viết lách lan man.
 
 ### 3. OpenRouter — Một API Key Gọi Jev
 
-Qua OpenRouter: `POST https://openrouter.ai/api/alpha/decisions` với model `typesafe/jev-1.13` — hoặc set base URL và dùng TypeSafe TS SDK. Áp dụng khi stack của bạn **đã có OpenRouter** cho nhiều model, không muốn thêm một key riêng.
+Đi qua OpenRouter thì gọn lắm: `POST https://openrouter.ai/api/alpha/decisions` với model `typesafe/jev-1.13` — hoặc trỏ base URL sang rồi xài TypeSafe TS SDK như bình thường. Cách này hợp khi team bạn **đã xài OpenRouter** cho nhiều model rồi, khỏi cần thêm một key riêng cho mệt.
 
 ### 4. Verified Cascade — LLM Dùng, Jev Duyệt
 
-Pattern phổ biến nhất: LLM sinh output (code, response) → **Jev verify** bằng các Noul/Choice questions trên chính output đó (`is_safe`, `matches_schema`, `tone`) → pass thì emit, fail thì escalate/retry. Jev là **gatekeeper calibrated**, LLM là **generator**.
+Đây là kiểu xài phổ biến nhất: LLM cứ sinh output như thường (code, câu trả lời) → **Jev đứng sau kiểm lại** bằng mấy câu hỏi Noul/Choice ngay trên output đó (`is_safe`, `matches_schema`, `tone`) → qua thì cho ra, rớt thì đẩy người duyệt hoặc chạy lại. Kiểu này Jev là **anh bảo vệ có kiểm chứng**, còn LLM là **tay thợ viết**.
 
 ### 5. Spice AI — Gọi Jev Từ SQL
 
-Spice AI cho phép gọi Jev **trực tiếp từ SQL** — quyết định nằm ngay trong query pipeline (route, score, flag) mà không cần qu vòng service layer: `state` từ row, `questions` định nghĩa sẵn, typed answer trả về join tiếp.
+Spice AI chơi hẳn kiểu gọi Jev **ngay trong câu SQL** — quyết định nằm luôn trong luồng query (rẽ nhánh, chấm điểm, gắn cờ) mà khỏi phải vòng qua service layer: `state` lấy từ row, `questions` định nghĩa sẵn, đáp án đúng kiểu trả về join tiếp được luôn.
 
 ---
 

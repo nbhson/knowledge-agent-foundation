@@ -89,17 +89,17 @@
 
 ## 1. Giới Thiệu
 
-Trong kỷ nguyên AI, chúng ta đã chứng kiến sự phát triển vượt bậc của các mô hình ngôn ngữ lớn (LLMs). Từ GPT-3, GPT-4, Claude, đến Gemini, các mô hình này ngày càng thông minh và mạnh mẽ hơn. Tuy nhiên, một câu hỏi quan trọng được đặt ra: **Tại sao với cùng một mô hình AI, một số ứng dụng hoạt động xuất sắc trong khi những ứng dụng khác lại thất bại?**
+Trong kỷ nguyên AI, các mô hình ngôn ngữ lớn (LLM) phát triển rất nhanh — từ GPT-3, GPT-4, Claude tới Gemini, model nào cũng ngày càng thông minh hơn. Nhưng có một câu hỏi đáng suy nghĩ: **cùng một model, sao có ứng dụng chạy rất tốt, có ứng dụng lại chưa hiệu quả?**
 
-Câu trả lời nằm ở **Harness Engineering** - một kỹ thuật không tập trung vào việc cải thiện mô hình AI, mà thay vào đó tập trung vào việc xây dựng toàn bộ **hệ sinh thái xung quanh mô hình đó**: công cụ (tools), quyền truy cập (permissions), bộ nhớ (memory), vòng lặp phản hồi (feedback loops), rào cản bảo vệ (guardrails), và quản lý ngữ cảnh (context management).
+Câu trả lời nằm ở **Harness Engineering** — thay vì cố làm model giỏi hơn, bạn xây nguyên **hệ sinh thái quanh nó**: tools, permissions, memory, feedback loops, guardrails, quản lý context.
 
 ### Bối Cảnh
 
-Khi Mitchell Hashimoto (người sáng lập HashiCorp, tác giả của Terraform) tuyên bố rằng *"Prompt Engineering đã chết"* và giới thiệu khái niệm **Harness Engineering**, ông đã mở ra một chương mới trong cách chúng ta nghĩ về phát triển ứng dụng AI. Thay vì lo lắng về cách viết prompt hoàn hảo, chúng ta cần tập trung vào việc xây dựng một hệ thống hoàn chỉnh để AI có thể hoạt động hiệu quả.
+Khi Mitchell Hashimoto (người sáng lập HashiCorp, tác giả Terraform) nói *"Prompt Engineering đã chết"* và đưa ra khái niệm **Harness Engineering**, ông đã mở ra một góc nhìn mới về cách làm ứng dụng AI. Thay vì cố viết prompt thật hay, ta tập trung xây hẳn một hệ thống để AI làm việc hiệu quả.
 
 ### Mục Đích Của Tài Liệu
 
-Tài liệu này cung cấp một cái nhìn toàn diện về Harness Engineering, bao gồm:
+Tài liệu này giúp bạn có cái nhìn toàn diện về Harness Engineering, gồm:
 - Định nghĩa và triết lý cốt lõi
 - So sánh với các kỹ thuật trước đó (Prompt Engineering, Context Engineering)
 - Các thành phần và nguyên tắc thiết kế
@@ -112,7 +112,7 @@ Tài liệu này cung cấp một cái nhìn toàn diện về Harness Engineeri
 
 ### Định Nghĩa
 
-**Harness Engineering** là kỹ thuật xây dựng và thiết kế toàn bộ **"môi trường xung quanh"** một mô hình AI (bao gồm công cụ, quyền truy cập, bộ nhớ, vòng lặp phản hồi, rào cản bảo vệ, quản lý context...) thay vì tập trung vào việc cải thiện bản thân mô hình đó.
+**Harness Engineering** là cách xây nguyên **"môi trường sống" cho một model AI** — gồm tools, quyền truy cập, memory, feedback loops, guardrails, quản lý context — thay vì can thiệp vào bản thân model.
 
 Nói một cách đơn giản:
 - **Mô hình AI** là thứ **suy nghĩ**
@@ -164,7 +164,7 @@ harness.addTool({
 
 </details>
 
-Trong ví dụ trên, thay vì "nhờ" AI cẩn thận, bạn xây dựng một hệ thống **không cho phép** AI trả về code có lỗi.
+Trong ví dụ trên, thay vì "nhờ" AI cẩn thận giúp mình, bạn xây hẳn một hệ thống **không cho phép** AI trả về code bị lỗi.
 
 ### So Sánh Với Các Khái Niệm Khác
 
@@ -180,7 +180,7 @@ Trong ví dụ trên, thay vì "nhờ" AI cẩn thận, bạn xây dựng một 
 
 ## 3. Ba Giai Đoạn Tiến Hóa Của Kỹ Nghệ AI
 
-Để hiểu rõ hơn về Harness Engineering, chúng ta cần nhìn lại quá trình tiến hóa của kỹ nghệ AI qua ba giai đoạn chính:
+Để hiểu rõ hơn về Harness Engineering, mình cùng nhìn lại quá trình làm AI đã đi qua những chặng nào nhé:
 
 ### 3.1. Prompt Engineering (2022-2024)
 
@@ -355,10 +355,10 @@ Mỗi giai đoạn không thay thế hoàn toàn giai đoạn trước, mà bổ
 | Baseline (no harness) | 12.5% | - |
 | With optimized harness | 20.5% | +64% |
 
-**Điều này có nghĩa là gì?**
-- Harness design có thể quan trọng hơn cả việc chọn mô hình AI
-- ROI cao hơn so với việc train/fine-tune mô hình mới
-- Có thể áp dụng ngay lập tức mà không cần tài nguyên lớn
+**Điều này nghĩa là gì?**
+- Thiết kế harness đôi khi còn quan trọng hơn chọn model
+- Lợi nhuận trên công sức bỏ ra cao hơn hẳn so với train/fine-tune model mới
+- Làm được ngay, không cần tài nguyên khủng
 
 ---
 
@@ -517,7 +517,7 @@ Total: ~$12,000 (3 months)
 
 ### 4.6. Competitive Advantage
 
-Khi các mô hình AI trở nên tương đương nhau, **Harness Engineering chính là competitive moat** (lợi thế cạnh tranh):
+Khi các model AI na ná nhau, **Harness Engineering chính là con hào cạnh tranh** của bạn:
 
 - **Anthropic**: Harness siêu đẳng (theo leak code của Claude)
 - **Cursor**: Harness tối ưu cho coding
@@ -544,7 +544,7 @@ Harness Engineering quan trọng vì:
 
 ## 5. Các Thành Phần Cốt Lõi Của Harness
 
-Một harness hoàn chỉnh bao gồm 7 thành phần chính. Hãy tưởng tượng chúng như các "cơ quan" trong cơ thể con người:
+Một harness đầy đủ gồm 7 mảnh ghép. Bạn cứ hình dung chúng như các "cơ quan" trong cơ thể nhé:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -918,7 +918,7 @@ Chốt lại: **Bạn không sửa LLM, bạn sửa PROMPT trước khi gửi.**
 
 #### Làm Sao Để Đoạn Code Đó Tự Động Chạy?
 
-Câu hỏi thực tế: **"Tôi có code rồi, nhưng làm sao để nó chạy giữa prompt và LLM?"**
+Câu hỏi thực tế là: **"Tôi có code rồi, nhưng làm sao để nó tự chạy giữa prompt và LLM?"**
 
 Có 4 cách, tùy vào thiết lập của bạn:
 
@@ -1408,7 +1408,7 @@ const harness = new AIHarness({
 
 ### Tích Hợp Component Với Modules Trong Repo
 
-Mỗi thành phần của Harness tương ứng trực tiếp với các modules trong **AI Coding Skills Framework**. Đây là cách các components "gắn liền" với thực tiễn:
+Mỗi thành phần của Harness tương ứng trực tiếp với các module trong **AI Coding Skills Framework**. Đây là cách các component gắn với thực tế ra sao:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -1676,19 +1676,19 @@ Sơ đồ dưới đây cho thấy **toàn bộ hệ thống Harness Engineering
 
 ## 6. Case Studies Thực Tế
 
-Các case studies sau đây cho thấy cách các tổ chức hàng đầu áp dụng Harness Engineering để đạt được kết quả vượt trội.
+Các case dưới đây cho thấy các team lớn đã dùng Harness Engineering thế nào để đạt kết quả vượt trội.
 
 ---
 
 ### 6.1. SWE-agent (Princeton NLP)
 
-**Bối cảnh**: Princeton NLP phát triển một AI agent để tự động sửa lỗi GitHub issues.
+**Bối cảnh**: team Princeton NLP làm một agent tự sửa GitHub issues.
 
-**Vấn đề ban đầu**:
-- Success rate chỉ 12.5% với baseline approach
-- Agent thường "lạc lối" trong codebase
-- Kết quả tìm kiếm quá nhiều, gây overwhelm
-- Không biết đâu là thông tin quan trọng
+**Vấn đề lúc đầu**:
+- Tỉ lệ thành công chỉ 12.5% với cách làm baseline
+- Agent hay "đi lạc" trong codebase
+- Kết quả tìm kiếm trả về quá nhiều, đọc không xuể
+- Không biết đâu mới là thông tin quan trọng
 
 **Giải pháp Harness Engineering**:
 
@@ -1764,9 +1764,9 @@ const memoryManager = {
 </details>
 
 **Kết quả**:
-- Success rate tăng từ **12.5% → 20.5%** (+64%)
-- Thời gian giải quyết issue giảm 40%
-- Token usage giảm 30%
+- Tỉ lệ thành công tăng từ **12.5% → 20.5%** (+64%)
+- Thời gian xử lý một issue giảm 40%
+- Lượng token tốn giảm 30%
 
 **Key Insights**:
 > "Không phải mô hình yếu, mà môi trường không được thiết kế tốt"
@@ -2793,15 +2793,15 @@ const result = await harness.execute("Build me a todo app");
 
 **Kết Luận**
 
-Harness Engineering không chỉ là một trend công nghệ - nó là sự chuyển đổi paradigm trong cách chúng ta xây dựng ứng dụng AI. Khi các mô hình AI ngày càng mạnh mẽ và trở thành "hàng hóa đại trà", khả năng thiết kế một harness tốt sẽ là yếu tố quyết định thành công.
+Harness Engineering không chỉ là một xu hướng công nghệ — nó là sự chuyển đổi góc nhìn trong cách chúng ta xây dựng ứng dụng AI. Khi các mô hình AI ngày càng mạnh và dần trở thành "hàng hóa phổ thông", khả năng thiết kế một harness tốt sẽ là yếu tố quyết định thành công.
 
 > **"The model thinks. The harness shapes what it thinks about. And the harness determines the quality of the final output."**
 
-Hãy bắt đầu từ hôm nay - không cần perfect, chỉ cần start. Build, measure, learn, và iterate. Harness Engineering là journey, không phải destination.
+Hãy bắt đầu từ hôm nay — không cần hoàn hảo, chỉ cần bắt đầu. Cứ build, đo lường, học hỏi rồi cải thiện dần. Harness Engineering là một hành trình, không phải đích đến.
 
 **Happy Building! 🚀**
 
 ---
 
-**Ngày cập nhật:** 13/07/2026  
+**Ngày cập nhật:** 16/10/2026  
 **Tác giả:** AI Knowledge Repository

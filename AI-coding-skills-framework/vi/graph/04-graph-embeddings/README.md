@@ -102,7 +102,7 @@ Khoảng cách gần trong vector space = Vai trò/cấu trúc giống nhau tron
 
 ```
 ┌──────────────────────┬──────────────────────┬───────────────────────────────┐
-│ Loại                 │ Cần Training?        │ Best For                      │
+│ Loại                 │ Cần training?        │ Phù hợp nhất khi              │
 ├──────────────────────┼──────────────────────┼───────────────────────────────┤
 │ Node2Vec / DeepWalk  │ Unsupervised (walks) │ General similarity, clustering│
 │ GraphSAGE / GAT      │ Supervised / Semi    │ Node classification, inductive│
@@ -123,7 +123,7 @@ Khoảng cách gần trong vector space = Vai trò/cấu trúc giống nhau tron
 
 **Analogies:**
 - **Random Walk = đi chơi quanh phố**: Bạn xuất phát tại "Alice", mỗi ngã rẽ chọn hướng ngẫu nhiên → xem những nơi nào bạn thường xuyên đi qua. Nếu "Alice" và "Bob" thường xuyên gặp nhau trên những con đường giống nhau → họ ở khu vực giống nhau.
-- **DeepWalk = Google Maps nhưng bị lạc đường**: Đi ngẫu nhiên quanh vùng,記錄 những nơi đi qua → hiểu cấu trúc vùng đất.
+- **DeepWalk = Google Maps nhưng đi lạc đường**: cứ đi ngẫu nhiên quanh khu vực, ghi lại những nơi đã đi qua → từ đó hiểu được cấu trúc của cả vùng.
 
 ### 2.1 DeepWalk — Random Walk + Word2Vec
 
@@ -531,7 +531,7 @@ for epoch in range(100):
 >
 > **Nhánh tiêu biểu (GraphGPS, GT)** kết hợp attention toàn-graph + message passing: giữ được chuỗi local nhưng thêm "tấm nhìn xa". Giá phải trả: **tốn memory O(N²)** với N nodes — nên cần trick như "attention 1-hop nguồn" (chỉ 1 block mới attention global).
 >
-> **Khi nào nên (chưa) dùng:** medium-size graphs, graph có đường đi dài quan trọng, cần SOTA accuracy → chọn GT. Graph hàng triệu nodes → message-passing GNN vẫn dễ scale hơn. Đây là chi tiết tính toán thuộc Module 07 — ở Module này chỉ cần biết **tồn tại họ embedding "thế hệ mới"** này.
+> **Khi nào nên (hoặc chưa nên) dùng:** graph cỡ vừa, có đường đi dài quan trọng và cần độ chính xác cao nhất → hãy chọn GT. Graph tới hàng triệu nodes → GNN truyền tin thông thường (message-passing) vẫn dễ mở rộng hơn. Phần tính toán chi tiết thuộc về Module 07 — ở module này bạn chỉ cần biết **đang có thêm họ embedding "thế hệ mới"** này.
 
 ---
 

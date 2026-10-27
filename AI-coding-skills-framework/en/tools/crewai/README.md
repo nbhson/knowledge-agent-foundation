@@ -175,4 +175,23 @@ task = Task(
 
 ---
 
+## ⚠️ Update 10/2026: CrewAI v1.x — Latest Version
+
+CrewAI released **v1.0.0 (10/2025)** and is now at **v1.15.x (2026)** — significant updates:
+
+| Change | Details |
+|--------|---------|
+| **v1.0.0** | Knowledge & guardrail event handling in Agent, response_format support |
+| **v1.5.0** | Structured outputs, before/after tool call hooks |
+| **v1.14+** | Inline skill definitions, Flow Definition authoring, dynamic LLM model pull |
+| **CrewAI CLI** | `crewai run` with `crew.jsonc` config file |
+
+**Note:** CrewAI >= 1.0 requires **Python 3.10 – 3.13**.
+
+```bash
+pip install crewai>=1.0.0
+```
+
+Ref: https://docs.crewai.com/
+
 *This article is part of the [AI Coding Skills Framework](../..) — the Tools branch — crewai*

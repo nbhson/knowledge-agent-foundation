@@ -195,6 +195,21 @@ loop-worktree lock --scope refs/heads/main
 loop gate check --action auto-merge --paths src/,tests/
 ```
 
+## Multi-Agent Loops Hiện Đại (2025) — Bối Cảnh
+
+Loop CLI ở trên tập trung vào **vận hành loop đơn + đa loop an toàn**. Bên ngoài, hệ sinh thái multi-agent đã chuẩn hóa một số khái niệm nên biết để định vị loop-* đúng chỗ:
+
+| Khái niệm | Là gì | Liên hệ với loop-* |
+|-----------|-------|---------------------|
+| **ReAct pattern** | Vòng Reason → Act → Observe lặp tới khi xong việc | Mỗi attempt trong `loop worktree` chính là một vòng ReAct có gác cổng |
+| **Agent loop (OpenAI Agents SDK)** | Agent + Runner tự quản turn, tool call, handoffs | `loop init` scaffold chính là khung quanh một agent loop như vậy |
+| **AutoGPT-style autonomous loops** | Agent tự chia mục tiêu thành task, chạy liên tục | `loop gate` + budget files chính là cơ chế giữ các loop kiểu này không chạy trôi |
+| **A2A protocol (Google, 2025)** | Chuẩn mở cho agent ↔ agent giao tiếp, handoff qua server | `loop-swarm` consensus là một cách khắt khe hơn để agent trao đổi kết quả |
+
+**Đọc thế nào**: các chuẩn này (OpenAI Agents SDK, A2A) định nghĩa *giao thức giữa các agent*; loop-* định nghĩa *kỷ luật vận hành quanh agent*. Hai tầng bổ sung cho nhau — khi nối loop-* với agent SDK bên ngoài, `loop gate` vẫn là điểm chặn cuối trước khi edits được merge.
+
+Refs: [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/) · [A2A protocol](https://github.com/a2aproject/a2a)
+
 ## Tài Liệu Tham Khảo
 
 ### Nguồn Chính
@@ -202,6 +217,9 @@ loop gate check --action auto-merge --paths src/,tests/
 - **Repo gốc**: https://github.com/cobusgreyling/loop-engineering
 - **Ecosystem stack**: memory-engineering → loop-engineering → harness-foundry → outerloop → fleet-engineering
 - **Companion**: [harness-foundry](https://github.com/cobusgreyling/harness-foundry), [outerloop](https://github.com/cobusgreyling/outerloop), [goal-engineering](https://github.com/cobusgreyling/goal-engineering)
+- **OpenAI Agents SDK**: https://openai.github.io/openai-agents-python/ — agent loop + handoffs chuẩn 2025
+- **A2A protocol**: https://github.com/a2aproject/a2a — chuẩn agent-to-agent (Google, 2025, đã donate cho Linux Foundation)
+- **ReAct paper**: https://arxiv.org/abs/2210.03629
 
 ### Liên Kết Sang Nhánh Khác
 

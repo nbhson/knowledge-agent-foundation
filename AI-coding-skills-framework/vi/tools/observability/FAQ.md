@@ -4,32 +4,34 @@ Câu hỏi nào khó hiểu thì đọc `README.md` phần trong ngoặc vuông.
 
 ---
 
-## Q1. LangSmith, Helicone, OpenLLMetry, W&B — chọn cái nào? [→ Tổng Quan Các Công Cụ]
+## Q1. LangSmith, Langfuse, Helicone, OpenLLMetry, W&B — chọn cái nào? [→ Tổng Quan Các Công Cụ]
 
 **Bạn sẽ thấy**
 
-Bốn công cụ, bốn kiểu can thiệp khác nhau — chọn sai thì phải sửa code hoặc không thấy được thứ bạn cần:
+Năm công cụ, năm kiểu can thiệp khác nhau — chọn sai thì phải sửa code hoặc không thấy được thứ bạn cần:
 
 | Công cụ | Nhà phát hành | Cách gắn vào | Hợp nhất khi |
 |---|---|---|---|
 | Helicone | Helicone | đổi địa chỉ API | đa framework, cần số tiền ngay |
+| Langfuse | Langfuse | SDK / OTel export | self-host, privacy-sensitive, muốn chuẩn gen-ai |
 | LangSmith | LangChain | callback | đã dùng LangChain |
 | OpenLLMetry | Traceloop | OpenTelemetry | nhiều nhà cung cấp, đã có hệ giám sát |
-| W&B | W&B | theo dõi thí nghiệm | nghiên cứu ML, so sány nhiều lần chạy |
+| W&B | W&B | theo dõi thí nghiệm | nghiên cứu ML, so sánh nhiều lần chạy |
 
 **Vì sao**
 
-Vì khác biệt nằm ở chỗ **bạn phải sửa gì**. Helicone là một proxy: đổi `OPENAI_API_BASE` sang `https://oai.helicone.ai/v1` là xong, không đụng dòng code nào — nhưng nó chỉ thấy lời gọi mô hình, không thấy từng bước trong chuỗi xử lý. LangSmith thấy được cả chuỗi bước `retrieve → build → agent → tools`, nhưng đòi bạn truyền callback vào mô hình.
+Vì khác biệt nằm ở chỗ **bạn phải sửa gì**. Helicone là một proxy: đổi `OPENAI_API_BASE` sang `https://oai.helicone.ai/v1` là xong, không đụng dòng code nào — nhưng nó chỉ thấy lời gọi mô hình, không thấy từng bước trong chuỗi xử lý. Langfuse là open source, chạy self-hosted được nên phù hợp khi dữ liệu không được gửi ra ngoài, đồng thời hỗ trợ OTel GenAI semantic conventions — trace theo chuẩn này đọc được ở cả Jaeger, Grafana, Datadog. LangSmith thấy được cả chuỗi bước `retrieve → build → agent → tools`, nhưng đòi bạn truyền callback vào mô hình.
 
 OpenLLMetry nằm giữa: dùng chuẩn OpenTelemetry nên đẩy dữ liệu sang Jaeger, Grafana, Datadog đều được. W&B mạnh về so sánh kết quả giữa nhiều lần thử.
 
 **Làm gì**
 
 1. Bắt đầu bằng Helicone — nhanh nhất, đổi hai biến môi trường là có số liệu chi phí ngay.
-2. Dùng LangChain thì chuyển sang LangSmith để xem được từng bước trong chuỗi.
-3. Đã có hệ giám sát sẵn (Grafana, Datadog) thì dùng OpenLLMetry để không phải dựng thêm dashboard riêng.
-4. Đang làm nghiên cứu, so sánh nhiều biến thể thì dùng W&B.
-5. Chỉ ghi lại những trường bạn thật sự dùng để quyết định, ví dụ `session_id`, `user_id`, `tool_name`.
+2. Cần self-host hoặc privacy-sensitive → dùng Langfuse, nó theo chuẩn OTel GenAI.
+3. Dùng LangChain thì chuyển sang LangSmith để xem được từng bước trong chuỗi.
+4. Đã có hệ giám sát sẵn (Grafana, Datadog) thì dùng OpenLLMetry để không phải dựng thêm dashboard riêng.
+5. Đang làm nghiên cứu, so sánh nhiều biến thể thì dùng W&B.
+6. Chỉ ghi lại những trường bạn thật sự dùng để quyết định, ví dụ `session_id`, `user_id`, `tool_name`.
 
 ```bash
 export OPENAI_API_BASE="https://oai.helicone.ai/v1"

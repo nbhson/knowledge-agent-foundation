@@ -66,6 +66,7 @@ ToolDefinition already has metrics tracking (harness/06):
 | Tool | Publisher | Standout features | Best for |
 |------|-----------|-------------------|----------|
 | **LangSmith** | LangChain | Tracing + evals + monitoring, natural LangChain integration | LangChain stack, full lifecycle |
+| **Langfuse** | Langfuse (open source) | Open-source tracing + agent graphs, OTel export, self-hostable | Self-hosting, privacy-sensitive, multi-framework |
 | **Helicone** | Helicone | LLM API proxy, cost tracking, analytics | Multi-framework, no code changes |
 | **OpenLLMetry** | Traceloop | OpenTelemetry-based, vendor-neutral | Standardized, multi-provider |
 | **Weights & Biases** | W&B | Experiment tracking, LLM evals | ML research, experiment logs |
@@ -108,6 +109,17 @@ Traceloop.init(app_name="my_harness")
 # Every framework (LangChain, LlamaIndex, OpenAI SDK...) traces automatically
 # → Export to Jaeger, Grafana, Datadog, ...
 ```
+
+## OpenTelemetry GenAI Semantic Conventions (2025)
+
+The OTel GenAI spec standardizes traces for LLM calls:
+- span.name: "genai.*"
+- genai.* attributes (genai.prompt_tokens, genai.completion_tokens, genai.model)
+- Langfuse supports OTel export from LangChain/LangGraph
+
+Ref: https://opentelemetry.io/docs/specs/semconv/gen-ai/
+
+Why it matters: before 2025, every vendor invented its own span names and attributes, so traces were not portable across backends. With the GenAI semantic conventions, the same trace reads correctly in Jaeger, Grafana, Datadog, or Langfuse — switching observability backends no longer means rewriting instrumentation. OpenLLMetry and Langfuse both emit according to this standard.
 
 ## Learning Roadmap (Directory Structure)
 
@@ -169,9 +181,11 @@ tool.update_metrics(latency_ms=1200, success=True)  # record on call
 ## Reference Materials
 
 - **LangSmith**: https://smith.langchain.com
+- **Langfuse**: https://langfuse.com
 - **Helicone**: https://www.helicone.ai
 - **OpenLLMetry**: https://github.com/traceloop/openllmetry
 - **Weights & Biases**: https://wandb.ai
+- **OTel GenAI Semantic Conventions**: https://opentelemetry.io/docs/specs/semconv/gen-ai/
 
 ### Links to Other Branches
 

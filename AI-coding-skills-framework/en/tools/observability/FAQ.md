@@ -32,7 +32,7 @@ The dashboard shows cost, latency, request count and error rate per loop. After 
 
 ---
 
-## Q2. Which tool do I pick — LangSmith, Helicone, OpenLLMetry or W&B? [→ Overview of the Tools]
+## Q2. Which tool do I pick — LangSmith, Langfuse, Helicone, OpenLLMetry or W&B? [→ Overview of the Tools]
 
 **What you see**
 
@@ -45,16 +45,22 @@ They differ in *how they attach*, not in what they measure.
 | Tool | How it attaches | Best fit |
 |---|---|---|
 | LangSmith | callback inside LangChain | you already run LangChain |
+| Langfuse | SDK or OTel export | self-hosting, privacy-sensitive, gen-ai standard |
 | Helicone | proxy in front of the API | many frameworks, zero code change |
 | OpenLLMetry (Traceloop) | OpenTelemetry standard | vendor-neutral, export to Jaeger/Grafana |
 | Weights & Biases | experiment tracking | ML research, prompt experiments |
 
+**On OTel GenAI Semantic Conventions (2025)**
+
+Since 2025, OpenTelemetry has a dedicated spec for LLM calls: spans named `genai.*` with attributes like `genai.prompt_tokens`, `genai.completion_tokens`, and `genai.model`. Langfuse and OpenLLMetry both emit according to this standard, so the same trace reads correctly in any OTel-compatible backend — Jaeger, Grafana, Datadog. Picking a vendor no longer locks you into a proprietary trace format.
+
 **What to do**
 
 1. Want visibility today with no refactor → Helicone, two environment variables.
-2. Running LangChain and want step-by-step traces plus feedback → LangSmith.
-3. Your company already runs OpenTelemetry → OpenLLMetry, one `Traceloop.init()` call.
-4. Do not send every vendor the same data; start with one.
+2. Need self-hosting or the OTel standard → Langfuse.
+3. Running LangChain and want step-by-step traces plus feedback → LangSmith.
+4. Your company already runs OpenTelemetry → OpenLLMetry, one `Traceloop.init()` call.
+5. Do not send every vendor the same data; start with one.
 
 ```python
 from traceloop.sdk import Traceloop
@@ -64,7 +70,7 @@ Traceloop.init(app_name="my_harness")
 
 **Verify**
 
-Trigger one agent run and confirm a trace exists with a chain broken into steps (retrieve → build → agent → tools), each showing token usage and latency.
+Trigger one agent run and confirm a trace exists with a chain broken into steps (retrieve → build → agent → tools), each showing token usage and latency. If you use Langfuse, check the trace carries the GenAI semantic conventions.
 
 ---
 

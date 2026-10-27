@@ -231,3 +231,22 @@ Former cross-cutting gaps now have homes: sandbox → `12`, trajectory → `13`,
 compaction → `14`, approvals → `15`. Remaining items no single module owns yet:
 PII/secret scrubbing pipeline, tenant isolation, cost-per-task SLOs.
 Per-module gaps are listed in each README's supplement section.
+
+## 8. Modern AI Coding Workflow (2026)
+
+The harness in this repo is not just theory — it is how AI coding tools actually run inside IDEs today:
+
+| Tool | Harness inside it |
+|------|------------------|
+| **Claude Code** | Agentic loop + Agent Skills (SKILL.md) + compaction + subagents. Has an official SDK (**Claude Agent SDK**, formerly Claude Code SDK — renamed 09/2025) to embed this loop into your own apps. |
+| **GitHub Copilot (agent mode)** | 2025-2026: from autocomplete → agent mode editing many files, running terminals, self-verifying; Copilot coding agent takes an issue → opens a PR. |
+| **Cursor** | Multi-tab agents, Composer running many files in parallel, background agents. |
+| **opencode / OSS harnesses** | Same pattern: MCP tools + approval gates + session trajectories. |
+
+**What's common in 2026 (per Anthropic, OpenAI, IBM, Google):**
+1. **Multi-agent orchestration** is the dominant pattern — lead agent + subagents (see `09-multi-agent/`), each subagent with its own context, returning short summaries.
+2. **Agent control plane**: one place to orchestrate many agents running in parallel across environments (browser, editor, CI) — heading toward an "Agentic OS".
+3. **Standardized protocols**: MCP (agent↔tool) + A2A (agent↔agent, Linux Foundation) — every serious coding agent runs both.
+4. **Trust by Design**: security + approval gates wired into every layer from the start, not audited afterwards (see `15-approval-gates/`).
+
+> To go deeper: `09-multi-agent/` for orchestration, `10-automation/` for self-running loops in CI, `06-decide-tools-mcp/` for MCP.

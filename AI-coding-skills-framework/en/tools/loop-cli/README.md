@@ -195,6 +195,21 @@ loop-worktree lock --scope refs/heads/main
 loop gate check --action auto-merge --paths src/,tests/
 ```
 
+## Modern Multi-Agent Loops (2025) — Context
+
+The loop-* CLI above covers the **operations discipline** of a loop (scaffold, score, gate, isolate). The wider ecosystem has standardized a few concepts worth placing alongside it:
+
+| Concept | What it is | Relation to loop-* |
+|---------|-----------|--------------------|
+| **ReAct pattern** | Reason → Act → Observe, repeated until done | Each `loop worktree` attempt is one ReAct-style loop with a gate |
+| **Agent loop (OpenAI Agents SDK)** | Agent + Runner manage turns, tool calls, and handoffs | `loop init` scaffolds the shell around such an agent loop |
+| **AutoGPT-style autonomous loops** | Agent loops that run unattended toward a goal | `loop gate` + budget files are the guardrails that keep them from drifting |
+| **A2A protocol (Google, 2025)** | Open protocol for agent-to-agent discovery and handoff | `loop-swarm` consensus is a stricter alternative for accepting another agent's work |
+
+**How to read this**: the SDKs and A2A define the *protocol between agents*; loop-* defines the *operating discipline around them*. They compose — when you wire loop-* to an external agent runtime, `loop gate` remains the mechanical checkpoint before edits reach the main branch.
+
+Refs: [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/) · [A2A protocol](https://github.com/a2aproject/a2a)
+
 ## Reference Materials
 
 ### Primary Sources
@@ -202,6 +217,9 @@ loop gate check --action auto-merge --paths src/,tests/
 - **Original repo**: https://github.com/cobusgreyling/loop-engineering
 - **Ecosystem stack**: memory-engineering → loop-engineering → harness-foundry → outerloop → fleet-engineering
 - **Companions**: [harness-foundry](https://github.com/cobusgreyling/harness-foundry), [outerloop](https://github.com/cobusgreyling/outerloop), [goal-engineering](https://github.com/cobusgreyling/goal-engineering)
+- **OpenAI Agents SDK**: https://openai.github.io/openai-agents-python/ — the agent loop standard
+- **A2A protocol**: https://github.com/a2aproject/a2a — agent-to-agent interoperability
+- **ReAct paper**: https://arxiv.org/abs/2210.03629
 
 ### Links to Other Branches
 

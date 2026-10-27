@@ -132,4 +132,30 @@ Log input and output token counts per call for one run. Cost per round should be
 
 ---
 
+**MAF new:** https://github.com/microsoft/agent-framework
+
+---
+
+## ⚠️ Update 10/2026: AutoGen → Microsoft Agent Framework (MAF)
+
+AutoGen has been **archived** and replaced by **Microsoft Agent Framework (MAF)**:
+- AutoGen repo archived — no further development
+- MAF = unification of AutoGen + Semantic Kernel
+- Completely new API: `agents/`, no more `ConversableAgent`
+
+```python
+# MAF new (2025+)
+from agent_framework import ChatAgent
+from agent_framework.openai import OpenAIChatClient
+
+agent = OpenAIChatClient(model_id="gpt-4o").create_agent(
+    name="assistant",
+    instructions="You are a helpful assistant",
+)
+result = await agent.run("Hello!")
+```
+
+**Migrate your project:** https://learn.microsoft.com/en-us/agent-framework/migration-guide/from-autogen/
+**MAF new:** https://github.com/microsoft/agent-framework
+
 *FAQ file riêng — file nguồn không bị sửa. Nguồn: README.md.*

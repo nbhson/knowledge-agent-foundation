@@ -4,28 +4,32 @@ Câu hỏi nào khó hiểu thì đọc `README.md` phần trong ngoặc vuông.
 
 ---
 
-## Q1. PromptFoo, Deepeval, Ragas — chọn cái nào? [→ Tổng Quan Các Công Cụ]
+## Q1. PromptFoo, Deepeval, RAGAS, LangSmith, Giskard — chọn cái nào? [→ Tổng Quan Các Công Cụ]
 
 **Bạn sẽ thấy**
 
-Bạn muốn biết việc đổi prompt từ "bạn là assistant hữu ích" sang "bạn là senior engineer" có thật sự tốt hơn không. Ba công cụ trả lời ba kiểu câu hỏi khác nhau:
+Bạn muốn biết việc đổi prompt từ "bạn là assistant hữu ích" sang "bạn là senior engineer" có thật sự tốt hơn không. Năm công cụ trả lời năm kiểu câu hỏi khác nhau:
 
 | Công cụ | Hỏi được câu nào | Cách dùng |
 |---|---|---|
 | PromptFoo | prompt này có tốt hơn prompt kia không | file cấu hình + so sánh bảng |
 | Deepeval | câu trả lời này có đúng và đủ không | viết test như pytest |
-| Ragas | phần truy xuất tài liệu có tốt không | chỉ dùng cho RAG |
+| RAGAS | phần truy xuất tài liệu có tốt không | chỉ dùng cho RAG |
+| LangSmith | hệ thống đang chạy production có ổn không | tracing + evals trên trace thật |
+| Giskard | model có bias, bịa, hay yếu khi bị tấn công không | scan model + dataset tự động |
 
 **Vì sao**
 
-Vì chúng đo những thứ khác nhau. PromptFoo chạy ở tầng ứng dụng: bạn đưa vào một bộ câu hỏi mẫu, nó chạy hết lên các biến thể prompt và các model khác nhau rồi xếp bảng. Deepeval viết test theo kiểu pytest, dùng các chỉ số có mô hình ngôn ngữ chấm điểm. Ragas chỉ dành cho hệ thống có truy xuất tài liệu, đo ba thứ: câu trả lời có bám đúng tài liệu không, có liên quan câu hỏi không, các đoạn tài liệu lấy ra có đủ và đúng không.
+Vì chúng đo những thứ khác nhau. PromptFoo chạy ở tầng ứng dụng: bạn đưa vào một bộ câu hỏi mẫu, nó chạy hết lên các biến thể prompt và các model khác nhau rồi xếp bảng. Deepeval viết test theo kiểu pytest, dùng các chỉ số có mô hình ngôn ngữ chấm điểm. RAGAS chỉ dành cho hệ thống có truy xuất tài liệu, đo ba thứ: câu trả lời có bám đúng tài liệu không, có liên quan câu hỏi không, các đoạn tài liệu lấy ra có đủ và đúng không. LangSmith gắn với runtime production — nó dùng trace thật để chạy eval, không phải dataset tĩnh. Giskard thì đi từ hướng ngược lại: trước khi chạy production, nó quét sẵn model và dataset để tìm điểm yếu (bias, hallucination, prompt injection).
 
 **Làm gì**
 
 1. Bắt đầu bằng PromptFoo — nhanh nhất để trả lời câu "đổi prompt có tốt hơn không", và nó chạy local.
 2. Chuyển sang Deepeval khi bạn muốn đánh giá nằm trong bộ test tự động, theo kiểu `assert_test`.
-3. Chỉ thêm Ragas khi thật sự dùng RAG; không có truy xuất thì Ragas không có gì để đo.
-4. Dùng cả ba cùng lúc cũng được: PromptFoo cho prompt, Ragas cho phần truy xuất, Deepeval cho kiểm thử định kỳ.
+3. Chỉ thêm RAGAS khi thật sự dùng RAG; không có truy xuất thì RAGAS không có gì để đo.
+4. Thêm LangSmith khi hệ thống đã chạy production và bạn muốn eval dựa trên dữ liệu thật, không phải dataset tự chế.
+5. Dùng Giskard khi cần kiểm định an toàn/bias trước khi deploy, đặc biệt với hệ thống hướng tới người dùng cuối.
+6. Dùng cả năm cùng lúc cũng được: PromptFoo cho prompt, RAGAS cho phần truy xuất, Deepeval cho kiểm thử định kỳ, LangSmith cho production monitoring, Giskard cho scan an toàn.
 
 ```yaml
 tests:

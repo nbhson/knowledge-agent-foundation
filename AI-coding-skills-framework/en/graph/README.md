@@ -214,6 +214,23 @@ Used to answer: "where is this function called?", "what breaks if I change this 
 
 ---
 
+### 5. GraphRAG 2026 — LazyGraphRAG & Cost
+
+**Biggest change 2025-2026:** GraphRAG is no longer enterprise-only. Microsoft released **LazyGraphRAG** (late 2024) solving the cost problem — LLM summarisation deferred to query time, indexing cost equal to vector RAG, ~700× lower query cost than full GraphRAG. Integrated into Microsoft Discovery and Azure Local (2025).
+
+| Variant | Indexing Cost | Quality | Best For |
+|---------|--------------|---------|---------|
+| **GraphRAG** (original) | High ($5-200/document set) | Highest | Global/sensemaking, large corpus |
+| **LazyGraphRAG** | ~Vector RAG (cheap) | Equal to GraphRAG | Large corpus, limited budget |
+| **LightRAG** | ~1/100 GraphRAG | 70-90% of GraphRAG | Incremental update, cost-sensitive |
+| **HippoRAG2** | Very low (20× cheaper) | Good for multi-hop | Token efficiency |
+
+**Benchmark 2025:** GraphRAG-Bench (Microsoft, 06/2025) confirms: single-hop/factoid queries → vanilla RAG wins; multi-hop + global → GraphRAG wins clearly. Gartner named GraphRAG in "Top Trends in D&A for 2026" as the path for complex AI use cases.
+
+> **Ref:** https://microsoft.github.io/graphrag/ | LazyGraphRAG: https://www.microsoft.com/en-us/research/blog/lazygraphrag-setting-a-new-standard-for-quality-and-cost
+
+---
+
 ## References
 
 ### Articles & Sources

@@ -4,11 +4,11 @@ Câu hỏi nào khó hiểu thì đọc `README.md` phần trong ngoặc vuông.
 
 ---
 
-## Q1. Chroma, Pinecone, Qdrant, Weaviate — chọn cái nào? [→ Tổng Quan Các Vector DB]
+## Q1. Chroma, Pinecone, Qdrant, Weaviate, pgvector — chọn cái nào? [→ Tổng Quan Các Vector DB]
 
 **Bạn sẽ thấy**
 
-Bốn lựa chọn, mỗi cái giải quyết một kiểu vấn đề:
+Năm lựa chọn, mỗi cái giải quyết một kiểu vấn đề:
 
 | Tên | Chạy ở đâu | Điểm mạnh | Hợp khi |
 |---|---|---|---|
@@ -16,10 +16,13 @@ Bốn lựa chọn, mỗi cái giải quyết một kiểu vấn đề:
 | Pinecone | cloud | không phải vận hành, có gói miễn phí | số lượng người dùng lớn |
 | Qdrant | local hoặc cloud | lọc theo thuộc tính rất nhanh | cần lọc phức tạp |
 | Weaviate | local hoặc cloud | tìm kiếm lai: vector + từ khoá | cần cả hai kiểu tìm |
+| pgvector | trong Postgres | không thêm hạ tầng, dùng sẵn backup/quyền | dự án đã có Postgres, quy mô vừa |
 
 **Vì sao**
 
-Vì khác biệt thật nằm ở câu hỏi bạn sẽ hỏi thường xuyên. Tìm kiếm ngữ nghĩa dựa trên ý nghĩa thì cả bốn đều làm được. Nhưng nếu câu hỏi của bạn luôn kèm điều kiện lọc — "tài liệu của dự án A, năm 2025, loại đặc tả" — thì Qdrant nhanh hơn hẳn, vì nó lọc trước rồi mới so khớp vector. Nếu bạn cần vừa tìm theo ý nghĩa vừa tìm theo từ khoá chính xác, Weaviate làm việc lai đó sẵn.
+Vì khác biệt thật nằm ở câu hỏi bạn sẽ hỏi thường xuyên. Tìm kiếm ngữ nghĩa dựa trên ý nghĩa thì cả năm đều làm được. Nhưng nếu câu hỏi của bạn luôn kèm điều kiện lọc — "tài liệu của dự án A, năm 2025, loại đặc tả" — thì Qdrant nhanh hơn hẳn, vì nó lọc trước rồi mới so khớp vector. Nếu bạn cần vừa tìm theo ý nghĩa vừa tìm theo từ khoá chính xác, Weaviate làm việc lai đó sẵn. Còn nếu hệ thống đã chạy Postgres, pgvector cho bạn truy xuất ngữ nghĩa mà không thêm một dịch vụ nào phải vận hành.
+
+Về embedding model, bộ ba mới 2026 đáng cân nhắc: **OpenAI text-embedding-3-large**, **BGE-M3** (flag_embedding, chạy được local), **Cohere v4**.
 
 **Làm gì**
 
@@ -27,7 +30,8 @@ Vì khác biệt thật nằm ở câu hỏi bạn sẽ hỏi thường xuyên. 
 2. Xây xong luồng nhớ và truy xuất rồi hãy nghĩ tới chuyện mở rộng.
 3. Lên production với lượng truy vấn lớn thì chuyển sang Pinecone để không phải tự vận hành.
 4. Cần lọc theo thuộc tính nhiều thì chọn Qdrant.
-5. Chỉ chọn Weaviate khi thật sự cần tìm kiếm lai.
+5. Chỉ chọn Weaviate khi thật sự cần tìm kiếm lai hoặc xử lý đa phương thức (text + image).
+6. Đã có Postgres và quy mô vừa → dùng pgvector, đừng thêm hạ tầng mới chỉ vì "vector DB chuyên dụng nghe xịn hơn".
 
 ```python
 import chromadb

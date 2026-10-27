@@ -329,4 +329,24 @@ loop-cli/      → loop gate + worktree isolation for automation (harness/10)
 
 ---
 
+## ⚠️ Update 10/2026: New Frameworks in the Agent Ecosystem
+
+Beyond the 3 frameworks already listed in Group 2 (LangChain, AutoGen, CrewAI), the agent ecosystem has gained new frameworks/protocols since 2025 worth tracking:
+
+| Framework/Protocol | Publisher | Highlights | Link |
+|--------------------|-----------|------------|------|
+| **Microsoft Agent Framework (MAF)** | Microsoft | Unification of AutoGen + Semantic Kernel — **replaces AutoGen** (now archived) | https://github.com/microsoft/agent-framework |
+| **OpenAI Agents SDK** | OpenAI | OpenAI's official agent SDK — tool calling, handoffs, guardrails, tracing | https://openai.github.io/openai-agents-python/ |
+| **Google ADK (Agent Development Kit)** | Google | Framework for building agents compatible with Gemini + Vertex AI, multi-agent support | https://google.github.io/adk-docs/ |
+| **A2A Protocol (Agent2Agent)** | Google → Linux Foundation | Standard protocol for agent-to-agent communication across different frameworks | https://a2a-protocol.org |
+
+**Important note on AutoGen:** The AutoGen repo has been **archived** — Microsoft no longer maintains it. If you are using AutoGen, plan a migration to **Microsoft Agent Framework (MAF)**. See details in [tools/autogen/](autogen/).
+
+### Version Updates for Existing Frameworks
+
+- **LangChain 1.0** (10/2025): `create_agent` is the primary API, LangGraph integrated natively — see [tools/langchain/](langchain/)
+- **CrewAI v1.x** (10/2025+): v1.0.0 released 10/2025, currently v1.15.x — see [tools/crewai/](crewai/)
+- **MCP Spec 2026-07-28**: Streamable HTTP replaces SSE, elicitation, sampling, registry — see [tools/mcp-ecosystem/](mcp-ecosystem/)
+- **Guardrails AI**: validators moved to standard PyPI (7/2026) — see [tools/guardrails/](guardrails/)
+
 *This article is part of the [AI Coding Skills Framework](../..) — the Tools branch*

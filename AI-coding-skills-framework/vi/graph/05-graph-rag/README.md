@@ -674,6 +674,7 @@ def rrf_score(ranked_lists: list[list[str]], k: int = 60) -> dict[str, float]:
 | Variant | Ý tưởng cốt lõi | Mạnh khi | Yếu/giới hạn |
 |---|---|---|---|
 | **GraphRAG (MSFT)** | Index + Leiden communities + LLM summary | Global/sensemaking, multi-doc | Đắt (index tốn token), chậm |
+| **LazyGraphRAG** (MSFT, 2024-2025) | Defer LLM summarisation tới query time | Index rẻ ngang vector RAG, quality ngang GraphRAG, query cost thấp hơn ~700× | Đã tích hợp Microsoft Discovery (2025) |
 | **LightRAG** | Dual-level index (low/high); retrieval theo query; 10x nhanh GraphRAG, 1/3-1/4 cost | Bao phủ retrieval, cost nhỏ | Không làm tốt aggregation global như gốc |
 | **HippoRAG (v2)** | Personalized PageRank trên KG + pairwise lai | Multi-hop, trả lời với **ít token** (20x rẻ hơn) | Phụ thuộc KG chất lượng |
 | **KAG** | KG-augmented generation, semantic reasoning | Cần lý giải, trả lời logic | Cấu hình phức tạp |

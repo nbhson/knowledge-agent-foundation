@@ -175,4 +175,23 @@ task = Task(
 
 ---
 
+## ⚠️ Cập nhật 10/2026: CrewAI v1.x — Phiên Bản Mới Nhất
+
+CrewAI đã phát hành **v1.0.0 (10/2025)** và đạt **v1.15.x (2026)** — nhiều thay đổi đáng chú ý:
+
+| Thay đổi | Chi tiết |
+|----------|----------|
+| **v1.0.0** | Knowledge & guardrail event handling trong Agent, response_format support |
+| **v1.5.0** | Structured outputs, before/after tool call hooks |
+| **v1.14+** | Inline skill definitions, Flow Definition authoring, dynamic LLM model pull |
+| **crewAI CLI** | `crewai run` có cấu hình qua `crew.jsonc` |
+
+**Lưu ý quan trọng:** CrewAI >= 1.0 yêu cầu **Python 3.10 – 3.13**.
+
+```bash
+pip install crewai>=1.0.0
+```
+
+Ref: https://docs.crewai.com/
+
 *Bài viết thuộc [AI Coding Skills Framework](../..) — nhánh Tools — crewai*

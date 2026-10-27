@@ -392,4 +392,36 @@ Mở log ở proxy, gõ một câu hỏi trên giao diện: log phải hiện c�
 
 ---
 
+### Q5. MCP và A2A khác nhau thế nào — và GraphRAG 2026 có gì mới? [→ AGENT_SYSTEM_ARCHITECTURE.md §3.4-3.5 + graph/05-graph-rag]
+
+**Bạn sẽ thấy**
+
+Bạn đọc tài liệu thấy hai chữ MCP và A2A, rồi đọc thêm graph thấy thêm GraphRAG, LazyGraphRAG, LightRAG — phân vân không biết chúng liên quan nhau thế nào.
+
+**Vì sao**
+
+Ba khái niệm giải quyết ba bài toán khác nhau:
+
+| Giao thức / Công nghệ | Ai nói chuyện với ai | Chuẩn hoá cái gì |
+|----------------------|---------------------|-----------------|
+| **MCP** (Model Context Protocol) | Agent → Tools / Data / APIs | "Agent cần làm gì" — tools, resources, prompts |
+| **A2A** (Agent-to-Agent, Linux Foundation 2025) | Agent → Agent (khác framework/vendor) | "Agent cần trao đổi với ai" — handoffs, collaboration, kết quả |
+| **GraphRAG** | Agent → Knowledge Graph | "Agent hỏi gì" — truy vấn multi-hop, global, có citation |
+
+**MCP + A2A = bổ sung nhau:** Agent chạy cả hai: gọi MCP để dùng tool, gọi A2A để delegate cho agent khác.
+
+**Tin GraphRAG mới 2025-2026:**
+- **LazyGraphRAG** (Microsoft, 2024-2025): giảm cost indexing xuống bằng vector RAG, quality ngang full GraphRAG, query rẻ hơn ~700×. Tích hợp Microsoft Discovery.
+- **LightRAG** (EMNLP 2025): dual-layer graph + vector, incremental update.
+- **Gartner 2026**: GraphRAG trong "Top Trends in D&A" cho complex AI use cases.
+- **Knowledge Graph Market**: $1.48B (2025) → $2.04B (2026).
+
+**Làm gì**
+
+1. MCP là bắt buộc — bất kỳ agent nào cũng cần gọi tools (xem `06-decide-tools-mcp/`).
+2. A2A khi cần ghép agent từ **nhiều framework** (Claude + LangGraph + ADK) — xem `09-multi-agent/`.
+3. GraphRAG khi cần trả lời câu hỏi **multi-hop** hoặc **global aggregation** — xem `05-graph-rag/`.
+
+---
+
 *FAQ file riêng — file nguồn không bị sửa. Nguồn: AI_AGENT_FRAMEWORK.md, GRAPH_ENGINEERING.md, HARNESS_ENGINEERING.md.*

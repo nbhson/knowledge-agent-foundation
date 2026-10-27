@@ -191,4 +191,17 @@ registry.register(ToolDefinition(
 
 ---
 
+## ⚠️ Update 10/2026: MCP Spec 2026-07-28
+
+Latest MCP spec (2026-07-28) has major changes:
+
+- **Streamable HTTP replaces SSE:** HTTP+SSE (2024-11-05) deprecated. Streamable HTTP is now the standard transport — stateless, request/response over HTTP POST.
+- **Stateless (handshake removed):** No more `initialize`/`notifications/initialized` handshake. Servers no longer maintain sessions.
+- **Protocol version header required:** Every HTTP request must include `MCP-Protocol-Version: 2026-07-28`.
+- **Elicitation:** Clients can embed user input requests inside tool calls.
+- **Sampling:** Servers can request the client to generate an LLM response (server-side sampling).
+- **Registry spec:** MCP server discovery via a centralized registry.
+
+Ref: https://modelcontextprotocol.io/specification/2026-07-28/
+
 *This article is part of the [AI Coding Skills Framework](../..) — the Tools branch — MCP Ecosystem*

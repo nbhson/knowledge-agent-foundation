@@ -61,7 +61,8 @@ This means: **agent system architecture is NOT about choosing the best model**, 
 |------|-------|----------------------------|
 | 12/2024 | Anthropic — *Building Effective Agents* | Standardized vocabulary: workflows vs agents, 5 workflow patterns |
 | 12/2024 | MCP launches | Standardized agent-tool ("USB-C for AI") |
-| 2025 | Google donates A2A to Linux Foundation | Standardized agent-agent |
+| 04/2025 | Google launches **A2A** protocol (50+ partners) + **Google ADK** (Agent Development Kit) | Standardized agent-agent; Google's open-source agent-building SDK |
+| 06/2025 | Google donates A2A to Linux Foundation (IBM ACP merges into A2A 08/2025) | Standardized agent-agent |
 | 06/2025 | Anthropic multi-agent research system | Orchestrator-worker production: +90.2% vs single agent (research eval) |
 | 09/2025 | Context engineering becomes a core discipline | Compaction, note-taking, sub-agent = 3 context levers |
 | 10/2025 | Agent Skills (open standard 12/2025) | Package expertise as SKILL.md — progressive disclosure |
@@ -456,6 +457,16 @@ Query -> [Hybrid Search] -> [Context Assembly] -> [Agent Loop] -> Answer
 
 **Advice from Anthropic:** Start with the direct LLM API — many patterns only need a few lines of code. Use a framework only when you understand the underlying code; wrong assumptions about abstractions are the most common source of bugs.
 
+**SDK naming notes (2025-2026):**
+- **Claude Agent SDK** = **Claude Code SDK** renamed (Anthropic, 09/2025) — same SDK, used for both Claude Code (IDE) and custom agents.
+- **OpenAI Agents SDK** = evolution of Swarm (experiment 2024) → production-grade SDK v2 (2025-2026).
+- **Google ADK** (Agent Development Kit): open-source, GA 04/2025, used internally for Gemini Agentspace + Vertex AI Agent Builder.
+
+**10/2026 Verification — new trends:**
+- **LazyGraphRAG** (Microsoft, late 2024 → production 2025): LLM summarisation deferred to query time → indexing cost equal to vector RAG, query quality equal to full GraphRAG, ~700× lower query cost. Integrated into Microsoft Discovery (2025) and Azure Local.
+- **Gartner 2026**: GraphRAG named in "Top Trends in D&A for 2026" as the path for complex cases where high-accuracy RAG fails.
+- **Agent Control Planes**: IBM predicts 2026 will be the year agent control planes and multi-agent dashboards become production reality.
+
 **MCP + A2A = standardization combo (2026):**
 
 ```
@@ -606,11 +617,11 @@ AGENT_SYSTEM_ARCHITECTURE.md (synthesis + 2026 update)
 
 | SDK | Strengths |
 |-----|-----------|
-| [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) | Frontier models, Skills, long-running |
+| [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) | Frontier models, Skills, long-running (formerly Claude Code SDK, renamed 09/2025) |
 | [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/) | Sandbox agents, handoffs, sessions, guardrails, tracing |
 | [LangGraph](https://langchain-ai.github.io/langgraph/) | Full flexibility, state machine, production |
 | [CrewAI](https://docs.crewai.com/) | Fast prototyping, roles + processes |
-| [Google ADK](https://adk.dev/) | Google ecosystem, Vertex AI |
+| [Google ADK](https://adk.dev/) | Google ecosystem, Vertex AI (GA 04/2025, open-source) |
 | [AWS Strands](https://strandsagents.com/latest/) | AWS + Bedrock ecosystem |
 
 ### Blogs & Key Principles

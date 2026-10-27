@@ -81,6 +81,15 @@ Start with **Phase 1** (Core Skills) and progress to **Phase 6** (Evaluation). E
 > Engineering, while harness module `12` is Sandbox Execution. Loop Engineering
 > lives in the top-level `loop/` directory, not in `harness/`.
 
+### Standard Protocols & SDKs (2026)
+
+> **Summary (details in [AGENT_SYSTEM_ARCHITECTURE.md](AGENT_SYSTEM_ARCHITECTURE.md)):**
+> - **MCP** (Model Context Protocol, spec `2026-07-28`) — agent↔tool. Every tool-calling module should go through MCP.
+> - **A2A** (Agent-to-Agent, Linux Foundation — launched by Google 04/2025, donated 06/2025) — agent↔agent handoffs and collaboration.
+> - **Agent Skills** (open standard at [agentskills.io](https://agentskills.io) since 12/2025) — package expertise as SKILL.md.
+> - **Mainstream SDKs**: Claude Agent SDK (formerly Claude Code SDK), OpenAI Agents SDK, Google ADK (GA 04/2025), LangGraph, CrewAI, AWS Strands.
+> - **GraphRAG 2026**: LazyGraphRAG + LightRAG cut costs by ~700× vs original GraphRAG (details in [GRAPH_ENGINEERING.md](GRAPH_ENGINEERING.md) and `graph/05-graph-rag/`).
+
 ---
 
 ## Learning Structure

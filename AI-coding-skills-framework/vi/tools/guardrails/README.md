@@ -217,4 +217,27 @@ registry.register(ToolDefinition(
 
 ---
 
+## ⚠️ Cập nhật 10/2026: Guardrails AI Hub — Thay Đổi Lớn 2026
+
+**Guardrails AI** vẫn phát triển tích cực, nhưng có 2 thay đổi quan trọng:
+
+1. **Validators chuyển sang PyPI chuẩn (7/2026):**Validators không còn qua Guardrails Hub hosted nữa — giờ cài trực tiếp bằng `pip`. Remote inferencing đã ngừng.
+
+```python
+# Cũ (deprecated — Hub hosted):
+from guardrails.hub import SomeValidator  # không còn hoạt động
+
+# Mới (7/2026+):
+pip install guardrails-ai
+# Validators import từ package chuẩn
+```
+
+2. **PyPI 0.6.x vẫn active** — framework core vẫn dùng được. Nếu cần thay thế nhẹ hơn:
+
+| Thay thế | Lý do | Link |
+|----------|-------|------|
+| **Pydantic Validators** | Nhẹ, built-in Python, không cần thêm dependency | https://docs.pydantic.dev/ |
+| **NeMo Guardrails** | NVIDIA, open-source, active development | https://github.com/NVIDIA/NeMo-Guardrails |
+| **Llama Guard** | Meta, model-based classifier, chạy local | https://ai.meta.com/research/llama-guard |
+
 *Bài viết thuộc [AI Coding Skills Framework](../..) — nhánh Tools — guardrails*

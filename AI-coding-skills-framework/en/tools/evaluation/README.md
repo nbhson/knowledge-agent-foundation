@@ -48,7 +48,11 @@ You change the system prompt from "you are a helpful assistant" to "you are a se
 |------|--------------|-------------------|
 | **PromptFoo** | Comprehensive LLM app eval | Config-driven, datasets + assertions, runs locally |
 | **Deepeval** | Eval pipelines + unit tests | Pytest-style, LLM-as-judge metrics |
-| **Ragas** | RAG-specific evaluation | Measures faithfulness, relevancy, context precision |
+| **RAGAS** | RAG-specific evaluation | Measures faithfulness, relevancy, context precision |
+| **LangSmith** | LLM production monitoring | Tracing + evals + datasets, LangChain/Anthropic/OpenAI integration |
+| **Giskard** | Open-source ML/LLM testing | Detects bias, hallucination, robustness across models |
+
+> **2025-2026 note:** Ragas is now officially **RAGAS** (v2+). LangSmith is the go-to for production monitoring with Anthropic or OpenAI SDK. Giskard is especially useful for open-source, vendor-neutral LLM quality testing.
 
 ### PromptFoo — Config-Driven Eval
 
@@ -168,7 +172,9 @@ New2:      "You always answer with as much detail as possible" → accuracy 74% 
 
 - **PromptFoo**: https://www.promptfoo.dev
 - **Deepeval**: https://github.com/confident-ai/deepeval
-- **Ragas**: https://docs.ragas.io
+- **RAGAS**: https://docs.ragas.io
+- **LangSmith**: https://smith.langchain.com
+- **Giskard**: https://www.giskard.ai
 - **LLM-as-judge paper**: https://arxiv.org/abs/2306.05685
 
 ### Links to Other Branches

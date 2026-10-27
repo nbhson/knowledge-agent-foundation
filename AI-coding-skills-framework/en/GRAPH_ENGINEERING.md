@@ -478,6 +478,30 @@ my-graph-project/
 
 ## 11. The Future of Graph Engineering
 
+## GraphRAG — 2026 Update
+
+> Microsoft GraphRAG (2024-2025): uses knowledge graphs to enhance RAG. Complex (multi-hop) queries outperform vector-only RAG.
+> Ref: https://microsoft.github.io/graphrag/
+
+### Key Developments 2025-2026:
+
+| Year | Development | Details |
+|------|------------|---------|
+| 2024-2025 | **LazyGraphRAG** (Microsoft) | LLM summarisation deferred to query time → indexing cost equal to vector RAG, quality equal to full GraphRAG, ~700× lower query cost. Integrated into Microsoft Discovery (2025) and Azure Local. |
+| 2025 | **LightRAG** (HKUDS, EMNLP 2025) | Dual-layer graph + vector index, incremental update instead of full re-index, cost ~1/100 of full GraphRAG. |
+| 2025 | **GraphRAG-Bench** (Microsoft, 06/2025) | Systematic benchmark: single-hop vanilla RAG wins; multi-hop and global GraphRAG wins clearly. |
+| 2026 | **Gartner** "Top Trends in D&A 2026" | GraphRAG named as the path for complex cases where high-accuracy vanilla RAG falls short. |
+| 2026 | **Knowledge Graph Market** | $1.48B (2025) → $2.04B (2026). GraphRAG shifting from "enterprise luxury" → production baseline. |
+
+### When to use GraphRAG vs LazyGraphRAG vs LightRAG:
+
+| Scenario | Recommendation |
+|----------|---------------|
+| Need global/sensemaking queries across entire corpus | Full GraphRAG |
+| Very large corpus, need cheap indexing, complex queries | LazyGraphRAG or LightRAG |
+| Need incremental updates (documents changing continuously) | LightRAG |
+| Only single-hop, factoid queries | Vanilla RAG (no graph needed) |
+
 ### 11.1. 2026–2028 Trends
 
 | Year | Trend |

@@ -179,4 +179,15 @@ while True:
 
 ---
 
+## ⚠️ Cập nhật 10/2026: LangChain 1.0 (10/2025)
+
+LangChain 1.0 phát hành 10/2025 với thay đổi lớn:
+- `create_agent` là API chính (thay nhiều chain utilities)
+- LangGraph tích hợp sẵn cho stateful workflows
+- LCEL vẫn hoạt động nhưng được khuyến nghị dùng qua agents
+- Package mới: `langchain` core tách khỏi `langchain-community`
+- Python 3.10+ bắt buộc (3.9 EOL tháng 10/2025)
+
+Migration: https://docs.langchain.com/oss/python/langchain/migration
+
 *Bài viết thuộc [AI Coding Skills Framework](../..) — nhánh Tools — langchain*

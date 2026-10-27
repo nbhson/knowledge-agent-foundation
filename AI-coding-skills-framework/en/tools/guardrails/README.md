@@ -217,4 +217,27 @@ registry.register(ToolDefinition(
 
 ---
 
+## ⚠️ Update 10/2026: Guardrails AI Hub — Major Changes 2026
+
+**Guardrails AI** is still actively maintained, but two significant changes occurred:
+
+1. **Validators moved to standard PyPI (7/2026):** Validators no longer come via the hosted Guardrails Hub — install directly with `pip`. Remote inferencing has been discontinued.
+
+```python
+# Old (deprecated — Hub hosted):
+from guardrails.hub import SomeValidator  # no longer works
+
+# New (7/2026+):
+pip install guardrails-ai
+# Validators imported from standard package
+```
+
+2. **PyPI 0.6.x still active** — the framework core still works. For lighter alternatives:
+
+| Alternative | Why | Link |
+|-------------|-----|------|
+| **Pydantic Validators** | Lightweight, built-in Python, no extra dependency | https://docs.pydantic.dev/ |
+| **NeMo Guardrails** | NVIDIA, open-source, active development | https://github.com/NVIDIA/NeMo-Guardrails |
+| **Llama Guard** | Meta, model-based classifier, runs locally | https://ai.meta.com/research/llama-guard |
+
 *This article is part of the [AI Coding Skills Framework](../..) — the Tools branch — guardrails*

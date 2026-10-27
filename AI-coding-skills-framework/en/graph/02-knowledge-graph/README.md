@@ -788,4 +788,19 @@ def agent_build_chunk(chunk_text: str, cypher_exec) -> list[str]:
 
 ---
 
+## GraphRAG — 2026 Update
+
+Microsoft GraphRAG (2024-2025): uses knowledge graphs to enhance RAG. Complex (multi-hop) queries outperform vector-only RAG.
+
+**New 2025-2026 developments:**
+- **LazyGraphRAG** (Microsoft, late 2024): defers LLM summarisation to query time — indexing cost equal to vector RAG, quality equal to full GraphRAG, ~700× lower query cost. Integrated into Microsoft Discovery (2025) and Azure Local.
+- **LightRAG** (HKUDS, EMNLP 2025): dual-layer graph + vector, incremental update instead of full re-index.
+- **GraphRAG-Bench** (Microsoft, 06/2025): multi-hop + global queries GraphRAG wins; single-hop factoid vanilla RAG wins.
+- **Gartner (2026)**: GraphRAG in "Top Trends in D&A for 2026" for complex cases where high-accuracy RAG falls short.
+- **Knowledge Graph Market**: $1.48B (2025) → $2.04B (2026). GraphRAG shifting from "enterprise luxury" → production baseline.
+
+Ref: https://microsoft.github.io/graphrag/
+
+---
+
 *Next: [03 — Graph Storage & Query](../03-graph-storage/)*

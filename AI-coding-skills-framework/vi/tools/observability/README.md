@@ -66,6 +66,7 @@ ToolDefinition đã có sẵn metrics tracking (harness/06):
 | Công cụ | Nhà phát hành | Đặc điểm nổi bật | Best for |
 |---------|--------------|------------------|----------|
 | **LangSmith** | LangChain | Tracing + evals + monitoring, tích hợp LangChain tự nhiên | LangChain stack, full lifecycle |
+| **Langfuse** | Langfuse (open source) | Open-source tracing + agent graphs, OTel export, self-host được | Self-host, privacy-sensitive, đa framework |
 | **Helicone** | Helicone | Proxy LLM API, cost tracking, analytics | Đa framework, không cần sửa code |
 | **OpenLLMetry** | Traceloop | OpenTelemetry-based, vendor-neutral | Standardized, multi-provider |
 | **Weights & Biases** | W&B | Experiment tracking, LLM evals | ML nghiên cứu, experiment log |
@@ -108,6 +109,17 @@ Traceloop.init(app_name="my_harness")
 # Mọi framework (LangChain, LlamaIndex, OpenAI SDK...) tự động trace
 # → Export sang Jaeger, Grafana, Datadog, ...
 ```
+
+## OpenTelemetry GenAI Semantic Conventions (2025)
+
+OTel GenAI spec chuẩn hóa traces cho LLM calls:
+- span.name: "genai.*"
+- genai.* attributes (genai.prompt_tokens, genai.completion_tokens, genai.model)
+- Langfuse hỗ trợ OTel export từ LangChain/LangGraph
+
+Ref: https://opentelemetry.io/docs/specs/semconv/gen-ai/
+
+Vì sao quan trọng: trước 2025, mỗi vendor tự đặt tên span/attribute riêng nên trace không portable giữa các backend. Với GenAI semantic conventions, cùng một trace đọc được ở Jaeger, Grafana, Datadog hay Langfuse — đổi backend quan sát không phải viết lại instrumentation. OpenLLMetry và Langfuse đều phát thẳng theo chuẩn này.
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 
@@ -169,9 +181,11 @@ tool.update_metrics(latency_ms=1200, success=True)  # ghi nhận khi gọi
 ## Tài Liệu Tham Khảo
 
 - **LangSmith**: https://smith.langchain.com
+- **Langfuse**: https://langfuse.com
 - **Helicone**: https://www.helicone.ai
 - **OpenLLMetry**: https://github.com/traceloop/openllmetry
 - **Weights & Biases**: https://wandb.ai
+- **OTel GenAI Semantic Conventions**: https://opentelemetry.io/docs/specs/semconv/gen-ai/
 
 ### Liên Kết Sang Nhánh Khác
 

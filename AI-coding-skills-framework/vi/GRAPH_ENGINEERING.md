@@ -478,7 +478,31 @@ my-graph-project/
 
 ## 11. Tương Lai Của Graph Engineering
 
-### 11.1. Xu Hướng 2026-2028
+### 11.1. Xu Hướng 2025-2028
+
+## GraphRAG — Cập nhật 2026
+
+> Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query phức tạp (multi-hop) tốt hơn vector-only RAG.
+> Ref: https://microsoft.github.io/graphrag/
+
+### Developments quan trọng 2025-2026:
+
+| Năm | Phát triển | Chi tiết |
+|-----|-----------|---------|
+| 2024-2025 | **LazyGraphRAG** (Microsoft) | LLM summarisation defer tới query time → indexing cost ngang vector RAG, quality ngang full GraphRAG, query cost thấp hơn ~700×. Đã tích hợp Microsoft Discovery (2025) và Azure Local. |
+| 2025 | **LightRAG** (HKUDS, EMNLP 2025) | Dual-layer graph + vector index, incremental update thay vì re-index toàn bộ, cost ~1/100 full GraphRAG. |
+| 2025 | **GraphRAG-Bench** (Microsoft, 06/2025) | Benchmark hệ thống: single-hop vanilla RAG thắng; multi-hop và global GraphRAG thắng rõ. |
+| 2026 | **Gartner** "Top Trends in D&A 2026" | GraphRAG được nêu như path cho complex cases mà high-accuracy RAG thuần không đủ. |
+| 2026 | **Knowledge Graph Market** | 1.48 tỷ USD (2025) → 2.04 tỷ USD (2026). GraphRAG chuyển từ "enterprise luxury" → baseline production. |
+
+### Khi nào dùng GraphRAG vs LazyGraphRAG vs LightRAG:
+
+| Trường hợp | Khuyến nghị |
+|-----------|-------------|
+| Cần global/sensemaking query trên toàn bộ corpus | GraphRAG nguyên gốc |
+| Corpus rất lớn, cần index rẻ, query phức tạp | LazyGraphRAG hoặc LightRAG |
+| Cần incremental update (document thay đổi liên tục) | LightRAG |
+| Chỉ cần single-hop, factoid queries | Vanilla RAG (không cần graph) |
 
 | Năm | Xu hướng |
 |-----|---------|

@@ -333,4 +333,24 @@ Và đây là con số đo thực tế khi cho RTK ra tay gọn bớt output —
 
 ---
 
+## ⚠️ Cập nhật 10/2026: Frameworks Mới Trong Hệ Sinh Thái Agent
+
+Ngoài 3 framework đã liệt kê ở Nhóm 2 (LangChain, AutoGen, CrewAI), hệ sinh thái agent từ 2025 có thêm các framework/protocol mới đáng theo dõi:
+
+| Framework/Protocol | Nhà phát hành | Đặc điểm | Liên kết |
+|--------------------|--------------|----------|----------|
+| **Microsoft Agent Framework (MAF)** | Microsoft | Sự hợp nhất AutoGen + Semantic Kernel — **thay thế AutoGen** (đã archive) | https://github.com/microsoft/agent-framework |
+| **OpenAI Agents SDK** | OpenAI | SDK chính thức của OpenAI cho agent — tool calling, handoffs, guardrails, tracing | https://openai.github.io/openai-agents-python/ |
+| **Google ADK (Agent Development Kit)** | Google | Framework xây agent tương thích Gemini + Vertex AI, hỗ trợ multi-agent | https://google.github.io/adk-docs/ |
+| **A2A Protocol (Agent2Agent)** | Google → Linux Foundation | Protocol chuẩn cho agent-to-agent giao tiếp giữa các framework khác nhau | https://a2a-protocol.org |
+
+**Lưu ý quan trọng về AutoGen:** Repo AutoGen đã bị **archive** — Microsoft không còn maintain. Nếu đang dùng AutoGen, hãy lên kế hoạch migrate sang **Microsoft Agent Framework (MAF)**. Xem chi tiết tại [tools/autogen/](autogen/).
+
+### Cập Nhật Version Các Framework Hiện Có
+
+- **LangChain 1.0** (10/2025): `create_agent` là API chính, LangGraph tích hợp sẵn — xem [tools/langchain/](langchain/)
+- **CrewAI v1.x** (10/2025+): v1.0.0 phát hành 10/2025, hiện tại v1.15.x — xem [tools/crewai/](crewai/)
+- **MCP Spec 2026-07-28**: Streamable HTTP thay SSE, elicitation, sampling, registry — xem [tools/mcp-ecosystem/](mcp-ecosystem/)
+- **Guardrails AI**: validators chuyển sang PyPI chuẩn (7/2026) — xem [tools/guardrails/](guardrails/)
+
 *Bài viết thuộc [AI Coding Skills Framework](../..) — nhánh Tools*

@@ -214,6 +214,23 @@ Mấy câu kiểu "hàm này được gọi ở chỗ nào?", "sửa file này t
 
 ---
 
+### 5. GraphRAG 2026 — LazyGraphRAG & Chi Phí
+
+**Thay đổi lớn nhất 2025-2026:** GraphRAG không còn chỉ dành cho enterprise lớn nữa. Microsoft ra mắt **LazyGraphRAG** (cuối 2024) giải quyết bài toán cost cũ — LLM summarisation được defer tới query time, indexing cost ngang vector RAG, query cost thấp hơn ~700× so với full GraphRAG. Đã tích hợp vào Microsoft Discovery và Azure Local (2025).
+
+| Variant | Chi phí index | Chất lượng | Phù hợp |
+|---------|--------------|-----------|---------|
+| **GraphRAG** (gốc) | Cao ($5-200/document set) | Cao nhất | Global/sensemaking, corpus lớn |
+| **LazyGraphRAG** | ~Vector RAG (rẻ) | Ngang GraphRAG | Corpus lớn, budget hạn chế |
+| **LightRAG** | ~1/100 GraphRAG | 70-90% GraphRAG | Incremental update, cost-sensitive |
+| **HippoRAG2** | Rất thấp (20× rẻ hơn) | Tốt cho multi-hop | Token efficiency |
+
+**Benchmark 2025:** GraphRAG-Bench (Microsoft, 06/2025) xác nhận: single-hop/factoid queries → vanilla RAG thắng; multi-hop + global → GraphRAG thắng rõ. Gartner đưa GraphRAG vào "Top Trends in D&A for 2026" như path cho complex AI use cases.
+
+> **Ref:** https://microsoft.github.io/graphrag/ | LazyGraphRAG: https://www.microsoft.com/en-us/research/blog/lazygraphrag-setting-a-new-standard-for-quality-and-cost
+
+---
+
 ## Tài Liệu Tham Khảo
 
 ### Bài Viết & Nguồn

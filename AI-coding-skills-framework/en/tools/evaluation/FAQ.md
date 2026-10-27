@@ -37,11 +37,11 @@ Run `promptfoo eval` then `promptfoo view`. The comparison table gives one accur
 
 ---
 
-## Q2. Which tool fits — PromptFoo, Deepeval or Ragas? [→ Overview of the Tools]
+## Q2. Which tool fits — PromptFoo, Deepeval, RAGAS, LangSmith or Giskard? [→ Overview of the Tools]
 
 **What you see**
 
-Three tools, three shapes. You cannot tell whether Ragas works on a non-RAG agent, or why Deepeval looks like a test framework.
+Five tools, five shapes. You cannot tell whether RAGAS works on a non-RAG agent, or why LangSmith needs a production trace, or what Giskard actually scans.
 
 **Why**
 
@@ -51,13 +51,17 @@ They answer different questions.
 |---|---|---|
 | PromptFoo | whole-app eval from a YAML file | prompt and model A/B tests, runs locally |
 | Deepeval | eval as unit tests, "LLM as judge" metrics | teams already living in pytest |
-| Ragas | retrieval quality (RAG) | faithfulness, answer relevancy, context precision |
+| RAGAS | retrieval quality (RAG) | faithfulness, answer relevancy, context precision |
+| LangSmith | production LLM monitoring | eval on real traces, dataset curation |
+| Giskard | open-source ML/LLM testing | bias detection, hallucination, robustness |
 
 **What to do**
 
 1. Start with PromptFoo for anything you can express as a text file — fastest feedback.
 2. Switch to Deepeval when you want eval to run as part of the test suite.
-3. Add Ragas only when the agent retrieves documents. It measures the retrieval step, not the answer step.
+3. Add RAGAS only when the agent retrieves documents. It measures the retrieval step, not the answer step.
+4. Add LangSmith when the system runs in production and you want to eval on real traces, not synthetic datasets.
+5. Add Giskard when you need pre-deployment safety checks — bias, hallucination, prompt injection robustness.
 
 ```python
 from ragas import evaluate
@@ -67,7 +71,7 @@ results = evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_pre
 
 **Verify**
 
-A RAG run reports all three metrics separately. If you only care about the final answer, PromptFoo already covers it and Ragas is extra cost.
+A RAG run reports all three metrics separately. If you only care about the final answer, PromptFoo already covers it and RAGAS is extra cost. LangSmith's evals run on the trace timeline, so you see per-session metrics. Giskard produces a scan report with risk categories before you ship.
 
 ---
 

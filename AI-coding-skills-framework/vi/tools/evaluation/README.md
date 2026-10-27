@@ -48,7 +48,11 @@ Hãy thử thế này: bạn đổi prompt system từ "bạn là assistant hữ
 |---------|---------------|------------------|
 | **PromptFoo** | Eval LLM apps toàn diện | Config-driven, dataset + assertions, chạy local |
 | **Deepeval** | Eval pipeline + unit tests | Pytest-style, LLM-as-judge metrics |
-| **Ragas** | RAG-specific evaluation | Đo faithfulness, relevancy, context precision |
+| **RAGAS** | RAG-specific evaluation | Đo faithfulness, relevancy, context precision |
+| **LangSmith** | Production monitoring cho LLM | Tracing + evals + datasets, tích hợp LangChain/Anthropic/OpenAI |
+| **Giskard** | Open-source ML/LLM testing | Phát hiện bias, hallucination, robustness của model |
+
+> **2025-2026 note:** Ragas giờ gọi là **RAGAS** (v2+). LangSmith là lựa chọn hàng đầu cho monitoring production khi dùng Anthropic hoặc OpenAI SDK. Giskard đặc biệt hữu ích khi cần open-source và không muốn phụ thuộc vendor.
 
 ### PromptFoo — Config-Driven Eval
 
@@ -168,7 +172,9 @@ New2:      "Bạn luôn trả lời chi tiết nhất có thể" → accuracy 74
 
 - **PromptFoo**: https://www.promptfoo.dev
 - **Deepeval**: https://github.com/confident-ai/deepeval
-- **Ragas**: https://docs.ragas.io
+- **RAGAS**: https://docs.ragas.io
+- **LangSmith**: https://smith.langchain.com
+- **Giskard**: https://www.giskard.ai
 - **LLM-as-judge paper**: https://arxiv.org/abs/2306.05685
 
 ### Liên Kết Sang Nhánh Khác

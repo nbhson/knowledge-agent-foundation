@@ -674,6 +674,7 @@ def rrf_score(ranked_lists: list[list[str]], k: int = 60) -> dict[str, float]:
 | Variant | Core idea | Strong when | Weakness/limits |
 |---|---|---|---|
 | **GraphRAG (MSFT)** | Index + Leiden communities + LLM summaries | Global/sensemaking, multi-doc | Expensive (indexing costs tokens), slow |
+| **LazyGraphRAG** (MSFT, 2024-2025) | Defers LLM summarisation to query time | Indexing cost equal to vector RAG, quality equal to GraphRAG, ~700× lower query cost | Integrated into Microsoft Discovery (2025) |
 | **LightRAG** | Dual-level index (low/high); retrieval per query; 10× faster than GraphRAG, 1/3–1/4 the cost | Retrieval coverage, low cost | Not as good at global aggregation as the original |
 | **HippoRAG (v2)** | Personalized PageRank on the KG + pairwise hybrid | Multi-hop, answers with **fewer tokens** (20× cheaper) | Depends on KG quality |
 | **KAG** | KG-augmented generation, semantic reasoning | When explanation/logic answers are needed | Complex configuration |

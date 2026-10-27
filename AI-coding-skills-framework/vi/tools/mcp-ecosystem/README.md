@@ -191,4 +191,17 @@ registry.register(ToolDefinition(
 
 ---
 
+## ⚠️ Cập nhật 10/2026: MCP Spec 2026-07-28
+
+Spec MCP mới nhất (2026-07-28) có thay đổi lớn:
+
+- **Streamable HTTP thay SSE:** HTTP+SSE (2024-11-05) deprecated. Streamable HTTP là transport chuẩn — stateless, request/response trên HTTP POST.
+- **Stateless (bỏ handshake):** Không còn `initialize`/`notifications/initialized` handshake. Server không dùng session nữa.
+- **Protocol version header bắt buộc:** Mọi request HTTP phải có header `MCP-Protocol-Version: 2026-07-28`.
+- **Elicitation:** Client có thể gửi request cho user input nhúng trong tool call.
+- **Sampling:** Server có thể yêu cầu client tạo LLM response (server-side sampling).
+- **Registry spec:** Danh sách MCP servers có thể discover qua centralized registry.
+
+Ref: https://modelcontextprotocol.io/specification/2026-07-28/
+
 *Bài viết thuộc [AI Coding Skills Framework](../..) — nhánh Tools — MCP Ecosystem*

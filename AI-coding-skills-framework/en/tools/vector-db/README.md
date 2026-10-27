@@ -62,6 +62,20 @@ In harness/01:
 | **Qdrant** | Open-source + Cloud | Rust core, semantic + metadata filtering, very fast | Complex filtering, production |
 | **Weaviate** | Open-source + Cloud | GraphQL native, hybrid search (vector + keyword) | Hybrid search, flexibility |
 
+## Vector DB Landscape 2025-2026
+
+| DB | Traits | Good for |
+|----|---------|--------|
+| Qdrant | Open source, Rust, hybrid search | Self-hosted, high performance |
+| pgvector | Postgres extension | Small-medium scale, simple setup |
+| Pinecone | Cloud-native, managed | Enterprise, managed infra |
+| Weaviate | Open source, hybrid search | Multimodal (text+image) |
+| Chroma | Local/embedded | Prototyping, local dev |
+
+New embedding models (2026): OpenAI text-embedding-3-large, BGE-M3 (flag_embedding), Cohere v4.
+
+> **A note on pgvector:** if your project already runs Postgres, `pgvector` is usually the lowest-friction choice — no new infrastructure, backups and permissions follow the database you already have. Its only limit is that at very large scale, raw speed trails dedicated engines like Qdrant or Pinecone.
+
 ### Chroma — Quick Start (Local)
 
 ```python
@@ -163,6 +177,8 @@ HARNESS_ENGINEERING.md line 1954:
 - **Pinecone**: https://www.pinecone.io
 - **Qdrant**: https://qdrant.tech
 - **Weaviate**: https://weaviate.io
+- **pgvector**: https://github.com/pgvector/pgvector
+- **BGE-M3**: https://huggingface.co/BAAI/bge-m3
 - **HNSW index paper**: https://arxiv.org/abs/1603.09320
 
 ### Links to Other Branches

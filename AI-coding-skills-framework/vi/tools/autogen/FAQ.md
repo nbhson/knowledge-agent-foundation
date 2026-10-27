@@ -156,4 +156,30 @@ Cố tình cho agent chạy `rm -rf` trong thư mục làm việc và `printenv`
 
 ---
 
+**MAF mới:** https://github.com/microsoft/agent-framework
+
+---
+
+## ⚠️ Cập nhật 10/2026: AutoGen → Microsoft Agent Framework (MAF)
+
+AutoGen đã được **archive** và thay thế bởi **Microsoft Agent Framework (MAF)**:
+- Repo AutoGen archived — không phát triển thêm
+- MAF = sự hợp nhất AutoGen + Semantic Kernel
+- API hoàn toàn mới: `agents/`, không còn `ConversableAgent`
+
+```python
+# MAF mới (2025+)
+from agent_framework import ChatAgent
+from agent_framework.openai import OpenAIChatClient
+
+agent = OpenAIChatClient(model_id="gpt-4o").create_agent(
+    name="assistant",
+    instructions="You are a helpful assistant",
+)
+result = await agent.run("Hello!")
+```
+
+**Di chuyển project cũ:** https://learn.microsoft.com/en-us/agent-framework/migration-guide/from-autogen/
+**MAF mới:** https://github.com/microsoft/agent-framework
+
 *FAQ file riêng — file nguồn không bị sửa. Nguồn: README.md.*

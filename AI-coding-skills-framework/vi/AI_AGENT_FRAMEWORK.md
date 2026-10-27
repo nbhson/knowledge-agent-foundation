@@ -81,6 +81,15 @@ Bắt đầu từ **Phase 1** (Core Skills) rồi học dần lên **Phase 6** (
 > trong khi module harness `12` là Sandbox Execution. Loop Engineering nằm ở
 > thư mục `loop/` cấp cao nhất, không nằm trong `harness/`.
 
+### Giao thức & SDK chuẩn (2026)
+
+> **Tóm tắt nhanh (chi tiết ở [AGENT_SYSTEM_ARCHITECTURE.md](AGENT_SYSTEM_ARCHITECTURE.md)):**
+> - **MCP** (Model Context Protocol, spec `2026-07-28`) — agent↔tool. Mọi module gọi tool nên đi qua MCP.
+> - **A2A** (Agent-to-Agent, Linux Foundation — Google ra mắt 04/2025, donate 06/2025) — agent↔agent, bổ sung cho MCP.
+> - **Agent Skills** (open standard 12/2025, [agentskills.io](https://agentskills.io)) — đóng gói chuyên môn thành SKILL.md.
+> - **SDK chính thống**: Claude Agent SDK (trước đây là Claude Code SDK), OpenAI Agents SDK, Google ADK (GA 04/2025), LangGraph, CrewAI, AWS Strands.
+> - **GraphRAG 2026**: LazyGraphRAG + LightRAG giảm chi phí ~700× so với GraphRAG gốc (chi tiết ở [GRAPH_ENGINEERING.md](GRAPH_ENGINEERING.md) và `graph/05-graph-rag/`).
+
 ---
 
 ## Cấu Trúc Học Tập

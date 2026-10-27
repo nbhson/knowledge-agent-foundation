@@ -231,3 +231,22 @@ Mấy lỗ hổng bao ngoài hồi trước giờ đã có chỗ ở mới: sand
 compaction qua `14`, approval qua `15`. Còn mấy món chưa ai nhận: lọc PII/secret trong pipeline,
 cách ly tenant cho sạch, trần chi phí tính theo task (SLO cost-per-task). Còn gap lẻ của từng module
 thì nằm trong mục bổ sung ở README của module đó.
+
+## 8. AI Coding Workflow Hiện Đại (2026)
+
+Harness trong repo này không phải lý thuyết suông — nó chính là cách các AI coding tool đang chạy thật trong IDE:
+
+| Tool | Harness trong đó |
+|------|-----------------|
+| **Claude Code** | Agentic loop + Agent Skills (SKILL.md) + compaction + subagents. Có SDK chính thức (**Claude Agent SDK**, trước đây là Claude Code SDK — đổi tên 09/2025) để embed loop này vào app riêng. |
+| **GitHub Copilot (agent mode)** | 2025-2026: từ autocomplete → agent mode sửa nhiều file, chạy terminal, tự verify; Copilot coding agent nhận issue → mở PR. |
+| **Cursor** | Multi-tab agent, Composer chạy nhiều file song song, background agents. |
+| **opencode / OSS harness** | Pattern tương tự: MCP tools + approval gates + session trajectories. |
+
+**Điểm chung 2026 (từ Anthropic, OpenAI, IBM, Google):**
+1. **Multi-agent orchestration** là pattern chủ đạo — lead agent + subagents (xem `09-multi-agent/`), mỗi subagent có context riêng, trả về summary ngắn.
+2. **Agent control plane**: một nơi điều phối nhiều agent chạy song song trên nhiều môi trường (browser, editor, CI) — hướng tới "Agentic OS".
+3. **Giao thức chuẩn hoá**: MCP (agent↔tool, spec `2026-07-28`) + A2A (agent↔agent, Linux Foundation) — coding agent nào cũng chạy cả hai.
+4. **Trust by Design**: security + approval gates wire vào mọi layer ngay từ đầu, thay vì audit sau (xem `15-approval-gates/`).
+
+> Muốn hiểu sâu từng phần: `09-multi-agent/` cho orchestration, `10-automation/` cho loop tự chạy trong CI, `06-decide-tools-mcp/` cho MCP.

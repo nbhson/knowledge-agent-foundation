@@ -179,4 +179,15 @@ while True:
 
 ---
 
+## ⚠️ Update 10/2026: LangChain 1.0 (10/2025)
+
+LangChain 1.0 released 10/2025 with major breaking changes:
+- `create_agent` is the primary API (replaces many chain utilities)
+- LangGraph integrated natively for stateful workflows
+- LCEL still works but now recommended via the agents layer
+- New package structure: `langchain` core separated from `langchain-community`
+- Python 3.10+ required (3.9 EOL October 2025)
+
+Migration: https://docs.langchain.com/oss/python/langchain/migration
+
 *This article is part of the [AI Coding Skills Framework](../..) — the Tools branch — langchain*

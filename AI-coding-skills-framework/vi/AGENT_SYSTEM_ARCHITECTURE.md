@@ -61,7 +61,8 @@
 |-----------|---------|-------------------|
 | 12/2024 | Anthropic — *Building Effective Agents* | Chuẩn hoá vocabulary: workflows vs agents, 5 workflow patterns |
 | 12/2024 | MCP ra mắt | Chuẩn hoá agent↔tool ("USB-C cho AI") |
-| 2025 | Google donate A2A cho Linux Foundation | Chuẩn hoá agent↔agent |
+| 04/2025 | Google công bố **A2A** protocol (50+ partners) + **Google ADK** (Agent Development Kit) | Chuẩn hoá agent↔agent; SDK open-source để build agent trong hệ Google |
+| 06/2025 | Google donate A2A cho Linux Foundation (IBM ACP merge vào A2A 08/2025) | Chuẩn hoá agent↔agent |
 | 06/2025 | Anthropic multi-agent research system | Orchestrator-worker production: +90.2% vs single agent (research eval) |
 | 09/2025 | Context engineering trở thành discipline chính | Compaction, note-taking, sub-agent = 3 đòn bẩy context |
 | 10/2025 | Agent Skills (open standard 12/2025) | Đóng gói chuyên môn thành SKILL.md — progressive disclosure |
@@ -456,6 +457,16 @@ Query → [Hybrid Search] → [Context Assembly] → [Agent Loop] → Answer
 
 **Lời khuyên từ Anthropic:** Bắt đầu với LLM API trực tiếp — nhiều patterns chỉ cần vài dòng code. Dùng framework khi hiểu rõ underlying code; sai assumption về abstraction là nguồn lỗi phổ biến nhất.
 
+**Ghi chú đặt tên SDK (2025-2026):**
+- **Claude Agent SDK** = **Claude Code SDK** đổi tên (Anthropic, 09/2025) — cùng một SDK, dùng cho Claude Code (IDE) lẫn agent tuỳ biến.
+- **OpenAI Agents SDK** = evolution của Swarm (thí nghiệm 2024) → production-grade SDK v2 (2025-2026).
+- **Google ADK** (Agent Development Kit): open-source, GA 04/2025, dùng nội bộ cho Gemini Agentspace + Vertex AI Agent Builder.
+
+**Xác minh 10/2026 — thêm xu hướng mới:**
+- **LazyGraphRAG** (Microsoft, cuối 2024 → production 2025): LLM summarisation defer tới query time → indexing cost ngang vector RAG, query quality ngang full GraphRAG, chi phí thấp hơn ~700×. Tích hợp vào Microsoft Discovery (2025) và Azure Local.
+- **Gartner 2026**: GraphRAG được nêu trong "Top Trends in D&A for 2026" như path cho complex cases mà high-accuracy RAG thất bại.
+- **Agent Control Planes**: IBM dự đoán 2026 là năm agent control planes và multi-agent dashboards trở thành thực tế sản xuất.
+
 **MCP + A2A = combo chuẩn hoá (2026):**
 
 ```
@@ -606,11 +617,11 @@ AGENT_SYSTEM_ARCHITECTURE.md (tổng hợp + cập nhật 2026)
 
 | SDK | Điểm mạnh |
 |-----|----------|
-| [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) | Frontier models, Skills, long-running |
+| [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) | Frontier models, Skills, long-running (trước đây là Claude Code SDK — đổi tên 09/2025) |
 | [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/) | Sandbox agents, handoffs, sessions, guardrails, tracing |
 | [LangGraph](https://langchain-ai.github.io/langgraph/) | Full flexibility, state machine, production |
 | [CrewAI](https://docs.crewai.com/) | Fast prototyping, roles + processes |
-| [Google ADK](https://adk.dev/) | Google ecosystem, Vertex AI |
+| [Google ADK](https://adk.dev/) | Google ecosystem, Vertex AI (GA 04/2025, open-source) |
 | [AWS Strands](https://strandsagents.com/latest/) | AWS + Bedrock ecosystem |
 
 ### Blogs & Key Principles

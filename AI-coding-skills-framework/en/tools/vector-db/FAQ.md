@@ -35,11 +35,11 @@ The same `query_texts` returns `doc-1` even though it shares no words with the q
 
 ---
 
-## Q2. Chroma, Pinecone, Qdrant or Weaviate — which one do I start with? [→ Overview of Vector DBs]
+## Q2. Chroma, Pinecone, Qdrant, Weaviate or pgvector — which one do I start with? [→ Overview of Vector DBs]
 
 **What you see**
 
-Four names, two of them "managed cloud", two "open-source", and you need to pick before you can retrieve anything.
+Five names — two "managed cloud", three "open-source" — and you need to pick before you can retrieve anything.
 
 **Why**
 
@@ -49,14 +49,18 @@ The right choice depends on where you are, not on which one is "best".
 |---|---|---|
 | Chroma | open-source, local | learning, laptop, simple RAG |
 | Pinecone | managed cloud | production at scale, zero ops |
-| Qdrant | open-source + cloud | you need metadata filtering |
-| Weaviate | open-source + cloud | you want hybrid vector + keyword search |
+| Qdrant | open-source + cloud | you need metadata filtering, self-hosted performance |
+| Weaviate | open-source + cloud | you want hybrid vector + keyword or multimodal search |
+| pgvector | Postgres extension | you already run Postgres, small-medium scale |
+
+On embedding models, the 2026 shortlist: **OpenAI text-embedding-3-large**, **BGE-M3** (flag_embedding, runs locally), **Cohere v4**.
 
 **What to do**
 
 1. Learn and prototype on Chroma — `pip install chromadb`, no account, no server.
 2. Move to Pinecone or Qdrant only when you outgrow one machine.
 3. Keep the collection and document shapes the same so the swap is a client change, not a rewrite.
+4. If Postgres is already in your stack, try pgvector first — no new service to operate.
 
 **Verify**
 

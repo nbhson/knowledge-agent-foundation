@@ -1227,3 +1227,65 @@ trong transparency log, và bộ escape drill liên tục chạy trong productio
 *Module cross-cutting · nhà chính thức của khái niệm sandbox*
 *Cập nhật: 16/10/2026*
 *Tác giả: AI Knowledge Repository*
+
+---
+
+## Cập nhật 10/2026 — Python Sandbox Example & Tier Selection
+
+> Bổ sung bản Python tương đương runner TypeScript ở §4.2, kèm bảng chọn tier
+> theo **risk profile** — câu hỏi thực tế đầu tiên khi dựng sandbox: *"code này
+> tin cậy tới mức nào?"* trả lời trước, cấu hình trả lời sau.
+
+### 1. Chọn tier theo risk profile
+
+| Tier | Cơ chế | Dùng cho | Giá escape | Chi phí |
+|------|--------|----------|-----------|---------|
+| **1 — Language limits** | `subprocess` timeout + resource limits (`RLIMIT_CPU`, `RLIMIT_AS`, `RLIMIT_FSIZE`) | **Code tin cậy nội bộ** — build script, test harness, tool do chính team viết | thấp | ~0, chạy native |
+| **2 — Container** | Docker `--network=none --read-only` + cap memory/CPU/pids | **Code không tin cậy** — code model sinh ra, script của bên thứ ba | trung bình | thấp (§2.3) |
+| **3 — MicroVM** | Firecracker / gVisor (kernel riêng hoặc syscall filter) | **Multi-tenant production** — SaaS chạy code người dùng, tenant lạ, blast radius chéo tenant | rất cao | trung bình (§2.4–2.5) |
+
+Quy tắc leo thang một chiều: **khi nghi ngờ, nâng tier lên, đừng hạ xuống.** Tier 1
+chỉ dùng được khi code chạy là code *bạn tự review*; cứ có một byte do model sinh
+ra là tối thiểu phải Tier 2. Tenant của người khác thì không bàn cãi — Tier 3.
+
+### 2. Python Runner — Tier 1 (timeout + resource limits)
+
+```python
+import resource, subprocess
+
+class SandboxError(Exception):
+    """Lỗi có kiểu — planner đọc code, không đọc text (§4.3)."""
+
+def run_sandboxed(cmd: list[str], workdir: str, *,
+                  timeout_s: int = 30, cpu_s: int = 10,
+                  mem_mb: int = 512, fsize_mb: int = 64) -> subprocess.CompletedProcess:
+    """Tier 1 — cách ly ở tầng ngôn ngữ: deadline + resource limits.
+    CHỈ cho code tin cậy nội bộ. Code không tin cậy → Tầng 2 (container)."""
+    def apply_limits():                       # chạy trong process con, không đụng cha
+        resource.setrlimit(resource.RLIMIT_CPU,   (cpu_s, cpu_s))        # chặn vòng lặp vô hạn
+        resource.setrlimit(resource.RLIMIT_AS,    (mem_mb << 20,) * 2)   # chặn cạn RAM
+        resource.setrlimit(resource.RLIMIT_FSIZE, (fsize_mb << 20,) * 2) # chặn file output khổng lồ
+        resource.setrlimit(resource.RLIMIT_NPROC, (64, 64))              # chặn fork bomb
+    try:
+        return subprocess.run(cmd, cwd=workdir, capture_output=True, text=True,
+                              timeout=timeout_s, preexec_fn=apply_limits,
+                              env={"PATH": "/usr/bin:/bin"})  # không kế thừa env (secret) của cha
+    except subprocess.TimeoutExpired as e:
+        raise SandboxError("deadline-exceeded") from e
+```
+
+Ba lưu ý để không tự lừa mình:
+
+| Điểm yếu | Vì sao | Cách khắc phục |
+|----------|--------|----------------|
+| `subprocess.run(timeout=…)` chỉ kill **con trực tiếp** | `bash -c "sleep 60 &"` để lại cháu chạy mãi (§3.3) | `start_new_session=True` + `os.killpg(os.getpgid(pid), SIGKILL)` |
+| `preexec_fn` không an toàn với thread | Chạy fork + exec giữa hai thread là undefined behavior | Chạy runner trong process đơn-thread, hoặc chuyển sang Tier 2 |
+| RLIMIT không phải ranh giới bảo mật | Chặn *lạm dụng tài nguyên*, không chặn đọc secret / net | Đó là việc của filesystem allowlist + `--network=none` (§3.1–3.2) |
+
+Tier 1 = **giới hạn tài nguyên**, không phải **cách ly bảo mật**. Hai thứ đó dễ
+nhầm vì cùng có từ "limit" — mà nhầm là cách `rm -rf` vào được host.
+
+### 3. Liên Kết Kiến Trúc
+
+Cơ chế sandbox nằm ở **Layer 7 (Execution & Safety)** của tổng thể kiến trúc —
+xem [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) (Layer 7).

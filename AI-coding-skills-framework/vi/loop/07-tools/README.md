@@ -150,4 +150,32 @@ memory-engineering → loop-engineering → harness-foundry → outerloop → fl
 
 ---
 
+## Cập nhật 10/2026 — Alternative Toolchain & So Sánh
+
+### So Sánh Loop Scheduling Approaches
+
+| Approach | Đặc điểm | Phù hợp khi |
+|----------|----------|-------------|
+| **Shell script + cron** | Đơn giản nhất, no deps, chạy ngay trên máy bạn | Loop cá nhân, demo, môi trường đã có cron |
+| **GitHub Actions** | Hosted, free tier, event-driven (cron + trigger theo PR/issue) | Loop gắn với repo, team nhỏ muốn zero infra |
+| **Temporal** | Durable execution, checkpoint/resume native | Long-running agents — dừng/tiếp tục không mất state |
+| **Airflow** | Data pipelines, DAG phức tạp, dependency graph | Pipeline dữ liệu/ML nhiều bước phụ thuộc nhau |
+| **Python asyncio scheduler** (in-process) | Chạy trong cùng process với app | Hundreds of loops trong một service tự quản |
+
+### Khi Nào Chọn Gì
+
+- **Mỗi ngày 1–2 runs** → cron hoặc GitHub Actions là đủ, đừng phức tạp hoá.
+- **Cần checkpoint/resume dài hạn** → Temporal — durable execution sinh ra cho việc này.
+- **ML / data pipeline** → Airflow với DAG rõ ràng từng bước.
+- **Hundreds of loops** → dedicated orchestrator (Kestra, Temporal, fleet-engineering).
+
+> **📌 Lưu ý:** Các CLI `loop-*` giới thiệu ở trên hiện tại là **một lựa chọn**, không phải bắt buộc. Các pattern ở [02-patterns](../02-patterns/) chạy được trên **mọi scheduler** trong bảng ở trên — pattern là quy trình + metrics + safety gates, scheduler chỉ là cách thức kích hoạt.
+
+### Xem Thêm
+
+- [harness — 10. Automation](../../harness/10-automation/README.md) — scheduler patterns chi tiết.
+- [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — Layer 5 (automation trong tổng thể kiến trúc).
+
+---
+
 *Trở về [README](../README.md) — tổng quan Module XII*

@@ -68,3 +68,33 @@ Nếu bạn còn phân vân chưa biết bắt đầu từ đâu, cứ chọn **
 6. **Chấm điểm lại**: `npx @cobusgreyling/loop audit . --suggest`.
 
 > **Nhớ kỹ**: đừng nhảy thẳng lên L3 cho mẫu mới trên repo production. Xem [04-operating](../04-operating/) để biết lộ trình nâng cấp từ từ.
+
+## Cập nhật 10/2026 — Portability: Patterns Không Gắn Vendor CLI
+
+> **⚠️ Lưu ý quan trọng**
+>
+> Các pattern trong thư mục này đang tham chiếu CLI `@cobusgreyling/loop-*` trong các ví dụ. Đây là **ví dụ cụ thể để dễ hình dung**, KHÔNG phải dependency bắt buộc. Bạn có thể triển khai bất kỳ pattern nào bằng scheduler / toolchain khác mà vẫn giữ nguyên quy trình, metrics và safety gates.
+
+### Mapping Pattern → Thay Thế Không Cần Vendor CLI
+
+| Pattern | Thay thế không cần vendor CLI |
+|---------|-------------------------------|
+| Daily Triage | GitHub Actions cron + issue labels |
+| PR Babysitter | GitHub Actions + `gh` CLI |
+| CI Sweeper | CI webhook + bot |
+| Dependency Sweeper | Dependabot / Renovate |
+| Changelog Drafter | git-cliff / release-drafter |
+| Issue Triage | issue-labeler bot |
+
+### Nguyên Tắc
+
+**Pattern = quy trình + metrics + safety gates; CLI chỉ là một implementation.** Bất kỳ scheduler nào — cron, Temporal, Airflow, GitHub Actions, Kestra — đều implement được các pattern này, miễn là bạn giữ đúng ba thành phần cốt lõi ở trên.
+
+### Checklist Chuyển Đổi
+
+Khi port một pattern sang scheduler khác:
+
+1. **Tách logic khỏi CLI** — quy trình (những gì loop làm) phải độc lập với tool gọi nó.
+2. **Giữ exit code convention** — `0` = proceed, `2` = escalate, để control scripts nối tiếp được bất kể scheduler.
+3. **Giữ `STATE.md` + run log JSON schema** — state và log là hợp đồng giữa các lần chạy, không đổi theo tool.
+4. **Test dry-run 1 tuần** trước khi cut-over — chạy song song ở chế độ report-only để xác nhận metrics khớp trước khi tắt hệ thống cũ.

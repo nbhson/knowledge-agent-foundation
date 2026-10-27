@@ -51,6 +51,12 @@
 > - [15. Cost-Benefit Analysis](#15-cost-benefit-analysis)
 >   - [15.1 When Multi-Agent Is Worth It](#151-when-multi-agent-is-worth-it)
 >   - [15.2 Token Cost Comparison](#152-token-cost-comparison)
+> - [17. Cập nhật 10/2026 — Multi-Agent Production Research](#17-cập-nhật-102026--multi-agent-production-research)
+>   - [17.1 Kết quả production (Anthropic Research, 06/2025)](#171-kết-quả-production-anthropic-research-062025)
+>   - [17.2 A2A Protocol (Linux Foundation, 2026)](#172-a2a-protocol-linux-foundation-2026)
+>   - [17.3 8 nguyên tắc prompting cho multi-agent](#173-8-nguyên-tắc-prompting-cho-multi-agent)
+>   - [17.4 Sub-agent output qua filesystem](#174-sub-agent-output-qua-filesystem)
+>   - [17.5 Sync vs Async](#175-sync-vs-async)
 > - [Tài Liệu Tham Khảo](#tài-liệu-tham-khảo)
 >   - [Frameworks](#frameworks)
 >   - [Research & Papers](#research-papers)
@@ -3001,3 +3007,174 @@ async function handleFault(agentId: string, lease: TaskLease, reason: string,
 - [Saga Pattern](https://microservices.io/patterns/data/saga.html) — Distributed transactions
 - [CQRS Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cQRS) — Command Query Responsibility Segregation
 - [Event Sourcing](https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing) — State via events
+
+---
+
+## 17. Cập nhật 10/2026 — Multi-Agent Production Research (Anthropic, A2A)
+
+> **📌 Khái Niệm Cơ Bản**
+>
+> - **Khái niệm:** Tổng hợp kết quả production mới nhất (10/2026) về multi-agent từ Anthropic Research và giao thức A2A (Agent-to-Agent) của Linux Foundation — khi nào multi-agent đáng tiền, cách prompt orchestrator, và cách agents "bắt tay" nhau qua chuẩn mở.
+> - **Ẩn dụ/so sánh:** Anthropic Research giống một xưởng phim có đạo diễn (LeadResearcher) và nhiều ekip quay song song (subagents); A2A giống "hợp đồng lao động chung" giúp các công ty (framework khác nhau) thuê việc cho nhau mà không phải mở sổ nội bộ.
+> - **Vì sao quan trọng:** Đây là data thật từ production (không phải benchmark lab) — cho biết chính xác multi-agent đắt bao nhiêu (15× tokens), hiệu quả bao nhiêu (+90.2%), và khi nào KHÔNG nên dùng.
+
+### 17.1 Kết quả production (Anthropic Research, 06/2025)
+
+Báo cáo "How we built our multi-agent research system" của Anthropic là một trong số ít nguồn có **số liệu production thật** (không phải synthetic benchmark). Các con số dưới đây trả lời trực tiếp câu hỏi "multi-agent có đáng không?" — và quan trọng không kém: "khi nào thì KHÔNG nên dùng?".
+
+| Chỉ số | Giá trị | Ý nghĩa |
+|---|---|---|
+| Hiệu năng orchestrator-worker | **+90.2%** vs single-agent Opus 4 | Trên internal research eval, kiến trúc Opus lead + Sonnet subagents vượt trội rõ rệt |
+| Token usage | Giải thích **80% variance** hiệu năng | Trên BrowseComp, lượng token tiêu thụ là yếu tố số 1 dự đoán kết quả |
+| 3 yếu tố giải thích 95% | Token usage + tool calls count + model choice | Không còn yếu tố bí ẩn nào khác —optimize cả 3 |
+| Token economics | Chat 1× · Agent đơn ≈ 4× · Multi-agent ≈ **15×** | Multi-agent đắt gấp ~4 lần agent đơn — phải đáng giá mới dùng |
+
+**Khi nào dùng / không dùng multi-agent:**
+
+| ✓ Phù hợp | ✗ KHÔNG phù hợp |
+|---|---|
+| Task giá trị cao (token spend xứng đáng) | Coding (ít parallelizable thật sự) |
+| Parallelizable thật sự (chia được thành subtask độc lập) | Task cần shared context chặt giữa các bước |
+| Cần vượt quá 1 context window | Real-time coordination (latency thấp) |
+| Nhiều tools phức tạp, đa lĩnh vực | Task đơn giản — 1 agent là đủ |
+
+**Kiến trúc Research feature (luồng end-to-end):**
+
+```
+LeadResearcher (Opus)
+   │
+   ├─ 1. Phân tích query, LƯU PLAN vào Memory (bền vững, không mất khi context dài)
+   │
+   ├─ 2. Spawn subagents — mỗi subagent nhận 4 thứ:
+   │       objective + output format + tool guidance + task boundaries
+   │
+   ├─ 3. Subagents dùng interleaved thinking SAU MỖI tool result
+   │      (không chỉ "nghĩ rồi làm" một lần đầu)
+   │
+   ├─ 4. Lead synthesize kết quả từ các subagent
+   │
+   └─ 5. CitationAgent xử lý citations riêng (tách khỏi luồng nghiên cứu)
+```
+
+### 17.2 A2A Protocol (Linux Foundation, 2026)
+
+A2A (Agent-to-Agent Protocol) là chuẩn mở cho **agent nói chuyện với agent** — bổ sung cho MCP (agent nói chuyện với tool), không cạnh tranh.
+
+| | MCP | A2A |
+|---|---|---|
+| Phạm vi | agent → tool | agent → agent |
+| Mô hình | Agent gọi tool/data trong hệ của nó | Agent delegate + nhận kết quả từ agent khác |
+| Quan hệ | Bổ sung nhau — không cạnh tranh | |
+
+**Điểm cốt lõi của A2A:**
+- Agents được build bằng **framework/vendor khác nhau** (LangGraph, CrewAI, ADK, custom) vẫn **discover + delegate + share results** được với nhau
+- Mỗi agent **KHÔNG expose memory/tools/logic nội bộ** — giao tiếp qua interface chuẩn, opaque và secure (bên kia không cần biết bạn implement thế nào)
+
+**Trạng thái quản trị (08/2026):** A2A đã vào **Agentic AI Foundation** (Linux Foundation). Technical Steering Committee gồm: AWS, Cisco, Google, IBM, Microsoft, Salesforce, SAP, ServiceNow.
+
+**Official SDKs:** Python, JS, Java, .NET, Go, Rust — kèm **A2A CLI** (phát hành 10/2026).
+
+**A2A KHÔNG phải:**
+- ❌ Development kit (không thay framework build agent)
+- ❌ Sub-agent protocol (sub-agent trong cùng 1 hệ thống dùng native primitives / MCP, không cần A2A)
+- ❌ Thay thế MCP (2 cái giải quyết 2 bài toán khác nhau)
+
+### 17.3 8 nguyên tắc prompting cho multi-agent
+
+Rút ra từ chính production Research system của Anthropic — 8 quy tắc giúp orchestrator "chỉ huy" subagents không loạn:
+
+1. **Think like your agents** — simulate từng step trong đầu để thấy failure modes thật (không phải failure mode bạn tưởng tượng, mà là cái subagent thật sự sẽ gặp).
+2. **Teach the orchestrator how to delegate** — mỗi subtask cần đủ 4 thành phần: `objective` + `output format` + `tool guidance` + `task boundaries`. Instruction mơ hồ → subagents duplicate work hoặc bỏ sót.
+3. **Scale effort to query complexity** — không phải query nào cũng cần 10 subagents:
+
+   | Loại query | Effort phù hợp |
+   |---|---|
+   | Fact-finding đơn giản | 1 agent, 3–10 tool calls |
+   | Comparison | 2–4 subagents, 10–15 calls mỗi subagent |
+   | Complex research | 10+ subagents |
+
+4. **Tool design critical** — heuristic: examine all tools trước, match tool to intent, prefer specialized over generic.
+5. **Let agents improve themselves** — một agent chuyên "tool-testing" viết lại tool descriptions → giảm **40% task completion time**.
+6. **Start wide, then narrow down** — chống lỗi query quá dài + cụ thể quá sớm (giống tìm kiếm trên Google: broad first, refine later).
+7. **Guide thinking** — extended thinking cho lead, interleaved thinking sau mỗi tool result cho subagents.
+8. **Parallel tool calling** — 3–5 subagents song song + 3+ tools song song mỗi subagent → giảm tới **90% research time**.
+
+### 17.4 Sub-agent output qua filesystem
+
+Giảm hiện tượng **"game of telephone"** (thông tin bị méo qua nhiều tầng truyền miệng): thay vì subagent copy toàn bộ output qua conversation history, subagent **ghi kết quả ra filesystem/artifact store**, rồi trả về **lightweight references** (path + hash). Orchestrator đọc file khi cần chi tiết — không phải giữ toàn bộ output trong context của mình.
+
+> So sánh: thay vì mỗi nhân viên đọc to cả báo cáo 50 trang trong phòng họp, họ gửi link file — ai cần chi tiết thì tự mở.
+
+### 17.5 Sync vs Async
+
+Anthropic chạy subagents **synchronously** — đơn giản, dễ debug, nhưng có bottleneck: lead **không thể steer subagent giữa chừng** (phải đợi subagent chạy xong mới phản hồi được). Async cho phép parallelism cao hơn nhưng đổi lại phức tạp về result coordination, state consistency, và error propagation.
+
+| Chế độ | Ưu | Nhược |
+|---|---|---|
+| **Sync** (Anthropic dùng) | Đơn giản, deterministic, dễ debug | Bottleneck — lead không steer subagent giữa chừng |
+| **Async** | Parallelism cao hơn | Phức tạp: result coordination + state consistency + error propagation |
+
+**Code minh họa — Orchestrator-Worker với effort-scaling rules:**
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+from dataclasses import dataclass, field
+from typing import List, Dict, Callable
+
+@dataclass
+class SubagentResult:
+    agent_id: str
+    findings: list          # refs tới artifact store, KHÔNG copy full output
+    tool_calls: int
+    tokens_used: int
+
+def scale_effort(query: str) -> Dict:
+    """Quy tắc 3: scale số subagent theo độ phức tạp query."""
+    q = query.lower()
+    if any(k in q for k in ["so sánh", "compare", "vs", "đối chiếu"]):
+        return {"n_subagents": 4, "max_tool_calls": 15, "type": "comparison"}
+    if any(k in q for k in ["nghiên cứu sâu", "deep research", "phân tích toàn diện"]):
+        return {"n_subagents": 12, "max_tool_calls": 20, "type": "complex"}
+    return {"n_subagents": 1, "max_tool_calls": 10, "type": "fact-finding"}
+
+def run_orchestrator(query: str, tools: Dict[str, Callable]) -> Dict:
+    """Orchestrator-worker: lead lên plan, spawn subagents song song,
+    mỗi subagent ghi output ra filesystem và trả về refs (không full copy)."""
+    plan = scale_effort(query)                     # Quy tắc 3: scale effort
+    subagent_specs = []
+    for i in range(plan["n_subagents"]):
+        subagent_specs.append({
+            "agent_id": f"sub-{i}",
+            "objective": f"Phủ khía cạnh {i+1}/{plan['n_subagents']} của: {query}",
+            "output_format": "markdown, mỗi finding kèm citation (artifact path + hash)",
+            "tool_guidance": "3+ tools song song mỗi lượt nếu độc lập",  # Quy tắc 8
+            "task_boundaries": "KHÔNG ôm khía cạnh của subagent khác",   # Quy tắc 2
+            "max_tool_calls": plan["max_tool_calls"],
+        })
+
+    # Spawn song song (sync): lead chờ toàn bộ — không steer giữa chừng (Quy tắc 17.5)
+    results: list[SubagentResult] = []
+    for spec in subagent_specs:
+        calls = 0
+        while calls < spec["max_tool_calls"]:
+            calls += 1                              # Đếm tool call
+        results.append(SubagentResult(
+            agent_id=spec["agent_id"],
+            findings=[f"artifact://{spec['agent_id']}/report.md"],
+            tool_calls=calls, tokens_used=calls * 4000,
+        ))
+
+    total_tokens = sum(r.tokens_used for r in results)
+    return {
+        "plan": plan,
+        "subagent_count": len(results),
+        "artifact_refs": [r.findings for r in results],   # Quy tắc 4.16.4: refs, không full copy
+        "total_tokens": total_tokens,                     # Quy tắc 17.1: token = yếu tố 80% variance
+    }
+```
+
+</details>
+
+> Cross-link: xem thêm [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — Section 3.5 (Orchestration) và 4.2/4.4 (mẫu production).

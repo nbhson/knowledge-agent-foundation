@@ -3245,6 +3245,142 @@ Muốn chạy tiếp (resume): gọi lại `run()` với đúng `runId` cũ — 
 > [`hooks-standard.md`](./hooks-standard.md) nhé. Nôm na là mỗi mốc vòng đời
 > (`preToolUse`, `postToolUse`...) gắn một script kiểm tra: cho qua, hỏi người, hay cấm hẳn.
 
+---
+
+## Cập nhật 10/2026 — Production Reliability Patterns (Anthropic 2025)
+
+> **📌 Bối cảnh:** Ba pattern dưới đây tổng hợp từ bài *Effective Harnesses for Long-Running Agents* (Anthropic, 2025) — dành cho lúc agent không còn là demo 5 phút mà là hệ thống production chạy hàng giờ, deploy liên tục, và lỗi là chuyện đương nhiên.
+
+### 1. Checkpoint & Resume (không restart)
+
+Agents là **stateful** — trạng thái tích lũy qua từng bước, nên lỗi nhỏ có xu hướng **compounding**: một trượt nhỏ ở bước 3 tạo ra lỗi lớn ở bước 7. Khi lỗi xảy ra, đừng chạy lại từ đầu — **resume từ checkpoint gần nhất**:
+
+| Thành phần | Vai trò |
+|---|---|
+| **Checkpoint** | Mỗi step hoàn thành lưu state (outputs, biến, tiến độ) vào storage bền vững (file JSON, S3, DB) |
+| **Resume** | Crash/timeout → load checkpoint gần nhất → bỏ qua step đã xong → chạy tiếp |
+| **Retry/backoff deterministic** | Lỗi tạm thời (network, rate limit) → exponential backoff, giới hạn số lần |
+| **Model adaptation** | Lỗi logic → **báo tool fail cho agent** để nó tự adapt (đổi approach) thay vì retry y nguyên |
+
+Nguyên tắc phân loại: **deterministic problems dùng retry/backoff; những gì cần phán đoán thì đưa về cho model** — agent thấy được lỗi sẽ tự sửa chiến lược, máy móc retry mù quáng thì không.
+
+### 2. Rainbow Deployments
+
+Agents có thể **đang chạy giữa chừng** khi bạn deploy version mới — cắt ngang giữa chừng là mất trạng thái, hỏng task đang dở. Giải pháp: **chuyển traffic dần** từ version cũ sang version mới, giữ cả 2 chạy song song:
+
+| Giai đoạn | Version cũ | Version mới | Ghi chú |
+|---|---|---|---|
+| 1. Deploy song song | 100% | 0% | Version mới đứng chờ, sẵn sàng nhận task |
+| 2. Chuyển dần | 80% → 50% → 20% | 20% → 50% → 80% | Task mới vào version mới; task cũ chạy hết lifecycle trên version cũ |
+| 3. Hoàn tất | 0% | 100% | Tắt version cũ khi không còn task nào đang chạy trên nó |
+
+Điểm mấu chốt: **không kill version cũ ngay** — agent đang chạy giữa chừng trên đó cần được hoàn thành trọn vẹn (drain). Tham khảo: **rainbow deploys trong Kubernetes** (Argo Rollouts, Flagger) — weighted routing giữa các version.
+
+### 3. Sync Bottleneck trong Orchestration
+
+Chạy subagents **sync** (lead đợi từng subagent xong rồi mới giao việc tiếp) là mô hình đơn giản nhất — nhưng tạo bottleneck nghiêm trọng:
+
+- Lead **không steer được** subagent giữa chừng: subagent đi lạc hướng thì cũng phải đợi nó chạy xong mới sửa được.
+- Lead **blocked** khi 1 subagent chậm: cả hệ thống dừng theo subagent chậm nhất (waterfall effect).
+
+**Async orchestration** giải quyết được throughput, nhưng phải trả lời 3 câu hỏi khó:
+
+| Vấn đề | Câu hỏi | Hướng giải |
+|---|---|---|
+| **Result coordination** | Kết quả từ nhiều subagent về khi nào, gom thế nào? | Completion queue, callback, hoặc barrier sync |
+| **State consistency** | Nhiều subagent viết chung state thì conflict thế nào? | Versioning, optimistic locking, hoặc tách vùng ghi |
+| **Error propagation** | 1 subagent fail thì các subagent phụ thuộc biết không? | Cancellation tree + shared error bus |
+
+Quy tắc thực dụng: **sync khi số subagent ít và task ngắn** (dễ debug); **async khi task dài, độc lập nhiều** (nhưng phải đầu tư vào 3 vấn đề trên ngay từ đầu, đừng để thành nợ kỹ thuật).
+
+### 4. Code Python — Workflow Runner với Checkpoint/Resume
+
+Code dưới đây minh họa pattern: mỗi step hoàn thành lưu checkpoint (JSON), crash → resume từ checkpoint cuối, retry với exponential backoff, tối đa 3 lần:
+
+```python
+import json, time, random
+from pathlib import Path
+from typing import Callable, Dict, List
+
+class CheckpointRunner:
+    """Workflow runner với checkpoint/resume — crash không phải chạy lại từ đầu."""
+
+    def __init__(self, name: str, checkpoint_dir: str = "./checkpoints",
+                 max_retries: int = 3):
+        self.name = name
+        self.max_retries = max_retries
+        self.checkpoint_dir = Path(checkpoint_dir)
+        self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+    def _path(self, run_id: str) -> Path:
+        return self.checkpoint_dir / f"{run_id}.json"
+
+    def _load(self, run_id: str) -> Dict:
+        """Load checkpoint nếu có — đây là chìa khóa của resume."""
+        p = self._path(run_id)
+        if p.exists():
+            return json.loads(p.read_text(encoding="utf-8"))
+        return {"completed": [], "results": {}}
+
+    def _save(self, run_id: str, state: Dict) -> None:
+        self._path(run_id).write_text(
+            json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def _run_step(self, step: Callable) -> object:
+        """Chạy 1 step với retry + exponential backoff (max 3 lần)."""
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                return step()
+            except Exception as e:
+                if attempt == self.max_retries:
+                    raise  # hết lượt — ném lên trên cho agent quyết định
+                wait = 2 ** attempt + random.random()  # 2s, 4s, 8s + jitter
+                print(f"    ⚠️ Lần {attempt}/{self.max_retries} fail: {e} — retry sau {wait:.1f}s")
+                time.sleep(wait)
+
+    def run(self, run_id: str, steps: List[Dict]) -> Dict:
+        """steps: [{"name": ..., "func": Callable}] — chạy tuần tự, checkpoint mỗi step."""
+        state = self._load(run_id)
+        done, results = set(state["completed"]), state["results"]
+        print(f"[{self.name}] run={run_id}: {len(done)}/{len(steps)} step đã xong trước đó")
+
+        for i, step in enumerate(steps):
+            name = step["name"]
+            if name in done:
+                print(f"  ↷ Bỏ qua '{name}' (đã xong — từ checkpoint)")
+                continue
+            print(f"  ▶ Chạy '{name}'...")
+            results[name] = self._run_step(step["func"])
+            done.add(name)
+            self._save(run_id, {"completed": sorted(done), "results": results})  # checkpoint!
+
+        print(f"[{self.name}] ✅ Hoàn tất run {run_id}")
+        return results
+
+# ---- Demo ----
+if __name__ == "__main__":
+    runner = CheckpointRunner("demo")
+    # Giả sử lần trước crash ở bước 3 — chạy lại vẫn resume đúng chỗ
+    out = runner.run("run-42", [
+        {"name": "parse",     "func": lambda: "parsed_data"},
+        {"name": "analyze",   "func": lambda: {"score": 42}},
+        {"name": "build",     "func": lambda: "artifact.bin"},  # crash ở đây lần trước
+        {"name": "test",      "func": lambda: "all_passed"},
+    ])
+    print("Kết quả:", out)
+```
+
+**Điểm mấu chốt trong code:**
+- `_save()` chạy **ngay sau khi** mỗi step xong — checkpoint luôn mới nhất, crash ở bước nào thì lần sau chỉ lặp lại đúng bước đó.
+- `run_id` cố định giúp nhiều lần chạy lại cùng một task **gộp chung checkpoint** — đây chính là resume.
+- Retry **deterministic** (backoff cố định công thức) cho lỗi tạm thời; khi hết lượt, ném exception lên để **agent nhận biết và adapt** (đổi cách làm) chứ không retry vô hạn.
+
+### 5. Cross-Reference
+
+> 📎 **Liên quan:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 2** (Orchestration) + **Section 4.3** (Long-Running Agent Pattern). Xem thêm Section 4 (Error Recovery) ở trên cho retry/circuit breaker/saga — checkpoint/resume là lớp bổ sung, không thay thế.
+
+---
+
 *Tài liệu: VII. Workflow — HARNESS ENGINEERING EDITION*
-*Ngày cập nhật: 16/10/2026*
+*Ngày cập nhật: 26/10/2026*
 *Tác giả: AI Knowledge Repository*

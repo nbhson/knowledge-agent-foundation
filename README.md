@@ -323,6 +323,7 @@ Developer Request
 | Resource | Path |
 |----------|------|
 | AI Coding Skills Framework | `AI-coding-skills-framework/en/AI_AGENT_FRAMEWORK.md` (EN) · `AI-coding-skills-framework/vi/AI_AGENT_FRAMEWORK.md` (VI) |
+| **Kiến Trúc Hệ Thống Agent (mới, 2026)** | `AI-coding-skills-framework/vi/AGENT_SYSTEM_ARCHITECTURE.md` — 8 layer + build checklist, tổng hợp từ Anthropic / OpenAI / MCP / A2A |
 | Orchestration Workflow | `instruction/.agents/AGENTS.md` |
 | GitHub Copilot Config | `instruction/.github/copilot-instructions.md` |
 | MCP Server Setup | `instruction/MCP_SETUP.md` |

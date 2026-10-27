@@ -1068,3 +1068,137 @@ giản là may mắn.
 *Module cross-cutting · thứ cho phép một context window cố định gánh một run không giới hạn*
 *Cập nhật: 16/10/2026*
 *Tác giả: AI Knowledge Repository*
+
+---
+
+## Cập nhật 10/2026 — Compaction Theo Anthropic (09/2025)
+
+> Bổ sung từ bài **"Effective context engineering for AI agents"** (Anthropic, 09/2025) —
+> hướng dẫn cụ thể hơn về cách viết compaction prompt và những gì thực sự an toàn để loại bỏ.
+
+### 1. Tool Result Clearing — Compaction "Lighter Touch" Nhất
+
+**Tool result cũ** là ứng viên loại bỏ an toàn nhất vì: nó đã từng được *đọc*
+(không phải trôi nổi) và chỉ chứa *trạng thái trung gian* — không phải quyết định,
+không phải invariant, không phải định nghĩa nhiệm vụ.
+
+Nói cách khác, **tool result clearing là dạng compaction nhẹ nhất (lightest touch)**
+mà vẫn hợp lý. Nếu bạn chưa làm gì về compaction, bắt đầu từ đây — nó đã được
+Anthropic đưa thành tính năng chính thức **"Context Management"** trên Claude
+Developer Platform.
+
+Nguyên tắc: deep trong lịch sử hội thoại (old tool results) đã phục vụ xong mục đích,
+model đã extract thông tin cần thiết từ nó rồi — **raw result giờ chỉ chiếm chỗ**.
+
+### 2. Compaction Prompt Tuning — Bắt Đầu Từ Recall, Rồi Iterate Precision
+
+Anthropic khuyến nghị quy trình 2 pha để viết compaction prompt:
+
+1. **Pha 1 — Maximize recall:** Yêu cầu summarizer capture **mọi thông tin quan trọng**
+   trước. Chưa cần gọn — miễn sao không bỏ sót gì. Lỗi này (thêm thừa) rẻ hơn
+   lỗi kia (bỏ sót cần thiết).
+2. **Pha 2 — Iterate precision:** Sau khi prompt đạt recall 100%, lần lượt thử
+   bỏ thông tin "có vẻ superfluous" và kiểm tra run có còn đúng không. Lặp cho
+   tới khi precision cao mà không mất recall.
+
+**Những thứ PHẢI giữ** (trong mọi compaction):
+
+- Architectural decisions đã đưa ra
+- Unresolved bugs (bug nào đang mở, tại sao)
+- Implementation details đang dùng
+- Current task state — mục tiêu + tiến độ + bước kế tiếp
+
+**Những thứ CÓ THỂ bỏ:**
+
+- Raw tool outputs cũ (đã đọc rồi, không còn cần)
+- Tool definitions đã đọc rồi (model không cần nhắc lại cách dùng tool)
+- Messages đã summarized ở lần compact trước
+
+### 3. Contract Với Module 02-Build-Context
+
+Compaction output là **trường `history`** trong cấu trúc `BuiltContext` (module 02).
+Pin set bắt nguồn từ ranh giới đó:
+
+- **Pin set tuyệt đối** = `system` + `goal` — hai phần không bao giờ cắt, bất kể
+  compaction nào xảy ra.
+- Mọi phần khác của `BuiltContext` (`retrieved`, `immediate`, `history`) đều nằm
+  trong danh sách evictable và tuân theo thứ tự loại theo utility (§4).
+
+```
+BuiltContext (→ 02)
+├── system  ───────────────────► PIN (không bao giờ cắt)
+├── goal    ───────────────────► PIN (không bao giờ cắt)
+├── retrieved ─────────────────► evictable (theo utility)
+├── history ────────────────────► evictable (theo utility) ← COMPACTION ĐỔ VÀO ĐÂY
+└── immediate ─────────────────► evictable (theo utility)
+```
+
+### 4. Bảng "Giữ vs Bỏ"
+
+| Giữ (không bao giờ bỏ) | Bỏ được (sau khi đọc xong) |
+|------------------------|----------------------------|
+| Architectural decisions | Raw tool outputs cũ |
+| Unresolved bugs + stack trace | Tool definitions đã đọc |
+| Current task state (goal, progress, next step) | Messages đã summarized ở lần trước |
+| File paths đang làm việc | Nhánh thất bại đã giải quyết |
+| Invariants / ràng buộc (HEADER/FOOTER, → §7) | Chit-chat, greeting |
+
+**Quy tắc nhớ nhanh:** "loại cái cần tới **sau** khi loại cái cần tới **trước**" —
+tool result là cái cần tới trước (bạn đọc để extract thông tin), nên sau khi extract
+xong nó thành "không cần nữa" và rơi vào nhóm bỏ được.
+
+### 5. Code Mẫu — should_compact + compact
+
+<details>
+<summary>Python Code — should_compact + compact với giữ 5 files gần nhất (Click to mở rộng/thu gọn)</summary>
+
+```python
+COMPACT_RATIO = 0.70          # trigger: 70% ngân sách
+MAX_RECENT_FILES = 5          # giữ 5 file gần nhất được truy cập (Claude Code)
+RESUME_BUDGET = 300           # token cho resume block
+
+def should_compact(tokens_used: int, limit: int) -> bool:
+    """Trigger compaction khi sử dụng > 70% ngân sách."""
+    return (tokens_used / limit) > COMPACT_RATIO
+
+
+def compact(messages: list[dict], recent_files: list[str] | None = None) -> str:
+    """Tóm tắt lịch sử hội thoại, giữ 5 file gần nhất.
+
+    Args:
+        messages: lịch sử hội thoại
+        recent_files: danh sách file gần nhất được truy cập (mặc định giữ 5)
+    Returns:
+        Resume block dạng text, ≤ RESUME_BUDGET tokens
+    """
+    if recent_files is None:
+        recent_files = []
+    recent_files = recent_files[-MAX_RECENT_FILES:]
+
+    # 1. Filter: tool results cũ deep trong history
+    kept = [m for m in messages if m.get("role") != "tool" or m.get("keep")]
+
+    # 2. Gộp lại messages còn lại (nếu nhiều → summarize)
+    total = sum(len(str(m.get("content", ""))) for m in kept)
+    if total > RESUME_BUDGET * 4:   # rough: ~4 chars/token
+        # Ưu tiên: goal + quyết định + unresolved + next + recent_files
+        summary_parts = [
+            "Goal: [trích nhiệm vụ hiện tại từ system/goal messages]",
+            "Decisions: [các quyết định đã đưa ra]",
+            "Open issues: [bug/task chưa giải quyết]",
+            "Next: [bước kế tiếp]",
+            f"Recent files: {', '.join(recent_files)}",
+        ]
+        return "\n".join(summary_parts)
+    return "\n".join(str(m.get("content", "")) for m in kept[-10:])
+```
+
+</details>
+
+### 6. Liên Quan Trong Repo
+
+- [02-build-context](../02-build-context/README.md) — Compaction output là trường
+  `history` trong `BuiltContext`; hybrid pre-computed + just-in-time retrieval đi cùng
+  compaction để context luôn có signal cao.
+- [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 3**
+  (build context) ghép với **Layer 4** (compaction/memory) trong kiến trúc agent.

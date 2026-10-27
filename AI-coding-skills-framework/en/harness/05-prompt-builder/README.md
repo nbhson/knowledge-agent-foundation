@@ -2692,3 +2692,233 @@ What must survive summarization: (1) goal in 1 line, (2) non-negotiable constrai
 *Document: V. Prompt Builder — HARNESS ENGINEERING EDITION*
 *Last updated: 16/10/2026*
 *Author: AI Knowledge Repository*
+
+*Updated: 10/2026 — Agent Skills Open Standard & Prompt Engineering Agents*
+
+---
+
+## October 2026 Update — Agent Skills Open Standard & Prompt Engineering Agents
+
+> **📌 Summary**
+>
+> Agent Skills is an open standard from 12/2025 (agentskills.io) — it defines how to package a skill so the agent can discover, load, and use it on its own. Three-tier progressive disclosure lets the agent load only the parts of a skill it actually needs. Skills can ship scripts so the agent runs code instead of generating tokens — cheaper and deterministic. This is a major step from "learning prompts" to "learning skills".
+
+### 1. Agent Skills Open Standard — From Prompt to Skill
+
+**Agent Skills** (agentskills.io, since 12/2025) is an open standard that defines how to package a "skill" so the agent can discover, load, and use it on its own. Instead of only writing prompts, you now define **SKILL.md + YAML frontmatter** containing metadata, behavior, and bundled scripts.
+
+**Complete SKILL.md:**
+
+```yaml
+---
+name: code-review-python
+description: >
+  Thực hiện code review cho Python code. Phát hiện:
+  - Security issues (SQL injection, hardcoded secrets, unsafe eval)
+  - Performance bottlenecks (N+1 queries, inefficient loops)
+  - Style violations (PEP8, docstring missing)
+  - Test coverage thấp
+version: 1.2.0
+tags: [python, security, quality, review]
+triggers:
+  - pattern: ".*review.*python.*"
+    context: ["code", "file", "repository"]
+  - pattern: ".*check.*security.*"
+    context: ["code"]
+allowed_scripts:
+  - run_static_analysis.py
+  - generate_report.py
+---
+
+# Code Review Python Skill
+
+## Mục tiêu
+Nhận vào một code snippet hoặc file Python, trả về báo cáo review có cấu trúc.
+
+## Quy trình
+
+1. **Parse input** — nhận file path hoặc code string
+2. **Static analysis** — chạy `ruff`, `bandit`, `pylint` qua scripts kèm theo
+3. **Security scan** — kiểm tra patterns nhạy cảm (secrets, SQL injection, eval)
+4. **Generate report** — tổng hợp thành JSON/Markdown với severity levels
+
+## Output format
+
+```json
+{
+  "files_reviewed": ["src/api.py", "src/auth.py"],
+  "issues": [
+    {
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "src/auth.py",
+      "line": 42,
+      "message": "Hardcoded password detected",
+      "suggestion": "Use environment variable or secrets manager"
+    }
+  ],
+  "summary": {
+    "critical": 1, "high": 3, "medium": 5, "low": 12
+  },
+  "coverage_percent": 67.5
+}
+```
+
+## Scripts kèm theo
+
+| Script | Mục đích |
+|--------|----------|
+| `run_static_analysis.py` | Chạy ruff, pylint, trả kết quả JSON |
+| `generate_report.py` | Tổng hợp findings thành report |
+| `scan_secrets.py` | Regex scan cho hardcoded secrets |
+
+## Ví dụ sử dụng
+
+```python
+# Agent gọi script thay vì generate tokens
+import subprocess, json
+
+result = subprocess.run(
+    ["python", "scripts/run_static_analysis.py", "--path", "./src"],
+    capture_output=True, text=True, timeout=60
+)
+report = json.loads(result.stdout)
+```
+
+## Lưu ý bảo mật
+
+- Chỉ cài skill từ nguồn trusted
+- Audit code trong scripts trước khi chạy
+- Scripts không được phép gọi external network mà không có allowlist
+- Version pinning: luôn chỉ định version cụ thể, không dùng `latest`
+```
+
+### 2. Progressive Disclosure — 3 Tiers of Skill Loading
+
+Progressive disclosure is the principle: **a skill does not load everything at once**, but is divided into 3 tiers to optimize context:
+
+| Tier | When to load | Content | Context cost |
+|------|-------------|---------|--------------|
+| **Tier 1: Metadata** | At agent startup | name, description, triggers, tags | ~50–100 tokens |
+| **Tier 2: SKILL.md body** | When task matches trigger | Procedure, output format, scripts list | ~500–2000 tokens |
+| **Tier 3: Scripts/Files** | When agent truly needs to use | Code scripts, assets, references | ~2000+ tokens (not loaded if agent self-generates) |
+
+> **"Unbounded context"** — Tier 3 lets the agent navigate to the scripts/files it needs rather than loading everything into memory. Context only grows when actually needed.
+
+### 3. Skills vs Scripts — When to Use Each
+
+| Criteria | Skill (prompt-driven) | Script (code-driven) |
+|----------|-----------------------|---------------------|
+| **Definition** | Describe behavior via prompt + examples | Describe behavior via runnable code |
+| **Token cost** | High (prompt + few-shot) | Low (just call script) |
+| **Determinism** | Variable (LLM output) | High (deterministic code) |
+| **Best for** | Creative tasks, open-ended | Repetitive, exact logic |
+| **Runtime cost** | Proportional to LLM tokens | Fixed (CPU time) |
+| **Example** | "Write a reply email to a customer" | "Parse 10K rows CSV, extract columns X,Y" |
+
+**Best practice:** Use skill with scripts when the task has a repetitive part (script logic) and a creative part (use LLM for synthesis).
+
+### 4. Decision Matrix — Which Approach to Choose?
+
+Updated decision matrix for agentic workflows:
+
+| Use case | Recommendation | Reason |
+|----------|---------------|--------|
+| Agent needs to discover skills automatically | **Skill registry** (SKILL.md) | Agent self-discovers |
+| Task has standard, repetitive logic | **Scripts** (Python/Shell) | Cheap + deterministic |
+| Task needs creativity/open-ended | **Prompt** (in skill body) | LLM generates |
+| Complex task, many agents | **Custom agent** (hierarchy) | Full control |
+| Hook into lifecycle event | **Hooks** (before/after) | Cross-cutting concern |
+| Many tools to call simultaneously | **MCP code execution** (06/2026) | Reduces tokens |
+| Skill to reuse across agents | **Skill shared via registry** | DRY, versioned |
+
+### 5. Full YAML Frontmatter
+
+```yaml
+---
+# Metadata (Tier 1 — always loaded at startup)
+name: data-pipeline-builder
+version: 2.1.0
+description: >
+  Xây dựng ETL/ELT data pipeline từ nguồn → transform → destination.
+  Hỗ trợ: PostgreSQL, S3, BigQuery, dbt, Airflow.
+compatibility:
+  agent_framework: ["langgraph", "autogen", "custom"]
+  min_api_version: "2025-12-01"
+
+# Discovery (Tier 1)
+tags: [etl, data, pipeline, airflow, dbt, bigquery]
+category: data-engineering
+author: data-team
+license: MIT
+
+# Triggers — when the skill should be loaded (Tier 2)
+triggers:
+  - intent: "build.*pipeline"
+    examples:
+      - "Xây data pipeline từ PostgreSQL sang BigQuery"
+      - "Tạo ETL job xử lý 1M records/day"
+  - intent: "dbt.*model"
+    examples:
+      - "Viết dbt model cho fact_orders"
+  - intent: "airflow.*dag"
+    examples:
+      - "Deploy DAG lên Airflow"
+
+# Security & permissions (Tier 1)
+permissions:
+  require_approval:
+    - action: "write_s3"
+      reason: "Ghi dữ liệu ra S3"
+    - action: "run_airflow_trigger"
+      reason: "Trigger DAG production"
+  allowed_network:
+    - "*.bigquery.googleapis.com"
+    - "*.aws.amazon.com"
+  max_file_write_size_mb: 500
+
+# Bundled scripts (Tier 3)
+scripts:
+  - name: scaffold_pipeline.py
+    description: Tạo cấu trúc thư mục + config mẫu
+    language: python
+    version: "1.0.0"
+    hash_sha256: "a3f5c8..."
+  - name: validate_schema.py
+    description: Validate source/target schemas
+    language: python
+    version: "1.2.0"
+
+# Dependencies (Tier 1)
+requirements:
+  python: ">=3.10"
+  packages: ["dbt-core>=1.5", "apache-airflow>=2.7"]
+  external_apis: ["BigQuery API", "AWS S3 API"]
+
+# Metadata
+created: 2025-01-15
+updated: 2026-09-20
+stability: stable  # experimental | stable | deprecated
+deprecated_at: null
+---
+
+# Skill body — Tier 2 (loaded when task matches trigger)
+[Tiếp tục với quy trình, output format, best practices...]
+```
+
+### 6. Security Checklist
+
+- [ ] Only install skills from trusted sources (verify author, license, hash)
+- [ ] Audit code in scripts before deploying
+- [ ] Check external network calls in scripts (deny by default)
+- [ ] Version pinning — do not use `@latest` in production
+- [ ] Permissions need approval for destructive actions
+- [ ] Log skill loading + script execution to audit trail
+- [ ] Scan skill YAML for injected malicious triggers
+
+### 7. Cross-links
+
+- [agent-skills-spec.md](agent-skills-spec.md) — Full specification (agentskills.io)
+- [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — Layer 4: Skill loader, progressive disclosure, sandbox execution
+
+*Author: AI Knowledge Repository*

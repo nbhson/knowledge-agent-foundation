@@ -73,6 +73,7 @@ Start with **Phase 1** (Core Skills) and progress to **Phase 6** (Evaluation). E
 | Debug/replay a run after the fact | [13 - Trajectory & Observability](#control-plane-harness-modules-1215) |
 | Keep the context window bounded | [14 - Compaction & Context](#control-plane-harness-modules-1215) |
 | Gate an irreversible action on a human | [15 - Approval Gates](#control-plane-harness-modules-1215) |
+| **Build a complete agent system architecture (8 Layers)** | [AGENT_SYSTEM_ARCHITECTURE.md](AGENT_SYSTEM_ARCHITECTURE.md) |
 
 > **Numbering note.** Harness modules are `01`–`15`. The `Part` labels below
 > (`Part I` … `Part XIII`) number *framework parts*, a different namespace —
@@ -87,6 +88,7 @@ Start with **Phase 1** (Core Skills) and progress to **Phase 6** (Evaluation). E
 ```
 AI/
 ├── AI_AGENT_FRAMEWORK.md                   ← HOMEPAGE
+├── AGENT_SYSTEM_ARCHITECTURE.md            ← AGENT SYSTEM ARCHITECTURE (8 Layers, updated 2026)
 ├── HARNESS_ENGINEERING.md                  ← HARNESS ARCHITECTURE
 ├── GRAPH_ENGINEERING.md                    ← GRAPH ARCHITECTURE
 │

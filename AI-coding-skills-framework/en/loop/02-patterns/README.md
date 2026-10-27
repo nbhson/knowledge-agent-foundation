@@ -68,3 +68,33 @@ If you are not sure where to begin, start with **Daily Triage at L1**. It helps 
 6. **Audit**: `npx @cobusgreyling/loop audit . --suggest`.
 
 > **Golden rule**: never jump straight to L3 with a new pattern on a production repo. See [04-operating](../04-operating/) for the safe upgrade path.
+
+## October 2026 Update — Portability: Patterns Without Vendor CLI Lock-in
+
+> **⚠️ Important note**
+>
+> The patterns in this folder reference the `@cobusgreyling/loop-*` CLI in their examples. These are **concrete examples to make things easier to picture**, NOT a hard dependency. You can implement any of these patterns with a different scheduler / toolchain while keeping the exact same process, metrics, and safety gates.
+
+### Pattern → Vendor-CLI-Free Replacement Mapping
+
+| Pattern | Replacement without a vendor CLI |
+|---------|-------------------------------|
+| Daily Triage | GitHub Actions cron + issue labels |
+| PR Babysitter | GitHub Actions + `gh` CLI |
+| CI Sweeper | CI webhook + bot |
+| Dependency Sweeper | Dependabot / Renovate |
+| Changelog Drafter | git-cliff / release-drafter |
+| Issue Triage | issue-labeler bot |
+
+### Principles
+
+**A pattern = process + metrics + safety gates; the CLI is just one implementation.** Any scheduler — cron, Temporal, Airflow, GitHub Actions, Kestra — can implement these patterns, as long as you preserve the three core components above.
+
+### Porting Checklist
+
+When porting a pattern to a different scheduler:
+
+1. **Separate logic from the CLI** — the workflow (what the loop does) must be independent of the tool that invokes it.
+2. **Keep the exit code convention** — `0` = proceed, `2` = escalate — so control scripts chain together regardless of scheduler.
+3. **Keep the `STATE.md` + run-log JSON schema** — state and logs are the contract between runs; they don't change with the tool.
+4. **Dry-run for one week** before cutover — run in parallel in report-only mode to confirm the metrics match before retiring the old system.

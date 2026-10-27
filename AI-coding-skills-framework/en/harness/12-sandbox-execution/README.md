@@ -1233,3 +1233,63 @@ transparency logs, and continuous escape-drill suites running in production.
 *Cross-cutting module · canonical home for the sandbox concept*
 *Last updated: 16/10/2026*
 *Author: AI Knowledge Repository*
+
+## October 2026 Update — Python Sandbox Example & Tier Selection
+
+> Adds the Python equivalent of the §4.2 TypeScript runner, plus a tier-selection table
+> by **risk profile** — the first practical question when building a sandbox: *"how much
+> do you trust this code?"* gets answered first, configuration second.
+
+### 1. Choose the tier by risk profile
+
+| Tier | Mechanism | Use for | Escape cost | Cost |
+|------|-----------|---------|-------------|------|
+| **1 — Language limits** | `subprocess` timeout + resource limits (`RLIMIT_CPU`, `RLIMIT_AS`, `RLIMIT_FSIZE`) | **Trusted internal code** — build scripts, test harnesses, tools written by your own team | low | ~0, runs native |
+| **2 — Container** | Docker `--network=none --read-only` + memory/CPU/pids caps | **Untrusted code** — model-generated code, third-party scripts | medium | low (§2.3) |
+| **3 — MicroVM** | Firecracker / gVisor (separate kernel or syscall filter) | **Multi-tenant production** — SaaS running user code, unknown tenants, cross-tenant blast radius | very high | medium (§2.4–2.5) |
+
+The one-way escalation rule: **when in doubt, raise the tier, never lower it.** Tier 1
+is only usable when the code being run is code *you reviewed yourself*; as soon as a single
+byte is model-generated, Tier 2 is the minimum. Someone else's tenants are not debatable — Tier 3.
+
+### 2. Python Runner — Tier 1 (timeout + resource limits)
+
+```python
+import resource, subprocess
+
+class SandboxError(Exception):
+    """Lỗi có kiểu — planner đọc code, không đọc text (§4.3)."""
+
+def run_sandboxed(cmd: list[str], workdir: str, *,
+                  timeout_s: int = 30, cpu_s: int = 10,
+                  mem_mb: int = 512, fsize_mb: int = 64) -> subprocess.CompletedProcess:
+    """Tier 1 — cách ly ở tầng ngôn ngữ: deadline + resource limits.
+    CHỈ cho code tin cậy nội bộ. Code không tin cậy → Tầng 2 (container)."""
+    def apply_limits():                       # chạy trong process con, không đụng cha
+        resource.setrlimit(resource.RLIMIT_CPU,   (cpu_s, cpu_s))        # chặn vòng lặp vô hạn
+        resource.setrlimit(resource.RLIMIT_AS,    (mem_mb << 20,) * 2)   # chặn cạn RAM
+        resource.setrlimit(resource.RLIMIT_FSIZE, (fsize_mb << 20,) * 2) # chặn file output khổng lồ
+        resource.setrlimit(resource.RLIMIT_NPROC, (64, 64))              # chặn fork bomb
+    try:
+        return subprocess.run(cmd, cwd=workdir, capture_output=True, text=True,
+                              timeout=timeout_s, preexec_fn=apply_limits,
+                              env={"PATH": "/usr/bin:/bin"})  # không kế thừa env (secret) của cha
+    except subprocess.TimeoutExpired as e:
+        raise SandboxError("deadline-exceeded") from e
+```
+
+Three notes so you don't fool yourself:
+
+| Weakness | Why | Fix |
+|----------|-----|-----|
+| `subprocess.run(timeout=…)` only kills the **direct child** | `bash -c "sleep 60 &"` leaves a grandchild running forever (§3.3) | `start_new_session=True` + `os.killpg(os.getpgid(pid), SIGKILL)` |
+| `preexec_fn` is not thread-safe | Running fork + exec between two threads is undefined behavior | Run the runner in a single-threaded process, or move up to Tier 2 |
+| RLIMIT is not a security boundary | It blocks *resource abuse*, not secret reads / network access | That's the job of a filesystem allowlist + `--network=none` (§3.1–3.2) |
+
+Tier 1 = **resource limits**, not **security isolation**. The two are easy to confuse
+because both contain the word "limit" — and confusing them is how `rm -rf` reaches the host.
+
+### 3. Architecture Links
+
+The sandbox mechanism sits at **Layer 7 (Execution & Safety)** of the overall architecture —
+see [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) (Layer 7).

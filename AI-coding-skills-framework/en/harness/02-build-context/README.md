@@ -4545,3 +4545,123 @@ Key takeaways:
 *Last updated: 16/10/2026*  
 *Author: AI Knowledge Repository*  
 *Environment: Ollama (gemma3:12b, nomic-embed-text — Jul-2026 examples, see AI_AGENT_FRAMEWORK.md Oct-2026 note)*
+
+---
+
+## October 2026 Update — Context Engineering (Anthropic 09/2025)
+
+> Added from **"Effective context engineering for AI agents"** (Anthropic, 09/2025)
+> and Chroma's **context rot** research — two sources that reshaped how modern
+> agent harnesses manage context.
+
+### 1. Context Rot & Attention Budget (Chroma Research)
+
+**Context rot** is the phenomenon where **the more tokens in context, the lower
+the recall accuracy** — even though the model still "sees" everything.
+
+Mechanically: a transformer must process **n² pairwise relationships** for n
+tokens — tokens grow linearly but attention cost grows quadratically. So context
+is not a "free container" but a **finite resource** — every added token erodes
+the attention budget available to the others.
+
+**Anthropic's golden rule:**
+
+> *"Find the smallest set of highest-signal tokens that maximize the likelihood
+> of the desired outcome."*
+
+This is the perfect capstone for the whole module's philosophy: the question is
+not "how much can we stuff in" but **"how much can we drop and still get the
+result we want"**.
+
+### 2. Three Levers for Long-Horizon Tasks
+
+Anthropic summarizes three techniques that keep agents running for hours instead
+of dying after a few dozen turns:
+
+| Lever | How it works | Strength | Weakness | Use when |
+|---|---|---|---|---|
+| **Compaction** | Near the window limit → summarize the conversation → open a new window with the summary | Keeps the thread of work going across hundreds of turns | Summarization loses some detail | Heavy back-and-forth, long conversations |
+| **Structured note-taking (agentic memory)** | Agent writes NOTES.md / a todo list **outside** the context window and re-reads it when needed | Costs no window space; survives across sessions | Requires write/read discipline | Iterative dev with clear milestones |
+| **Sub-agent architecture** | A subagent does deep work with its own clean context → returns only a 1,000–2,000 token summary to the lead agent | Lead's context stays clean; research runs in parallel | More calls; communication design needed | Parallel research / analysis |
+
+**Details worth learning from Claude Code:**
+- During compaction, Claude Code keeps **architectural decisions + unresolved bugs + implementation details**, discards old tool outputs, and **keeps the 5 most recently accessed files**.
+- The canonical note-taking example is **Claude Plays Pokemon**: the agent maintains a map + strategy + tallies across thousands of steps — after every context reset it re-reads its notes and carries on as if nothing happened.
+
+**Which one to use when?**
+
+| Situation | Pick | Why |
+|---|---|---|
+| Heavy back-and-forth (long chats, repeated fix loops) | **Compaction** | Conversation thread stays intact; summaries preserve context |
+| Iterative dev with milestones | **Note-taking** | One note per milestone — clean context, no lost progress |
+| Parallel research / analysis | **Multi-agent (sub-agent)** | Each subagent gets its own branch with its own context; the lead only receives the summary |
+
+### 3. Just-in-Time vs Pre-Computed Retrieval
+
+Two styles of loading information — and as usual, **hybrid is the recommendation**:
+
+| Criterion | Pre-computed retrieval | Just-in-time retrieval |
+|---|---|---|
+| Idea | Pour context into the window before running | Agent finds the information itself at the moment of need (agentic search) |
+| Example | RAG pipeline; `CLAUDE.md` dropped into context upfront | Claude Code uses glob/grep to read files on demand |
+| Pros | Guaranteed baseline presence of info; low latency | Always fresh; no window space spent on unused info |
+| Cons | Context bloat, prone to "context rot" | More round-trips; depends on exploration quality |
+
+**Recommendation (exactly what Claude Code does):** combine both — drop `CLAUDE.md`
+into the context upfront as the foundation, and read codebase details **just-in-time
+with glob/grep**.
+
+**Progressive disclosure through exploration:** the agent doesn't need to read an
+entire 100K-token file — **file size, file name, timestamp** are cheap signals to
+decide whether to dig deeper. Look at metadata first, read content later.
+
+### 4. Sample Code — Context Budget Allocator
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+def allocate_context_budget(
+    components: dict[str, str],   # system / goal / retrieved / history / immediate
+    total_budget: int = 8_000,
+    ratios: dict[str, float] | None = None,
+) -> dict[str, str]:
+    """Allocate the token budget by %, trimming low-priority parts before overflow.
+
+    The pin set (system + goal) is never trimmed — see module 14-compaction-context.
+    """
+    ratios = ratios or {
+        "system": 0.15, "goal": 0.10,       # pin set — never trimmed
+        "retrieved": 0.40, "history": 0.25, "immediate": 0.10,
+    }
+    evict_order = ["history", "retrieved", "immediate"]   # lowest priority trimmed first
+    parts, used = {}, 0
+    for name, text in components.items():
+        cap = int(total_budget * ratios.get(name, 0.10))
+        parts[name] = text[:cap]
+        used += min(len(text), cap)
+
+    i = 0
+    while used > total_budget and i < len(evict_order):    # over budget → trim progressively
+        key = evict_order[i]
+        if key in components:
+            used -= len(parts[key]) - len(parts[key]) // 2
+            parts[key] = parts[key][: len(parts[key]) // 2]  # trim the second half
+        i += 1
+    return parts
+
+# Usage
+ctx = allocate_context_budget({
+    "system": SYSTEM_PROMPT, "goal": TASK_GOAL,
+    "retrieved": docs_text, "history": chat_text, "immediate": current_file_text,
+})
+prompt = "\n\n".join(ctx.values())
+```
+
+</details>
+
+### 5. Related In This Repo
+
+- [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 3** describes
+  the build-context layer in the overall agent architecture.
+- Compaction — trigger + pin set + resume block in detail: [14-compaction-context](../14-compaction-context/README.md).

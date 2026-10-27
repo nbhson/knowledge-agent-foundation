@@ -1110,3 +1110,90 @@ là mẫu phát hiện được. Hộp đen là cách bạn tìm ra chuyến bay
 *Module cross-cutting · cột sống của observability harness*
 *Cập nhật: 16/10/2026*
 *Tác giả: AI Knowledge Repository*
+
+---
+
+## Cập nhật 10/2026 — Python Trajectory & Cost-per-Run
+
+> Bổ sung bản Python tương đương TrajectoryStore TypeScript ở §8.1, kèm phân tích
+> **cost-per-run** — thứ biến trajectory từ "log để debug" thành "log để quản trị chi phí".
+
+### 1. TrajectoryEvent + JSONL Append-Only (Python)
+
+```python
+from dataclasses import dataclass, field, asdict
+from collections import defaultdict
+from pathlib import Path
+import json, time
+
+@dataclass
+class TrajectoryEvent:
+    session_id: str
+    kind: str                      # prompt | tool_call | tool_result | eval | ...
+    payload: dict                  # đã redact; ≤64KB — quá lớn thì thay bằng {"ref": ...}
+    id: str = ""                   # ULID — sắp xếp được theo lexicographic (§1.1)
+    tokens_in: int = 0
+    tokens_out: int = 0
+    latency_ms: int = 0
+    ts: int = field(default_factory=lambda: int(time.time() * 1000))
+
+class TrajectoryStore:
+    """JSONL append-only, một file / session. Dòng đã ghi không bao giờ sửa."""
+    def __init__(self, root: str):
+        self.root = Path(root); self.root.mkdir(parents=True, exist_ok=True)
+
+    def append(self, e: TrajectoryEvent) -> None:
+        if not e.id:
+            e.id = f"evt_{time.time_ns():024d}"          # thay bằng ULID ở production
+        with (self.root / f"{e.session_id}.jsonl").open("a", encoding="utf-8") as f:
+            f.write(json.dumps(asdict(e), ensure_ascii=False) + "\n")
+
+    def tail(self, session_id: str, n: int = 20) -> list[TrajectoryEvent]:
+        p = self.root / f"{session_id}.jsonl"
+        lines = p.read_text(encoding="utf-8").splitlines() if p.exists() else []
+        return [TrajectoryEvent(**json.loads(l)) for l in lines[-n:]]
+```
+
+Hai bất biến giữ nguyên như bản TypeScript: **chỉ-append** (sổ cái không xóa) và
+**mỗi event mang `session_id`** (không event mồ côi — §4.3).
+
+### 2. Cost-per-Run: Phát Hiện Run Đắt Bất Thường
+
+```python
+def cost_per_run(events: list[TrajectoryEvent]) -> dict[str, dict]:
+    """Tổng tokens / latency per run, group theo task type.
+    Run vượt p95 của task type × 3 → flag điều tra, đừng đoán."""
+    agg: dict[str, dict] = defaultdict(lambda: {"tokens": 0, "latency_ms": 0, "steps": 0})
+    for e in events:
+        a = agg[e.payload.get("task_type", "unknown")]
+        a["tokens"] += e.tokens_in + e.tokens_out
+        a["latency_ms"] += e.latency_ms; a["steps"] += 1
+    return dict(agg)
+```
+
+Vì sao metric này đáng xây đầu tiên: phân tích của Anthropic (06/2025) cho thấy
+**token usage giải thích ~80% variance hiệu năng** giữa các run agent — run chậm,
+run fail thường là run nuốt token nhiều nhất, và nguyên nhân hầu như luôn truy ra
+được (vòng retry, retrieval lặp, compaction ngừng chạy — §6.2). Đo cost-per-run
+theo task type là cách rẻ nhất thấy đuôi phân phối đó **trước** khi hoá đơn thấy.
+
+Known gap: hiện chưa có **SLO cost-per-task** — ngưỡng "run này đắt bất thường"
+vẫn là con số kinh nghiệm, chưa được chuẩn hoá thành SLO đo được. Gap này đã được
+ghi nhận ở [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) (§8);
+cho tới khi có SLO, hãy lưu phân phối cost per task type để có dữ liệu hiệu chuẩn.
+
+### 3. Trace Quyết Định — Không Trace Nội Dung Hội Thoại
+
+Ranh giới privacy giữ nguyên trong bản Python: emit **pattern quyết định** (kind,
+tool, tier, exit code, số token, latency), **không** emit nội dung prompt/response
+của conversation. Lý do là bài học production của Anthropic Research: log hội thoại
+nguyên văn biến trajectory store thành một bản copy dữ liệu nhạy cảm thứ hai —
+mỗi query ad-hoc, mỗi dashboard, mỗi lần export đều là một đường rò rỉ tiềm năng
+(→ §5.2: redact lúc emit, không redact lúc đọc). Payload cần truy vết → lưu `{ref}`
+trỏ tới blob có ACL riêng, không inline vào event.
+
+### 4. Liên Kết Kiến Trúc
+
+Trajectory là **Layer 8 (Observability & Feedback)** — mọi layer khác emit vào đó,
+mọi buổi debug đọc từ đó. Xem
+[AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) (Layer 8).

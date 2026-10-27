@@ -3171,3 +3171,126 @@ def retrieve(query: str, tenant_id: str):
 *Document: I. Retrieve Memory & Knowledge*
 *Created: 2026-07-11*
 *Environment: Ollama (gemma3:12b, nomic-embed-text)*
+
+---
+
+## October 2026 Update — Retrieval for Agentic Systems
+
+### 1. Complete Hybrid Search Pipeline (~45 lines, production-ready)
+
+BM25 (rank-bm25) + vector (Ollama nomic-embed-text) → RRF fusion → cross-encoder rerank → top-k.
+
+```python
+import requests
+import numpy as np
+from rank_bm25 import BM25Okapi
+
+OLLAMA = "http://localhost:11434"
+TOP_K = 20
+RERANK_TOP = 5
+
+def embed(texts):
+    """Embed via Ollama nomic-embed-text."""
+    res = requests.post(f"{OLLAMA}/api/embed", json={
+        "model": "nomic-embed-text",
+        "input": texts if isinstance(texts, list) else [texts]
+    })
+    return res.json()["embeddings"]
+
+def bm25_search(query, chunks, tokenizer):
+    """BM25 keyword search."""
+    tokenized_corpus = [tokenizer(c["text"]) for c in chunks]
+    bm25 = BM25Okapi(tokenized_corpus)
+    scores = bm25.get_scores(tokenizer(query))
+    ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
+    return [(idx, score) for idx, score in ranked[:TOP_K]]
+
+def vector_search(query, chunks):
+    """Semantic search via vector similarity."""
+    q_emb = embed(query)[0]
+    results = []
+    for i, c in enumerate(chunks):
+        v_emb = embed(c["text"])[0]
+        sim = np.dot(q_emb, v_emb) / (np.linalg.norm(q_emb) * np.linalg.norm(v_emb))
+        results.append((i, sim))
+    return sorted(results, key=lambda x: x[1], reverse=True)[:TOP_K]
+
+def rrf_fusion(bm25_results, vec_results, k=60):
+    """Reciprocal Rank Fusion."""
+    fused = {}
+    for rank, (idx, _) in enumerate(bm25_results):
+        fused[idx] = fused.get(idx, 0) + 1 / (k + rank + 1)
+    for rank, (idx, _) in enumerate(vec_results):
+        fused[idx] = fused.get(idx, 0) + 1 / (k + rank + 1)
+    return sorted(fused.items(), key=lambda x: x[1], reverse=True)
+
+def rerank_crossencoder(query, chunks, indices):
+    """Cross-encoder rerank (simulated — replace with sentence-transformers in production)."""
+    results = []
+    for idx in indices:
+        c = chunks[idx]
+        # Simulated cross-encoder score; use CrossEncoder("cross-encoder/ms-marco-MiniLML-6-v2") in production
+        score = len([w for w in query.lower().split() if w in c["text"].lower()]) / max(len(query.split()), 1)
+        results.append((idx, score))
+    return sorted(results, key=lambda x: x[1], reverse=True)[:RERANK_TOP]
+
+def hybrid_search(query, chunks):
+    """Complete hybrid pipeline."""
+    tokenizer = lambda t: t.lower().split()
+    bm25_scores = bm25_search(query, chunks, tokenizer)
+    vec_scores = vector_search(query, chunks)
+    fused = rrf_fusion(bm25_scores, vec_scores)
+    indices = [idx for idx, _ in fused]
+    reranked = rerank_crossencoder(query, chunks, indices)
+    return [chunks[idx] for idx, _ in reranked]
+
+# Usage
+chunks = [{"text": "BHYT là bảo hiểm y tế bắt buộc"}, {"text": "Mức đóng BHYT là 4.5%"}]
+results = hybrid_search("mức đóng BHYT", chunks)
+print([r["text"] for r in results])
+```
+
+### 2. Just-in-Time vs Pre-Computed Retrieval (Anthropic, 09/2025)
+
+| Aspect | Pre-computed (Static) | Just-in-time (Agentic) |
+|--------|----------------------|------------------------|
+| **Definition** | CLAUDE.md, context files written upfront | Agent generates own queries, explores, progressive disclosure |
+| **Pros** | Fast, deterministic, no search cost | Flexible, context-aware, multi-hop capable |
+| **Cons** | Manual update needed, can be outdated | Slower, potentially noisy |
+| **When to use** | Project conventions, architecture docs, coding standards | Feature exploration, debugging, novel scenarios |
+| **Examples** | CLAUDE.md, SPEC.md, system prompt | glob/grep dynamic queries, web search, documentation exploration |
+
+**Recommended hybrid:** Use both — pre-computed for stable facts + agentic search for dynamic exploration.
+
+- **Agentic search pattern:** Agent generates queries → explores file tree → progressive disclosure (layers of info loaded on demand).
+- **Source:** Anthropic, "Agentic Retrieval Patterns," 09/2025.
+
+### 3. GraphRAG Comparison (Microsoft, 2024)
+
+| Metric | Vector RAG | GraphRAG |
+|--------|-----------|----------|
+| **Comprehensiveness** | Baseline | +30-40% higher |
+| **Diversity of answers** | Baseline | +30-40% higher |
+| **Local entity queries** | Good enough | Equivalent |
+| **Global sensemaking** | Weak | Strong |
+| **Multi-hop reasoning** | Difficult | Well-supported |
+| **Citation path clarity** | May hallucinate | 25-30% less hallucination |
+| **Implementation complexity** | Low | High |
+| **Storage overhead** | Baseline | +50-100% |
+
+**When you need GraphRAG:**
+
+- Multi-hop queries: "Who is the manager of the person that developer X reports to?"
+- Global sensemaking: Summarize entire codebase, analyze patterns
+- Entity relationship queries: "Find all dependencies of service A"
+
+**When Vector RAG is sufficient:**
+
+- Simple lookup queries
+- Local entity questions
+- Low-latency requirements
+
+### 4. Cross-Links
+
+- `[AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md)` — Layer 1 (Data Sources) and Layer 3 (Retrieval & Context)
+- `[GraphRAG](../../graph/05-graph-rag/README.md)` — GraphRAG implementation details

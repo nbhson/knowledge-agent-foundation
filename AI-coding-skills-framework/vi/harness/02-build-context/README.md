@@ -4536,3 +4536,119 @@ Key takeaways:
 *Ngày cập nhật: 16/10/2026*  
 *Tác giả: AI Knowledge Repository*  
 *Môi trường: Ollama (gemma3:12b, nomic-embed-text — ví dụ Jul-2026, xem ghi chú Oct-2026)*
+
+---
+
+## Cập nhật 10/2026 — Context Engineering (Anthropic 09/2025)
+
+> Bổ sung từ bài **"Effective context engineering for AI agents"** (Anthropic, 09/2025)
+> và nghiên cứu **context rot** của Chroma — hai nguồn định hình lại cách các agent
+> harness hiện đại quản lý context.
+
+### 1. Context Rot & Attention Budget (Chroma Research)
+
+**Context rot** là hiện tượng: **càng nhiều token trong context, khả năng recall chính
+xác càng giảm** — dù model vẫn "nhìn thấy" hết mọi thứ.
+
+Về mặt cơ học: một transformer phải xử lý **n² quan hệ theo cặp (pairwise
+relationships)** cho n token — token tăng tuyến tính nhưng chi phí chú ý tăng bậc hai.
+Vì vậy context không phải "kho chứa miễn phí" mà là **một tài nguyên hữu hạn (finite
+resource)** — mỗi token thêm vào đều "ăn mòn" attention budget của những token khác.
+
+**Nguyên tắc vàng của Anthropic:**
+
+> *"Tìm tập token nhỏ nhất, signal cao nhất, tối đa hóa khả năng đạt kết quả mong muốn."*
+
+Đây chính là chốt hạ cho triết lý của cả module: câu hỏi không phải "nhét thêm được bao
+nhiêu" mà là **"bỏ đi được bao nhiêu mà vẫn đạt kết quả"**.
+
+### 2. Ba Đòn Bẩy Cho Long-Horizon Tasks
+
+Anthropic tổng kết ba kỹ thuật giúp agent chạy dài hàng giờ thay vì chết sau vài chục lượt:
+
+| Đòn bẩy | Cách hoạt động | Điểm mạnh | Điểm yếu | Dùng khi |
+|---|---|---|---|---|
+| **Compaction** | Gần giới hạn window → tóm tắt hội thoại → mở window mới với summary | Giữ mạch làm việc qua hàng trăm lượt | Tóm tắt có hao hụt chi tiết | Back-and-forth nhiều, hội thoại dài |
+| **Structured note-taking (agentic memory)** | Agent tự ghi NOTES.md / todo list **ra ngoài** context window, đọc lại khi cần | Không tốn chỗ trong window; tồn tại qua nhiều session | Cần kỷ luật ghi/đọc | Iterative dev có milestones rõ |
+| **Sub-agent architecture** | Subagent làm việc sâu với context riêng sạch → chỉ trả summary 1,000–2,000 tokens cho lead agent | Context của lead luôn sạch; research chạy parallel | Tốn nhiều call; cần thiết kế giao tiếp | Research / analysis song song |
+
+**Chi tiết đáng học từ Claude Code:**
+- Khi compaction, Claude Code giữ **architectural decisions + unresolved bugs + implementation details**, discard tool outputs cũ, và **giữ 5 files gần nhất được truy cập**.
+- Ví dụ kinh điển về note-taking là **Claude Plays Pokemon**: agent duy trì map + chiến lược + tallies qua hàng nghìn steps — sau mỗi lần context reset, nó đọc lại notes và tiếp tục như chưa có gì xảy ra.
+
+**Khi nào dùng cái nào?**
+
+| Tình huống | Chọn | Vì sao |
+|---|---|---|
+| Back-and-forth nhiều (chat dài, sửa-lỗi-lặp) | **Compaction** | Mạch hội thoại liền mạch, tóm tắt giữ được ngữ cảnh |
+| Iterative dev có milestones | **Note-taking** | Mỗi milestone ghi 1 note — context sạch mà tiến độ không mất |
+| Research / analysis song song | **Multi-agent (sub-agent)** | Mỗi subagent một nhánh với context riêng, lead chỉ nhận bản tổng kết |
+
+### 3. Just-in-Time vs Pre-Computed Retrieval
+
+Hai phong cách nạp thông tin — và như thường lệ, **hybrid là khuyến nghị**:
+
+| Tiêu chí | Pre-computed retrieval | Just-in-time retrieval |
+|---|---|---|
+| Ý tưởng | Đổ sẵn context vào window trước khi chạy | Agent tự tìm thông tin đúng lúc cần (agentic search) |
+| Ví dụ | RAG pipeline; `CLAUDE.md` được drop vào context upfront | Claude Code dùng glob/grep đọc file đúng lúc |
+| Ưu | Nền tảng thông tin chắc chắn có mặt; latency thấp | Luôn fresh; không tốn chỗ cho info không dùng tới |
+| Nhược | Phình context, dễ dính "context rot" | Nhiều round-trip; phụ thuộc chất lượng exploration |
+
+**Khuyến nghị (Claude Code làm đúng kiểu này):** kết hợp cả hai — `CLAUDE.md` drop vào
+context upfront làm nền, còn chi tiết codebase thì **glob/grep just-in-time**.
+
+**Progressive disclosure qua exploration:** agent không cần đọc nguyên cả file 100K
+token — **kích thước file, tên file, timestamp** chính là những signals rẻ tiền để quyết
+định có mở sâu hơn hay không. Xem metadata trước, đọc nội dung sau.
+
+### 4. Code Mẫu — Context Budget Allocator
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+def allocate_context_budget(
+    components: dict[str, str],   # system / goal / retrieved / history / immediate
+    total_budget: int = 8_000,
+    ratios: dict[str, float] | None = None,
+) -> dict[str, str]:
+    """Chia ngân sách token theo %, cắt ưu tiên thấp trước khi tràn.
+
+    Pin set (system + goal) không bao giờ bị cắt — xem module 14-compaction-context.
+    """
+    ratios = ratios or {
+        "system": 0.15, "goal": 0.10,       # pin set — không cắt
+        "retrieved": 0.40, "history": 0.25, "immediate": 0.10,
+    }
+    evict_order = ["history", "retrieved", "immediate"]   # cắt ưu tiên thấp trước
+    parts, used = {}, 0
+    for name, text in components.items():
+        cap = int(total_budget * ratios.get(name, 0.10))
+        parts[name] = text[:cap]
+        used += min(len(text), cap)
+
+    i = 0
+    while used > total_budget and i < len(evict_order):    # vượt budget → cắt dần
+        key = evict_order[i]
+        if key in components:
+            used -= len(parts[key]) - len(parts[key]) // 2
+            parts[key] = parts[key][: len(parts[key]) // 2]  # cắt nửa sau
+        i += 1
+    return parts
+
+# Usage
+ctx = allocate_context_budget({
+    "system": SYSTEM_PROMPT, "goal": TASK_GOAL,
+    "retrieved": docs_text, "history": chat_text, "immediate": current_file_text,
+})
+prompt = "\n\n".join(ctx.values())
+```
+
+</details>
+
+### 5. Liên Quan Trong Repo
+
+- [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 3** mô tả
+  tầng build context trong kiến trúc agent tổng thể.
+- Compaction — trigger + pin set + resume block chi tiết: [14-compaction-context](../14-compaction-context/README.md).

@@ -150,4 +150,32 @@ memory-engineering → loop-engineering → harness-foundry → outerloop → fl
 
 ---
 
+## October 2026 Update — Alternative Toolchain & Comparison
+
+### Comparing Loop Scheduling Approaches
+
+| Approach | Characteristics | Best fit |
+|----------|----------|-------------|
+| **Shell script + cron** | Simplest, no deps, runs right on your machine | Personal loops, demos, environments that already have cron |
+| **GitHub Actions** | Hosted, free tier, event-driven (cron + PR/issue triggers) | Repo-tied loops, small teams that want zero infra |
+| **Temporal** | Durable execution, native checkpoint/resume | Long-running agents — stop/resume without losing state |
+| **Airflow** | Data pipelines, complex DAGs, dependency graphs | Data/ML pipelines with many interdependent steps |
+| **Python asyncio scheduler** (in-process) | Runs in the same process as the app | Hundreds of loops in a single self-managed service |
+
+### When to Choose What
+
+- **1–2 runs per day** → cron or GitHub Actions is enough; don't over-engineer.
+- **Long-running checkpoint/resume** → Temporal — durable execution was built for this.
+- **ML / data pipelines** → Airflow with a clear DAG per step.
+- **Hundreds of loops** → a dedicated orchestrator (Kestra, Temporal, fleet-engineering).
+
+> **📌 Note:** The `loop-*` CLIs introduced above are currently **one option**, not a requirement. The patterns in [02-patterns](../02-patterns/) run on **every scheduler** in the table above — a pattern is process + metrics + safety gates, and the scheduler is just how it gets triggered.
+
+### See Also
+
+- [harness — 10. Automation](../../harness/10-automation/README.md) — scheduler patterns in detail.
+- [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — Layer 5 (automation in the overall architecture).
+
+---
+
 *Back to [README](../README.md) — Module XII overview*

@@ -3250,3 +3250,141 @@ Resume: re-invoke `run()` with same `runId`; completed keys hit `done()`/store a
 *Document: VII. Workflow — HARNESS ENGINEERING EDITION*
 *Last updated: 16/10/2026*
 *Author: AI Knowledge Repository*
+
+## October 2026 Update — Production Reliability Patterns (Anthropic 2025)
+
+> **📌 Context:** The three patterns below are distilled from the article *Effective Harnesses for Long-Running Agents* (Anthropic, 2025) — for when the agent is no longer a 5-minute demo but a production system running for hours, deploying continuously, where failure is a given.
+
+### 1. Checkpoint & Resume (no restart)
+
+Agents are **stateful** — state accumulates step by step, so small errors tend to **compound**: a small slip at step 3 creates a big error at step 7. When an error happens, don't run again from scratch — **resume from the latest checkpoint**:
+
+| Component | Role |
+|---|---|
+| **Checkpoint** | Each completed step saves state (outputs, variables, progress) to durable storage (JSON file, S3, DB) |
+| **Resume** | Crash/timeout → load latest checkpoint → skip finished steps → continue |
+| **Deterministic retry/backoff** | Transient errors (network, rate limit) → exponential backoff, bounded retries |
+| **Model adaptation** | Logic errors → **report tool failure to the agent** so it can adapt (change approach) instead of retrying the same way |
+
+The triage principle: **deterministic problems get retry/backoff; anything requiring judgment goes back to the model** — an agent that can see the error will fix its own strategy; blind mechanical retries cannot.
+
+### 2. Rainbow Deployments
+
+Agents may be **mid-run** when you deploy a new version — cutting them off mid-flight loses state and breaks in-progress tasks. Solution: **shift traffic gradually** from the old version to the new one, keeping both running in parallel:
+
+| Phase | Old version | New version | Notes |
+|---|---|---|---|
+| 1. Parallel deploy | 100% | 0% | New version stands by, ready to receive tasks |
+| 2. Gradual shift | 80% → 50% → 20% | 20% → 50% → 80% | New tasks go to the new version; old tasks run out their lifecycle on the old version |
+| 3. Complete | 0% | 100% | Shut down the old version when no task is still running on it |
+
+The key point: **don't kill the old version immediately** — agents running mid-flight on it need to complete fully (drain). Reference: **rainbow deploys in Kubernetes** (Argo Rollouts, Flagger) — weighted routing between versions.
+
+### 3. Sync Bottleneck in Orchestration
+
+Running subagents **synchronously** (the lead waits for each subagent to finish before assigning the next task) is the simplest model — but it creates a serious bottleneck:
+
+- The lead **cannot steer** a subagent mid-run: if the subagent drifts off course, you still have to wait for it to finish before correcting.
+- The lead is **blocked** when one subagent is slow: the whole system stalls behind the slowest subagent (waterfall effect).
+
+**Async orchestration** solves throughput, but you must answer 3 hard questions:
+
+| Problem | Question | Solution direction |
+|---|---|---|
+| **Result coordination** | When do results from many subagents come back, and how are they collected? | Completion queue, callbacks, or barrier sync |
+| **State consistency** | Multiple subagents write shared state — how are conflicts handled? | Versioning, optimistic locking, or partitioned write zones |
+| **Error propagation** | If one subagent fails, do dependent subagents know? | Cancellation tree + shared error bus |
+
+Pragmatic rule: **sync when there are few subagents and tasks are short** (easier to debug); **async when tasks are long and highly independent** (but invest in the 3 issues above from the start — don't let them become technical debt).
+
+### 4. Python Code — Workflow Runner with Checkpoint/Resume
+
+The code below illustrates the pattern: each completed step saves a checkpoint (JSON), crash → resume from the last checkpoint, retry with exponential backoff, max 3 times:
+
+```python
+import json, time, random
+from pathlib import Path
+from typing import Callable, Dict, List
+
+class CheckpointRunner:
+    """Workflow runner với checkpoint/resume — crash không phải chạy lại từ đầu."""
+
+    def __init__(self, name: str, checkpoint_dir: str = "./checkpoints",
+                 max_retries: int = 3):
+        self.name = name
+        self.max_retries = max_retries
+        self.checkpoint_dir = Path(checkpoint_dir)
+        self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+    def _path(self, run_id: str) -> Path:
+        return self.checkpoint_dir / f"{run_id}.json"
+
+    def _load(self, run_id: str) -> Dict:
+        """Load checkpoint nếu có — đây là chìa khóa của resume."""
+        p = self._path(run_id)
+        if p.exists():
+            return json.loads(p.read_text(encoding="utf-8"))
+        return {"completed": [], "results": {}}
+
+    def _save(self, run_id: str, state: Dict) -> None:
+        self._path(run_id).write_text(
+            json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def _run_step(self, step: Callable) -> object:
+        """Chạy 1 step với retry + exponential backoff (max 3 lần)."""
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                return step()
+            except Exception as e:
+                if attempt == self.max_retries:
+                    raise  # hết lượt — ném lên trên cho agent quyết định
+                wait = 2 ** attempt + random.random()  # 2s, 4s, 8s + jitter
+                print(f"    ⚠️ Lần {attempt}/{self.max_retries} fail: {e} — retry sau {wait:.1f}s")
+                time.sleep(wait)
+
+    def run(self, run_id: str, steps: List[Dict]) -> Dict:
+        """steps: [{"name": ..., "func": Callable}] — chạy tuần tự, checkpoint mỗi step."""
+        state = self._load(run_id)
+        done, results = set(state["completed"]), state["results"]
+        print(f"[{self.name}] run={run_id}: {len(done)}/{len(steps)} step đã xong trước đó")
+
+        for i, step in enumerate(steps):
+            name = step["name"]
+            if name in done:
+                print(f"  ↷ Bỏ qua '{name}' (đã xong — từ checkpoint)")
+                continue
+            print(f"  ▶ Chạy '{name}'...")
+            results[name] = self._run_step(step["func"])
+            done.add(name)
+            self._save(run_id, {"completed": sorted(done), "results": results})  # checkpoint!
+
+        print(f"[{self.name}] ✅ Hoàn tất run {run_id}")
+        return results
+
+# ---- Demo ----
+if __name__ == "__main__":
+    runner = CheckpointRunner("demo")
+    # Giả sử lần trước crash ở bước 3 — chạy lại vẫn resume đúng chỗ
+    out = runner.run("run-42", [
+        {"name": "parse",     "func": lambda: "parsed_data"},
+        {"name": "analyze",   "func": lambda: {"score": 42}},
+        {"name": "build",     "func": lambda: "artifact.bin"},  # crash ở đây lần trước
+        {"name": "test",      "func": lambda: "all_passed"},
+    ])
+    print("Kết quả:", out)
+```
+
+**Key points in the code:**
+- `_save()` runs **immediately after** each step finishes — the checkpoint is always fresh, so a crash at step N means the next run only repeats that exact step.
+- A fixed `run_id` makes multiple reruns of the same task **share one checkpoint set** — this is exactly what resume means.
+- Retry is **deterministic** (fixed backoff formula) for transient errors; when retries run out, the exception is raised so the **agent can notice and adapt** (change approach) rather than retrying forever.
+
+### 5. Cross-Reference
+
+> 📎 **Related:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 2** (Orchestration) + **Section 4.3** (Long-Running Agent Pattern). See also Section 4 (Error Recovery) above for retry/circuit breaker/saga — checkpoint/resume is a complementary layer, not a replacement.
+
+---
+
+*Document: VII. Workflow — HARNESS ENGINEERING EDITION*
+*Updated: 26/10/2026*
+*Author: AI Knowledge Repository*

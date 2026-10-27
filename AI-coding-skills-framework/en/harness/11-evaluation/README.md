@@ -3479,3 +3479,130 @@ print(f"$/pass-task: ${cost_per_pass_task(46.0, 710):.4f}")
 
 **Last updated:** 16/10/2026  
 **Author:** AI Knowledge Repository
+
+## October 2026 Update — LLM-as-Judge & End-State Evaluation (Anthropic 06/2025)
+
+> **📌 Context:** Distilled from the article *Demystifying Evals for AI Agents* (Anthropic, 06/2025). The core message: **don't wait for the perfect eval to get started** — start small, grade with an LLM, and evaluate the end state instead of every step.
+
+### 1. Eval-First — Start with ~20 Test Cases
+
+The most common mistake: **postponing eval building** until the system is "stable" — then when you need to measure, there's no baseline to compare against. Reality is the opposite:
+
+> **Key point:** The earliest changes have the **largest effect sizes** — when improving success rate from **30% → 80%**, you can **see the difference with a small sample** (~20 test cases). But once the system is at 85%, seeing a difference of 85% → 87% requires thousands of cases.
+
+| Stage | Number of test cases | Why it's enough |
+|---|---|---|
+| Early project | ~20 | Large effect size (30%→80%), differences visible immediately |
+| Maturing | 100–500 | Detect regressions as features are added |
+| Stable | Hundreds–thousands | Compare models/versions, fine-tuning |
+
+### 2. LLM-as-Judge Pattern
+
+This is the **simplest scoring method that aligns best with human judgment**: 1 LLM call, 1 prompt, graded against a fixed rubric:
+
+| Criterion | Scoring question |
+|---|---|
+| **Factual accuracy** | Does every claim in the output match the sources? |
+| **Citation accuracy** | Does each citation point to the source supporting that claim? |
+| **Completeness** | Is any part of the task missing? |
+| **Source quality** | Are primary sources preferred over secondary? |
+| **Tool efficiency** | Did the agent use tools sensibly or wastefully and redundantly? |
+
+**Output:** score `0.0–1.0` + label `pass/fail`. Because the output is structured, it scales to **hundreds of outputs** without manually reading each one.
+
+### 3. End-State Evaluation
+
+For agents that **mutate state** (write files, run commands, change the DB), don't grade each step — grade the **end state**:
+
+> **Why?** The same destination can be reached via **many different paths**. Grading each step punishes unusual paths even when the result is correct; grading end-state is fair and reflects the real value the user receives.
+
+| Task type | Evaluation |
+|---|---|
+| Agent fixes code | ✅ Do tests pass? Does the build succeed? No broken functionality? |
+| Agent deploys infra | ✅ Does the endpoint return correct results? Is the cluster state correct? |
+| Agent does research | ✅ Does the answer address the question with trustworthy sources? |
+
+For **complex workflows**, split the progress into **checkpoints** — each checkpoint corresponds to an **expected state change** — so you grade end-state while also knowing where the break happened if it fails.
+
+### 4. Human Evaluation — Catching Edge Cases
+
+Automation can't catch everything — you need **humans reading batches of outputs** (in the early stages) to catch error classes the rubric doesn't yet cover:
+
+- **Hallucinated answers:** the agent asserts confidently with no supporting source.
+- **System failures:** timeouts, wrong tool calls, silent crashes that don't get graded as fails.
+- **Source selection bias:** the classic example — agents **choosing SEO content farms over academic PDFs**. Fix: add **source quality heuristics to the prompt** (prefer `.edu`, `.gov`, reputable domains; penalize content farms).
+
+> Pattern: a human finds an edge case → turn the edge case into a new test case → rubric/heuristics get updated → the LLM-judge can grade that error class on its own next time. **Human evaluation feeds the automated eval; it doesn't replace it.**
+
+### 5. Production Reliability Eval
+
+After going to production, evaluation shifts roles from "grading papers" to "standing guard":
+
+| Activity | Purpose |
+|---|---|
+| **Regression test after every deploy** | Re-run the eval suite before release — catch incidents caused by prompt/model/tool changes |
+| **Tracing decision patterns** | Log **decision patterns** (which tools the agent picked, which branches it took) — not conversation content (privacy) — to debug root causes when quality drops |
+
+### 6. Python Code — LLM-Judge with Rubric Prompt
+
+```python
+import json
+from typing import Dict, Optional
+
+RUBRIC_PROMPT = """You are a strict evaluator. Grade the agent's answer.
+
+TASK: {task}
+AGENT ANSWER: {answer}
+SOURCES USED: {sources}
+
+Score each dimension 0.0-1.0:
+- factual_accuracy: Do claims match the sources?
+- citation_accuracy: Are citations correct for each claim?
+- completeness: Does it address all parts of the task?
+- source_quality: Are primary sources preferred over secondary?
+- tool_efficiency: Were tool calls reasonable, minimal, purposeful?
+
+Return ONLY valid JSON:
+{{"scores": {{"factual_accuracy": 0.0, "citation_accuracy": 0.0,
+"completeness": 0.0, "source_quality": 0.0, "tool_efficiency": 0.0}},
+"overall": 0.0, "verdict": "pass"|"fail", "reason": "..."}}"""
+
+PASS_THRESHOLD = 0.7
+
+def llm_judge(task: str, answer: str, sources: str,
+              call_llm, threshold: float = PASS_THRESHOLD) -> Optional[Dict]:
+    """Chấm 1 output bằng LLM-as-judge: 1 call, 1 rubric, trả score + pass/fail."""
+    prompt = RUBRIC_PROMPT.format(task=task, answer=answer, sources=sources)
+    raw = call_llm(prompt)  # 1 LLM call duy nhất
+
+    try:
+        start, end = raw.find("{"), raw.rfind("}") + 1
+        verdict = json.loads(raw[start:end])  # parse score JSON
+    except (ValueError, json.JSONDecodeError):
+        return None  # judge lỗi format → bỏ qua, không chấm bừa
+
+    score = float(verdict.get("overall", 0.0))
+    return {
+        "score": round(score, 2),
+        "pass": score >= threshold,          # pass/fail theo threshold
+        "verdict": verdict.get("verdict", "fail"),
+        "reason": verdict.get("reason", ""),
+    }
+
+# Ví dụ dùng:
+# result = llm_judge(task="Tóm tắt paper X", answer="...", sources="...",
+#                    call_llm=my_llm_client)
+# if result and not result["pass"]:
+#     print(f"❌ Fail ({result['score']}): {result['reason']}")
+```
+
+**Key point:** 1 call, 1 rubric, parseable JSON output, pass/fail by threshold — good enough for CI running hundreds of test cases without a complex harness.
+
+### 7. Cross-Reference
+
+> 📎 **Related:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 8** (Evaluation). See also Section 4.2 (LLM-as-Judge Evaluation) above for a more detailed code-grading pattern, and `07-workflow` for checkpoints during long agent runs.
+
+---
+
+**Last updated:** 26/10/2026  
+**Author:** AI Knowledge Repository

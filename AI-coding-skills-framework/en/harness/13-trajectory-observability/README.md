@@ -1146,3 +1146,93 @@ detectible pattern. The flight recorder is how you find the flight that was hija
 *Cross-cutting module · the spine of harness observability*
 *Last updated: 16/10/2026*
 *Author: AI Knowledge Repository*
+
+## October 2026 Update — Python Trajectory & Cost-per-Run
+
+> Adds the Python equivalent of the §8.1 TypeScript TrajectoryStore, plus
+> **cost-per-run** analysis — the thing that turns trajectory from "a log to debug"
+> into "a log to manage costs".
+
+### 1. TrajectoryEvent + JSONL Append-Only (Python)
+
+```python
+from dataclasses import dataclass, field, asdict
+from collections import defaultdict
+from pathlib import Path
+import json, time
+
+@dataclass
+class TrajectoryEvent:
+    session_id: str
+    kind: str                      # prompt | tool_call | tool_result | eval | ...
+    payload: dict                  # đã redact; ≤64KB — quá lớn thì thay bằng {"ref": ...}
+    id: str = ""                   # ULID — sắp xếp được theo lexicographic (§1.1)
+    tokens_in: int = 0
+    tokens_out: int = 0
+    latency_ms: int = 0
+    ts: int = field(default_factory=lambda: int(time.time() * 1000))
+
+class TrajectoryStore:
+    """JSONL append-only, một file / session. Dòng đã ghi không bao giờ sửa."""
+    def __init__(self, root: str):
+        self.root = Path(root); self.root.mkdir(parents=True, exist_ok=True)
+
+    def append(self, e: TrajectoryEvent) -> None:
+        if not e.id:
+            e.id = f"evt_{time.time_ns():024d}"          # thay bằng ULID ở production
+        with (self.root / f"{e.session_id}.jsonl").open("a", encoding="utf-8") as f:
+            f.write(json.dumps(asdict(e), ensure_ascii=False) + "\n")
+
+    def tail(self, session_id: str, n: int = 20) -> list[TrajectoryEvent]:
+        p = self.root / f"{session_id}.jsonl"
+        lines = p.read_text(encoding="utf-8").splitlines() if p.exists() else []
+        return [TrajectoryEvent(**json.loads(l)) for l in lines[-n:]]
+```
+
+The two invariants stay the same as the TypeScript version: **append-only** (a ledger that never deletes) and
+**every event carries a `session_id`** (no orphan events — §4.3).
+
+### 2. Cost-per-Run: Detecting Abnormally Expensive Runs
+
+```python
+def cost_per_run(events: list[TrajectoryEvent]) -> dict[str, dict]:
+    """Tổng tokens / latency per run, group theo task type.
+    Run vượt p95 của task type × 3 → flag điều tra, đừng đoán."""
+    agg: dict[str, dict] = defaultdict(lambda: {"tokens": 0, "latency_ms": 0, "steps": 0})
+    for e in events:
+        a = agg[e.payload.get("task_type", "unknown")]
+        a["tokens"] += e.tokens_in + e.tokens_out
+        a["latency_ms"] += e.latency_ms; a["steps"] += 1
+    return dict(agg)
+```
+
+Why this metric is worth building first: Anthropic's analysis (06/2025) showed
+**token usage explains ~80% of performance variance** between agent runs — slow runs
+and failed runs are usually the runs that swallowed the most tokens, and the cause
+can almost always be traced (retry loops, repeated retrieval, compaction stopped
+running — §6.2). Measuring cost-per-run by task type is the cheapest way to see that
+distribution tail **before** the invoice does.
+
+Known gap: there is no **cost-per-task SLO** yet — the threshold for "this run is
+abnormally expensive" is still a rule-of-thumb number, not standardized into a
+measurable SLO. This gap is recorded in
+[AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) (§8);
+until an SLO exists, store the cost distribution per task type so you have
+calibration data.
+
+### 3. Trace Decisions — Not Conversation Content
+
+The privacy boundary carries over unchanged to the Python version: emit **decision
+patterns** (kind, tool, tier, exit code, token count, latency), **not** the
+prompt/response content of conversations. The reason is Anthropic Research's
+production lesson: logging verbatim conversations turns the trajectory store into a
+second copy of sensitive data — every ad-hoc query, every dashboard, every export is
+a potential leak (→ §5.2: redact at emit time, not at read time). Payloads that need
+to be traceable → store a `{ref}` pointing to a blob with its own ACL, never inline
+them in the event.
+
+### 4. Architecture Links
+
+Trajectory is **Layer 8 (Observability & Feedback)** — every other layer emits into it,
+every debugging session reads from it. See
+[AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) (Layer 8).

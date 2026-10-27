@@ -3360,4 +3360,270 @@ trail `approval_request` / `approval_verdict` đều do
 
 *Tài liệu: VI. Decide Tools / MCP Calls — HARNESS ENGINEERING EDITION*
 *Ngày cập nhật: 16/10/2026 (stateless 2026-07-28: xem 2026-07-28-migration.md)*
+*Ngày cập nhật: 10/2026 — MCP Ecosystem & Code Execution Pattern*
+
+---
+
+## Cập nhật 10/2026 — MCP Ecosystem & Code Execution Pattern
+
+> **📌 Tóm tắt**
+>
+> Tháng 10/2026, hệ sinh thái MCP đã phát triển vượt bậc: spec `2026-07-28` hoàn thiện, hàng loạt AI clients hỗ trợ (Claude, ChatGPT, VS Code, Cursor, MCPJam...), và quan trọng nhất — mô hình **code execution với MCP** (Anthropic 11/2025) giúp agent viết code gọi MCP tools thay vì expose hàng chục tools riêng lẻ, giảm token và latency đáng kể.
+
+### 1. MCP Ecosystem 2026 — "USB-C cho AI"
+
+**MCP** (Model Context Protocol) ngày càng trở thành chuẩn kết nối tool cho AI agents. Spec `2026-07-28` hoàn thiện nhiều tính năng mới:
+
+| Thành phần | Mô tả |
+|---|---|
+| **Spec** | `2026-07-28` — định nghĩa đầy đủ tools, resources, prompts, sampling |
+| **MCP Apps** | Các ứng dụng chạy trong AI clients (Cursor, VS Code, Claude Desktop...) |
+| **Hỗ trợ rộng** | Claude, ChatGPT, VS Code, Cursor, MCPJam, nhiều nhà khác |
+| **Mô tả gốc** | MCP = "USB-C cho AI" — kết nối unified thay vì mỗi nhà một kiểu |
+
+> **Phân biệt MCP vs A2A:** Hai giao thức bổ sung nhau:
+> - **MCP** (Model Context Protocol): Agent → Tool (gọi tool/services)
+> - **A2A** (Agent-to-Agent): Agent → Agent (giao tiếp giữa các agents với nhau)
+>
+> A2A đã được tích hợp vào [Agentic AI Foundation 08/2026](https://github.com/agentprotocol/A2A) — Layer 4. MCP và A2A cùng tồn tại, phục vụ hai nhu cầu khác nhau.
+
+### 2. Code Execution Pattern với MCP (Anthropic 11/2025)
+
+**Bài toán cũ:** Khi agent kết nối nhiều MCP servers (mỗi server có 5-10 tools), tổng cộng có thể lên tới 50-100 tools. Mỗi tool description phải nằm trong context của mỗi LLM call → tốn **token + latency**.
+
+**Giải pháp — Agent viết code gọi MCP tools:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              CODE EXECUTION WITH MCP                        │
+│                                                             │
+│  Agent viết code:                                           │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ # Agent viết code để gọi tool                       │   │
+│  │ results = await mcp_batch([                          │   │
+│  │   {"server": "filesystem", "tool": "read",           │   │
+│  │    "args": {"path": "/data/a.txt"}},                │   │
+│  │   {"server": "web", "tool": "search",                │   │
+│  │    "args": {"query": "bug fixes"}},                 │   │
+│  │   {"server": "db", "tool": "query",                 │   │
+│  │    "args": {"sql": "SELECT * FROM logs"}},          │   │
+│  │ ])                                                   │   │
+│  └─────────────────────────────────────────────────────┘   │
+│       │                                                    │
+│       ▼                                                    │
+│  Sandbox executor chạy code → gọi MCP servers              │
+│       │                                                    │
+│       ▼                                                    │
+│  Chỉ TRẢ VỀ KẾT QUẢ TỔNG HỢP cho context                  │
+│       (giảm token đáng kể so với expose 50+ tools)         │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**So sánh hai cách tiếp cận:**
+
+| Tiêu chí | Expose mỗi tool riêng lẻ | Code execution pattern |
+|---|---|---|
+| Số tools trong context | 50-100 tool descriptions | 1 tool `mcp_batch_execute` |
+| Token cost | Cao (mỗi tool × mỗi call) | Thấp (chỉ kết quả aggregate) |
+| Latency | Tăng theo số tools | Tương đương 1 tool call |
+| Phù hợp | < 20 tools | Nhiều MCP servers, nhiều tools |
+| Code complexity | Thấp | Trung bình (cần sandbox executor) |
+
+### 3. Tool Design — Action Centered Intelligence (ACI)
+
+Tool descriptions cần viết như **docstring cho junior developer** — rõ ràng, đầy đủ, không mơ hồ:
+
+```python
+# ❌ BAD: Description mơ hồ
+{
+    "name": "get_data",
+    "description": "Lấy dữ liệu từ hệ thống",
+}
+
+# ✅ GOOD: Description như docstring dev
+{
+    "name": "get_employee_records",
+    "description": """
+    Trả về danh sách nhân viên theo filter.
+    Args:
+        department (str): Tên phòng ban (VD: "IT", "HR")
+        status (str): Trạng thái ("active"|"all", default="active")
+        limit (int): Số bản ghi tối đa (1-100, default=50)
+    Returns:
+        List[dict]: Danh sách nhân viên với fields: id, name, department, email
+    Raises:
+        ValueError: department không hợp lệ
+        PermissionError: Không có quyền truy cập phòng ban này
+    """,
+}
+```
+
+**4 nguyên tắc ACI Tool Design:**
+
+1. **Descriptions = docstring cho junior dev** — mô tả rõ input/output/error, không viết tắt
+2. **Format gần text tự nhiên** — tool name dùng underscores, mô tả dạng câu
+3. **Poka-yoke params** — dùng absolute paths, enums thay vì free-form strings, defaults rõ ràng
+4. **Test tool với inputs thật** — đừng chỉ viết mô tả; phải chạy thử, nhất là edge cases
+
+**Tránh bloated toolset:** 10 tool chất lượng tốt hơn 50 tool "cũng được".
+
+### 4. Python — Sandbox Executor Pattern
+
+```python
+import json
+from typing import Any, Dict, List, Optional
+
+
+class MCPToolExecutor:
+    """
+    Agent viết code gọi MCP tools, chạy trong sandbox.
+    Chỉ kết quả tổng hợp được trả về context — giảm token đáng kể.
+
+    Pattern:
+    1. Agent nhận task → viết code gọi mcp_batch()
+    2. Sandbox chạy code → gọi các MCP servers
+    3. Trả về kết quả tổng hợp (aggregate results)
+    4. Agent tổng hợp → final answer
+    """
+
+    def __init__(self, mcp_client, sandbox_config: Dict = None):
+        self.mcp = mcp_client
+        self.sandbox = sandbox_config or {
+            "timeout_seconds": 30,
+            "max_output_bytes": 1_000_000,
+            "allowed_servers": None,  # None = all, list = subset
+        }
+        self._results_cache: Dict[str, Any] = {}
+        self._call_log: List[Dict] = []
+
+    def execute_agent_code(self, code: str, cache_key: str = None) -> Dict:
+        """
+        Agent viết code → chạy trong sandbox → trả kết quả tổng hợp.
+
+        Args:
+            code: Python code do agent viết, gọi mcp_batch([...])
+            cache_key: Key để cache kết quả (tránh chạy lại cùng lời gọi)
+
+        Returns:
+            {"success": bool, "aggregate_result": {...}, "tool_calls": [...],
+             "tokens_saved": int}
+        """
+        # 1. Kiểm tra cache
+        if cache_key and cache_key in self._results_cache:
+            return {
+                "success": True,
+                "aggregate_result": self._results_cache[cache_key],
+                "from_cache": True,
+                "tool_calls": [],
+            }
+
+        # 2. Sandbox chạy code với kiểm soát timeout + output limit
+        tool_calls = self._run_in_sandbox(code)
+
+        # 3. Tổng hợp kết quả từ tất cả tool calls
+        aggregate = self._aggregate_results(tool_calls)
+
+        # 4. Ước tính token tiết kiệm được
+        token_saved = self._estimate_token_savings(tool_calls, aggregate)
+
+        # 5. Cache kết quả (theo hash của code)
+        if cache_key:
+            self._results_cache[cache_key] = aggregate
+
+        # 6. Log trajectory
+        self._call_log.append({
+            "cache_key": cache_key,
+            "tool_calls": tool_calls,
+            "aggregate": aggregate,
+            "token_saved": token_saved,
+        })
+
+        return {
+            "success": True,
+            "aggregate_result": aggregate,
+            "tool_calls": tool_calls,
+            "tokens_saved": token_saved,
+            "from_cache": False,
+        }
+
+    def _run_in_sandbox(self, code: str) -> List[Dict]:
+        """Chạy code agent viết trong sandbox có kiểm soát."""
+        results = []
+        try:
+            batch_calls = self._extract_mcp_batch_calls(code)
+            for call in batch_calls:
+                server = call["server"]
+                tool = call["tool"]
+                args = call["args"]
+
+                # Kiểm tra server được phép gọi
+                allowed = self.sandbox.get("allowed_servers")
+                if allowed and server not in allowed:
+                    results.append({
+                        "server": server, "tool": tool,
+                        "error": f"Server '{server}' không được phép gọi",
+                    })
+                    continue
+
+                # Gọi MCP server với timeout
+                response = self.mcp.call_tool(server, tool, args,
+                                              timeout=self.sandbox["timeout_seconds"])
+                results.append({
+                    "server": server,
+                    "tool": tool,
+                    "result": response,
+                })
+        except Exception as e:
+            results.append({"error": str(e)})
+
+        return results
+
+    def _aggregate_results(self, tool_calls: List[Dict]) -> Dict:
+        """Gộp kết quả từ nhiều tool calls thành một response gọn gàng."""
+        success_count = sum(1 for r in tool_calls if "error" not in r)
+        error_count = len(tool_calls) - success_count
+
+        if len(tool_calls) == 1:
+            return tool_calls[0].get("result", {})
+
+        return {
+            "total_calls": len(tool_calls),
+            "success_count": success_count,
+            "error_count": error_count,
+            "results": [r.get("result", {"error": r.get("error")}) for r in tool_calls],
+            "summary": f"{success_count} thành công, {error_count} lỗi",
+        }
+
+    def _extract_mcp_batch_calls(self, code: str) -> List[Dict]:
+        """Trích xuất các mcp_batch() calls từ code agent viết."""
+        import re
+        pattern = (
+            r'\{"server":\s*"([^"]+)",\s*"tool":\s*"([^"]+)",'
+            r'\s*"args":\s*(\{[^}]+\})\}'
+        )
+        matches = re.findall(pattern, code)
+        return [
+            {"server": m[0], "tool": m[1], "args": json.loads(m[2])}
+            for m in matches
+        ]
+
+    def _estimate_token_savings(self, tool_calls: List[Dict], aggregate: Dict) -> int:
+        """
+        Ước tính token tiết kiệm được nhờ aggregate thay vì expose từng tool.
+        Mỗi tool description ~200-500 tokens; aggregate chỉ ~50-100 tokens.
+        """
+        n_tools = len(tool_calls)
+        # Giả sử mỗi tool description = 300 tokens avg
+        original_context_cost = n_tools * 300
+        # Aggregate result ≈ 80 tokens
+        new_context_cost = 80
+        return max(0, original_context_cost - new_context_cost)
+```
+
+### 5. Cross-links
+
+- [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md)
+- [agent-skills-spec.md](../05-prompt-builder/agent-skills-spec.md) — Agent Skills Open Standard (agentskills.io)
+
 *Tác giả: AI Knowledge Repository*

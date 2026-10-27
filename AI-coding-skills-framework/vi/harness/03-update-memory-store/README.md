@@ -3276,3 +3276,131 @@ Mấy điều mang về gối đầu giường:
 *Ngày cập nhật: 16/10/2026*  
 *Tác giả: AI Knowledge Repository*  
 *Môi trường: Ollama (gemma3:12b, nomic-embed-text)*
+
+---
+
+## Cập nhật 10/2026 — Structured Note-Taking & Long-Running Memory
+
+### 1. Structured note-taking / agentic memory (Anthropic 09/2025)
+
+Agent tự ghi NOTES.md/todo ra ngoài context window để:
+- Giữ state giữa các turn trong cùng session
+- Bàn giao context cho session tiếp theo
+- Tránh quên action items đã đề ra
+
+**Memory tool (Claude Developer Platform):** Persistent memory giữa các summarization — agent có thể đọc/ghi memory store riêng, không phụ thuộc conversation window.
+
+**Pattern đề xuất:**
+
+```
+PROJECT/
+├── CLAUDE.md          # System instructions + conventions
+├── NOTES.md           # Agent notes, todos, state
+├── SPEC.md            # Specifications
+└── PROGRESS.md        # Feature progress tracking
+```
+
+### 2. Long-running agent memory pattern (Anthropic 11/2025)
+
+Initializer agent tạo cấu trúc ban đầu, các session sau đọc và tiếp tục:
+
+| File | Mục đích |
+|------|----------|
+| `feature_list.json` | Danh sách features với `passes: false` (chưa pass) |
+| `init.sh` | Script setup repo, dependencies |
+| `claude-progress.txt` | Progress notes, decisions, next steps |
+| Git commits | Mỗi feature commit khi pass |
+
+**Session flow:**
+1. Đọc `feature_list.json` + `git log` → xác định feature tiếp theo
+2. Implement feature → run tests
+3. Nếu test pass → mark feature trong JSON + git commit + update progress
+4. Nếu fail → ghi note vào progress file
+
+**Tại sao JSON được ưa chuộng hơn Markdown:**
+- Model ít ghi đè/ghi sai format JSON so với Markdown tự do
+- Parse machine-readable, không phải regex parse text
+- Dễ diff trong git, conflict resolution đơn giản hơn
+
+### 3. Khi nào reset memory hoàn toàn
+
+**Nên reset khi:**
+- Task đã hoàn thành hoàn toàn
+- Tất cả facts đã được consolidate vào permanent storage
+- Milestone cuối cùng đã đạt
+
+**Không nên reset khi:**
+- Đang giữa milestone/cuộc họp quan trọng
+- Facts chưa được consolidate (sẽ mất insights)
+- Cần audit trail cho compliance
+
+### 4. Python code: ProgressStore class
+
+```python
+import json
+from pathlib import Path
+from datetime import datetime
+
+class ProgressStore:
+    """Simple file-based progress tracking for long-running agents."""
+
+    def __init__(self, progress_file: str = "claude-progress.json"):
+        self.progress_file = Path(progress_file)
+        self._init_file()
+
+    def _init_file(self):
+        if not self.progress_file.exists():
+            self.progress_file.write_text(json.dumps({
+                "created_at": datetime.now().isoformat(),
+                "features": []
+            }, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def read(self) -> dict:
+        return json.loads(self.progress_file.read_text(encoding="utf-8"))
+
+    def write(self, data: dict):
+        self.progress_file.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
+
+    def add_feature(self, name: str, description: str = ""):
+        data = self.read()
+        data["features"].append({
+            "name": name,
+            "description": description,
+            "status": "pending",
+            "passes": False,
+            "added_at": datetime.now().isoformat(),
+            "completed_at": None
+        })
+        self.write(data)
+
+    def mark_feature(self, name: str, passes: bool):
+        data = self.read()
+        for feat in data["features"]:
+            if feat["name"] == name:
+                feat["passes"] = passes
+                feat["status"] = "passed" if passes else "failed"
+                feat["completed_at"] = datetime.now().isoformat()
+        self.write(data)
+
+    def get_next_feature(self) -> dict | None:
+        data = self.read()
+        for feat in data["features"]:
+            if not feat["passes"]:
+                return feat
+        return None
+
+# Usage
+store = ProgressStore("project/claude-progress.json")
+store.add_feature("auth", "Implement JWT authentication")
+store.add_feature("api", "Create REST endpoints")
+next_f = store.get_next_feature()
+print(f"Next: {next_f['name'] if next_f else 'All done'}")
+store.mark_feature("auth", passes=True)
+```
+
+### 5. Cross-link
+
+- `[AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md)` — Layer 6 (Agent Memory & State) — structured memory patterns cho production agents.

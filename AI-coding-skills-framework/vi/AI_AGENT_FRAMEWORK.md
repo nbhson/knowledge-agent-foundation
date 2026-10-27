@@ -73,6 +73,7 @@ Bắt đầu từ **Phase 1** (Core Skills) rồi học dần lên **Phase 6** (
 | Debug/replay một run sau khi xảy ra | [13 - Trajectory & Observability](#mặt-phẳng-kiểm-soát-harness-modules-1215) |
 | Giữ cửa sổ context có giới hạn | [14 - Compaction & Context](#mặt-phẳng-kiểm-soát-harness-modules-1215) |
 | Gate thao tác không đảo ngược cho con người | [15 - Approval Gates](#mặt-phẳng-kiểm-soát-harness-modules-1215) |
+| **Xây kiến trúc hệ thống agent hoàn chỉnh (8 Layer)** | [AGENT_SYSTEM_ARCHITECTURE.md](AGENT_SYSTEM_ARCHITECTURE.md) |
 
 > **Ghi chú về đánh số.** Module harness là `01`–`15`. Nhãn `Part` bên dưới
 > (`Part I` … `Part XIII`) đánh số *các phần của framework*, là namespace khác —
@@ -84,12 +85,13 @@ Bắt đầu từ **Phase 1** (Core Skills) rồi học dần lên **Phase 6** (
 
 ## Cấu Trúc Học Tập
 
-```
 AI/
 ├── AI_AGENT_FRAMEWORK.md                   ← TRANG CHỦ
+├── AGENT_SYSTEM_ARCHITECTURE.md            ← KIẾN TRÚC HỆ THỐNG AGENT (8 Layer, cập nhật 2026)
 ├── HARNESS_ENGINEERING.md                  ← KIẾN TRÚC HARNESS
 ├── GRAPH_ENGINEERING.md                    ← KIẾN TRÚC GRAPH
 │
+
 ├── harness/                                ← HARNESS (7 Components)
 │  │
 │  │  ── CORE SKILLS (Kỹ Năng Cốt Lõi) ──

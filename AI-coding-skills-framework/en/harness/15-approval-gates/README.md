@@ -1161,3 +1161,62 @@ metric (→ 9.3) becomes the product dashboard of the next five years.
 *Cross-cutting module · control plane for irreversible actions · human-in-the-loop*
 *Updated: 16/10/2026*
 *Author: AI Knowledge Repository*
+
+## October 2026 Update — Approval Fatigue & UX
+
+> A deeper look at approval fatigue (raised in §7.1) — the #1 silent failure mode of
+> human-in-the-loop systems: the gate isn't bypassed, it gets **rubber-stamped reflexively**.
+
+### 1. What Is Approval Fatigue — And Why It's Dangerous
+
+Approval fatigue happens when gates fire too often: the user faces dozens of approval boxes
+every day, and the brain optimizes by approving reflexively — which is exactly **automation
+bias** (Parasuraman & Manzey, 2010; → §10.5). In that state:
+
+- The gate still *technically* works — every action has an approval.
+- The gate is *substantively* dead — the "Approve" button becomes a second Enter key.
+- It's worse than having no gate: you **believe** there's human review, so you lower your
+  guard at other layers; while in reality nobody is reading anything.
+
+Human-delegation research shows false alarms erode vigilance:
+the gate fires on something harmless, the human stops checking the real threats too
+(the cry-wolf curve). The early-detection metric lives in §9.3: **approval rate rising +
+decision time falling at the same time** = fatigue has set in.
+
+### 2. Five Mitigations
+
+| Mitigation | How | When to use |
+|-----------|-----|-------------|
+| **Risk-based approval** | Only gate S1/S2 (prod-auth, elevated); S3 read-only auto-approves + logs. Put the gate on the expensive tail (§2.1), don't burn attention on the cheap tier | Always — the default of the tier taxonomy |
+| **Batching** | Group low-risk ops in the same plan segment into **one** gate with a combined diff | Many `write` edits in one task (§7.1) |
+| **Approval summary** | Payload always carries diff + consequences + rollback; humans approve *evidence*, not *narrative* | Every gate (evidence rule §3.2) |
+| **Timeout-deny stays** | Fatigue is not a reason to loosen TTL or fail-open; expired is still deny (§4.2) | Always — no exceptions |
+| **Audit + weekly review** | Watch approval rate / median wait / deny patterns per tier to **calibrate**: a tier being machine-stamped gets a raised threshold or loses its gate | Fixed cadence — not ad hoc |
+
+Every mitigation shares one principle: *spend the least human attention per safe
+decision* — kill useless gates so real gates stay alive.
+
+### 3. Anti-Pattern: Gating by Tool Call, When You Should Gate by Business Operation
+
+**Anti-pattern:** gate *every tool call* — reading a file needs approval, search needs
+approval, grep needs approval. After two days, the user unconsciously click-throughs
+everything, including `db.migrate` on prod.
+
+Principle: **gate by BUSINESS OPERATION, not by technique.**
+
+| Gate ❌ by technique | Gate ✅ by business operation |
+|---------------------|------------------------------|
+| `read_file`, `search`, `grep` | Deploy to prod, force-push a release branch |
+| `list`, `view`, `stat` | Delete data, change IAM / rotate secrets |
+| running local tests | Sending messages/emails outside the system |
+
+Read-only technical actions have git + sandbox + audit as cover (reversibility — → §10.2
+Aider); save real gates for what git cannot undo. OpenHands ("confirm every
+change") is the main case study of this mistake — the worst ergonomics because it *trains*
+rubber-stamping (§10.3).
+
+### 4. Architecture Links
+
+The approval gate sits at **Layer 7 (Execution & Safety)** — the technical ceiling that gates
+complement, in the 9-layer architecture. See
+[AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) (Layer 7).

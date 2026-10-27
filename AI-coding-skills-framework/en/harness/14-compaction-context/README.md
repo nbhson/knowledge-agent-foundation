@@ -1096,3 +1096,135 @@ difference between an agent that survives long runs and one that is merely lucky
 *Cross-cutting module · what lets a fixed context window support an unbounded run*
 *Last updated: 16/10/2026*
 *Author: AI Knowledge Repository*
+
+## October 2026 Update — Compaction According to Anthropic (09/2025)
+
+> Added from the article **"Effective context engineering for AI agents"** (Anthropic, 09/2025) —
+> more concrete guidance on how to write a compaction prompt and what is actually safe to remove.
+
+### 1. Tool Result Clearing — The "Lightest Touch" Compaction
+
+**Old tool results** are the safest removal candidates because: they were already *read*
+(not just floating around) and contain only *intermediate state* — not decisions,
+not invariants, not the task definition.
+
+In other words, **tool result clearing is the lightest-touch form of compaction**
+that still makes sense. If you haven't done anything about compaction, start here — it has
+already been shipped by Anthropic as the official **"Context Management"** feature on the Claude
+Developer Platform.
+
+Principle: tool results deep in conversation history have already served their purpose;
+the model has extracted the needed information from them — **the raw result now just takes up space**.
+
+### 2. Compaction Prompt Tuning — Start with Recall, Then Iterate Precision
+
+Anthropic recommends a 2-phase process for writing a compaction prompt:
+
+1. **Phase 1 — Maximize recall:** Ask the summarizer to capture **every important piece
+   of information** first. It doesn't need to be compact yet — as long as nothing is missed.
+   This error (adding too much) is cheaper than the other error (missing something needed).
+2. **Phase 2 — Iterate precision:** Once the prompt reaches 100% recall, iteratively try
+   removing information that "seems superfluous" and check whether runs are still correct. Repeat
+   until precision is high without losing recall.
+
+**Things you MUST keep** (in every compaction):
+
+- Architectural decisions already made
+- Unresolved bugs (which bug is open, why)
+- Implementation details currently in use
+- Current task state — goal + progress + next step
+
+**Things that CAN be dropped:**
+
+- Old raw tool outputs (already read, no longer needed)
+- Tool definitions already read (the model doesn't need a reminder of how to use the tool)
+- Messages already summarized in the previous compaction
+
+### 3. Contract With Module 02-Build-Context
+
+Compaction output is the **`history` field** in the `BuiltContext` structure (module 02).
+The pin set derives from that boundary:
+
+- **Absolute pin set** = `system` + `goal` — the two parts never cut, no matter
+  what compaction happens.
+- Every other part of `BuiltContext` (`retrieved`, `immediate`, `history`) is
+  in the evictable list and follows the utility-based eviction order (§4).
+
+```
+BuiltContext (→ 02)
+├── system  ───────────────────► PIN (không bao giờ cắt)
+├── goal    ───────────────────► PIN (không bao giờ cắt)
+├── retrieved ─────────────────► evictable (theo utility)
+├── history ────────────────────► evictable (theo utility) ← COMPACTION ĐỔ VÀO ĐÂY
+└── immediate ─────────────────► evictable (theo utility)
+```
+
+### 4. "Keep vs Drop" Table
+
+| Keep (never drop) | Can drop (after reading) |
+|-------------------|--------------------------|
+| Architectural decisions | Old raw tool outputs |
+| Unresolved bugs + stack trace | Tool definitions already read |
+| Current task state (goal, progress, next step) | Messages summarized in the previous compaction |
+| File paths being worked on | Resolved failure branches |
+| Invariants / constraints (HEADER/FOOTER, → §7) | Chit-chat, greetings |
+
+**Quick rule to remember:** "discard the thing needed **later** after discarding the thing needed **earlier**" —
+a tool result is something needed earlier (you read it to extract information), so after extraction
+it becomes "no longer needed" and falls into the droppable group.
+
+### 5. Sample Code — should_compact + compact
+
+<details>
+<summary>Python Code — should_compact + compact with keeping the 5 most recent files (Click to expand/collapse)</summary>
+
+```python
+COMPACT_RATIO = 0.70          # trigger: 70% ngân sách
+MAX_RECENT_FILES = 5          # giữ 5 file gần nhất được truy cập (Claude Code)
+RESUME_BUDGET = 300           # token cho resume block
+
+def should_compact(tokens_used: int, limit: int) -> bool:
+    """Trigger compaction khi sử dụng > 70% ngân sách."""
+    return (tokens_used / limit) > COMPACT_RATIO
+
+
+def compact(messages: list[dict], recent_files: list[str] | None = None) -> str:
+    """Tóm tắt lịch sử hội thoại, giữ 5 file gần nhất.
+
+    Args:
+        messages: lịch sử hội thoại
+        recent_files: danh sách file gần nhất được truy cập (mặc định giữ 5)
+    Returns:
+        Resume block dạng text, ≤ RESUME_BUDGET tokens
+    """
+    if recent_files is None:
+        recent_files = []
+    recent_files = recent_files[-MAX_RECENT_FILES:]
+
+    # 1. Filter: tool results cũ deep trong history
+    kept = [m for m in messages if m.get("role") != "tool" or m.get("keep")]
+
+    # 2. Gộp lại messages còn lại (nếu nhiều → summarize)
+    total = sum(len(str(m.get("content", ""))) for m in kept)
+    if total > RESUME_BUDGET * 4:   # rough: ~4 chars/token
+        # Ưu tiên: goal + quyết định + unresolved + next + recent_files
+        summary_parts = [
+            "Goal: [trích nhiệm vụ hiện tại từ system/goal messages]",
+            "Decisions: [các quyết định đã đưa ra]",
+            "Open issues: [bug/task chưa giải quyết]",
+            "Next: [bước kế tiếp]",
+            f"Recent files: {', '.join(recent_files)}",
+        ]
+        return "\n".join(summary_parts)
+    return "\n".join(str(m.get("content", "")) for m in kept[-10:])
+```
+
+</details>
+
+### 6. Related In This Repo
+
+- [02-build-context](../02-build-context/README.md) — Compaction output is the
+  `history` field in `BuiltContext`; hybrid pre-computed + just-in-time retrieval goes together
+  with compaction so context always stays high-signal.
+- [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 3**
+  (build context) pairs with **Layer 4** (compaction/memory) in the agent architecture.

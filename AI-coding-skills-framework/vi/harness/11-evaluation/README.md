@@ -3476,5 +3476,131 @@ print(f"$/pass-task: ${cost_per_pass_task(46.0, 710):.4f}")
 > **Phụ lục Oct-2026:** evals nay bao cả automation (eval từng node + workflow, Custom Graders Library,
 > generated graders). Ghép `minimal-benchmark-harness.md` với log trajectory (`13`) + trace OTel để chấm tái lập được.
 
-**Ngày cập nhật:** 16/10/2026  
+---
+
+## Cập nhật 10/2026 — LLM-as-Judge & End-State Evaluation (Anthropic 06/2025)
+
+> **📌 Bối cảnh:** Tổng hợp từ bài *Demystifying Evals for AI Agents* (Anthropic, 06/2025). Thông điệp chính: **đừng đợi eval hoàn hảo mới bắt đầu** — bắt đầu nhỏ, chấm bằng LLM, và đánh giá trạng thái cuối thay vì từng bước.
+
+### 1. Eval-First — Bắt Đầu Với ~20 Test Cases
+
+Sai lầm phổ biến nhất: **hoãn xây eval** đến khi hệ thống "ổn định" — rồi khi cần đo lường thì không có baseline để so. Thực tế ngược lại:
+
+> **Điểm mấu chốt:** Những thay đổi sớm nhất có **effect size lớn nhất** — khi cải thiện success rate từ **30% → 80%**, bạn **thấy được ngay với sample nhỏ** (~20 test cases). Còn khi hệ thống đã 85%, muốn thấy khác biệt 85% → 87% cần hàng nghìn cases.
+
+| Giai đoạn | Số test cases | Lý do đủ dùng |
+|---|---|---|
+| Đầu dự án | ~20 | Effect size lớn (30%→80%), khác biệt thấy rõ ngay |
+| Đang trưởng thành | 100–500 | Phát hiện regression theo feature mới |
+| Ổn định | Hàng trăm–hàng nghìn | So model/version, tinh chỉnh nhỏ |
+
+### 2. LLM-as-Judge Pattern
+
+Đây là cách chấm **đơn giản nhất mà align nhất với human judgement**: 1 LLM call, 1 prompt, chấm theo rubric cố định:
+
+| Tiêu chí | Câu hỏi chấm |
+|---|---|
+| **Factual accuracy** | Mỗi claim trong output có khớp với sources không? |
+| **Citation accuracy** | Trích dẫn có trỏ đúng nguồn hỗ trợ claim đó không? |
+| **Completeness** | Có bỏ sót phần nào của task không? |
+| **Source quality** | Primary sources được ưu tiên hơn secondary không? |
+| **Tool efficiency** | Agent dùng tool hợp lý hay lăng nhăng, dư thừa? |
+
+**Output:** score `0.0–1.0` + nhãn `pass/fail`. Vì output có cấu trúc nên scale được cho **hàng trăm outputs** mà không cần đọc tay từng cái.
+
+### 3. End-State Evaluation
+
+Với agent **mutate state** (viết file, chạy lệnh, thay đổi DB), đừng chấm từng step — chấm **trạng thái cuối**:
+
+> **Tại sao?** Cùng một đích, agent có thể đến bằng **nhiều path** khác nhau. Chấm từng step sẽ trừng phạt path khác thường dù kết quả đúng; chấm end-state thì công bằng và phản ánh đúng giá trị người dùng nhận được.
+
+| Loại task | Đánh giá |
+|---|---|
+| Agent sửa code | ✅ Tests pass? Build thành công? Không phá chức năng cũ? |
+| Agent deploy infra | ✅ Endpoint trả đúng kết quả? Trạng thái cluster đúng? |
+| Agent research | ✅ Answer có đúng câu hỏi, có nguồn đáng tin? |
+
+Với **workflow phức tạp**, chia tiến trình thành các **checkpoints** — mỗi checkpoint ứng với một **state change mong đợi** — để vừa chấm end-state vừa biết đứt gãy ở đoạn nào nếu fail.
+
+### 4. Human Evaluation — Bắt Edge Cases
+
+Tự động hóa không bắt hết — cần **người đọc hàng loạt output** (trong giai đoạn đầu) để bắt các class lỗi mà rubric chưa bao phủ:
+
+- **Hallucinated answers:** agent khẳng định chắc nịch nhưng không có nguồn nào hỗ trợ.
+- **System failures:** timeout, tool gọi sai, crash âm thầm không bị chấm là fail.
+- **Source selection bias:** ví dụ kinh điển — agents **chọn SEO content farms thay vì academic PDFs**. Fix: thêm **source quality heuristics vào prompt** (ưu tiên `.edu`, `.gov`, domain uy tín; phạt content farm).
+
+> Pattern: người tìm edge case → biến edge case thành test case mới → rubric/heuristics được cập nhật → LLM-judge tự chấm được class lỗi đó lần sau. **Human evaluation là nguồn nuôi dưỡng eval tự động, không phải thay thế nó.**
+
+### 5. Production Reliability Eval
+
+Sau khi lên production, evaluation chuyển vai trò từ "chấm bài" sang "canh gác":
+
+| Hoạt động | Mục đích |
+|---|---|
+| **Regression test sau mỗi deploy** | Chạy lại bộ eval trước khi release — bắt sự cố do prompt/model/tool đổi |
+| **Tracing decision patterns** | Log **decision patterns** (agent chọn tool nào, rẽ nhánh nào) — không log nội dung conversation (privacy) — để debug root cause khi quality tụt |
+
+### 6. Code Python — LLM-Judge với Rubric Prompt
+
+```python
+import json
+from typing import Dict, Optional
+
+RUBRIC_PROMPT = """You are a strict evaluator. Grade the agent's answer.
+
+TASK: {task}
+AGENT ANSWER: {answer}
+SOURCES USED: {sources}
+
+Score each dimension 0.0-1.0:
+- factual_accuracy: Do claims match the sources?
+- citation_accuracy: Are citations correct for each claim?
+- completeness: Does it address all parts of the task?
+- source_quality: Are primary sources preferred over secondary?
+- tool_efficiency: Were tool calls reasonable, minimal, purposeful?
+
+Return ONLY valid JSON:
+{{"scores": {{"factual_accuracy": 0.0, "citation_accuracy": 0.0,
+"completeness": 0.0, "source_quality": 0.0, "tool_efficiency": 0.0}},
+"overall": 0.0, "verdict": "pass"|"fail", "reason": "..."}}"""
+
+PASS_THRESHOLD = 0.7
+
+def llm_judge(task: str, answer: str, sources: str,
+              call_llm, threshold: float = PASS_THRESHOLD) -> Optional[Dict]:
+    """Chấm 1 output bằng LLM-as-judge: 1 call, 1 rubric, trả score + pass/fail."""
+    prompt = RUBRIC_PROMPT.format(task=task, answer=answer, sources=sources)
+    raw = call_llm(prompt)  # 1 LLM call duy nhất
+
+    try:
+        start, end = raw.find("{"), raw.rfind("}") + 1
+        verdict = json.loads(raw[start:end])  # parse score JSON
+    except (ValueError, json.JSONDecodeError):
+        return None  # judge lỗi format → bỏ qua, không chấm bừa
+
+    score = float(verdict.get("overall", 0.0))
+    return {
+        "score": round(score, 2),
+        "pass": score >= threshold,          # pass/fail theo threshold
+        "verdict": verdict.get("verdict", "fail"),
+        "reason": verdict.get("reason", ""),
+    }
+
+# Ví dụ dùng:
+# result = llm_judge(task="Tóm tắt paper X", answer="...", sources="...",
+#                    call_llm=my_llm_client)
+# if result and not result["pass"]:
+#     print(f"❌ Fail ({result['score']}): {result['reason']}")
+```
+
+**Điểm mấu chốt:** 1 call, 1 rubric, output JSON parse được, pass/fail theo threshold — đủ dùng cho CI chạy hàng trăm test cases mà không cần harness phức tạp.
+
+### 7. Cross-Reference
+
+> 📎 **Liên quan:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 8** (Evaluation). Xem thêm Section 4.2 (LLM-as-Judge Evaluation) ở trên cho pattern chấm code chi tiết hơn, và `07-workflow` cho checkpoint khi agent chạy dài.
+
+---
+
+**Ngày cập nhật:** 26/10/2026  
 **Tác giả:** AI Knowledge Repository

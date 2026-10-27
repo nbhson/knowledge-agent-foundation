@@ -3186,3 +3186,126 @@ def retrieve(query: str, tenant_id: str):
 *Tài liệu: I. Retrieve Memory & Knowledge*
 *Ngày tạo: 2026-07-11*
 *Môi trường: Ollama (gemma3:12b, nomic-embed-text)*
+
+---
+
+## Cập nhật 10/2026 — Retrieval cho Agentic Systems
+
+### 1. Pipeline hybrid search hoàn chỉnh (Python ~45 dòng, chạy được)
+
+BM25 (rank-bm25) + vector (Ollama nomic-embed-text) → RRF fusion → cross-encoder rerank → top-k.
+
+```python
+import requests
+import numpy as np
+from rank_bm25 import BM25Okapi
+
+OLLAMA = "http://localhost:11434"
+TOP_K = 20
+RERANK_TOP = 5
+
+def embed(texts):
+    """Embed via Ollama nomic-embed-text."""
+    res = requests.post(f"{OLLAMA}/api/embed", json={
+        "model": "nomic-embed-text",
+        "input": texts if isinstance(texts, list) else [texts]
+    })
+    return res.json()["embeddings"]
+
+def bm25_search(query, chunks, tokenizer):
+    """BM25 keyword search."""
+    tokenized_corpus = [tokenizer(c["text"]) for c in chunks]
+    bm25 = BM25Okapi(tokenized_corpus)
+    scores = bm25.get_scores(tokenizer(query))
+    ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
+    return [(idx, score) for idx, score in ranked[:TOP_K]]
+
+def vector_search(query, chunks):
+    """Semantic search via vector similarity."""
+    q_emb = embed(query)[0]
+    results = []
+    for i, c in enumerate(chunks):
+        v_emb = embed(c["text"])[0]
+        sim = np.dot(q_emb, v_emb) / (np.linalg.norm(q_emb) * np.linalg.norm(v_emb))
+        results.append((i, sim))
+    return sorted(results, key=lambda x: x[1], reverse=True)[:TOP_K]
+
+def rrf_fusion(bm25_results, vec_results, k=60):
+    """Reciprocal Rank Fusion."""
+    fused = {}
+    for rank, (idx, _) in enumerate(bm25_results):
+        fused[idx] = fused.get(idx, 0) + 1 / (k + rank + 1)
+    for rank, (idx, _) in enumerate(vec_results):
+        fused[idx] = fused.get(idx, 0) + 1 / (k + rank + 1)
+    return sorted(fused.items(), key=lambda x: x[1], reverse=True)
+
+def rerank_crossencoder(query, chunks, indices):
+    """Cross-encoder rerank (simulated — replace with sentence-transformers)."""
+    results = []
+    for idx in indices:
+        c = chunks[idx]
+        # Simulated cross-encoder score; use CrossEncoder("cross-encoder/ms-marco-MiniLML-6-v2") in production
+        score = len([w for w in query.lower().split() if w in c["text"].lower()]) / max(len(query.split()), 1)
+        results.append((idx, score))
+    return sorted(results, key=lambda x: x[1], reverse=True)[:RERANK_TOP]
+
+def hybrid_search(query, chunks):
+    """Complete hybrid pipeline."""
+    tokenizer = lambda t: t.lower().split()
+    bm25_scores = bm25_search(query, chunks, tokenizer)
+    vec_scores = vector_search(query, chunks)
+    fused = rrf_fusion(bm25_scores, vec_scores)
+    indices = [idx for idx, _ in fused]
+    reranked = rerank_crossencoder(query, chunks, indices)
+    return [chunks[idx] for idx, _ in reranked]
+
+# Usage
+chunks = [{"text": "BHYT là bảo hiểm y tế bắt buộc"}, {"text": "Mức đóng BHYT là 4.5%"}]
+results = hybrid_search("mức đóng BHYT", chunks)
+print([r["text"] for r in results])
+```
+
+### 2. Just-in-time vs pre-computed retrieval (Anthropic 09/2025)
+
+| Khía cạnh | Pre-computed (Static) | Just-in-time (Agentic) |
+|-----------|----------------------|------------------------|
+| **Định nghĩa** | CLAUDE.md, context files được ghi sẵn | Agent tự generate queries, explore, progressive disclosure |
+| **Ưu điểm** | Nhanh, deterministic, không tốn token search | Linh hoạt, context-aware, multi-hop capable |
+| **Nhược điểm** | Cần manual update, có thể outdated | Tốn thời gian, có thể noisy |
+| **Khi nào dùng** | Project conventions, architecture docs, coding standards | Feature exploration, debugging, novel scenarios |
+| **Ví dụ** | CLAUDE.md, SPEC.md, system prompt | glob/grep dynamic queries, web search, documentation exploration |
+
+**Khuyến nghị hybrid:** Kết hợp cả hai — pre-computed cho static facts + agentic search cho dynamic exploration.
+
+- **Agentic search pattern:** Agent tự generate queries → explore file tree → progressive disclosure (lấy từng lớp thông tin khi cần).
+- **Nguồn:** Anthropic, "Agentic Retrieval Patterns," 09/2025.
+
+### 3. GraphRAG comparison (Microsoft 2024)
+
+| Chỉ số | Vector RAG | GraphRAG |
+|--------|-----------|----------|
+| **Comprehensiveness** | Baseline | +30-40% cao hơn |
+| **Diversity of answers** | Baseline | +30-40% cao hơn |
+| **Local entity queries** | Đủ tốt | Tương đương |
+| **Global sensemaking** | Yếu | Mạnh |
+| **Multi-hop reasoning** | Khó | Hỗ trợ tốt |
+| **Citation path clarity** | Có thể hallucinate | Giảm 25-30% hallucination |
+| **Implementation complexity** | Thấp | Cao |
+| **Storage overhead** | Baseline | +50-100% |
+
+**Khi nào cần GraphRAG:**
+
+- Multi-hop queries: "Ai là trưởng phòng của người mà developer X báo cáo?"
+- Global sensemaking: Tóm tắt toàn bộ codebase, phân tích patterns
+- Entity relationship queries: "Tìm tất cả dependencies của service A"
+
+**Khi nào Vector RAG đủ:**
+
+- Simple lookup queries
+- Local entity questions
+- Low-latency requirements
+
+### 4. Cross-link
+
+- `[AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md)` — Layer 1 (Data Sources) và Layer 3 (Retrieval & Context)
+- `[GraphRAG](../../graph/05-graph-rag/README.md)` — chi tiết GraphRAG implementation

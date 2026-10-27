@@ -51,6 +51,12 @@
 > - [15. Cost-Benefit Analysis](#15-cost-benefit-analysis)
 >   - [15.1 When Multi-Agent Is Worth It](#151-when-multi-agent-is-worth-it)
 >   - [15.2 Token Cost Comparison](#152-token-cost-comparison)
+> - [17. October 2026 Update — Multi-Agent Production Research (Anthropic, A2A)](#17-october-2026-update--multi-agent-production-research-anthropic-a2a)
+>   - [17.1 Production results (Anthropic Research, 06/2025)](#171-production-results-anthropic-research-062025)
+>   - [17.2 A2A Protocol (Linux Foundation, 2026)](#172-a2a-protocol-linux-foundation-2026)
+>   - [17.3 8 prompting principles for multi-agent](#173-8-prompting-principles-for-multi-agent)
+>   - [17.4 Sub-agent output via filesystem](#174-sub-agent-output-via-filesystem)
+>   - [17.5 Sync vs Async](#175-sync-vs-async)
 > - [References](#references)
 >   - [Frameworks](#frameworks)
 >   - [Research & Papers](#research-papers)
@@ -3000,3 +3006,172 @@ async function handleFault(agentId: string, lease: TaskLease, reason: string,
 - [Saga Pattern](https://microservices.io/patterns/data/saga.html) — Distributed transactions
 - [CQRS Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cQRS) — Command Query Responsibility Segregation
 - [Event Sourcing](https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing) — State via events
+
+## 17. October 2026 Update — Multi-Agent Production Research (Anthropic, A2A)
+
+> **📌 Core Concepts**
+>
+> - **Concept:** A synthesis of the latest production findings (10/2026) on multi-agent from Anthropic Research and the A2A (Agent-to-Agent) protocol from the Linux Foundation — when multi-agent is worth the cost, how to prompt the orchestrator, and how agents "shake hands" through an open standard.
+> - **Analogy:** Anthropic Research is like a film studio with a director (LeadResearcher) and many parallel film crews (subagents); A2A is like a "shared labor contract" that lets companies (different frameworks) hire work from each other without opening their internal books.
+> - **Why it matters:** This is real production data (not lab benchmarks) — it tells you exactly how expensive multi-agent is (15× tokens), how effective it is (+90.2%), and when you should NOT use it.
+
+### 17.1 Production results (Anthropic Research, 06/2025)
+
+Anthropic's "How we built our multi-agent research system" report is one of the few sources with **real production numbers** (not synthetic benchmarks). The figures below directly answer "is multi-agent worth it?" — and just as important: "when should you NOT use it?".
+
+| Metric | Value | Meaning |
+|---|---|---|
+| Orchestrator-worker performance | **+90.2%** vs single-agent Opus 4 | On the internal research eval, the Opus lead + Sonnet subagents architecture clearly outperforms |
+| Token usage | Explains **80% of performance variance** | On BrowseComp, token consumption is the #1 predictor of outcomes |
+| 3 factors explain 95% | Token usage + tool call count + model choice | No other mystery factors remain — optimize all 3 |
+| Token economics | Chat 1× · Single agent ≈ 4× · Multi-agent ≈ **15×** | Multi-agent costs ~4× more than a single agent — it must be worth it |
+
+**When to use / not use multi-agent:**
+
+| ✓ Good fit | ✗ Poor fit |
+|---|---|
+| High-value tasks (token spend justified) | Coding (not truly parallelizable) |
+| Truly parallelizable (splittable into independent subtasks) | Tasks needing tight shared context across steps |
+| Exceeding a single context window | Real-time coordination (low latency) |
+| Many complex tools, multi-domain | Simple tasks — 1 agent is enough |
+
+**Research feature architecture (end-to-end flow):**
+
+```
+LeadResearcher (Opus)
+   │
+   ├─ 1. Phân tích query, LƯU PLAN vào Memory (bền vững, không mất khi context dài)
+   │
+   ├─ 2. Spawn subagents — mỗi subagent nhận 4 thứ:
+   │       objective + output format + tool guidance + task boundaries
+   │
+   ├─ 3. Subagents dùng interleaved thinking SAU MỖI tool result
+   │      (không chỉ "nghĩ rồi làm" một lần đầu)
+   │
+   ├─ 4. Lead synthesize kết quả từ các subagent
+   │
+   └─ 5. CitationAgent xử lý citations riêng (tách khỏi luồng nghiên cứu)
+```
+
+### 17.2 A2A Protocol (Linux Foundation, 2026)
+
+A2A (Agent-to-Agent Protocol) is an open standard for **agent talking to agent** — it complements MCP (agent talking to tools), it does not compete with it.
+
+| | MCP | A2A |
+|---|---|---|
+| Scope | agent → tool | agent → agent |
+| Model | Agent calls tools/data within its own system | Agent delegates to + receives results from another agent |
+| Relationship | Complementary — not competitors | |
+
+**Core points of A2A:**
+- Agents built with **different frameworks/vendors** (LangGraph, CrewAI, ADK, custom) can still **discover + delegate + share results** with each other
+- Each agent does **NOT expose internal memory/tools/logic** — communication happens through standard interfaces, opaque and secure (the other side doesn't need to know how you implement it)
+
+**Governance status (08/2026):** A2A has joined the **Agentic AI Foundation** (Linux Foundation). Technical Steering Committee: AWS, Cisco, Google, IBM, Microsoft, Salesforce, SAP, ServiceNow.
+
+**Official SDKs:** Python, JS, Java, .NET, Go, Rust — plus the **A2A CLI** (released 10/2026).
+
+**A2A is NOT:**
+- ❌ A development kit (it does not replace agent-building frameworks)
+- ❌ A sub-agent protocol (sub-agents within one system use native primitives / MCP — no A2A needed)
+- ❌ A replacement for MCP (the two solve two different problems)
+
+### 17.3 8 prompting principles for multi-agent
+
+Drawn from Anthropic's own production Research system — 8 rules that keep the orchestrator's command of subagents from descending into chaos:
+
+1. **Think like your agents** — simulate each step in your head to surface real failure modes (not the ones you imagine, but the ones a real subagent will hit).
+2. **Teach the orchestrator how to delegate** — every subtask needs all 4 components: `objective` + `output format` + `tool guidance` + `task boundaries`. Vague instructions → subagents duplicate work or miss coverage.
+3. **Scale effort to query complexity** — not every query needs 10 subagents:
+
+   | Query type | Appropriate effort |
+   |---|---|
+   | Simple fact-finding | 1 agent, 3–10 tool calls |
+   | Comparison | 2–4 subagents, 10–15 calls each |
+   | Complex research | 10+ subagents |
+
+4. **Tool design critical** — heuristic: examine all tools first, match tool to intent, prefer specialized over generic.
+5. **Let agents improve themselves** — a dedicated "tool-testing" agent rewrites tool descriptions → **40% decrease in task completion time**.
+6. **Start wide, then narrow down** — guards against over-long, over-specific early queries (like searching Google: broad first, refine later).
+7. **Guide thinking** — extended thinking for the lead, interleaved thinking after each tool result for subagents.
+8. **Parallel tool calling** — 3–5 subagents in parallel + 3+ tools in parallel per subagent → up to **90% research time reduction**.
+
+### 17.4 Sub-agent output via filesystem
+
+Reduces the **"game of telephone"** effect (information getting distorted through multiple hand-offs): instead of the subagent copying its full output through the conversation history, the subagent **writes results to a filesystem/artifact store**, then returns **lightweight references** (path + hash). The orchestrator reads files when it needs detail — it doesn't have to keep full output in its own context.
+
+> Analogy: instead of each employee reading a 50-page report aloud in the meeting, they send a file link — anyone who needs the details opens it themselves.
+
+### 17.5 Sync vs Async
+
+Anthropic runs subagents **synchronously** — simple, easy to debug, but with a bottleneck: the lead **cannot steer a subagent mid-run** (it must wait for the subagent to finish before responding). Async allows higher parallelism but trades for complexity in result coordination, state consistency, and error propagation.
+
+| Mode | Pros | Cons |
+|---|---|---|
+| **Sync** (Anthropic's choice) | Simple, deterministic, easy to debug | Bottleneck — lead cannot steer mid-run |
+| **Async** | Higher parallelism | Complex: result coordination + state consistency + error propagation |
+
+**Illustrative code — Orchestrator-Worker with effort-scaling rules:**
+
+<details>
+<summary>Python Code (Click to expand/collapse)</summary>
+
+```python
+from dataclasses import dataclass, field
+from typing import List, Dict, Callable
+
+@dataclass
+class SubagentResult:
+    agent_id: str
+    findings: list          # refs tới artifact store, KHÔNG copy full output
+    tool_calls: int
+    tokens_used: int
+
+def scale_effort(query: str) -> Dict:
+    """Quy tắc 3: scale số subagent theo độ phức tạp query."""
+    q = query.lower()
+    if any(k in q for k in ["so sánh", "compare", "vs", "đối chiếu"]):
+        return {"n_subagents": 4, "max_tool_calls": 15, "type": "comparison"}
+    if any(k in q for k in ["nghiên cứu sâu", "deep research", "phân tích toàn diện"]):
+        return {"n_subagents": 12, "max_tool_calls": 20, "type": "complex"}
+    return {"n_subagents": 1, "max_tool_calls": 10, "type": "fact-finding"}
+
+def run_orchestrator(query: str, tools: Dict[str, Callable]) -> Dict:
+    """Orchestrator-worker: lead lên plan, spawn subagents song song,
+    mỗi subagent ghi output ra filesystem và trả về refs (không full copy)."""
+    plan = scale_effort(query)                     # Quy tắc 3: scale effort
+    subagent_specs = []
+    for i in range(plan["n_subagents"]):
+        subagent_specs.append({
+            "agent_id": f"sub-{i}",
+            "objective": f"Phủ khía cạnh {i+1}/{plan['n_subagents']} của: {query}",
+            "output_format": "markdown, mỗi finding kèm citation (artifact path + hash)",
+            "tool_guidance": "3+ tools song song mỗi lượt nếu độc lập",  # Quy tắc 8
+            "task_boundaries": "KHÔNG ôm khía cạnh của subagent khác",   # Quy tắc 2
+            "max_tool_calls": plan["max_tool_calls"],
+        })
+
+    # Spawn song song (sync): lead chờ toàn bộ — không steer giữa chừng (Quy tắc 17.5)
+    results: list[SubagentResult] = []
+    for spec in subagent_specs:
+        calls = 0
+        while calls < spec["max_tool_calls"]:
+            calls += 1                              # Đếm tool call
+        results.append(SubagentResult(
+            agent_id=spec["agent_id"],
+            findings=[f"artifact://{spec['agent_id']}/report.md"],
+            tool_calls=calls, tokens_used=calls * 4000,
+        ))
+
+    total_tokens = sum(r.tokens_used for r in results)
+    return {
+        "plan": plan,
+        "subagent_count": len(results),
+        "artifact_refs": [r.findings for r in results],   # Quy tắc 4.16.4: refs, không full copy
+        "total_tokens": total_tokens,                     # Quy tắc 17.1: token = yếu tố 80% variance
+    }
+```
+
+</details>
+
+> Cross-link: see also [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — Section 3.5 (Orchestration) and 4.2/4.4 (production patterns).

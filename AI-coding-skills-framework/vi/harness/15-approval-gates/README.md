@@ -1110,3 +1110,64 @@ sản phẩm của năm năm tới.
 *Module cross-cutting · control plane cho hành động không đảo ngược · human-in-the-loop*
 *Cập nhật: 16/10/2026*
 *Tác giả: AI Knowledge Repository*
+
+---
+
+## Cập nhật 10/2026 — Approval Fatigue & UX
+
+> Bổ sung sâu hơn về approval fatigue (§7.1 đã nêu) — failure mode lặng lẽ #1 của
+> hệ human-in-the-loop: gate không bị bỏ, mà bị **đồng ký theo phản xạ**.
+
+### 1. Approval Fatigue Là Gì — Và Vì Sao Nó Nguy Hiểm
+
+Approval fatigue xảy ra khi gate nổ quá nhiều: user đối mặt hàng chục hộp duyệt
+mỗi ngày, não bộ tự tối ưu bằng cách duyệt theo phản xạ — chính là **automation
+bias** (Parasuraman & Manzey, 2010; → §10.5). Ở trạng thái đó:
+
+- Gate vẫn *về mặt kỹ thuật* hoạt động — mọi hành động đều có approval.
+- Gate *về mặt thực chất* đã chết — nút "Approve" thành phím Enter thứ hai.
+- Tệ hơn không có gate: bạn **tưởng** có human review, nên hạ cảnh giác ở những
+  lớp khác; mà thực tế không ai đọc gì cả.
+
+Nghiên cứu delegation người-máy cho thấy false alarm bào mòn sự tỉnh táo:
+gate nổ với thứ vô hại, human ngừng kiểm tra cả thứ thật (đường cong cry-wolf).
+Metric phát hiện sớm nằm ở §9.3: **approval rate tăng + thời gian quyết định giảm
+cùng lúc** = fatigue đã xuất hiện.
+
+### 2. Năm Mitigations
+
+| Mitigation | Cách làm | Khi nào dùng |
+|-----------|----------|--------------|
+| **Risk-based approval** | Chỉ gate S1/S2 (prod-auth, elevated); S3 read-only auto-approve + log. Gate đặt đúng cái đuôi đắt đỏ (§2.1), đừng đốt attention ở tầng rẻ | Luôn luôn — mặc định của tier taxonomy |
+| **Batching** | Gom các ops rủi ro thấp cùng một segment plan thành **một** gate duy nhất với diff tổng | Nhiều edit `write` cùng một task (§7.1) |
+| **Approval summary** | Payload luôn có diff + hậu quả + rollback; human duyệt *bằng chứng*, không duyệt *lời kể* | Mọi gate (quy tắc bằng chứng §3.2) |
+| **Timeout-deny giữ nguyên** | Fatigue không phải lý do nới TTL hay fail-open; hết hạn vẫn là deny (§4.2) | Luôn luôn — không ngoại lệ |
+| **Audit + review hằng tuần** | Xem approval rate / wait trung vị / pattern deny theo tier để **calibrate**: tier nào được stamp máy móc thì nâng ngưỡng hoặc bỏ gate | Nhịp cố định — không phải tùy hứng |
+
+Mitigation nào cũng cùng một nguyên lý: *tốn ít attention của con người nhất cho
+mỗi quyết định an toàn* — nghĩa là giết gate vô dụng để gate thật còn sống.
+
+### 3. Anti-Pattern: Gate Theo Tool Call, Đúng Ra Gate Theo Nghiệp Vụ
+
+**Anti-pattern:** gate *mỗi tool call* — đọc file xin duyệt, search xin duyệt,
+grep xin duyệt. Sau hai ngày, user click-through vô thức mọi thứ, kể cả
+`db.migrate` trên prod.
+
+Nguyên tắc: **gate theo NGHIỆP VỤ, không gate theo kỹ thuật.**
+
+| Gate ❌ theo kỹ thuật | Gate ✅ theo nghiệp vụ |
+|----------------------|------------------------|
+| `read_file`, `search`, `grep` | Deploy lên prod, force-push nhánh release |
+| `list`, `view`, `stat` | Delete dữ liệu, đổi IAM / xoay secret |
+| chạy test cục bộ | Gửi tin nhắn/email ra ngoài hệ thống |
+
+Hành động kỹ thuật read-only có git + sandbox + audit che (reversibility — → §10.2
+Aider); gate thật để dành cho thứ git không undo được. OpenHands ("xác nhận mọi
+thay đổi") là case study chính của lỗi này — ergonomics tệ nhất vì nó *luyện*
+rubber-stamp (§10.3).
+
+### 4. Liên Kết Kiến Trúc
+
+Approval gate nằm ở **Layer 7 (Execution & Safety)** — trần kỹ thuật mà gate bổ
+trợ, trong kiến trúc 9 layer. Xem
+[AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) (Layer 7).

@@ -56,7 +56,7 @@ RLCD:  "You said 0.7 — was it right 70%?" ──►  calibration (honest proba
                                               └── Jev trains here
 ```
 
-> Jev is **not an LLM** and does **no text/token generation** — it is a transformer-based model trained on synthetic data via RLCD, returning typed decisions with distributions. See [03 — Primitives](../03-primitives/) for Choice / Score / Noul.
+> Jev is **not an LLM** and does **no text/token generation** — it is a transformer-based model trained on synthetic data via RLCD, returning typed decisions with distributions. See [02 — Primitives](../02-primitives/) for Choice / Score / Noul.
 
 ---
 
@@ -375,4 +375,4 @@ The threshold recorded *with each decision* tells you what bar the system applie
 
 *Back to [README](../README.md) — Module XIV overview*
 
-*Previous: [03 — Primitives](../03-primitives/) · Next: [05 — Production Patterns](../05-patterns/)*
+*Previous: [02 — Primitives](../02-primitives/) · Next: [05 — Production Patterns](../05-patterns/)*

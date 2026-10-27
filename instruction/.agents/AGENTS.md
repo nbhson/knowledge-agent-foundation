@@ -7,7 +7,7 @@ This directory contains the workspace configuration, rules, agents, workflows, t
 We use **Angular 15.2.1** with classic module-based (NgModule) architecture. Do NOT assume modern Angular features (Standalone Components, Signals, `resource()`, `@if`/`@for` control flow) — they are **not available** in this codebase.
 
 For full details on our stack, components, and state management, please see:
-[.agents/knowledge/frontend-architecture.md](.agents/knowledge/frontend-architecture.md).
+[./knowledge/frontend-architecture.md](./knowledge/frontend-architecture.md).
 
 ---
 

@@ -174,8 +174,6 @@ def choose_graph_db(requirements: dict) -> str:
 
 ### 2.1 CRUD Cơ Bản
 
-### 2.1 CRUD Cơ Bản
-
 <details>
 <summary>Cypher Code — CRUD (Click để xem)</summary>
 

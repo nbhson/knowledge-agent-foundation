@@ -22,7 +22,7 @@ Ensure quality checks are performed as follows:
 
 ## 3. Workflow Reference & Strict Compliance
 
-- Always refer to [.agents/AGENTS.md](.agents/AGENTS.md) for the main orchestration workflow.
+- Always refer to [AGENTS.md](./AGENTS.md) for the main orchestration workflow.
 - **CRITICAL COMPLIANCE RULE**: You MUST NOT skip any phases defined in the loaded workflow (e.g., `.agents/workflows/*.md`). You MUST execute them strictly and sequentially. Creating an explicit task checklist (Task Tracker) to track your progress across these phases is MANDATORY.
 - **Memory Artifacts**: Every completed task MUST output a `*.ctx.md` engineering report in `.agents/reports/` (Phase 5 — Report Generation). These reports are context memory for future tasks.
 

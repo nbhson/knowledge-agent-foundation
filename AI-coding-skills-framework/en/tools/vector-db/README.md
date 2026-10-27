@@ -145,7 +145,7 @@ Step 4: Upgrade to Pinecone/Qdrant when you need to scale (03-patterns)
 | Build context from chunks | [harness/02-build-context](../../harness/02-build-context/) |
 | Update the memory store | [harness/03-update-memory-store](../../harness/03-update-memory-store/) |
 | LangChain RAG | [tools/langchain](../langchain/) |
-| Embedding models | [ollama/MODEL.md](../../../ollama/MODEL.md) |
+| Embedding models | [ollama/MODEL.md](../../../../ollama/MODEL.md) |
 
 ## Real-World Case Studies
 
@@ -187,7 +187,7 @@ HARNESS_ENGINEERING.md line 1954:
 - [harness/01-retrieve-memory-knowledge](../../harness/01-retrieve-memory-knowledge/) — The retrieval component
 - [harness/06-decide-tools-mcp](../../harness/06-decide-tools-mcp/) — The `vector_search` tool
 - [tools/langchain](../langchain/) — LangChain retriever integrations
-- [ollama/](../../../ollama/) — Local embedding models (nomic-embed-text)
+- [ollama/](../../../../ollama/) — Local embedding models (nomic-embed-text)
 
 ---
 

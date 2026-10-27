@@ -503,4 +503,4 @@ Log chỉ có nghĩa khi **liên kết được probability ↔ outcome**. Với
 
 *Tiếp theo: [05 — Patterns: Xây Dựng Quyết Định Production](../05-patterns/) →*
 
-*Trước đó: [03 — Confidence & Probability](../03-confidence/)*
+*Trước đó: [02 — Ba Primitives — Choice, Score, Noul](../02-primitives/)*

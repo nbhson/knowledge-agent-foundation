@@ -1,333 +1,134 @@
-# instruction — Agentic Workspace Configuration
+# Agent Foundation — AI Coding Skills Framework
 
-Bộ cấu hình workspace cho AI Agent (Cline, Copilot, Cursor...) khi làm việc với dự án.
+Repo tổng hợp **kiến thức nền tảng về AI Agent** và **bộ cấu hình agent thực chiến** để triển khai AI agent vào dự án thật. Repo gồm 3 phần độc lập nhưng liên kết logic với nhau:
 
----
+| # | Thành phần | Vai trò |
+|---|------------|---------|
+| 1 | [`AI-coding-skills-framework/`](AI-coding-skills-framework/) | **Giáo trình lý thuyết** — 15 module về AI Agent (Retrieve Memory, Context, Workflow, Multi-Agent, Evaluation…), viết song song EN + VI |
+| 2 | [`instruction/`](instruction/) | **Cấu hình triển khai** — workspace config cho AI agent (Copilot, Cline, Cursor, Gemini): workflows, skills, rules, knowledge, hooks |
+| 3 | [`ollama/`](ollama/) | **AI local** — hướng dẫn chạy model local (embedding, chat) trên Mac / Windows bằng Ollama |
 
-## 📖 Mối liên hệ với AI Coding Skills Framework
-
-> **Hai phần này HOÀN TOÀN RIÊNG BIỆT nhưng có mối liên hệ logic.**
-
-```
-AI Coding Skills Framework          instruction/                  Status
-(Kiến thức & Nguyên lý)            (Cấu hình & Triển khai)
-─────────────────────────────────────────────────────────────────────────
-Module 01 (Retrieve Memory)   ───►  knowledge/                  ⚠️ PARTIAL
-Module 02 (Build Context)     ───►  knowledge/ + AGENTS.md      ⚠️ PARTIAL
-Module 03 (Update Memory)     ───►  ❌ CHƯA CÓ                  ❌ MISSING
-Module 04 (Plan & Decompose)  ───►  workflows/feature-delivery  ✅ DONE
-Module 05 (Prompt Builder)    ───►  templates/ + rules/         ⚠️ PARTIAL
-Module 06 (Tools/MCP)         ───►  skills/ (SKILL.md files)    ✅ DONE
-Module 07 (Workflow)          ───►  workflows/ (bug-fix, etc.)  ✅ DONE
-Module 08 (Task Management)   ───►  hooks/ (phase-1 → phase-5)  ⚠️ PARTIAL
-Module 09 (Multi-Agent)       ───►  ❌ CHƯA CÓ                  ❌ MISSING
-Module 10 (Automation)        ───►  hooks/ + rules/             ⚠️ PARTIAL
-Module 11 (Evaluation)        ───►  reports/, report-templates/ ✅ DONE
-Module 12 (Sandbox)           ───►  📄 docs only (chưa có)        ❌ MISSING
-Module 13 (Trajectory/Obs.)   ───►  📄 docs only (chưa có)        ❌ MISSING
-Module 14 (Compaction)        ───►  📄 docs only (chưa có)        ❌ MISSING
-Module 15 (Approval Gates)    ───►  📄 docs only (chưa có)        ❌ MISSING
-```
-
-> Module `01`–`11` là các giai đoạn pipeline; `12`–`15` là mặt phẳng kiểm soát xuyên
-> module (sandbox, trajectory, compaction, approval) mà các module trên đều phụ thuộc vào.
-
-| Thuộc tính | AI Coding Skills Framework | instruction/ |
-|------------|---------------------------|------------|
-| **Mục đích** | Tài liệu học tập — giáo trình lý thuyết | Bộ cấu hình thực tế — files điều khiển AI agent |
-| **Nội dung** | 15 module: Retrieve, Context, Prompt, Workflow, Multi-Agent, Evaluation... | Skills, Rules, Workflows, Knowledge, Hooks, Templates |
-| **Đối tượng** | Developers muốn **hiểu nguyên lý** AI Agent | AI Agent (Cline/Copilot/Cursor) đọc trực tiếp khi coding |
-| **Kết quả** | Hiểu "tại sao" và "cách làm" | AI agent hành xử đúng chuẩn dự án |
-| **Cần thêm gì** | Chỉ cần đọc | Cần kiến thức về project-specific rules, team workflows |
-
-### Phân tích chi tiết — Module nào đã có, module nào thiếu?
-
-#### ✅ Đã có tương ứng (đủ)
-
-| Module | Framework | instruction/ | Ghi chú |
-|--------|-----------|------------|---------|
-| **04 - Plan & Decompose** | Task decomposition, planning algorithms | `workflows/feature-delivery.md`, `workflows/bug-fix.md` | Workflow đã có các bước: Discovery → Plan → Approval → Implement |
-| **06 - Tools/MCP** | Tool selection, MCP protocol, intent classification | `skills/SKILL.md` files | Mỗi SKILL.md định nghĩa kỹ năng cụ thể cho AI agent |
-| **07 - Workflow** | Pipeline design, state machine, error recovery | `workflows/*.md` + `hooks/` | 5 phases hooks + workflow per task type |
-| **11 - Evaluation** | Quality metrics, benchmarks, reporting | `reports/`, `report-templates/`, `templates/engineering-report-template.md` | Reports và templates đã có |
-
-#### ⚠️ Có một phần (partial)
-
-| Module | Framework | instruction/ hiện tại | Thiếu |
-|--------|-----------|---------------------|-------|
-| **01 - Retrieve Memory** | Vector search, BM25, hybrid search, knowledge graph | `knowledge/*.md` — static markdown files | ❌ Không có vector DB, embedding search, BM25 index. Chỉ có **static knowledge docs** |
-| **02 - Build Context** | Context window management, compression, templates | `knowledge/` được load khi start + `AGENTS.md` có context flow | ❌ Không có context compression, sliding window, token budget management |
-| **05 - Prompt Builder** | Prompt templates, few-shot, CoT, guardrails | `templates/*.md` (report templates) + `rules/*.md` | ❌ Không có dynamic prompt templates, few-shot examples, chain-of-thought prompting |
-| **08 - Task Management** | Task classification, decomposition, dependency DAG | `hooks/` (5 phases) + workflow steps | ❌ Không có task state management, dependency graph, priority scheduling |
-| **10 - Automation** | CI/CD, code generation, git automation, monitoring | `hooks/` + `rules/coding-style.md` | ❌ Không có CI/CD pipeline config, git hooks automation, monitoring setup |
-
-#### ❌ Chưa có (missing)
-
-| Module | Framework | Hiện trạng trong instruction/ |
-|--------|-----------|-----------------------------|
-| **03 - Update Memory Store** | Write-back memory, memory consolidation, event sourcing | **Hoàn toàn chưa có.** Không có cơ chế lưu trữ lại kiến thức mới, merge/dedupe facts, hay event sourcing |
-| **09 - Multi-Agent** | Agent roles, communication, orchestration, shared memory | **Hoàn toàn chưa có.** Không có multi-agent config, agent-to-agent communication, shared memory |
-
-#### 🔒 Mặt phẳng kiểm soát (12–15) — chưa có tương ứng
-
-Các module này là tài liệu policy/contract, không phải kỹ năng triển khai được, nên cột
-`instruction/` trống là đúng — nhưng điều đó cũng có nghĩa là **harness hiện không có cơ chế
-thực thi** cho chúng.
-
-| Module | Framework | Hiện trạng trong instruction/ |
-|--------|-----------|-----------------------------|
-| **12 - Sandbox Execution** | Isolation tiers, network egress control, image pinning | **Chưa có.** Tool call chạy không sandbox; không có network policy, không ghim image digest |
-| **13 - Trajectory & Observability** | Append-only event stream, join keys, retention | **Chưa có.** Không có structured event log xuyên module; chỉ có text log |
-| **14 - Compaction & Context** | Compaction trigger, pin set, pruning | **Chưa có.** Không có cơ chế nén context hay quản lý token budget |
-| **15 - Approval Gates** | Risk tiers, gate payload, timeout-deny, audit | **Chưa có.** Approval ở module 04 chỉ là bước trong workflow, không có timer, payload hay audit trail |
-
-### Tại sao thiếu?
-
-```
-AI Coding Skills Framework instruction/
-(Kiến thức)                 (Triển khai thực tế)
-                            
-Retrieve Memory  ──?──►     knowledge/*.md = static docs
-                            ❌ Không có: vector store, embedding, BM25 index
-                            
-Build Context    ──?──►     AGENTS.md = orchestration flow
-                            ❌ Không có: context compression, token budget
-                            
-Update Memory    ──?──►     ❌ Không có gì
-                            ❌ Không có: write-back, consolidation, event log
-                            
-Multi-Agent      ──?──►     ❌ Không có gì
-                            ❌ Không có: agent definitions, communication protocol
-```
-
-**Lý do:** Hiện tại instruction/ tập trung vào **workflow orchestration** (cách AI agent thực hiện task) và **coding rules** (quy tắc coding). Nó **chưa address** phần:
-- **Memory management** (lưu/truy xuất/xử lý knowledge động)
-- **Context optimization** (quản lý context window hiệu quả)
-- **Multi-agent coordination** (phối hợp nhiều agents)
-
-Đây là những phần cần **triển khai thêm** nếu muốn instruction/ cover đầy đủ 11 modules của Framework.
+> **Framework (phần 1)** trả lời câu hỏi *"tại sao và làm thế nào"* — **instruction (phần 2)** là files mà agent đọc trực tiếp khi coding — **ollama (phần 3)** là nền tảng chạy model/embedding cục bộ.
 
 ---
 
-## 📁 Cấu trúc thư mục
+## 📖 Mục lục
+
+- [1. AI-coding-skills-framework — Giáo trình lý thuyết](#1-ai-coding-skills-framework--giáo-trình-lý-thuyết)
+- [2. instruction — Cấu hình agent workspace](#2-instruction--cấu-hình-agent-workspace)
+- [3. ollama — AI local](#3-ollama--ai-local)
+- [Cập nhật 2026-07+](#-cập-nhật-2026-07)
+- [Ghi chú về `.github-migration/`](#ghi-chú-về-github-migration)
+
+---
+
+## 1. `AI-coding-skills-framework/` — Giáo trình lý thuyết
+
+Tài liệu học tập về kiến trúc AI Agent, viết song song 2 ngôn ngữ (`en/` và `vi/`), cấu trúc giống hệt nhau:
+
+```
+AI-coding-skills-framework/
+├── en/                              ← bản tiếng Anh
+├── vi/                              ← bản tiếng Việt
+│   (mỗi ngôn ngữ gồm)
+│   ├── AI_AGENT_FRAMEWORK.md        ← giáo trình chính: 15 modules
+│   ├── AGENT_SYSTEM_ARCHITECTURE.md ← 8-layer kiến trúc agent + build checklist
+│   ├── HARNESS_ENGINEERING.md       ← Harness engineering
+│   ├── GRAPH_ENGINEERING.md         ← Graph / knowledge engineering
+│   ├── FAQ.md
+│   ├── graph/    (7 submodule)      ← Graph & knowledge engineering
+│   ├── harness/  (7 submodule)      ← Agent harness
+│   ├── jev/      (7 submodule)      ← Jev & System One Models (decision layer)
+│   ├── loop/     (7 submodule)      ← Loop / orchestration
+│   └── tools/                       ← Tools & ecosystems (langchain, crewai, autogen,
+│                                       mcp-ecosystem, vector-db, guardrails, rtk,
+│                                       evaluation, observability, loop-cli)
+└──
+```
+
+- **Đối tượng:** developers muốn hiểu nguyên lý — mỗi module có `README.md` riêng, học tuần tự 01 → 07.
+- **Ngôn ngữ:** nội dung EN/VI song song, cùng cấu trúc thư mục.
+
+---
+
+## 2. `instruction/` — Cấu hình agent triển khai thực tế
+
+Bộ files mà AI agent (GitHub Copilot, Cline, Cursor, Gemini CLI…) đọc trực tiếp khi làm việc với dự án. Copy thư mục này vào bất kỳ repo nào cần agent hỗ trợ, sau đó customize `knowledge/`, `rules/`, `workflows/`.
 
 ```
 instruction/
-├── README.md                          ← TRANG CHỦ (file này)
-│
-├── .agents/                           ← Cấu hình cho Cline / general agents
-│   ├── AGENTS.md                      ← Orchestration workflow chính
-│   ├── GEMINI.md                      ← Config riêng cho Gemini
-│   │
-│   ├── knowledge/                     ← Kiến thức dự án (bắt buộc load)
-│   │   ├── project-overview.md        ← Tổng quan dự án
-│   │   ├── frontend-architecture.md   ← Kiến trúc Frontend (Angular)
-│   │   ├── module-map.md              ← Map các modules
-│   │   ├── design-system.md           ← Design system & UI patterns
-│   │   ├── code-formatting-workflow.md← Quy tắc format code
-│   │   ├── pr-creation-workflow.md    ← Quy trình tạo PR
-│   │   └── pre-commit.sh             ← Script pre-commit
-│   │
-│   ├── rules/                         ← Quy tắc coding (bắt buộc tuân thủ)
-│   │   ├── angular.md                 ← Quy tắc Angular
-│   │   ├── coding-style.md            ← Code reuse, type safety
-│   │   ├── scss.md                    ← Quy tắc SCSS
-│   │   └── templates.md              ← Quy tắc sử dụng templates
-│   │
-│   ├── skills/                        ← Kỹ năng chuyên sâu
-│   │   ├── angular-architecture/SKILL.md
-│   │   └── styling-standards/SKILL.md
-│   │
-│   ├── templates/                     ← Templates cho reports & tickets
-│   │   ├── bug-report-template.md
-│   │   ├── engineering-report-template.md
-│   │   ├── jira-ticket-review-template.md
-│   │   ├── pull-request-template.md
-│   │   └── technical-design-template.md
-│   │
-│   └── workflows/                     ← Quy trình thực hiện theo loại task
-│       ├── bug-fix.md
-│       ├── code-review.md
-│       ├── feature-delivery.md
-│       ├── jira-review.md
-│       └── refactor.md
-│
-└── .github/                           ← Cấu hình cho GitHub Copilot
-    ├── copilot-instructions.md        ← Instructions cho Copilot
-    │
-    ├── agents/                        ← Agent definitions
-    │   └── strict-rules.agent.md
-    │
-    ├── hooks/                         ← Lifecycle hooks (5 phases)
-    │   ├── README.md
-    │   ├── session.json
-    │   ├── phase-1-understanding.hook.md
-    │   ├── phase-2-planning.hook.md
-    │   ├── phase-3-execution-formatting.hook.md
-    │   ├── phase-4-validation-pr.hook.md
-    │   └── phase-5-report-generation.hook.md
-    │
-    ├── knowledge/                     ← Knowledge base cho Copilot
-    │   └── core-engineering-guidelines.md
-    │
-    ├── report-templates/              ← Templates cho reports
-    │   ├── bug-report.md
-    │   ├── engineering-report.md
-    │   ├── jira-ticket-review.md
-    │   ├── pull-request.md
-    │   └── technical-design.md
-    │
-    ├── reports/                       ← Thư mục output reports
-    │   └── .gitkeep
-    │
-    └── skills/                        ← Skills definitions cho Copilot
-        ├── angular-architecture/SKILL.md
-        ├── bug-fix/SKILL.md
-        ├── code-review/SKILL.md
-        ├── feature-delivery/SKILL.md
-        ├── post-code-change/SKILL.md
-        ├── pre-pull-request/SKILL.md
-        ├── refactor/SKILL.md
-        ├── report-generation/SKILL.md
-        ├── styling-standards/SKILL.md
-        └── unit-test/SKILL.md
+├── MCP_SETUP.md                     ← Hướng dẫn setup MCP server (GitHub MCP...)
+├── .agents/                         ← Config cho general agents (Cline, Gemini...)
+│   ├── AGENTS.md                    ← Orchestration workflow chính (chuẩn AGENTS.md)
+│   ├── GEMINI.md                    ← Config riêng cho Gemini
+│   ├── copilot-instructions.md      ← Instructions cho Copilot
+│   ├── agents/                      ← Agent definitions (*.agent.md)
+│   ├── hooks/                       ← 5 lifecycle hooks (phase-1 → phase-5)
+│   ├── knowledge/                   ← Kiến thức dự án (bắt buộc load)
+│   ├── rules/                       ← Quy tắc coding (angular, scss, coding-style...)
+│   ├── scripts/                     ← Script hỗ trợ
+│   ├── skills/                      ← Kỹ năng chuyên sâu (SKILL.md)
+│   ├── templates/                   ← Templates cho reports & tickets
+│   ├── workflows/                   ← bug-fix, feature-delivery, refactor,
+│   │                                  code-review, jira-review
+│   ├── report-templates/ + reports/ ← Báo cáo *.ctx.md (context memory)
+│   └── ISSUE_TEMPLATE/, workflows/  ← Cấu hình GitHub
+├── .github/                         ← Config cho GitHub Copilot
+│   ├── copilot-instructions.md      ← Entry point của Copilot
+│   ├── agents/ + instructions/      ← Agent & instruction definitions
+│   ├── phases/                      ← 5 phase definitions + DIAGRAM.md
+│   ├── hooks/                       ← Hooks dạng script (phase-guard.sh, check-refs.sh,
+│   │                                  pre-commit, verify-report-hash.sh...)
+│   ├── prompts/                     ← Prompt files cho Copilot
+│   ├── knowledge/ + skills/         ← Knowledge base + skills cho Copilot
+│   └── reports/                     ← Output reports
+└── .github-migration/               ← ⚠️ Bản migration (xem ghi chú bên dưới)
 ```
+
+**Flow hoạt động:** Request → Classify → Load Workflow → Load Knowledge → Apply Rules → Plan & Approval → Implement → Validate → Report + PR.
+
+Chi tiết đầy đủ từng thành phần: xem [`instruction/.agents/README.md`](instruction/.agents/README.md).
 
 ---
 
-## 🧩 Giải thích từng thành phần
+## 3. `ollama/` — AI local
 
-### 1. Workflows — Quy trình thực hiện
+Hướng dẫn chạy model & embedding cục bộ bằng Ollama — dùng cho local RAG / vector search (tham chiếu từ `AI-coding-skills-framework/*/tools/vector-db/`):
 
-Mỗi workflow định nghĩa **chuỗi bước bắt buộc** cho một loại task:
-
-```
-Request → Classify → Load Workflow → Execute Steps → Report
-```
-
-| Workflow | Khi nào dùng | Steps chính |
-|----------|---------------|-------------|
-| `feature-delivery.md` | Tạo feature mới | Knowledge → Rules → Discovery → Plan → Approval → Implement → Validate → PR |
-| `bug-fix.md` | Sửa bug | Knowledge → Rules → Investigation → Plan → Approval → Fix → Validate → PR |
-| `refactor.md` | Refactor code | Knowledge → Rules → Analysis → Plan → Approval → Refactor → Validate → PR |
-| `code-review.md` | Review PR | Load PR changes → Apply rules → Report |
-| `jira-review.md` | Review Jira ticket | Load ticket → Analyze → Report |
-
-**Nguyên tắc chung:** AI agent **KHÔNG BAO GIỜ** bắt đầu coding ngay. Luôn phải: Load Knowledge → Apply Rules → Plan → Approval → Implement → Validate → Report.
-
-### 2. Rules — Quy tắc coding
-
-| Rule | Phạm vi | Nội dung chính |
-|------|---------|----------------|
-| `coding-style.md` | Tất cả | Code reuse, check `/core` trước khi tạo mới, type safety, no `any` |
-| `angular.md` | Angular | Component structure, file suffixes, lazy loading, signals |
-| `scss.md` | Styling | SCSS imports, mixins, variables, no duplication |
-| `templates.md` | Documentation | Markdown templates cho reports & tickets |
-
-### 3. Skills — Kỹ năng chuyên sâu
-
-Mỗi SKILL.md định nghĩa **hướng dẫn chi tiết** cho một kỹ năng cụ thể:
-
-- **angular-architecture**: Container vs. Presentation pattern, RxJS data loading
-- **styling-standards**: SCSS conventions, glass panels, responsive patterns
-- **bug-fix**: Cách reproduce, analyze, fix, validate bugs
-- **code-review**: Checklist khi review code
-- **feature-delivery**: Quy trình end-to-end từ plan đến PR
-- **unit-test**: Cách viết tests với Vitest
-- **refactor**: Nguyên tắc refactor an toàn
-
-### 4. Knowledge — Kiến thức dự án
-
-Các files `.md` chứa kiến thức về dự án mà AI agent **bắt buộc load** trước khi thực hiện bất kỳ task nào:
-
-- `project-overview.md` — Tổng quan dự án, tech stack
-- `frontend-architecture.md` — Kiến trúc Angular, state management
-- `module-map.md` — Map các modules và relationships
-- `design-system.md` — Design tokens, UI patterns
-- `code-formatting-workflow.md` — Quy tắc format code
-
-### 5. Hooks — Lifecycle hooks
-
-5 phases chạy tự động qua mỗi task:
-
-```
-Phase 1: Understanding    → Hiểu request
-Phase 2: Planning         → Lên kế hoạch
-Phase 3: Execution        → Thực hiện + Format code
-Phase 4: Validation       → Validate + Tạo PR
-Phase 5: Report           → Tạo báo cáo
-```
-
-### 6. Templates — Templates cho outputs
-
-| Template | Dùng cho |
-|----------|----------|
-| `bug-report-template.md` | Báo cáo bug |
-| `engineering-report-template.md` | Báo cáo kỹ thuật sau khi implement |
-| `technical-design-template.md` | Thiết kế kỹ thuật (implementation plan) |
-| `pull-request-template.md` | Mô tả PR |
-| `jira-ticket-review-template.md` | Review Jira ticket |
+| File | Nội dung |
+|------|----------|
+| [`MODEL.md`](ollama/MODEL.md) | Danh sách model gợi ý (chat + embedding, vd `nomic-embed-text`) |
+| [`local-ai-setup-for-mac.md`](ollama/local-ai-setup-for-mac.md) | Setup AI local trên macOS |
+| [`local-ai-setup-for-window.md`](ollama/local-ai-setup-for-window.md) | Setup AI local trên Windows |
 
 ---
 
-## 🔄 Flow hoạt động
+## 🔄 Cập nhật 2026-07
 
-```
-Developer Request
-       │
-       ▼
-┌─────────────────┐
-│  Classify Type   │  ← feature / bug / refactor / review
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Load Workflow   │  ← .agents/workflows/<type>.md
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Load Knowledge  │  ← .agents/knowledge/*.md
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Apply Rules     │  ← .agents/rules/*.md
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Plan & Approval │  ← Chờ user approve
-└────────┬────────┘
-         │ Approved
-         ▼
-┌─────────────────┐
-│  Implement       │  ← Code theo rules + skills
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Validate        │  ← Test + Build + Visual check
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Report + PR     │  ← Tạo report + Pull Request
-└─────────────────┘
-```
+Repo được cập nhật theo chuẩn agent mới nhất (07/2026 trở đi):
+
+- **MCP spec 2026-07-28** — MCP (Model Context Protocol) là chuẩn kết nối tool/data cho agent; cấu hình tham khảo trong [`instruction/MCP_SETUP.md`](instruction/MCP_SETUP.md) (GitHub MCP remote server) và module Tools/MCP trong framework.
+- **`AGENTS.md`** — file hướng dẫn agent theo chuẩn mở [agents.md](https://agents.md), đặt tại [`instruction/.agents/AGENTS.md`](instruction/.agents/AGENTS.md): orchestration 5-phase, workflow routing, strict compliance & memory artifacts (`*.ctx.md`).
+- **Hooks mới** — lifecycle hooks 5 phase (Understanding → Planning → Execution → Validation/PR → Report):
+  - `instruction/.agents/hooks/` — hooks dạng markdown (`phase-1-understanding.hook.md` → `phase-5-report-generation.hook.md`) + `session.json`.
+  - `instruction/.github/hooks/` — hooks dạng script thực thi: `phase-guard.sh` / `.ps1`, `phase-gates.json`, `check-refs.sh`, `pre-commit`, `verify-report-hash.sh`, `report-lifecycle.sh`, `sync-routing.sh`.
+  - `instruction/.github/phases/` — định nghĩa 5 phase kèm diagram.
 
 ---
 
-## 🔗 Liên kết
+## ⚠️ Ghi chú về `.github-migration/`
+
+[`instruction/.github-migration/`](instruction/.github-migration/) là **bản copy trong quá trình migration** cấu hình từ layout cũ sang layout mới (`.github/` + `.agents/`). Nội dung hiện đã được phản ánh ở hai thư mục đích, nên thư mục này **có thể xóa sau khi xác nhận migration hoàn tất**. Không tham chiếu trực tiếp vào nó từ cấu hình mới.
+
+---
+
+## 🔗 Liên kết nhanh
 
 | Resource | Path |
 |----------|------|
-| AI Coding Skills Framework | `AI-coding-skills-framework/en/AI_AGENT_FRAMEWORK.md` (EN) · `AI-coding-skills-framework/vi/AI_AGENT_FRAMEWORK.md` (VI) |
-| **Kiến Trúc Hệ Thống Agent (mới, 2026)** | `AI-coding-skills-framework/vi/AGENT_SYSTEM_ARCHITECTURE.md` — 8 layer + build checklist, tổng hợp từ Anthropic / OpenAI / MCP / A2A |
-| Orchestration Workflow | `instruction/.agents/AGENTS.md` |
-| GitHub Copilot Config | `instruction/.github/copilot-instructions.md` |
-| MCP Server Setup | `instruction/MCP_SETUP.md` |
-
----
-
-> **Ghi chú:** Thư mục `instruction/` được thiết kế để copy vào bất kỳ dự án nào cần AI agent hỗ trợ. Chỉ cần customize `knowledge/`, `rules/`, và `workflows/` cho phù hợp với dự án của bạn.
+| Giáo trình framework (EN / VI) | `AI-coding-skills-framework/en/AI_AGENT_FRAMEWORK.md` · `AI-coding-skills-framework/vi/AI_AGENT_FRAMEWORK.md` |
+| Kiến trúc hệ thống agent (8 layer) | `AI-coding-skills-framework/en/AGENT_SYSTEM_ARCHITECTURE.md` · `AI-coding-skills-framework/vi/AGENT_SYSTEM_ARCHITECTURE.md` |
+| Orchestration workflow | `instruction/.agents/AGENTS.md` |
+| GitHub Copilot config | `instruction/.github/copilot-instructions.md` |
+| MCP Server setup | `instruction/MCP_SETUP.md` |
+| Model local (Ollama) | `ollama/MODEL.md` |

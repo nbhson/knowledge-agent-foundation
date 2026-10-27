@@ -145,7 +145,7 @@ Bước 4: Nâng cấp Pinecone/Qdrant khi cần scale (03-patterns)
 | Build context từ chunks | [harness/02-build-context](../../harness/02-build-context/) |
 | Update memory store | [harness/03-update-memory-store](../../harness/03-update-memory-store/) |
 | LangChain RAG | [tools/langchain](../langchain/) |
-| Embedding model | [ollama/MODEL.md](../../../ollama/MODEL.md) |
+| Embedding model | [ollama/MODEL.md](../../../../ollama/MODEL.md) |
 
 ## Case Studies Thực Tế
 
@@ -187,7 +187,7 @@ HARNESS_ENGINEERING.md dòng 1954:
 - [harness/01-retrieve-memory-knowledge](../../harness/01-retrieve-memory-knowledge/) — Retrieval component
 - [harness/06-decide-tools-mcp](../../harness/06-decide-tools-mcp/) — `vector_search` tool
 - [tools/langchain](../langchain/) — LangChain retriever integrations
-- [ollama/](../../../ollama/) — Embedding models local (nomic-embed-text)
+- [ollama/](../../../../ollama/) — Embedding models local (nomic-embed-text)
 
 ---
 

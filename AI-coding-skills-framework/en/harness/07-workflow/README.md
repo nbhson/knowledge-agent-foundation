@@ -3381,7 +3381,7 @@ if __name__ == "__main__":
 
 ### 5. Cross-Reference
 
-> 📎 **Related:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 2** (Orchestration) + **Section 4.3** (Long-Running Agent Pattern). See also Section 4 (Error Recovery) above for retry/circuit breaker/saga — checkpoint/resume is a complementary layer, not a replacement.
+> 📎 **Related:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 2** (Orchestration) + **Section 4.3** (Long-Running Agent Pattern). See also Section 4 (Error Recovery) above for retry/circuit breaker/saga — checkpoint/resume is a complementary layer, not a replacement.
 
 ---
 

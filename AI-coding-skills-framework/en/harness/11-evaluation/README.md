@@ -3600,7 +3600,7 @@ def llm_judge(task: str, answer: str, sources: str,
 
 ### 7. Cross-Reference
 
-> 📎 **Related:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 8** (Evaluation). See also Section 4.2 (LLM-as-Judge Evaluation) above for a more detailed code-grading pattern, and `07-workflow` for checkpoints during long agent runs.
+> 📎 **Related:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 8** (Evaluation). See also Section 4.2 (LLM-as-Judge Evaluation) above for a more detailed code-grading pattern, and `07-workflow` for checkpoints during long agent runs.
 
 ---
 

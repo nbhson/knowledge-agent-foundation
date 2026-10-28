@@ -3598,7 +3598,7 @@ def llm_judge(task: str, answer: str, sources: str,
 
 ### 7. Cross-Reference
 
-> 📎 **Liên quan:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 8** (Evaluation). Xem thêm Section 4.2 (LLM-as-Judge Evaluation) ở trên cho pattern chấm code chi tiết hơn, và `07-workflow` cho checkpoint khi agent chạy dài.
+> 📎 **Liên quan:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 8** (Evaluation). Xem thêm Section 4.2 (LLM-as-Judge Evaluation) ở trên cho pattern chấm code chi tiết hơn, và `07-workflow` cho checkpoint khi agent chạy dài.
 
 ---
 

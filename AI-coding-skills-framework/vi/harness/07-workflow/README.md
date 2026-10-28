@@ -3377,7 +3377,7 @@ if __name__ == "__main__":
 
 ### 5. Cross-Reference
 
-> 📎 **Liên quan:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 2** (Orchestration) + **Section 4.3** (Long-Running Agent Pattern). Xem thêm Section 4 (Error Recovery) ở trên cho retry/circuit breaker/saga — checkpoint/resume là lớp bổ sung, không thay thế.
+> 📎 **Liên quan:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 2** (Orchestration) + **Section 4.3** (Long-Running Agent Pattern). Xem thêm Section 4 (Error Recovery) ở trên cho retry/circuit breaker/saga — checkpoint/resume là lớp bổ sung, không thay thế.
 
 ---
 

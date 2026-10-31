@@ -2,15 +2,19 @@
 
 Câu nào chưa rõ thì bạn mở thêm file ghi trong ngoặc để đọc chi tiết nhé.
 
+**Cách đọc file này:** mỗi câu hỏi có 4 phần — **Bạn sẽ thấy** (tình huống thật), **Vì sao** (nguyên nhân), **Làm gì** (các bước cụ thể), **Kiểm tra** (cách biết mình làm đúng). Thuật ngữ khó sẽ được giải thích ngay tại chỗ bằng ví dụ đời thường.
+
 ---
 
 ## AI_AGENT_FRAMEWORK.md
+
+> Phần này giải đáp thắc mắc về file `AI_AGENT_FRAMEWORK.md` — tài liệu chính của framework, nơi nói về ba nhóm module: `harness/` (bộ khung vận hành agent), `graph/` (kho tri thức dạng đồ thị), `loop/` (vòng lặp tự cải thiện).
 
 ### Q1. Framework này dùng để làm gì — khác gì so với dùng ChatGPT bình thường? [→ § 🧠 Hiểu Framework Này]
 
 **Bạn sẽ thấy**
 
-Bạn clone repo về, mở `AI_AGENT_FRAMEWORK.md` (1.195 dòng), thấy ba thư mục con: `harness/` (15 module), `graph/` (9 module), `loop/` (7 phần). Ngay dòng đầu tài liệu đã nói rõ: đây là hướng dẫn để **xây** agent, không phải cách **dùng** AI thông thường. Bảng "Phân biệt rộ: Phần nào cần model?" cũng gây bất ngờ: `BM25 Search` ❌, `Prompt Building` ❌, `Workflow` ❌, `CI/CD Automation` ❌ — chỉ `Vector Search` cần embedding model (model biến text thành vector) và `Generate Answer` cần LLM (mô hình ngôn ngữ lớn).
+Bạn clone repo về (clone = tải bản sao mã nguồn về máy), mở `AI_AGENT_FRAMEWORK.md` (1.195 dòng), thấy ba thư mục con: `harness/` (15 module — module = một khối chức năng riêng), `graph/` (9 module), `loop/` (7 phần). Ngay dòng đầu tài liệu đã nói rõ: đây là hướng dẫn để **xây** agent, không phải cách **dùng** AI thông thường. Bảng "Phân biệt rộ: Phần nào cần model?" cũng gây bất ngờ: `BM25 Search` ❌, `Prompt Building` ❌, `Workflow` ❌, `CI/CD Automation` ❌ — chỉ `Vector Search` cần embedding model (model biến text thành vector) và `Generate Answer` cần LLM (mô hình ngôn ngữ lớn). BM25 = cách tìm kiếm đếm từ khóa trùng khớp, giống Ctrl+F thông minh hơn.
 
 **Vì sao**
 
@@ -27,7 +31,9 @@ Tài liệu coi framework là "bộ máy điều phối", còn mô hình AI ch�
 
 **Kiểm tra**
 
-`curl -s http://localhost:11434/api/tags` trả về cả hai tên model. Nạp 10 file markdown vào module 01, hỏi một câu tiếng Anh, và câu trả lời phải trích đúng đoạn đã nạp. Nếu không trích được, bạn mới đang ở tầng model — chưa chạm tới tầng framework.
+`curl -s http://localhost:11434/api/tags` trả về cả hai tên model. (curl = lệnh gọi thử một địa chỉ web từ terminal; localhost:11434 = máy Ollama chạy trên chính máy bạn.) Nạp 10 file markdown vào module 01, hỏi một câu tiếng Anh, và câu trả lời phải trích đúng đoạn đã nạp. Nếu không trích được, bạn mới đang ở tầng model — chưa chạm tới tầng framework.
+
+> **Tóm gọn 1 câu:** Framework này là bộ khung để bạn tự xây agent (60% là code thường, không cần model); bắt đầu từ module 01-02 với Ollama miễn phí, chưa cần mua API.
 
 ---
 
@@ -52,7 +58,9 @@ Hai module đầu là đường ống lấy dữ liệu về — chưa có gì �
 
 **Kiểm tra**
 
-Lệnh `curl` trả về 768 số thực. Lệnh `pkb search "cách deploy Docker"` tìm đúng ghi chú giữa khoảng 1.000 ghi chú. Nếu chưa tìm được, hãy sửa cách **tìm kiếm** (BM25 + vector) chứ đừng đụng tới prompt builder.
+Lệnh `curl` trả về 768 số thực. (768 số thực = vector — "tấm thẻ thông tin" mà embedding model gắn cho mỗi đoạn văn để máy so sánh độ giống nhau.) Lệnh `pkb search "cách deploy Docker"` tìm đúng ghi chú giữa khoảng 1.000 ghi chú. Nếu chưa tìm được, hãy sửa cách **tìm kiếm** (BM25 + vector) chứ đừng đụng tới prompt builder.
+
+> **Tóm gọn 1 câu:** Bắt đầu bằng dự án nhỏ nhất (Personal Knowledge Base, 2-3 ngày, 3 module), đo kết quả từng bước trước khi thêm module mới.
 
 ---
 
@@ -60,7 +68,7 @@ Lệnh `curl` trả về 768 số thực. Lệnh `pkb search "cách deploy Docke
 
 **Bạn sẽ thấy**
 
-Trong `AI_AGENT_FRAMEWORK.md`, "Part XII" là Loop Engineering và "Part XIII" là Graph Engineering. Nhưng trong thư mục `harness/`, module `12` là Sandbox Execution, `13` là Trajectory & Observability, `14` là Compaction & Context, `15` là Approval Gates. Người mới thấy "số 12" là tìm nhầm sang `loop/`.
+Trong `AI_AGENT_FRAMEWORK.md`, "Part XII" là Loop Engineering và "Part XIII" là Graph Engineering. Nhưng trong thư mục `harness/`, module `12` là Sandbox Execution (sandbox = hộp cát — vùng bịt kín để agent chạy lệnh mà không đụng tới phần còn lại của máy), `13` là Trajectory & Observability (log lại từng bước agent đã đi), `14` là Compaction & Context (nén ngữ cảnh cho gọn), `15` là Approval Gates (cổng xin người duyệt). Người mới thấy "số 12" là tìm nhầm sang `loop/`.
 
 **Vì sao**
 
@@ -72,6 +80,8 @@ Hai hệ số cùng tồn tại: số `01`–`15` đánh số **module trong th�
 2. Dùng ba file ở gốc thư mục làm bản đồ: `AI_AGENT_FRAMEWORK.md` (trang chủ), `HARNESS_ENGINEERING.md`, `GRAPH_ENGINEERING.md`.
 3. Module 12–15 không nằm trên lộ trình học vì chúng **không phải giai đoạn** của đường ống, mà là nền mà mọi giai đoạn 01–11 đều phụ thuộc vào.
 4. Muốn agent tự cải thiện qua nhiều vòng chạy thì vào `loop/`, không phải `harness/12`.
+
+**Cách đọc bảng này:** cột trái là điều bạn đang cần làm; cột phải là đúng thư mục chứa lời giải. Ví dụ, cần "cách ly code agent chạy lệnh" thì mở `harness/12-sandbox-execution/`, không phải `loop/`.
 
 | Bạn đang tìm | Đường dẫn đúng |
 |---|---|
@@ -85,6 +95,8 @@ Hai hệ số cùng tồn tại: số `01`–`15` đánh số **module trong th�
 **Kiểm tra**
 
 Đếm thư mục: `harness/` có 15 module, `graph/` có 9 module, `loop/` có 7 phần. Mở `harness/12-sandbox-execution/README.md`, phần đầu phải nói về cách ly và ranh giới thực thi, không nói về vòng lặp cải thiện.
+
+> **Tóm gọn 1 câu:** Đếm theo đường dẫn thư mục, đừng đếm theo nhãn "Part"; module 12-15 là nền móng (sandbox, log, nén context, cổng duyệt), không phải giai đoạn học tuần tự.
 
 ---
 
@@ -102,7 +114,9 @@ Framework chỉ cần đúng **hai loại model**: một embedding model để t
 
 1. Dùng Ollama local miễn phí để học: `nomic-embed-text` chỉ 768 chiều, nhẹ hơn nhiều so với việc thuê API.
 2. Chuyển sang API trả phí chỉ khi cần chất lượng cao hơn — đổi đúng **một** dòng, phần còn lại giữ nguyên.
-3. Đo chi phí trước khi scale: harness tiết kiệm 40-60% tiền token nhờ nén ngữ cảnh và kiểm tra đầu ra.
+3. Đo chi phí trước khi scale: harness tiết kiệm 40-60% tiền token nhờ nén ngữ cảnh và kiểm tra đầu ra. (Scale = mở rộng hệ thống phục vụ nhiều người dùng hơn.)
+
+**Cách đọc bảng này:** cột trái là hai loại model bạn cần; cột giữa là việc của nó; hai cột cuối là ví dụ chạy miễn phí trên máy và ví dụ dịch vụ trả phí.
 
 | Loại model | Việc của nó | Chạy local | Chạy trả phí |
 |---|---|---|---|
@@ -115,13 +129,19 @@ Framework chỉ cần đúng **hai loại model**: một embedding model để t
 
 `ollama list` hiện `gemma3:12b`. Chạy cùng một câu hỏi ở local và ở API: nếu local đúng mà API sai, vấn đề nằm ở ngữ cảnh bạn gửi chứ không phải ở model.
 
+> **Tóm gọn 1 câu:** Chỉ cần đúng 2 loại model (một để tìm kiếm, một để trả lời); học bằng Ollama miễn phí, đổi sang API trả phí chỉ khi cần chất lượng cao hơn.
+
 ---
 
 ## GRAPH_ENGINEERING.md
 
+> Phần này giải đáp thắc mắc về `GRAPH_ENGINEERING.md` — tài liệu dạy xây hệ thống tri thức dạng đồ thị (knowledge graph) cho agent.
+
 ### Q1. Hệ thống của tôi đang ở tầng nào — keyword, vector, hay đã cần graph? [→ § 3 Ba Giai Đoạn Tiến Hóa Của Retrieval]
 
 **Bạn sẽ thấy**
+
+**Cách đọc bảng này:** cột "Tầng" là mốc thời gian công nghệ xuất hiện; cột giữa là công cụ bạn đang dùng; cột "Mức kiểm soát" là bao nhiêu phần kết quả bạn làm chủ được (⭐ = sao, càng nhiều càng kiểm soát tốt). Ví dụ, tầng 2020-2022 là tìm theo đúng từ khóa bằng BM25.
 
 | Tầng | Bạn đang dùng gì | Câu hỏi nó trả lời tốt | Mức kiểm soát |
 |---|---|---|---|
@@ -148,6 +168,8 @@ Ba tầng **cộng dồn**, không thay thế. Tài liệu nói thẳng: vẫn c
 
 Chạy lại 20 câu đó sau khi nối graph. Nếu số câu trả lời đúng không tăng, hãy xem lại chất lượng trích xuất quan hệ — chứ đừng vội đổi kho dữ liệu.
 
+> **Tóm gọn 1 câu:** Ba tầng keyword → vector → graph cộng dồn chứ không thay nhau; chỉ thêm graph khi lỗi của bạn nằm ở câu hỏi nhiều bước hoặc bao quát cả kho tài liệu.
+
 ---
 
 ### Q2. Tôi không biết trước cần những quan hệ nào — có phải vẽ schema trước không? [→ § 8.2 The 8 Commandments of Graph Engineering]
@@ -172,7 +194,9 @@ Tài liệu đặt luật số 1 là **Schema First, Data Second**: định ngh�
 
 **Kiểm tra**
 
-Sau lô đầu tiên: mọi edge đều có đủ ba trường `source`, `confidence`, `timestamp`, và một câu hỏi nối 2 tài liệu trả lời được kèm đường dẫn. Thiếu trường nào thì vá tập trung vào script trích xuất, đừng sửa từng câu trả lời.
+Sau lô đầu tiên: mọi edge đều có đủ ba trường `source`, `confidence`, `timestamp`, và một câu hỏi nối 2 tài liệu trả lời được kèm đường dẫn. (edge = cạnh — một quan hệ nối 2 điểm trong đồ thị; `source` = thông tin nằm ở tài liệu nào; `confidence` = model tự chấm độ chắc chắn từ 0 đến 1; `timestamp` = dấu thời gian.) Thiếu trường nào thì vá tập trung vào script trích xuất, đừng sửa từng câu trả lời.
+
+> **Tóm gọn 1 câu:** Định nghĩa trước 3 loại node, 5 loại edge (Schema First), và bắt buộc mỗi quan hệ ghi rõ nguồn + độ tin cậy + thời gian (provenance) — đó là cách graph không thành mớ rối.
 
 ---
 
@@ -198,7 +222,9 @@ Nút thắt không phải chỗ lưu, mà là **xây graph**: mỗi vòng trích
 
 **Kiểm tra**
 
-Sau 100 tài liệu, câu hỏi local phải trả lời đúng ngay cả khi không có graph, còn câu hỏi multi-hop thì phải in ra được đường dẫn. Nếu độ chính xác chưa vượt vector search thuần, hãy thêm dữ liệu thay vì đổi kiến trúc.
+Sau 100 tài liệu, câu hỏi local phải trả lời đúng ngay cả khi không có graph, còn câu hỏi multi-hop thì phải in ra được đường dẫn. (local = hỏi về 1 tài liệu cụ thể; multi-hop = câu hỏi cần nối 2+ bước quan hệ, như "người duyệt dự án X báo cáo cho ai?".) Nếu độ chính xác chưa vượt vector search thuần, hãy thêm dữ liệu thay vì đổi kiến trúc.
+
+> **Tóm gọn 1 câu:** Nút thắt là bước xây graph chứ không phải chỗ lưu; bắt đầu nhỏ (100 tài liệu, 3 loại node, 5 loại edge), dùng Kuzu/NetworkX thử nghiệm, Neo4j khi lên production.
 
 ---
 
@@ -219,6 +245,8 @@ Tài liệu vẽ đúng quan hệ ba chiều: **Harness** (`harness/01-11`) cấ
 3. Cập nhật tăng dần bằng `graph/08`, đừng xây lại toàn bộ mỗi khi có tài liệu mới.
 4. Muốn hỏi sâu hơn phần này thì đọc FAQ của từng thư mục: `graph/FAQ.md`, `harness/FAQ.md`, `loop/FAQ.md`.
 
+**Cách đọc bảng này:** cột trái là nhu cầu của bạn; cột phải là thư mục đúng để mở. Ví dụ, muốn câu trả lời có quan hệ và đường dẫn chứng minh → mở `graph/`.
+
 | Bạn muốn | Mở thư mục |
 |---|---|
 | Agent chạy 1 lần, cần công cụ, quyền, log | `harness/` |
@@ -227,11 +255,15 @@ Tài liệu vẽ đúng quan hệ ba chiều: **Harness** (`harness/01-11`) cấ
 
 **Kiểm tra**
 
-Chạy `MATCH (n) RETURN count(n)` trên kho đồ thị — con số phải khác 0. Thêm một tài liệu mới rồi chạy lại `scripts/query_graph.py`: số node tăng lên, còn kết quả của câu hỏi cũ **không đổi**. Đó là dấu hiệu cập nhật tăng dần đang chạy đúng.
+Chạy `MATCH (n) RETURN count(n)` trên kho đồ thị — con số phải khác 0. (MATCH (n) RETURN count(n) = câu lệnh đếm tổng số node trong đồ thị.) Thêm một tài liệu mới rồi chạy lại `scripts/query_graph.py`: số node tăng lên, còn kết quả của câu hỏi cũ **không đổi**. Đó là dấu hiệu cập nhật tăng dần đang chạy đúng.
+
+> **Tóm gọn 1 câu:** Harness cấp công cụ cho 1 lần chạy, graph cấp lớp tri thức, loop điều phối nhiều lần chạy — ghép theo dòng chảy: xây graph → lưu → GraphRAG → nạp vào context của harness.
 
 ---
 
 ## HARNESS_ENGINEERING.md
+
+> Phần này giải đáp thắc mắc về `HARNESS_ENGINEERING.md` — tài liệu dạy xây "harness": lớp hạ tầng bao quanh model, gồm công cụ, bộ nhớ, quyền hạn, log, và cổng duyệt.
 
 ### Q1. Thêm harness tốn công hơn không — có đáng không, và tiền thì thế nào? [→ § 4.1 + § 4.5 Tại Sao Harness Engineering Quan Trọng?]
 
@@ -254,6 +286,8 @@ Tài liệu dẫn số đo được thay vì niềm tin: nghiên cứu SWE-agent
 **Kiểm tra**
 
 Chạy cùng 20 issue GitHub trên cấu hình cũ và mới. Nếu tỉ lệ pass tăng mà bạn không đụng tới model, đó là bằng chứng giá trị của lớp môi trường. Con số trong ví dụ của tài liệu là $30.000 xuống còn $12.000 trong 3 tháng (giảm 60%), nhưng bạn phải đo trên hệ thống của mình, đừng chép con số này.
+
+> **Tóm gọn 1 câu:** Đáng — SWE-agent tăng 64% tỉ lệ thành công chỉ nhờ thiết kế lại môi trường, không đổi model; bắt đầu bằng 3 việc rẻ: giới hạn output, gắn linter, nén lịch sử.
 
 ---
 
@@ -278,6 +312,8 @@ Tài liệu trả lời thẳng ở mục Key Insight: *"Prompt Engineering khô
 **Kiểm tra**
 
 Đếm số lần phải sửa prompt trong một tuần. Nếu số đó không giảm, bạn đang chữa bệnh bằng cách viết thêm chữ — hãy thêm một ràng buộc ở tầng công cụ hoặc tầng kiểm tra đầu ra.
+
+> **Tóm gọn 1 câu:** Prompt engineering chưa chết nhưng không còn đủ — hãy chuyển phần quan trọng từ lời dặn sang hạ tầng: code không cho phép trả về kết quả sai, thay vì chỉ nói "hãy cẩn thận".
 
 ---
 
@@ -304,6 +340,8 @@ Module 01–11 là các giai đoạn của đường ống: làm tuần tự và
 
 Chạy đầu-cuối: tài liệu của bạn được nạp, một câu hỏi trả lời đúng mà không cần sửa prompt. Nếu bạn không ghi lại thời gian, số token và tỉ lệ lỗi, bạn chưa có harness — bạn chỉ có một đoạn prompt dài.
 
+> **Tóm gọn 1 câu:** Module 12-15 là nền móng, không phải giai đoạn; bỏ qua thì agent vẫn chạy nhưng sai không biết dừng, không có log, không xin được người duyệt — ghép sandbox sớm nhất có thể.
+
 ---
 
 ### Q4. Tôi đã có code tìm kiếm rồi — làm sao cho nó tự chạy giữa prompt và LLM? [→ § 5.3 Vậy Can Thiệp Vào Đâu?]
@@ -320,7 +358,9 @@ Không có ai tự gọi code giúp bạn. Bạn cần đứng ở giữa: chặ
 
 1. Chọn một trong bốn cách: **proxy server** (mọi ứng dụng chat), **wrapper hàm** (code Python của bạn), **Open WebUI** (không cần code), **LangChain/LlamaIndex** (production).
 2. Cách nhanh nhất là dựng proxy rồi đổi địa chỉ trong app chat: từ `localhost:11434` sang `localhost:5000/api/chat`.
-3. Luôn in ra số đoạn context đã ghép — đó là bằng chứng bạn không quên bước trung gian.
+3. Luôn in ra số đoạn context đã ghép — đó là bằng chứng bạn không quên bước trung gian. (context = các đoạn văn bản liên quan được nhét vào prompt trước khi gửi cho model.)
+
+**Cách đọc bảng này:** cột "Cách" là 3 phương án chặn câu hỏi giữa app chat và model; cột "Dùng khi" nói rõ tình huống nào nên chọn; ⭐ càng ít càng dễ làm. Ví dụ, app Python tự viết → chọn wrapper hàm (dễ nhất).
 
 | Cách | Dùng khi | Độ khó |
 |---|---|---|
@@ -332,7 +372,9 @@ Không có ai tự gọi code giúp bạn. Bạn cần đứng ở giữa: chặ
 
 **Kiểm tra**
 
-Mở log ở proxy, gõ một câu hỏi trên giao diện: log phải hiện các đoạn context được ghép vào **trước** khi có request tới Ollama. Không thấy dòng log đó nghĩa là ứng dụng vẫn đang gọi thẳng model.
+Mở log ở proxy, gõ một câu hỏi trên giao diện: log phải hiện các đoạn context được ghép vào **trước** khi có request tới Ollama. Không thấy dòng log đó nghĩa là ứng dụng vẫn đang gọi thẳng model. (proxy = máy chủ đứng giữa; request = yêu cầu gửi đi.)
+
+> **Tóm gọn 1 câu:** Không ai tự gọi code giúp bạn — bạn phải chặn câu hỏi ở giữa (proxy, wrapper, Open WebUI, hoặc LangChain) để tìm context rồi mới gửi cho model.
 
 ---
 
@@ -346,6 +388,8 @@ Bạn đọc tài liệu thấy hai chữ MCP và A2A, rồi đọc thêm graph 
 
 Ba khái niệm giải quyết ba bài toán khác nhau:
 
+**Cách đọc bảng này:** cột giữa nói rõ "ai nói chuyện với ai"; cột phải là việc mà chuẩn đó lo. Ví dụ, MCP là chuyện agent gọi tool (công cụ); A2A là chuyện agent này nhờ agent khác làm việc.
+
 | Giao thức / Công nghệ | Ai nói chuyện với ai | Chuẩn hoá cái gì |
 |----------------------|---------------------|-----------------|
 | **MCP** (Model Context Protocol) | Agent → Tools / Data / APIs | "Agent cần làm gì" — tools, resources, prompts |
@@ -354,7 +398,7 @@ Ba khái niệm giải quyết ba bài toán khác nhau:
 
 **MCP + A2A = bổ sung nhau:** Agent chạy cả hai: gọi MCP để dùng tool, gọi A2A để delegate cho agent khác.
 
-**Tin GraphRAG mới 2025-2026:**
+**Tin GraphRAG mới 2025-2026:** (GraphRAG = dùng đồ thị tri thức để tăng độ chính xác cho RAG; LazyGraphRAG/LightRAG = 2 phiên bản rẻ hơn của GraphRAG)
 - **LazyGraphRAG** (Microsoft, 2024-2025): giảm cost indexing xuống bằng vector RAG, quality ngang full GraphRAG, query rẻ hơn ~700×. Tích hợp Microsoft Discovery.
 - **LightRAG** (EMNLP 2025): dual-layer graph + vector, incremental update.
 - **Gartner 2026**: GraphRAG trong "Top Trends in D&A" cho complex AI use cases.
@@ -365,6 +409,8 @@ Ba khái niệm giải quyết ba bài toán khác nhau:
 1. MCP là bắt buộc — bất kỳ agent nào cũng cần gọi tools (xem `06-decide-tools-mcp/`).
 2. A2A khi cần ghép agent từ **nhiều framework** (Claude + LangGraph + ADK) — xem `09-multi-agent/`.
 3. GraphRAG khi cần trả lời câu hỏi **multi-hop** hoặc **global aggregation** — xem `05-graph-rag/`.
+
+> **Tóm gọn 1 câu:** MCP lo chuyện agent gọi tool, A2A lo chuyện agent nhờ agent khác, GraphRAG lo chuyện tra đồ thị tri thức — ba việc khác nhau, thường dùng cùng nhau.
 
 ---
 

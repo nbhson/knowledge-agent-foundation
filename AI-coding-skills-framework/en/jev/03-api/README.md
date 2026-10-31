@@ -6,13 +6,17 @@
 
 ## 1. Endpoint & Authentication
 
+This section covers where Jev lives on the network and how to sign in. It matters because the transport is deliberately ordinary — nothing new to learn here.
+
 > **📌 Core Concept**
 >
-> **Definition:** Jev is reached via **`POST https://api.typesafe.ai/v1/systemone`** with a **Bearer API key**. The body carries `model`, `state`, and `questions`; model aliases map `jev-latest` → `jev-1.13.0`.
+> **Definition:** Jev is reached via **`POST https://api.typesafe.ai/v1/systemone`** with a **Bearer API key** (Bearer = a standard HTTP header that carries your secret key: `Authorization: Bearer <key>`). The body carries `model`, `state`, and `questions`; model aliases map `jev-latest` → `jev-1.13.0`.
 > **Analogy:** It looks exactly like calling an LLM API — because the *transport* is deliberately boring. The novelty is entirely in what comes back: typed decisions with distributions, not a token stream.
 > **Why it matters:** Zero new protocol skills required. If you can hold an API key and POST JSON, you can ship a decision layer today — the interesting decisions are which questions to ask and which confidence band to act on.
 
 ### 1.1 The Basics
+
+How to read it: each row is one connection fact; for instance, "Auth" shows the exact header format and "Price" is what you pay per million input tokens.
 
 | Item | Value |
 |------|-------|
@@ -27,7 +31,11 @@
 
 > 📄 **Example code:** [`examples/01-1-1-the-basics.sh`](examples/01-1-1-the-basics.sh)
 
+> **One-line summary:** One boring HTTPS POST with a bearer key — all the novelty is in the typed response.
+
 ### 1.2 Key Handling
+
+Read the flow top down: the key lives in an environment variable, travels only in server-side headers, and reaches exactly one endpoint.
 
 ```
 TYPESAFE_API_KEY   env var (never commit)
@@ -39,9 +47,15 @@ Authorization: Bearer sk-…      ← server-side only; rotate on leak
 One key → /v1/systemone          (or the same key pointed at OpenRouter — §6)
 ```
 
+Gloss: env var = an environment variable, a secret your program reads at runtime instead of hard-coding; rotate = replace the key after it leaks.
+
+> **One-line summary:** Keep the key in a server-side env var, never in code or logs.
+
 ---
 
 ## 2. Request & Response
+
+This section shows a full request and what comes back, block by block.
 
 > **📌 Core Concept**
 >
@@ -59,7 +73,11 @@ Three questions — one Choice, one Noul, one Score — in a single pass:
 
 > 📄 **Example code:** [`examples/03-2-2-response-shape.json`](examples/03-2-2-response-shape.json)
 
+> **One-line summary:** The reply carries one typed block per question, each with probabilities and confidence.
+
 ### 2.3 Reading the Blocks
+
+How to read it: each row is one answer type from the response; "How to read it" tells you which field to act on. For instance, for a `choice` answer you branch on `selected` and use `confidence` as a gate.
 
 | Answer key | Payload | How to read it |
 |------------|---------|----------------|
@@ -77,13 +95,17 @@ low     → route to a human or another system / LLM
 
 > ⚠️ For Choice/Score, `confidence` is concentration of the distribution — a **margin, NOT a probability the answer is right**. Jev can pick a wrong in-schema answer, sometimes with high confidence. Type safety ≠ factual correctness (see [04-calibration](../04-calibration/)).
 
+> **One-line summary:** One request, one report with a separate typed block per question — read the block, gate on the band.
+
 ---
 
 ## 3. Official SDKs
 
+This section covers the ready-made client libraries. They matter because they remove boilerplate and give you a portable escape hatch.
+
 > **📌 Core Concept**
 >
-> **Definition:** TypeSafe ships **official Python and JavaScript SDKs** that wrap `/v1/systemone`. Both accept a custom base URL — which is how you point the TypeSafe TS SDK at **OpenRouter** (§6) without changing application code.
+> **Definition:** TypeSafe ships **official Python and JavaScript SDKs** (SDK = a client library that wraps the raw HTTP calls) that wrap `/v1/systemone`. Both accept a custom base URL — which is how you point the TypeSafe TS SDK at **OpenRouter** (§6) without changing application code.
 > **Analogy:** A **power adapter** — the appliance (your decision logic) doesn't change when you plug into a different country's outlet (TypeSafe direct vs OpenRouter).
 > **Why it matters:** SDKs remove hand-rolled `requests`/`fetch` boilerplate, keep `model` aliases current, and — via base URL — give you a vendor-portable seam for the day you want a second route to the same model.
 
@@ -96,6 +118,8 @@ low     → route to a human or another system / LLM
 
 </details>
 
+> **One-line summary:** Install the SDK, set the key, send state + questions, get typed answers.
+
 ### 3.2 JavaScript Quickstart
 
 <details>
@@ -105,6 +129,8 @@ low     → route to a human or another system / LLM
 
 </details>
 
+> **One-line summary:** Same shape as Python: client, key, state + questions, typed answers.
+
 ### 3.3 Pointing the SDK at OpenRouter
 
 Same client, different base URL — no application restructure:
@@ -113,17 +139,23 @@ Same client, different base URL — no application restructure:
 
 Full OpenRouter mechanics in §6.
 
+> **One-line summary:** Change one base-URL string and the same SDK code now reaches Jev through OpenRouter.
+
 ---
 
 ## 4. Pydantic AI — TypeSafeModel
 
+This section explains the Python integration that turns your data classes into Jev questions.
+
 > **📌 Core Concept**
 >
-> **Definition:** In Pydantic AI, **`TypeSafeModel`** turns your `output_type` into Jev questions: **each field = one question**, **field `description` = the question text**, and **docstring / `instructions` = the framing**. TypeSafe calls this pairing **"probably the most important concept"** — because it is the *opposite habit* from prompting an LLM.
+> **Definition:** In Pydantic AI, **`TypeSafeModel`** turns your `output_type` into Jev questions: **each field = one question**, **field `description` = the question text**, and **docstring / `instructions` = the framing** (Pydantic = the Python library for typed data classes; a docstring = the free-text note under a class definition). TypeSafe calls this pairing **"probably the most important concept"** — because it is the *opposite habit* from prompting an LLM.
 > **Analogy:** An LLM prompt is a **briefing memo** you hope gets followed; a `TypeSafeModel` is a **form with labeled fields** — the label *is* the ask. You wouldn't bury "Rate urgency 1–5" inside a memo's third paragraph; you put it on the line marked *Urgency*.
 > **Why it matters:** Once fields and descriptions carry the decisions, your Jev agent becomes typed end-to-end: valid answers by construction, parallel evaluation under the hood, and confidence bands your code can branch on — without any string parsing.
 
 ### 4.1 Field → Question Mapping
+
+How to read it: each row maps one Python construct to what it becomes as a Jev question. For instance, a nested model becomes namespaced questions like `outer.inner`.
 
 | Pydantic construct | Becomes |
 |--------------------|---------|
@@ -136,6 +168,8 @@ Full OpenRouter mechanics in §6.
 
 > 📌 **The habit inversion:** with an LLM you invest in *instructions* and hope structure emerges; with `TypeSafeModel` you invest in **field descriptions** (the questions) and keep instructions as light framing. Opposite habit — TypeSafe: *"probably the most important concept."*
 
+> **One-line summary:** Each field is a question, its description is the question text — effort moves from instructions to field descriptions.
+
 ### 4.2 Decide-Only Agent
 
 <details>
@@ -145,7 +179,11 @@ Full OpenRouter mechanics in §6.
 
 </details>
 
+> **One-line summary:** One-field output type + framing instructions = the smallest possible Jev agent.
+
 ### 4.3 Tools Attached — The Extra Question
+
+This subsection explains what changes when tools are attached: Jev gains one extra "which tool?" question, and how the two tool kinds behave.
 
 With **tools** attached, every request carries **one more question**: *"which of these does the text call for?"* The flow:
 
@@ -172,20 +210,30 @@ Jev picks a tool (typesafe_tool_call_threshold, default 0.6)
 | Arg tool | `ToolCallProposed` → **`ModelAPIError`** → `FallbackModel` handles the entire step |
 | `FallbackModel` | The LLM sits *behind* Jev — Jev routes/decides, LLM writes |
 
+Gloss: no-arg tool = a tool that needs no parameters, so Jev's pick alone is enough; arg tool = a tool that needs parameters, which Jev cannot write — so an LLM takes over the whole step.
+
+> **One-line summary:** With tools, Jev picks the tool; no-argument tools run directly, argument tools hand the whole step to a fallback LLM.
+
 ### 4.4 Other TypeSafeModel Details
+
+Four leftover rules worth knowing before you ship:
 
 - **List fan-out:** `list[Item]` → one question per element, same pass — cheap map-reduce (see [02-primitives](../02-primitives/) §5.2).
 - **Nested models:** `outer.inner` namespacing keeps deep outputs addressable.
 - **Instructions for a single question:** when you only need one verdict, a one-field `output_type` plus framing instructions is the minimal decide-only agent.
 - **`UserError` on a bare bool:** `flag: bool` with **no description** raises `UserError` at runtime — Jev refuses to guess what your field means. Always write the question.
 
+> **One-line summary:** Lists fan out, nests namespace, and a bare `bool` without a description is a hard error — always write the question.
+
 ---
 
 ## 5. LangChain — TypeSafeClassifier
 
+This section covers the LangChain integration, whose main use is sitting in front of the LLM as a gatekeeper.
+
 > **📌 Core Concept**
 >
-> **Definition:** LangChain's **`TypeSafeClassifier`** answers named questions over a state via **`.invoke(state, questions)`** and returns typed answers + distributions — designed to sit in **middleware**: route before the LLM runs, or gate risky tool calls with **`AutoModeMiddleware`**.
+> **Definition:** LangChain's **`TypeSafeClassifier`** answers named questions over a state via **`.invoke(state, questions)`** and returns typed answers + distributions — designed to sit in **middleware** (code that runs between the incoming request and the LLM): route before the LLM runs, or gate risky tool calls with **`AutoModeMiddleware`**.
 > **Analogy:** A **bouncer with a checklist** — the classifier doesn't join the party (generate text); it checks the list at the door and lets the right chain through, or stops the wrong tool call.
 > **Why it matters:** Middleware is where decisions multiply: every incoming request, every tool call can carry one cheap parallel Jev pass instead of a deliberative LLM call — the LangChain-native version of "Jev routes and verifies, LLM provides the language."
 
@@ -198,7 +246,11 @@ Jev picks a tool (typesafe_tool_call_threshold, default 0.6)
 
 </details>
 
+> **One-line summary:** `.invoke(state, questions)` in, typed answers out — designed for the middleware slot.
+
 ### 5.2 Two Middleware Patterns
+
+How to read it: each row is one placement pattern; "What Jev does" is the question it answers and "Effect" is what you get. For instance, routing middleware classifies the request before any LLM chain runs.
 
 | Middleware | What Jev does | Effect |
 |------------|---------------|--------|
@@ -216,9 +268,13 @@ request ──► TypeSafeClassifier ──► answers (+ distributions)
         └────────► LLM runs only when it should ◄───┘
 ```
 
+> **One-line summary:** Two middleware placements: route requests to the right chain, and block risky tool calls before they run.
+
 ---
 
 ## 6. OpenRouter — One Key, Many Models
+
+This section covers the second way in: routing Jev through OpenRouter so one key reaches many models.
 
 > **📌 Core Concept**
 >
@@ -230,6 +286,8 @@ request ──► TypeSafeClassifier ──► answers (+ distributions)
 
 > 📄 **Example code:** [`examples/09-6-1-direct-call.sh`](examples/09-6-1-direct-call.sh)
 
+How to read it: each row is one connection fact for the OpenRouter route; "Alternative" names the SDK-based way to the same place.
+
 | Item | Value |
 |------|-------|
 | Endpoint | `POST https://openrouter.ai/api/alpha/decisions` |
@@ -239,9 +297,13 @@ request ──► TypeSafeClassifier ──► answers (+ distributions)
 
 **Use case:** *one key, many models* — LLMs for writing, `typesafe/jev-1.13` for deciding, single billing/auth surface.
 
+> **One-line summary:** Same model through OpenRouter: one key, one bill, LLMs and Jev side by side.
+
 ---
 
 ## 7. Limits & Errors
+
+This section lists the hard edges of jev-1.13 and the errors they produce. Read it before shipping — most incidents start at one of these boundaries.
 
 > **📌 Core Concept**
 >
@@ -250,6 +312,8 @@ request ──► TypeSafeClassifier ──► answers (+ distributions)
 > **Why it matters:** Every production incident with a decision model starts at a boundary: a state that overflowed context, a count Jev was asked to do, a file it could never read. Learn the edges here — then read [07-limits-and-evaluation](../07-limits-and-evaluation/) before shipping.
 
 ### 7.1 Hard Limits (jev-1.13)
+
+How to read it: "Limit" is the boundary, "Detail" explains it, "What to do instead" is the workaround. For instance, the arithmetic row says: compute counts in your code, then pass the numbers as state.
 
 | Limit | Detail | What to do instead |
 |-------|--------|--------------------|
@@ -274,7 +338,11 @@ request ──► TypeSafeClassifier ──► answers (+ distributions)
 └──────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** Text-only input, 64k context ceiling, math in code — design around these and the model stays reliable.
+
 ### 7.2 Common Errors
+
+How to read it: "Error / symptom" is what you observe, "Likely cause" is the usual reason, "Fix" is the remedy. For instance, always-low confidence usually means a noisy state, not a broken model.
 
 | Error / symptom | Likely cause | Fix |
 |-----------------|--------------|-----|
@@ -286,7 +354,11 @@ request ──► TypeSafeClassifier ──► answers (+ distributions)
 | Accuracy drop after "adding more context" | Unrelated detail in state | Build a **small relevant state** within the latency budget |
 | Trying to count / diff dates in Jev | Out of scope for 1.13 | Compute in code; pass the numbers as state |
 
+> **One-line summary:** Every common error maps to a known boundary — shrink the state, describe the bool, or route the step to the fallback LLM.
+
 ### 7.3 Production Checklist
+
+A pre-ship checklist: each line is one thing to confirm before real traffic.
 
 ```
 □ API key server-side only; rotated
@@ -300,6 +372,8 @@ request ──► TypeSafeClassifier ──► answers (+ distributions)
 □ fallback path exists: human or LLM behind Jev (FallbackModel pattern)
 □ latency budget 70–500ms verified under real load
 ```
+
+> **One-line summary:** Ten checks — key hygiene, typed questions, clean state, wired bands, a fallback path — and you are ready to ship.
 
 ---
 

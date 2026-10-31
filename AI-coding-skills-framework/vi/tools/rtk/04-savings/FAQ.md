@@ -10,6 +10,8 @@ Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông ở
 
 **Bạn sẽ thấy**
 
+Chạy `rtk gain` — lệnh in báo cáo tiết kiệm — ra kết quả thế này:
+
 ```
 $ rtk gain
 Commands run: 342
@@ -18,7 +20,9 @@ Estimated tokens saved: ~300k
 Reduction: 82%
 ```
 
-Nhìn dễ hiểu là hơn 80% chi phí đã bớt. Nhưng con số token ở đây là ước lượng theo `bytes / 4`, và RTK đo **giảm output của lệnh bash**, không phải giảm hóa đơn token.
+Giải nghĩa từng dòng: `Commands run: 342` = đã có 342 lệnh chạy qua RTK. `Raw bytes avoided: 1.2 MB` = 1,2 MB output không phải in ra. `Estimated tokens saved: ~300k` = ước lượng 300.000 token được bớt. `Reduction: 82%` = output bị cắt 82%.
+
+Nhìn dễ hiểu là hơn 80% chi phí đã bớt. Nhưng con số token ở đây là ước lượng theo `bytes / 4` — RTK chia số byte cho 4, không có tokenizer (bộ đếm token thật). Và RTK đo **giảm output của lệnh bash**, không phải giảm hóa đơn token.
 
 **Vì sao**
 
@@ -40,11 +44,15 @@ Chuỗi tính tiền đi thế này: output của lệnh bash bị cắt 82% ở
 
 Chạy `rtk gain` hai lần cách nhau một ngày làm việc: `Commands run` phải tăng, `Reduction` phải nằm trong khoảng 70–90%. Nếu `Commands run` không đổi thì hook không chạy, và bạn đang đọc số liệu của một bộ đo rỗng.
 
+> **Tóm gọn 1 câu:** 82% là mức cắt output của lệnh bash — đáng tin, nhưng hóa đơn cuối chỉ giảm ít hơn vì prompt, lịch sử và output của model không nằm trong phép đo.
+
 ---
 
 ### Q14. `rtk discover` nói có lệnh "0% reduction" — có nghĩa là RTK vô dụng không? [→ § Lệnh Đo Lường]
 
 **Bạn sẽ thấy**
+
+Chạy `rtk discover` — lệnh tìm các lệnh chưa được nén — ra kết quả thế này:
 
 ```
 $ rtk discover
@@ -54,6 +62,8 @@ Found 5 commands with 0% reduction:
   - ansible-playbook    (6 calls)
 Consider `rtk init` for these or add custom TOML filters.
 ```
+
+Giải nghĩa: "0% reduction" = lệnh này chạy qua RTK mà output không bị cắt tí nào. Số trong ngoặc = số lần đã gọi, ví dụ `terraform plan` đã bị gọi 12 lần. `TOML filters` = bộ lọc viết riêng bằng file cấu hình TOML. `rtk init` = lệnh cài hook tự động.
 
 Có 5 lệnh bị nén 0% — nghĩa là chúng chạy ra y hệt bản gốc. Riêng `terraform plan` đã bị gọi 12 lần.
 
@@ -67,7 +77,7 @@ Một lý do phụ cũng thường gặp: một số project có cấu hình ri�
 
 **Làm gì**
 
-1. Với lệnh cần output đầy đủ (như `terraform plan`), đừng nén — hãy thêm vào `exclude_commands` và công nhận là không tiết kiệm được ở lệnh đó.
+1. Với lệnh cần output đầy đủ (như `terraform plan` — bản kế hoạch hạ tầng dùng để xem trước khi áp), đừng nén — hãy thêm vào `exclude_commands` (danh sách lệnh được miễn nén) và công nhận là không tiết kiệm được ở lệnh đó.
 2. Với lệnh chỉ cần giảm nhẹ, viết bộ lọc riêng trong TOML cấu hình.
 3. Chạy `rtk discover --all --since 7` để xem cơ hội trong 7 ngày qua, không chỉ project hiện tại.
 4. Dùng `rtk session` để xem mức độ áp dụng RTK qua các phiên gần đây — nếu tỉ lệ thấp, vấn đề nằm ở agent chưa dùng hook.
@@ -79,15 +89,17 @@ Một lý do phụ cũng thường gặp: một số project có cấu hình ri�
 
 Sau khi thêm bộ lọc mới, chạy lại `rtk discover` và xác nhận lệnh đó không còn nằm trong danh sách 0%. Nếu vẫn còn, hãy kiểm tra lệnh có nằm trong `exclude_commands` không.
 
+> **Tóm gọn 1 câu:** "0% reduction" không phải RTK hỏng — đó là danh sách lệnh chưa có bộ lọc, xếp theo số lần gọi để bạn biết chỗ nào khai thác tiếp trước.
+
 ---
 
 ### Q15. Tôi muốn đưa số liệu tiết kiệm lên dashboard của team — làm sao? [→ § Liên Kết Với Harness Evaluation]
 
 **Bạn sẽ thấy**
 
-Bạn có `rtk gain` nhưng số liệu nằm trong terminal, không lên được biểu đồ. Bạn cũng muốn xuất JSON cho hệ thống báo cáo, và muốn có số đo liên tục thay vì chạy tay mỗi tuần.
+Bạn có `rtk gain` nhưng số liệu nằm trong terminal, không lên được biểu đồ. Bạn cũng muốn xuất JSON (định dạng dữ liệu mà dashboard đọc được) cho hệ thống báo cáo, và muốn có số đo liên tục thay vì chạy tay mỗi tuần.
 
-Bảng benchmark đi kèm trong tài liệu cũng cho bạn mốc so sánh nhanh: `ls -la` từ 45 dòng xuống 12 dòng (~73%), `git push` từ 15 dòng xuống `ok main` (~93%), `cargo test` khi fail từ hơn 200 dòng xuống khoảng 20 dòng (~90%), `ruff check` gom theo nhóm (~80%), `docker ps` chỉ giữ cột cần thiết (~70%+).
+Bảng benchmark đi kèm trong tài liệu cũng cho bạn mốc so sánh nhanh — benchmark = số đo tham chiếu khi chạy cùng một lệnh: `ls -la` từ 45 dòng xuống 12 dòng (~73%), `git push` từ 15 dòng xuống `ok main` (~93%), `cargo test` khi fail từ hơn 200 dòng xuống khoảng 20 dòng (~90%), `ruff check` (lỗi kiểm tra code Python) gom theo nhóm (~80%), `docker ps` (danh sách container đang chạy) chỉ giữ cột cần thiết (~70%+).
 
 **Vì sao**
 
@@ -97,7 +109,7 @@ Vì đây là đúng vai trò của RTK trong bộ đánh giá của harness: bi
 
 1. Dùng `rtk gain --all --format json` để xuất JSON làm nguồn dữ liệu cho dashboard.
 2. Dùng `rtk gain --history` để xem các lệnh gần đây kèm mức giảm — dùng để truy vết khi con số tổng giảm.
-3. Dùng `rtk gain --graph` cho biểu đồ ASCII 30 ngày gần nhất, tiện nhắc trong status report.
+3. Dùng `rtk gain --graph` cho biểu đồ ASCII 30 ngày gần nhất, tiện nhắc trong status report. (ASCII graph = biểu đồ vẽ bằng ký tự, xem được ngay trong terminal.)
 4. Dùng `rtk gain --daily` khi cần xem ngày nào lệch chuẩn — thường là ngày bạn mới chạy lệnh nặng chưa có bộ lọc.
 5. Chạy `rtk gain` định kỳ (mỗi ngày hoặc mỗi tuần) giống nguyên tắc đo lường liên tục.
 
@@ -105,7 +117,9 @@ Vì đây là đúng vai trò của RTK trong bộ đánh giá của harness: bi
 
 **Kiểm tra**
 
-Mở file JSON xuất ra và kiểm tra có các trường tổng lệnh, số byte đã tránh, số token ước lượng và tỉ lệ giảm. Telemetry mặc định tắt, nên số liệu của bạn không đi đâu; nếu muốn chặn tuyệt đối thì đặt `RTK_TELEMETRY_DISABLED=1`.
+Mở file JSON xuất ra và kiểm tra có các trường tổng lệnh, số byte đã tránh, số token ước lượng và tỉ lệ giảm. Telemetry (chế độ gửi số liệu đi đâu đó) mặc định tắt, nên số liệu của bạn không đi đâu; nếu muốn chặn tuyệt đối thì đặt `RTK_TELEMETRY_DISABLED=1`.
+
+> **Tóm gọn 1 câu:** Lấy dữ liệu từ `rtk gain --format json` đẩy lên dashboard, chạy định kỳ — có số đo liên tục thì mới phân biệt được "tốn tiền vì cấu hình sai" với "tốn tiền vì repo lớn thật".
 
 ---
 

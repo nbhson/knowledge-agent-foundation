@@ -36,11 +36,15 @@ từ *viết prompt cho khéo* sang *vẽ vòng lặp cho khôn*.
 
 #### 3 Bằng Chứng Khoa Học & Thực Tiễn
 
+Cách đọc bảng này: mỗi dòng là một bằng chứng, cột giữa nói bằng chứng từ đâu, cột phải nói con số thu được. Ví dụ, #1 là nghiên cứu DeepMind: agent có vòng lặp phản hồi có cấu trúc (structured feedback loop) mắc ít lỗi lặp lại hơn 52% so với agent chạy một lượt.
+
 | # | Nghiên Cứu / Nguồn | Phát Hiện Quan Trọng |
 |---|-------------------|----------------------|
 | 1 | **DeepMind (2025)** | Agents với structured feedback loops giảm **52% lỗi lặp lại** so với agents không có loop |
 | 2 | **Anthropic (2025)** | Self-refine loops trong Claude Code tăng **38% code quality** trên benchmark SWE-bench |
 | 3 | **loop-engineering (Cobus Greyling, 2026)** | Repo reference tự dogfood: `loop-audit` workflow chấm **Loop Ready score** trên mọi PR/push, đạt 5.5k+ GitHub stars trong 6 tháng |
+
+Giải nghĩa: **self-refine loop** = vòng lặp tự soi và tự sửa kết quả của chính nó; **dogfood** = "ăn thức ăn của chính mình": dùng chính sản phẩm mình làm ra; **PR/push** = đề nghị gộp code / đẩy code lên repo.
 
 #### Triết lý cốt lõi:
 
@@ -64,6 +68,8 @@ thấy sai cũng không buồn sửa.
 **Nếu không làm thế này**: bạn sẽ kẹt cả buổi trong cảnh gõ đi gõ lại cùng một kiểu prompt, agent thì ngã đúng
 một cái hố hết lần này tới lần khác, token đốt tiền vô ích, mà cuối cùng chẳng đọng lại quy trình nào xài lại được.
 
+> **Tóm gọn 1 câu:** Loop Engineering quan trọng vì nó biến việc gõ prompt lặp lại thành dây chuyền tự chạy, tự kiểm chứng, có điểm đo — nghiên cứu cho thấy nó giảm 52% lỗi lặp lại và tăng 38% chất lượng code.
+
 ## Tổng Quan
 
 **Loop Engineering** là cách vẽ ra những **vòng lặp có nề nếp** để AI agent tự phát hiện việc, tự xắn tay làm,
@@ -73,6 +79,8 @@ với **cuốn sổ cái trạng thái** nằm ngoài bất kỳ đoạn chat n�
 So với Module VII (Workflow) chỉ lo xếp ngay ngắn một đường ống chạy một lần, Loop Engineering lo chuyện dài hơi hơn:
 vòng lặp **tự nuôi sống chính nó** — agent làm xong một task chưa phải xong chuyện, nó còn phải **tự hỏi
 việc nào đáng làm tiếp, tự kiểm hàng, rồi mang bài học đó qua vòng sau**.
+
+Giải nghĩa sơ đồ dưới đây: khối "NĂM BUILDING BLOCKS" là năm mảnh ghép của loop (automation, worktree, skill, MCP, sub-agent) cộng thêm state; khối "ANATOMY OF A LOOP" là trình tự một vòng chạy, từ lịch chạy tới cổng duyệt người; khối "AUTONOMY LEVELS" là ba mức tự chủ L1→L3; khối "SAFETY + OPERATING" là lớp bảo vệ: danh sách cấm, quy tắc tự gộp, cổng duyệt người, hạn mức token.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -103,6 +111,8 @@ việc nào đáng làm tiếp, tự kiểm hàng, rồi mang bài học đó qu
 │  └───────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+> **Tóm gọn 1 câu:** Loop Engineering là vòng lặp tự phát hiện việc, tự làm, tự kiểm và tự khôn lên sau mỗi vòng — gồm năm mảnh ghép, một trình tự chạy từ lịch đến cổng duyệt người, ba mức tự chủ, và một lớp an toàn.
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 
@@ -161,13 +171,21 @@ Bước 7: 07-tools/ — dùng CLI scaffold, audit, giám sát
 | Tránh các sai lầm đắt giá | [06-anti-patterns](06-anti-patterns/) |
 | Dùng CLI scaffold/audit | [07-tools](07-tools/) |
 
+Cách đọc bảng này: cột "Bạn muốn..." là nhu cầu của bạn, cột "Đọc" là file nên mở. Ví dụ, nếu bạn muốn kiểm tra loop đã sẵn sàng chạy thật chưa thì mở `03-safety/` phần checklist §1–§10. "Pattern picker" là bảng giúp chọn pattern theo nhu cầu; "production" là môi trường thật đang phục vụ người dùng.
+
+> **Tóm gọn 1 câu:** Học theo thứ tự 7 bước từ concepts tới tools, hoặc tra bảng trên theo nhu cầu — mỗi nhu cầu có đúng một file nên đọc.
+
 ---
 
 ## Case Studies Thực Tế
 
+Phần này kể chuyện các loop thật đang chạy trong repo tham chiếu — cả cấu hình lẫn những lần hỏng, để bạn không phải tự va vào.
+
 ### 1. Repo Reference — Eat Its Own Dogfood
 
 Repo `loop-engineering` đem chính mấy pattern của mình ra xài trên thân mình, kiểu "nhà trồng được gì ăn nấy":
+
+Cách đọc bảng này: mỗi dòng là một loop đang chạy, cột "Level" là mức tự chủ (L1 = chỉ báo cáo, L2 = sửa nhưng có người duyệt), cột "Automation" cho biết chạy tự động (✅ + file cấu hình) hay chạy tay (⏸). Ví dụ, Daily Triage chạy tự động ngày thường, còn PR Babysitter chỉ chạy khi người gõ lệnh.
 
 | Loop | Level | Automation | Notes |
 |------|-------|------------|-------|
@@ -179,6 +197,8 @@ Repo `loop-engineering` đem chính mấy pattern của mình ra xài trên thâ
 | PR Babysitter | L2 | ⏸ Manual | Worktrees cho fixes; verifier required |
 | Dependency Sweeper | L2 | ⏸ Dependabot only | Patch-only |
 | CI Sweeper | L2 | ⏸ Partial | Reacts qua failing validate/audit |
+
+Giải nghĩa: **changelog** = file ghi thay đổi theo từng phiên bản; **Dependabot** = bot của GitHub tự đề nghị nâng cấp thư viện; **PR Babysitter** = loop trông PR đến khi được gộp; **CI Sweeper** = loop dọn dẹp các bài kiểm tra CI bị fail.
 
 ### 2. Stories Thực Tế (Thắng Và Thất Bại Trung Thực)
 
@@ -200,9 +220,15 @@ Mỗi nhà một kiểu bếp, mỗi tool một cách chạy loop — mở đún
 - **Opencode**: CLI-first loops: cron/systemd + `opencode run`, skills, worktrees — `examples/opencode/`
 - **GitHub Actions**: event-driven CI sweeper — `examples/github-actions/`
 
+Giải nghĩa: **cron/systemd** = hai trình hẹn giờ có sẵn trên Linux; **event-driven** = chạy khi có sự kiện (PR mới, issue mới) thay vì chạy theo lịch; **Triage inbox** = hộp thư chứa việc đã được xếp hạng.
+
+> **Tóm gọn 1 câu:** Cùng một pattern Daily Triage chạy được trên năm tool khác nhau — chọn đúng file ví dụ của tool bạn đang dùng là có sẵn cách làm.
+
 ---
 
 ## Tài Liệu Tham Khảo
+
+Phần này gom các nguồn đọc thêm: bài viết gốc, repo gốc, và danh sách CLI. Muốn hiểu sâu khái niệm thì đọc hai bài viết đầu tiên.
 
 ### Bài Viết & Nguồn
 
@@ -216,6 +242,8 @@ Mỗi nhà một kiểu bếp, mỗi tool một cách chạy loop — mở đún
 - [Fleet Engineering](https://github.com/cobusgreyling/fleet-engineering) — quản trị population agents
 
 ### Frameworks & Tools
+
+Cách đọc bảng danh sách dưới đây: mỗi dòng là một CLI, phần sau dấu gạch là việc nó làm. Ví dụ, `loop-gate` chặn hành động sai đường dẫn bằng máy, không dựa vào lời nhắc.
 
 - **loop** (front door) — `npx @cobusgreyling/loop init | doctor | status | audit | cost`
 - **loop-audit** — Loop Readiness Score CLI
@@ -234,6 +262,8 @@ Muốn vọc từng món thì ghé: [07-tools](07-tools/).
 > **"Hệ thống tốt nhất không phải là hệ thống không bao giờ sai — mà là hệ thống sửa sai nhanh nhất."**
 
 > *"Build the loop. But build it like someone who intends to stay the engineer, not just the person who presses go."* — Addy Osmani
+
+> **Tóm gọn 1 câu:** Loop Engineering không đòi hệ thống hoàn hảo — nó đòi hệ thống có điểm đo, có nút dừng, và một kỹ sư vẫn giữ vai vẽ vòng lặp chứ không chỉ bấm nút khởi động.
 
 ---
 

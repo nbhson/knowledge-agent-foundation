@@ -2,6 +2,8 @@
 
 Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
+> **Tài liệu này nói về gì:** Jev là một mô hình ra quyết định — nhận dữ liệu thô và trả về lựa chọn kèm xác suất, không sinh chữ. File này giải thích Jev là gì, khác gì mô hình lớn (LLM), và nên dùng ở đâu.
+
 ---
 
 ## Q1. "System One model" nghĩa là gì — khác mô hình lớn ở chỗ nào? [→ §2 System One vs System Two]
@@ -22,11 +24,13 @@ Dùng ba câu hỏi tự kiểm trước khi gọi bất kỳ mô hình nào:
 2. Người đọc kết quả là mắt tôi hay là `if/switch` trong code? → code thì Jev.
 3. Tôi có cần phần "tại sao" không? → cần thì mô hình lớn, vì Jev trả quyết định kèm xác suất chứ không trả lý do.
 
-Một khác biệt nữa ít ai để ý: Jev được huấn luyện bằng RLCD (tối ưu xác suất theo kết quả thật), còn mô hình lớn dùng RLHF (tối ưu theo sở thích con người). Đây là lý do xác suất của Jev dùng làm ngưỡng trong code được, còn xác suất của mô hình lớn thì không.
+Một khác biệt nữa ít ai để ý: Jev được huấn luyện bằng RLCD (RLCD = Reinforcement Learning from Calibration Data — tối ưu xác suất theo kết quả thật, đúng/sai đo được), còn mô hình lớn dùng RLHF (RLHF = Reinforcement Learning from Human Feedback — tối ưu theo sở thích con người, kiểu "câu này hay hơn"). Đây là lý do xác suất của Jev dùng làm ngưỡng trong code được, còn xác suất của mô hình lớn thì không.
 
 **Kiểm tra**
 
-Vẽ lại ba tầng trên giấy: **code cứng** (chắc chắn 100%, không hiểu ngữ nghĩa) → **Jev** (hiểu ngữ nghĩa hẹp, có xác suất thật) → **mô hình lớn** (hiểu rộng, chậm, xác suất không đáng tin). Mỗi yêu cầu trong backlog của bạn nên rơi vào đúng một tầng. Nếu phần lớn rơi tầng giữa thì bạn đang trả tiền không cần thiết.
+Vẽ lại ba tầng trên giấy: **code cứng** (chắc chắn 100%, không hiểu ngữ nghĩa — ví dụ `if status == "open"`) → **Jev** (hiểu ngữ nghĩa hẹp, có xác suất thật) → **mô hình lớn** (hiểu rộng, chậm, xác suất không đáng tin). Mỗi yêu cầu trong backlog của bạn nên rơi vào đúng một tầng. Nếu phần lớn rơi tầng giữa thì bạn đang trả tiền không cần thiết.
+
+> **Tóm gọn 1 câu:** System One = phản xạ nhanh (Jev: quyết định nhỏ có cấu trúc, 70–500ms), System Two = suy nghĩ chậm (LLM: viết, lập luận); chọn bằng ba câu hỏi — đáp án có đóng không, ai đọc kết quả, có cần "tại sao" không.
 
 ---
 
@@ -57,6 +61,8 @@ giữ lại: đúng kiểu · không bịa ngoài danh sách · câu hỏi chạ
 
 Đo trên 100 yêu cầu thật của bạn: tỉ lệ lần gọi mô hình lớn đã giảm bao nhiêu phần trăm, và tỉ lệ JSON hỏng từng phải xử lý là bao nhiêu. Hai con số đó là lý do kỹ thuật để giải thích cho đồng nghiệp.
 
+> **Tóm gọn 1 câu:** Jev bỏ khả năng viết văn bản một cách có chủ đích: đổi flexibility (nguồn của bịa đặt, JSON hỏng, chậm) lấy câu trả lời luôn đúng kiểu, chạy song song, xác suất đáng tin, không cần dò JSON.
+
 ---
 
 ## Q3. Jev đáp ứng trong 70–500ms — tại sao chỗ nào 200ms, chỗ nào 4 giây? [→ §1.1, §4 Kiến trúc]
@@ -84,6 +90,8 @@ Có hai lý do tách biệt. Thứ nhất, khoảng 70–500ms là dải đo đ�
 
 Đếm số token ước lượng của trạng thái trước khi gửi và từ chối nếu vượt 30 nghìn. Đo độ trễ theo nhóm kích thước đầu vào để biết dải thật của hệ thống bạn, thay vì tin con số trung bình trên tài liệu.
 
+> **Tóm gọn 1 câu:** Độ trễ 70–500ms là dải đo được chứ không phải cam kết, còn trần 64k token là chặn cứng — nên hãy gom mọi câu hỏi vào một lượt gọi (chấm song song, gần như không thêm độ trễ) và cắt trạng thái gọn trước khi gửi.
+
 ---
 
 ## Q4. Nên dùng Jev ở đâu và không nên ở đâu? [→ §6 Khi nào dùng / không dùng]
@@ -99,6 +107,8 @@ Hai sai lầm đối xứng, mỗi sai lầm đều tốn tiền theo một ki�
 **Làm gì**
 
 Dán bảng này cạnh bàn làm việc:
+
+Cách đọc bảng này: cột **Bạn cần** là loại việc của bạn; cột **Dùng** là công cụ phù hợp (Jev / mô hình lớn / code thuần). Ví dụ, "chọn một giữa vài giá trị đã biết trước" → Jev; "viết email" → mô hình lớn; "cộng trừ đếm số" → code thuần.
 
 | Bạn cần | Dùng |
 |---|---|
@@ -117,9 +127,13 @@ Dán bảng này cạnh bàn làm việc:
 
 Lấy 30 tác vụ thật trong backlog, tự gạo mỗi cái vào "đáp án đóng" hay "cần văn bản" hay "tính toán". Kiểm tra lại những cái bạn đang giao cho Jev có thật sự nằm trong nhóm đáp án đóng không.
 
+> **Tóm gọn 1 câu:** Chỉ giao cho Jev việc có đáp án đóng (chọn, chấm mức, có/không); việc cần văn bản thì giao mô hình lớn, việc tính toán chính xác thì để code thuần — sai lớp vừa tốn tiền vừa sai ngầm.
+
 ---
 
 ## Q5. Tôi có tự chạy được Jev trên máy mình không? [→ §3 Lịch sử & tên gọi]
+
+Phần này trả lời câu "tại sao không tải được Jev về chạy" — và cách giảm rủi ro phụ thuộc nhà cung cấp.
 
 **Bạn sẽ thấy**
 
@@ -127,7 +141,7 @@ Bạn tìm trên mạng và không thấy tệp trọng số (weights) của Jev
 
 **Vì sao**
 
-Đây là lựa chọn chiến lược có chủ đích, không phải thiếu sót. Công ty TypeSafe AI hoạt động khoảng hai năm trong im lặng, tuyển người từ các nơi như OpenAI, Google Brain, Meta, Stripe, Docker, rồi công bố sản phẩm vào tháng 9/2026 với khoản tiền hạt giống 40 triệu USD do DCVC dẫn dắt. Họ chọn **sản phẩm trước, giao diện lập trình trước** — nên không phát hành trọng số, không phát hành bài báo, và đầu tư nặng vào tích hợp sẵn ngay ngày đầu. Tên "Jev" lấy từ nhà kinh tế gia William Stanley Jevons và nghịch lý Jevons: máy móc rẻ hơn thì tổng chi phí lại tăng.
+Đây là lựa chọn chiến lược có chủ đích, không phải thiếu sót. Công ty TypeSafe AI hoạt động khoảng hai năm trong im lặng, tuyển người từ các nơi như OpenAI, Google Brain, Meta, Stripe, Docker, rồi công bố sản phẩm vào tháng 9/2026 với khoản tiền hạt giống (seed round = vòng gọi vốn đầu tiên) 40 triệu USD do DCVC dẫn dắt. Họ chọn **sản phẩm trước, giao diện lập trình trước** — nên không phát hành trọng số (weights = tệp chứa "bộ não" mô hình, có nó mới tự chạy máy được), không phát hành bài báo, và đầu tư nặng vào tích hợp sẵn ngay ngày đầu. Tên "Jev" lấy từ nhà kinh tế gia William Stanley Jevons và nghịch lý Jevons: máy móc rẻ hơn thì tổng chi phí lại tăng.
 
 **Làm gì**
 
@@ -141,6 +155,8 @@ Bạn tìm trên mạng và không thấy tệp trọng số (weights) của Jev
 **Kiểm tra**
 
 Trong nhật ký quyết định, mỗi dòng phải có đủ số phiên bản mô hình và mã yêu cầu (`request_id`). Không có hai trường này thì không truy vết được sự cố sau này.
+
+> **Tóm gọn 1 câu:** Không chạy Jev tại máy được — chỉ có một điểm giao diện HTTP; hãy giảm rủi ro phụ thuộc bằng cách ghim phiên bản cụ thể và bọc lời gọi trong một module duy nhất của dự án.
 
 ---
 

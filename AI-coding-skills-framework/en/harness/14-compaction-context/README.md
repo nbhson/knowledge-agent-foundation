@@ -64,33 +64,49 @@
 
 ### Opening Story
 
-It's turn 47. The agent is deep in a refactor: 31 tool calls, four files rewritten, two
-test suites run, one confusing stack trace buried somewhere in the middle. The context
-window is at 96%. The next tool result will be 4,000 tokens and it doesn't fit.
+This story shows what happens when compaction is missing. Compaction = shrinking the
+conversation when it no longer fits, without losing what matters.
+
+It's turn 47. The agent is deep in a refactor: 31 tool calls (tool call = the agent
+runs a tool, like reading a file), four files rewritten, two test suites run, one
+confusing stack trace (stack trace = the error report that lists what called what)
+buried somewhere in the middle. The context window (context window = the model's
+working memory, measured in tokens; 1 token ≈ ¾ of a word) is at 96%. The next tool
+result will be 4,000 tokens and it doesn't fit.
 
 Now the team has three bad options and no good one:
 
 1. **Let it fail.** The run dies at turn 47 with a context-length error. The user sees
    "something went wrong" after 20 minutes.
-2. **Naive truncation.** Drop the oldest messages. The agent loses the task
-   specification it was given in turn 1, re-reads a file it already read in turn 12
-   (because the *result* is gone but the *edit* is not), and confidently produces a
-   patch that undoes its own work from turn 30.
-3. **Summarize everything equally.** Compress the whole transcript into a paragraph.
-   The paragraph mentions the stack trace and omits the task definition, so the agent
-   solves the wrong problem fluently.
+2. **Naive truncation.** Truncation = cutting the oldest messages off the top. The
+   agent loses the task specification it was given in turn 1. It re-reads a file it
+   already read in turn 12 (because the *result* is gone but the *edit* is not). It
+   then confidently produces a patch that undoes its own work from turn 30.
+3. **Summarize everything equally.** Compress the whole transcript (transcript = the
+   full turn-by-turn log of the run) into a paragraph. The paragraph mentions the
+   stack trace and omits the task definition. So the agent solves the wrong problem,
+   fluently.
 
-**None of these is real "compaction".** Compaction is a friendly but firm *routine*: a trigger, a pin set of
-things you always keep, a simple way to decide what goes next, and a
-resume block that rebuilds the run's state in a fixed shape. Get those four
-right and turn 47 feels boring. Get them wrong and the failure is quiet — the run
-*finishes*, it just finishes the wrong job.
+**None of these is real "compaction".** Compaction is a friendly but firm *routine*: a
+trigger (when to shrink), a pin set (what to always keep), a utility ranking (what to
+drop first), and a resume block (a fixed-shape note that rebuilds the run's state).
+Get those four right and turn 47 feels boring. Get them wrong and the failure is
+quiet — the run *finishes*, it just finishes the wrong job.
+
+> **One-line summary:** Without a compaction routine, a long agent run either crashes
+> at the context ceiling or quietly finishes the wrong job.
 
 ### Why Is Compaction Non-Optional?
 
 > *"Any agent that can't survive its own context window is a demo, not a product."*
 
+This section shows the math: without compaction every run has a hard expiration date.
+
 #### The Arithmetic
+
+How to read it: each row is one context-window size. "Input per turn" is how many
+tokens one turn adds. "Turns before exhaustion" is how soon the window fills up with
+no compaction. The last column shows the same run with a 70% trigger plus compaction.
 
 | Budget | Input per turn | Turns before exhaustion | With 70% trigger + compaction |
 |--------|----------------|------------------------|----------------------------------|
@@ -106,21 +122,44 @@ each of those needs a run that lives past one context window.
 
 #### Second-Order Effects
 
-- **Cost.** Compaction reduces per-turn input tokens dramatically on long runs, because a 60 KB resume block replaces 180 KB of history. Teams routinely see 40–70% cost reduction on runs over 30 turns.
-- **Quality.** Compaction *can* hurt quality — that is what §5–7 are about. Done badly it's strictly worse than no compaction, because the model confidently reasons on a lossy summary.
-- **Auditability.** Compaction produces a `compaction` event (→ 13) recording exactly what was kept and evicted. A harness where you can't reconstruct what the model lost is a harness you can't debug.
+Compaction changes more than capacity. Three side effects to plan for:
+
+- **Cost.** Compaction reduces per-turn input tokens dramatically on long runs, because
+  a 60 KB resume block replaces 180 KB of history. Teams routinely see 40–70% cost
+  reduction on runs over 30 turns.
+- **Quality.** Compaction *can* hurt quality — that is what §5–7 are about. Done badly
+  it's strictly worse than no compaction, because the model confidently reasons on a
+  lossy summary (lossy = some detail is thrown away for good).
+- **Auditability.** Compaction produces a `compaction` event (→ 13) recording exactly
+  what was kept and evicted. Event = a log entry you can query later. A harness where
+  you can't reconstruct what the model lost is a harness you can't debug.
+
+> **One-line summary:** Every context window has a turn limit; compaction is the only
+> thing that removes it, and it must be done carefully or it trades crashes for silent quality loss.
+
+---
 
 ## Overview
 
 > **📌 Core Concept**
 >
-> - **Concept:** Compaction is **triggered summarization**: when context exceeds a threshold, low-value spans are replaced by a structured resume block instead of hitting the token ceiling. **Pruning** is its companion — deciding *what* goes first by utility, not by recency.
-> - **Analogy:** Packing a small suitcase for a long trip. When it's full you don't toss things at random — you have rules (hygiene kit stays, old receipts go) and you leave a note listing what you removed.
-> - **Why it matters:** Every long agent run dies without compaction: context overflow, lost-in-the-middle accuracy collapse, and a 3–5× token bill from resending dead tool output. Compaction at 70% keeps runs alive indefinitely at flat cost.
+> - **Concept:** Compaction is **triggered summarization** (summarization that fires
+>   automatically at a threshold): when context exceeds a threshold, low-value spans
+>   (span = one piece of the conversation, e.g. one tool result) are replaced by a
+>   structured resume block instead of hitting the token ceiling. **Pruning** is its
+>   companion — deciding *what* goes first by utility (usefulness to the rest of the
+>   run), not by recency (how old it is).
+> - **Analogy:** Packing a small suitcase for a long trip. When it's full you don't
+>   toss things at random — you have rules (hygiene kit stays, old receipts go) and
+>   you leave a note listing what you removed.
+> - **Why it matters:** Every long agent run dies without compaction: context
+>   overflow, lost-in-the-middle accuracy collapse, and a 3–5× token bill from
+>   resending dead tool output. Compaction at 70% keeps runs alive indefinitely at
+>   flat cost.
 
-**Context Compaction** is what lets a small, fixed context window support a long, open-ended run. It's
-the part of most agent harnesses that gets the least attention, and the most painful to
-get wrong.
+**Context Compaction** is what lets a small, fixed context window support a long,
+open-ended run. It's the part of most agent harnesses that gets the least attention,
+and the most painful to get wrong.
 
 ```
 BEFORE compaction (188k of 200k budget)
@@ -146,7 +185,13 @@ AFTER compaction (74k of 200k budget)
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**Four components, and a missing one is a bug:**
+Reading the diagram: the "before" box is nearly full — 178k of its 200k tokens can be
+thrown away. The trigger fires at 70% usage. The "after" box keeps the system prompt
+and goal, a 280-token resume block, and the last 3 turns verbatim (verbatim = word
+for word, not summarized).
+
+**Four components, and a missing one is a bug.** How to read it: each row is one
+required part; the last column is the failure you get if that part is missing.
 
 | # | Component | Failure if missing |
 |---|-----------|-------------------|
@@ -156,7 +201,19 @@ AFTER compaction (74k of 200k budget)
 | 4 | **Resume block** | Agent wakes up with no state, re-reads everything, bill triples |
 | 5 | **Memory write-back** *(the commonly-missed one)* | Decisions vanish with the evicted span and are never persisted |
 
+Glossary for the table: **trigger** = the rule that decides when to compact. **Pin
+set** = the "do not delete" list. **Utility ranking** = scoring each span by
+usefulness. **FIFO** = "first in, first out" — drop the oldest item first. **`ls`** =
+the directory-listing command; its output is usually cheap to re-run. **Resume
+block** = the fixed-shape summary the agent reads after compaction. **Write-back** =
+saving decisions to long-term memory before they leave the context.
+
+> **One-line summary:** Compaction = trigger + pin set + utility ranking + resume
+> block + memory write-back; miss any one and the run crashes or silently goes wrong.
+
 ## Contents
+
+How to read it: this table maps each numbered section to one line on what it covers.
 
 | # | Topic | Description |
 |---|-------|-------------|
@@ -177,11 +234,20 @@ AFTER compaction (74k of 200k budget)
 | 15 | [Production Checklist](#15-production-checklist) | Ship gate |
 | 16 | [Future Trends](#16-future-trends-in-compaction) | 2026-2028 |
 
+> **One-line summary:** Sections 1–7 explain the design, 8–9 make it runnable and
+> tested, 10–16 cover real systems, principles, and checklists.
+
 ---
 
 ## 1. Definitions & Vocabulary
 
+This section defines the seven terms the rest of the module uses. Read it once;
+every later section assumes these names.
+
 ### 1.1 Core Terms
+
+How to read it: each row is one term, its plain meaning, and the failure mode when
+the term is ignored.
 
 | Term | Definition | Fails when… |
 |------|-----------|-------------|
@@ -193,10 +259,21 @@ AFTER compaction (74k of 200k budget)
 | **Write-back** | Persisting resume + decisions + open items to memory *before* they leave context | skipped → decisions are lost forever |
 | **Lost in the middle** | Accuracy degrades when relevant info sits mid-context | ignored → pinning is arbitrary |
 
+Plain-language notes: **evictable** = "allowed to delete". **Critical path** = the
+chain of steps the current goal still depends on. **Diff** = the set of edits made to
+files so far. **Repro** = the exact command that reproduces the current error.
+
+> **One-line summary:** Seven terms — auto-compaction, resume block, trajectory-aware
+> pruning, compaction ratio, pin set, write-back, lost in the middle — are the shared
+> vocabulary for everything below.
+
 ### 1.2 The Two Families: Summarization vs Pruning
 
-They are complements, not alternatives, and confusing them is the root of most bad
-implementations.
+This section separates two operations people confuse. They are complements, not
+alternatives; mixing them up is the root of most bad implementations.
+
+How to read it: each row compares the two on one dimension — what it does, when to
+use it, what it costs, and what can go wrong.
 
 | | **Summarization** | **Pruning** |
 |---|------------------|------------|
@@ -209,13 +286,24 @@ implementations.
 
 **The order matters:** prune first (free, no information loss for dead spans), then
 summarize what remains oversized (expensive, lossy). Teams that summarize first and
-prune never pay almost 40% less and keep more information.
+prune later pay roughly 40% more and keep less information.
+
+> **One-line summary:** Prune dead weight first (free), then summarize what's left
+> but too big (expensive and lossy) — in that order.
 
 ---
 
 ## 2. Trigger Policy
 
+This section answers "when do we compact?" — too late and the run dies; too often and
+you pay quality and cost.
+
+> **One-line summary:** The trigger is a measured, deterministic rule — and 70% is
+> the sweet spot.
+
 ### 2.1 Why 70% and Not 90%
+
+The ladder below shows what happens at each usage level:
 
 ```
 100% ──── hard ceiling: the request itself fails. Unrecoverable, no logging.
@@ -232,7 +320,13 @@ lossy summarization.
 
 **The rule: trigger when you can still afford to summarize well.**
 
+> **One-line summary:** Trigger at 70% so 30% of the window is headroom — compacting
+> at 90% means compacting under pressure, the worst time to lose detail.
+
 ### 2.2 Trigger Strategies
+
+How to read it: each row is one way to decide "compact now", the rule itself, and
+when that rule fits.
 
 | Strategy | Rule | Use when |
 |----------|------|----------|
@@ -243,21 +337,34 @@ lossy summarization.
 | **Size-of-next** | compact when `est(next_result) > headroom` | tight budgets (32k) |
 
 Production recommendation: **threshold OR turn-count**, whichever fires first, plus
-task-boundary compaction when the plan (→ 08) has a natural seam. Growth-rate is a
-useful alarm for "this run is in a loop" (→ 10 §17.3).
+task-boundary compaction when the plan (→ 08) has a natural seam (seam = a clean
+break point between two tasks). Growth-rate is a useful alarm for "this run is in a
+loop" (→ 10 §17.3).
 
 **Never let the model decide.** Compaction is a harness policy computed from measured
 token counts. A model asked "should we compact?" will answer "no, I'm fine" while
 holding 195k tokens.
 
+> **One-line summary:** Use a threshold at 70% or a turn cap at 20 — whichever fires
+> first — and never ask the model whether it needs compacting.
+
 ---
 
 ## 3. The Pin Set — What Must Survive
 
+This section defines the "never delete" list. It is the safety net that keeps the
+agent solving the *right* problem after compaction.
+
+> **One-line summary:** Pin anything whose loss would change the task itself — and
+> let pins expire when their work is done.
+
 ### 3.1 Pinned vs Evictable
 
-The pin set is the answer to "what would make the run wrong if it disappeared?" Anything
-whose absence changes the *task* rather than the *taste* is pinned.
+The pin set is the answer to "what would make the run wrong if it disappeared?"
+Anything whose absence changes the *task* rather than the *taste* is pinned.
+
+How to read it: the left column is the never-delete list; the right column lists
+what may be deleted, roughly in the order you'd delete it.
 
 | Pinned (never evict) | Evictable (in eviction order) |
 |---------------------|------------------------------|
@@ -271,22 +378,40 @@ whose absence changes the *task* rather than the *taste* is pinned.
 | Output schema the model must produce | History of a completed sub-task |
 | Pointer to durable memory | Token-heavy dead tool output (summarized, not dropped) |
 
-**The subtlety:** "the last failure signal" is pinned *for the active loop only*. Once
-the loop is resolved, that failure becomes evictable. Pinning it forever means your
-pin set grows monotonically and eventually exceeds the budget — which is its own
+Glossary for the table: **stdout** = the raw text a tool prints. **Retrieved chunks
+with score <0.3** = search results that scored too low to matter. **`cat`** = print a
+file's contents. **Output schema** = the exact shape the answer must have. **Pointer
+to durable memory** = a short reference to a fact stored in long-term memory.
+
+**The subtlety:** "the last failure signal" is pinned *for the active loop only*.
+Once the loop is resolved, that failure becomes evictable. Pinning it forever means
+your pin set grows monotonically and eventually exceeds the budget — which is its own
 failure mode, and a quiet one.
+
+> **One-line summary:** Pin the task itself (goal, constraints, active edits, live
+> failure), evict the rest by usefulness — and unpin when a loop is resolved.
 
 ### 3.2 The Pin Set
 
 > 📄 **Example code:** [`examples/01-3-2-the-pin-set.ts`](examples/01-3-2-the-pin-set.ts)
 
-**Rule: the pin set is derived, not hand-maintained.** It's computed from the plan, the
-active loop, and the pending gate list — so it shrinks automatically as work completes
-instead of accumulating.
+**Rule: the pin set is derived, not hand-maintained.** Derived = computed
+automatically from other state, not typed in by hand. It's computed from the plan,
+the active loop, and the pending gate list — so it shrinks automatically as work
+completes instead of accumulating.
+
+> **One-line summary:** Compute the pin set from the plan and active loop; never
+> maintain it by hand.
 
 ---
 
 ## 4. Utility-Based Pruning
+
+This section answers "in what order do we delete?" — by usefulness to the rest of
+the run, not by age.
+
+> **One-line summary:** Score each span by recency + plan reachability + failure
+> signal, then evict the lowest scores first.
 
 ### 4.1 Why Recency-Only Fails
 
@@ -307,11 +432,19 @@ one irrelevant, one fatal — and keeps the three `ls` calls from turns 38–40 
 they are recent. The agent then re-derives a dependency that violates a standing
 constraint.
 
+> **One-line summary:** Age is a bad proxy for value: the oldest span may be the
+> constraint the whole run depends on.
+
 ### 4.2 Scoring Trajectory-Aware Utility
+
+Each span gets a utility score between 0 and 1. High score = keep; low score = evict
+first.
 
 ```
 utility = 0.30·recency + 0.40·structural_reachability + 0.30·failure_signal
 ```
+
+How to read it: the three ingredients, what each means, and how to compute it.
 
 | Term | Meaning | Implementation |
 |------|---------|----------------|
@@ -319,11 +452,18 @@ utility = 0.30·recency + 0.40·structural_reachability + 0.30·failure_signal
 | `structural_reachability` | Is this span on the current critical path to the goal? | BFS over the plan graph (→ 04) from the active task; a span feeding a *pending* node scores high, a span feeding a *completed* node scores low |
 | `failure_signal` | Does this span carry the error the active loop is chasing? | string/trace match against the loop's last error (see §8.3) |
 
-Then evict ascending utility, never crossing the budget. Crucially, **this ordering
-operates on the plan graph, not on the message list** — which is why it needs `08` and
-`04` to be useful.
+Plain notes: **normalized age** = age squashed to a 0–1 number so old spans decay
+smoothly. **BFS** = breadth-first search — walking the plan graph outward from the
+active task to see which spans feed work that is still pending.
+
+Then evict ascending utility (lowest score first), never crossing the budget.
+Crucially, **this ordering operates on the plan graph, not on the message list** —
+which is why it needs `08` and `04` to be useful.
 
 > 📄 **Example code:** [`examples/02-4-2-scoring-trajectory-aware-utility.ts`](examples/02-4-2-scoring-trajectory-aware-utility.ts)
+
+> **One-line summary:** Utility = 30% recency + 40% "still on the path to the goal"
+> + 30% "carries the error being chased"; evict the lowest first.
 
 ### 4.3 Collapse, Don't Delete
 
@@ -337,19 +477,32 @@ Two refinements that separate a good implementation from a working one:
    (vector cache) rejected: adds 400ms p99`. Cheap, and it prevents the agent from
    re-exploring it.
 
+Reading the diagram: six identical failed test runs collapse into one 24-token line
+that keeps the last error.
+
 ```
 turns 38,39,40:  npm test (exit 1)  ──┐
 turns 41,42,43:  npm test (exit 1)  ──┼──▶  [retried 6×, last_err: E2BIG @ test_refresh_rotation]
 turn  44:        npm test (exit 1)  ──┘         (from turn 38, 18k tokens → 24 tokens)
 ```
 
+> **One-line summary:** Don't delete repeated or dead work outright — squeeze it
+> into one line that keeps the last error or the reason it was rejected.
+
 ---
 
 ## 5. The Resume Block
 
+This section defines the note the agent reads after compaction — the single object
+that decides whether the run continues correctly.
+
+> **One-line summary:** The resume block is a fixed-format, ≤300-token state note;
+> its quality bar is "a fresh agent can continue from it alone".
+
 ### 5.1 Format
 
-Fixed keys, hard budget, machine-checkable:
+Fixed keys, hard budget, machine-checkable (machine-checkable = a parser can read
+it, not just a human):
 
 ```
 Goal:<one line — the task, not the plan>
@@ -361,15 +514,25 @@ Invariants:[…]                          the ≤5 pinned constraints
 Evicted:[span-id list]                  for audit + reconstruction
 ```
 
+What each key means: **Goal** = the task in one line. **Decisions** = choices already
+made, with IDs. **Open** = unfinished tasks, each with its task ID. **Repro** = the
+exact command that reproduces the current failure. **Next** = the one action to do
+now. **Invariants** = rules that must not be broken. **Evicted** = the IDs of spans
+that were deleted, for audit.
+
 **Why the keys are fixed:** the resume block is re-read by *code*, not just by the
-model. A parser extracts `Open[]` to rebuild the pending task list, `Repro` to seed the
-retry, and `Evicted[]` to write back to memory and to emit the audit event. Free-form
-prose breaks all three.
+model. A parser extracts `Open[]` to rebuild the pending task list, `Repro` to seed
+the retry, and `Evicted[]` to write back to memory and to emit the audit event.
+Free-form prose breaks all three.
+
+> **One-line summary:** Seven fixed keys — Goal, Decisions, Open, Repro, Next,
+> Invariants, Evicted — because code, not just the model, reads them back.
 
 ### 5.2 Quality Bar
 
-A resume block is good when a **fresh agent with an empty context** can pick up the run
-and do the next step correctly. Test it exactly that way:
+A resume block is good when a **fresh agent with an empty context** can pick up the
+run and do the next step correctly (this test is called *cold-start*: start cold,
+with nothing in context). Test it exactly that way:
 
 > 📄 **Example code:** [`examples/03-5-2-quality-bar.ts`](examples/03-5-2-quality-bar.ts)
 
@@ -377,11 +540,23 @@ A block that says "we were refactoring authentication and hit some issues" fails
 one of these lines. It feels informative and is useless — this is the most common way
 compaction silently destroys a run.
 
+> **One-line summary:** Judge a resume block by one test only: can an agent with an
+> empty context take the correct next step from it?
+
 ---
 
 ## 6. The Compaction↔Memory Contract
 
+This section draws the line between short-lived context and long-term memory. Getting
+this line wrong is the most common way compaction loses information permanently.
+
+> **One-line summary:** Context owns what dies with the run; memory owns what a
+> future run needs — and you must save to memory *before* evicting.
+
 ### 6.1 The Boundary
+
+How to read it: each row pairs a piece of data with its owner — left column means
+"context keeps it and may delete it", right column means "save it to durable memory".
 
 | Transient — context owns it (→ 02) | Durable — memory owns it (→ 03) |
 |--------------------------------------|----------------------------------|
@@ -396,6 +571,9 @@ The line is not "important vs unimportant". It is **"will this still be needed a
 this run?"** Tool stdout from turn 4 might be needed at turn 44, but not after turn
 60 — that is context's job. A decision made at turn 12 will be needed by a *different
 run* next week — that is memory's job.
+
+> **One-line summary:** Ask "needed after this run?" — no → context may evict it;
+> yes → it must be written to memory first.
 
 ### 6.2 The Most Commonly Broken Contract in Production
 
@@ -416,6 +594,11 @@ sequence is:
 6. continue the run
 ```
 
+Plain notes on the sequence: **tenant + task scoped** = saved under keys that bind
+the data to one tenant and one task, so it can't leak across. **fsync** = force the
+data physically onto disk before moving on, so a crash can't lose it. **resumeHash**
+= a fingerprint of the resume block, so audits can detect changes.
+
 Step 3 failing must abort step 5. Not log a warning — abort. A compaction that loses a
 decision has produced a run that can't be trusted, and the cheapest way to make that
 impossible is to make it fail loudly.
@@ -424,13 +607,23 @@ impossible is to make it fail loudly.
 module: kill the memory backend, run a compaction, and assert the run refuses to
 proceed.
 
+> **One-line summary:** Persist to memory (with fsync) before evicting — if the save
+> fails, abort the compaction rather than lose a decision silently.
+
 ---
 
 ## 7. Compaction-Safe Prompts
 
+This section shows how to write a prompt that survives summarization. Compaction is
+lossy, so the prompt must put what can't be lost where summarizers keep it.
+
+> **One-line summary:** Put invariants at the very start and very end of the prompt;
+> pin literal values — paraphrase is where precision dies.
+
 ### 7.1 Header / Body / Footer
 
-Compaction is lossy, so design the prompt to survive it:
+Structure a prompt in three zones. Compaction is lossy, so design the prompt to
+survive it:
 
 ```
 [HEADER — invariants, always kept]
@@ -447,14 +640,23 @@ Compaction is lossy, so design the prompt to survive it:
   followed by a migration note.
 ```
 
+Plain notes: **invariants** = rules that must never be broken. **Unified diff** = the
+standard text format that shows added and removed lines. **JWT** = signed login
+tokens. The **HEADER** holds the rules, the **BODY** holds bulky reference material
+that may be evicted, and the **FOOTER** repeats the rules.
+
 **The empirical basis** is the lost-in-the-middle result (§10.5): models attend most
 reliably to the beginning and end of a long context. Putting the invariants in both
 places means a summarizer that keeps only the head *and* the tail still preserves the
 constraints — and a summarizer that keeps 80% of tokens preserves them with near-certainty.
 
+> **One-line summary:** Invariants in the header, repeated in the footer, bulky
+> material in the middle — because summarizers reliably keep the two ends.
+
 ### 7.2 What Summarizers Drop
 
-Knowing the failure modes tells you what to pin:
+Knowing the failure modes tells you what to pin. How to read it: left column = what
+summarizers typically lose; right column = the counter-move.
 
 | Commonly dropped | Mitigation |
 |-----------------|------------|
@@ -469,13 +671,27 @@ The general rule: **paraphrase is where precision dies.** A summarizer asked to
 "compress" will write "the timeout is about 30 seconds" instead of
 `timeoutMs: 30000`. Pin the literal value; let the summary explain around it.
 
+> **One-line summary:** Summarizers lose negations, numbers, IDs, error structure,
+> and ordering — pin each of those verbatim instead of trusting the summary.
+
 ---
 
 ## 8. TypeScript Implementation
 
+This section points to runnable code for every piece designed above, in order.
+
+> **One-line summary:** Five code files cover types, the compact routine, the
+> scorer, the resume builder, and memory write-back.
+
 ### 8.1 Types
 
+The data structures the whole module is built on: spans, the pin set, the resume
+block, and the compaction event.
+
 > 📄 **Example code:** [`examples/04-8-1-types.ts`](examples/04-8-1-types.ts)
+
+> **One-line summary:** Start from the types — they encode the pin set and resume
+> block shapes used by every other file.
 
 ### 8.2 shouldCompact + compact()
 
@@ -486,36 +702,78 @@ The general rule: **paraphrase is where precision dies.** A summarizer asked to
 
 </details>
 
+`shouldCompact()` = the trigger check; `compact()` = the full routine (pin → prune →
+summarize → write back → resume block).
+
+> **One-line summary:** This file is the whole pipeline in two functions: one decides
+> when, one does it.
+
 ### 8.3 Trajectory Utility Scorer
+
+The `recency` + `structural_reachability` + `failure_signal` scorer from §4.2, as
+runnable code.
 
 > 📄 **Example code:** [`examples/06-8-3-trajectory-utility-scorer.ts`](examples/06-8-3-trajectory-utility-scorer.ts)
 
+> **One-line summary:** The eviction ordering lives here — score every span, sort
+> ascending, evict from the bottom.
+
 ### 8.4 Resume Block Builder
+
+Turns the kept state into the fixed-key ≤300-token resume block from §5.1.
 
 > 📄 **Example code:** [`examples/07-8-4-resume-block-builder.ts`](examples/07-8-4-resume-block-builder.ts)
 
+> **One-line summary:** The builder enforces the format and the 300-token cap in
+> code, not by hoping the model behaves.
+
 ### 8.5 Memory Write-Back
 
+Persists decisions, open items, and invariants to memory before eviction (§6.2's
+sequence, as code).
+
 > 📄 **Example code:** [`examples/08-8-5-memory-write-back.ts`](examples/08-8-5-memory-write-back.ts)
+
+> **One-line summary:** Write-back runs before eviction and aborts the compaction if
+> the persist fails.
 
 ---
 
 ## 9. Testing Compaction
 
+This section covers the three test layers: invariants, the memory contract, and
+quality regression.
+
+> **One-line summary:** Test invariants on real trajectories, test the
+> write-before-evict contract, and track success rates before vs after compaction.
+
 ### 9.1 Invariant Tests
+
+Invariant tests = checks that must pass on *every* compaction (e.g. the pin set is
+intact, the resume block parses, the ratio is sane).
 
 > 📄 **Example code:** [`examples/09-9-1-invariant-tests.ts`](examples/09-9-1-invariant-tests.ts)
 
-Run these on **every** recorded trajectory that hits a compaction, in nightly CI. Real
-trajectories catch the edge cases synthetic ones never do.
+Run these on **every** recorded trajectory that hits a compaction, in nightly CI
+(CI = automated checks that run on every code change). Real trajectories catch the
+edge cases synthetic ones never do.
+
+> **One-line summary:** Replay every recorded compaction nightly and assert the
+> invariants held.
 
 ### 9.2 The Contract Test That Matters Most
+
+The contract test: break the memory backend on purpose, run a compaction, and assert
+the run refuses to continue (because the write-back could not happen).
 
 > 📄 **Example code:** [`examples/10-9-2-the-contract-test-that-matters-most.ts`](examples/10-9-2-the-contract-test-that-matters-most.ts)
 
 The second test is the real acceptance criterion for the whole module. It's also the
 test most teams skip, and it's the one that would have caught the turn-47 failure
 described at the top.
+
+> **One-line summary:** If memory write-back fails, compaction must abort — and this
+> test proves it.
 
 ### 9.3 Quality Regression Suite
 
@@ -527,9 +785,18 @@ compaction, the pin set is wrong — and this is the measurement that finds it:
 A specific run that fails only when a compaction happened immediately before the
 failure is the strongest possible signal that the pin set is missing something.
 
+> **One-line summary:** Compare success rates of runs with and without compaction;
+> a drop right after a compaction points at a missing pin.
+
 ---
 
 ## 10. Real-World Case Studies
+
+This section shows how four production systems and one research paper solved the
+same problems above.
+
+> **One-line summary:** Claude Code, Aider, Devin, and Letta each implement a piece
+> of this module in production; lost-in-the-middle explains why pinning works.
 
 ### 10.1 Claude Code — /compact and Auto-Compact
 
@@ -546,6 +813,9 @@ adopting:
    compacted; here's what I remember" because it's phrased like a save point, not a
    hidden truncation.
 
+> **One-line summary:** Make compaction visible and user-controllable, and use one
+> implementation for both the manual and automatic paths.
+
 ### 10.2 Aider — Repository Map + History Digest
 
 Aider's `repo map` is the purest form of the pin set: a compact, always-present index
@@ -558,6 +828,9 @@ direction with the actual edits preserved verbatim. The lesson is about **what t
 raw**: the diffs are the irreplaceable part. A summary of a diff is nearly useless,
 because a diff's value is in its exact bytes.
 
+> **One-line summary:** Keep a tiny always-present map of the repo (pin set) and keep
+> diffs raw — a summarized diff is nearly useless.
+
 ### 10.3 Devin — Long-Run Context Management
 
 Autonomous coding agents running for tens of minutes hit context limits constantly, and
@@ -567,18 +840,27 @@ handle it as an ordinary operation rather than an exception:
 - **Progress summaries as artifacts.** Each task produces a summary that is written to the session record, not just kept in context. That artifact is what a human reads to review the run, and what a later run loads if it resumes.
 - **Test output kept structured, not summarized.** The failing test name and assertion are preserved exactly; the surrounding stack frames are dropped.
 
+> **One-line summary:** Compact at task boundaries, store progress summaries as
+> reviewable records, and keep failure details exact.
+
 ### 10.4 Letta / MemGPT — Tiered Memory as Virtual Context
 
 The MemGPT paper reframes compaction as a **memory architecture** rather than a
 summarization trick: the model has a small in-context "working memory" and a larger
-external store, and it issues explicit tool calls to page information in and out. The
-agent controls what is resident.
+external store, and it issues explicit tool calls to page information in and out
+(paging = moving data between fast small memory and big slow storage, like an OS does
+with RAM and disk). The agent controls what is resident (resident = currently loaded
+in context).
 
 This is a more powerful model of the same problem, and it makes the memory↔context
 boundary explicit rather than implicit. The trade-off is that paging decisions are made
-by a stochastic model, so you still want the deterministic pin set underneath as a
-floor. The production pattern that emerges: **Letta-style paging for *what* to load,
+by a stochastic model (stochastic = non-deterministic — it may choose differently each
+time), so you still want the deterministic pin set underneath as a floor. The
+production pattern that emerges: **Letta-style paging for *what* to load,
 deterministic pinning for *what must never be lost*.**
+
+> **One-line summary:** Let the model page data in and out of a big external store —
+> but keep the deterministic pin set underneath as a floor.
 
 ### 10.5 Lost in the Middle — The Research Behind Pinning
 
@@ -597,17 +879,36 @@ summarized context than with truncated context, because a fluent summary creates
 false impression of coverage. Hence §5.2's acceptance test — evaluate the block by
 cold-start continuation, not by reading it.
 
+> **One-line summary:** Models remember the start and end of context best — put
+> must-keep facts there, and judge summaries by behavior, not by how they read.
+
 ---
 
 ## 11. TypeScript Interfaces for Compaction
 
+The full public type surface of the module (type surface = all the interfaces other
+code may depend on), in one file for reference and reuse.
+
 > 📄 **Example code:** [`examples/12-11-typescript-interfaces-for-compaction.ts`](examples/12-11-typescript-interfaces-for-compaction.ts)
+
+> **One-line summary:** One file holds every interface — copy it as the contract
+> between compaction, memory, and the harness.
 
 ---
 
 ## 12. Design Principles for Compaction
 
+This section distills the module into reusable principles: SOLID applied to context,
+then six rules of thumb.
+
+> **One-line summary:** Prune before summarizing, derive pins, cap budgets, persist
+> before evicting, stay deterministic, and test with a cold agent.
+
 ### 12.1 SOLID for Context Management
+
+SOLID = five classic software-design principles (Single responsibility, Open/closed,
+Liskov substitution, Interface segregation, Dependency inversion). How to read it:
+each row maps one principle to a concrete design choice in this module.
 
 | Principle | Application |
 |-----------|-------------|
@@ -616,6 +917,13 @@ cold-start continuation, not by reading it.
 | **L**iskov substitution | `MemoryStore` implementations (Postgres, vector DB, file) are interchangeable; the write-back contract is identical. |
 | **I**nterface segregation | The context assembler needs `shouldCompact()`; the debugger needs `render()`. Don't make debug tooling drag in the plan graph. |
 | **D**ependency inversion | Compaction depends on `PlanGraph` as an interface, so a synthetic graph works in unit tests without a planner. |
+
+Plain notes: **Postgres** = a relational database. **Vector DB** = a database that
+stores embeddings for similarity search. **TrajectorySink** = the component that
+records the run log. **Synthetic graph** = a fake plan graph for tests.
+
+> **One-line summary:** Keep deciding, persisting, recording, and summarizing in
+> separate swappable components.
 
 ### 12.2 Six Design Principles
 
@@ -626,9 +934,14 @@ cold-start continuation, not by reading it.
 5. **Deterministic policy.** Trigger, pin, and eviction order are computed from measured state. The model never decides what it forgets.
 6. **The contract is with a cold agent.** Accept a resume block only if a fresh agent with an empty context takes the correct next action from it.
 
+> **One-line summary:** Six rules: prune first, derive pins, hard-cap budgets,
+> persist before evicting, keep policy deterministic, and accept only cold-start-proven blocks.
+
 ---
 
 ## 13. Best Practices
+
+A quick reference list. Each line compresses a section above into one action.
 
 ### 13.1 DO ✅
 
@@ -640,6 +953,9 @@ cold-start continuation, not by reading it.
 - Persist decisions, open items, and invariants to memory with `fsync` **before** evicting.
 - Emit a `compaction` event with `keptIds`, `evictedIds`, and `ratio` (→ 13).
 - Test with a cold agent: same next action from the resume block as from the full context.
+
+> **One-line summary:** Do: trigger early, pin the task, score eviction by the plan,
+> collapse retries, cap the block, and write back before evicting.
 
 ### 13.2 DON'T ❌
 
@@ -653,9 +969,15 @@ cold-start continuation, not by reading it.
 - ❌ Don't treat a fluent summary as evidence of coverage. Test by cold-start continuation.
 - ❌ Don't compact inside a task when the plan has a natural seam — compact at the seam.
 
+> **One-line summary:** Don't: compact late, evict by age, trust the model's judgment,
+> paraphrase pinned values, or delay the write-back.
+
 ---
 
 ## 14. Anti-Patterns & Solutions
+
+How to read it: each row is one recurring mistake, the symptom you'd observe in
+production, and the fix from this module.
 
 | Anti-Pattern | Symptom | Fix |
 |--------------|---------|-----|
@@ -671,9 +993,15 @@ cold-start continuation, not by reading it.
 | **Compaction not audited** | Quality drops after compaction; nobody knows why | Emit the event; track post-compaction eval scores |
 | **No cold-start test** | The block reads fine and is useless | Cold-agent continuation test in CI |
 
+> **One-line summary:** Most compaction failures reduce to three causes — evicting
+> the wrong thing, compacting too late, or skipping the write-back.
+
 ---
 
 ## 15. Production Checklist
+
+How to read it: each checkbox is one gate to pass before shipping compaction; the
+bold word names the area, the rest is the acceptance condition.
 
 - [ ] **Trigger** — 70% utilization OR 20 turns; deterministic, computed from measured tokens
 - [ ] **Headroom** — 30% reserved; a single large tool result can't trigger a cascade
@@ -689,9 +1017,23 @@ cold-start continuation, not by reading it.
 - [ ] **Tests** — invariants on every recorded compaction; cold-agent continuation test; memory-down test
 - [ ] **Quality tracking** — post-compaction eval score tracked and compared to non-compacted runs
 
+Plain notes: **schema** here = the output shape the model must produce. **Cascade** =
+one oversized result forcing an immediate second compaction. **Memory-down test** =
+the §9.2 test with the memory backend deliberately broken.
+
+> **One-line summary:** Thirteen gates — trigger, headroom, pins with expiry,
+> eviction order, resume cap, write-back, audit, monitoring, prompt structure, and
+> three test layers — all pass before shipping.
+
 ---
 
 ## 16. Future Trends in Compaction
+
+This section looks at where compaction design is heading between 2026 and 2028.
+
+> **One-line summary:** Compaction is moving from an emergency response to a
+> designed, verifiable, plan-aware step — and eventually to not needing the raw
+> data in context at all.
 
 ### 16.1 Structure-Aware Compaction (2026-2028)
 
@@ -699,13 +1041,19 @@ cold-start continuation, not by reading it.
 - **Learned eviction policies.** Train the utility function on which spans actually preceded successful vs failed outcomes, instead of hand-weighting three terms.
 - **Prefetch during summarization.** The summarizer's own call already knows what the next step needs; have it emit that as a `prefetch` alongside the resume block, so the following turn starts with the right context already resident.
 
+> **One-line summary:** Next: compact the plan instead of the transcript, learn the
+> utility weights from outcomes, and prefetch what the next turn needs.
+
 ### 16.2 Verifiable Compaction
 
 Compaction is lossy by nature, and today nothing proves what was preserved matters. Two
 directions: **coverage metrics** (fraction of *goal-relevant* facts that survived,
-measurable against the eval set), and **auditable drop lists** (`evicted[]` already
-exists; the next step is making it queryable so "what did we lose" is a one-query
-question before it becomes an incident).
+measurable against the eval set — eval set = a fixed batch of test questions), and
+**auditable drop lists** (`evicted[]` already exists; the next step is making it
+queryable so "what did we lose" is a one-query question before it becomes an incident).
+
+> **One-line summary:** Make loss measurable: score how many goal-relevant facts
+> survived and make the drop list queryable.
 
 ### 16.3 Compaction as a First-Class Step Type
 
@@ -714,14 +1062,26 @@ before context handed to a sub-agent (→ 09 §16.2) — compaction stops being 
 emergency response to a threshold and becomes a designed part of execution. That is the
 difference between an agent that survives long runs and one that is merely lucky.
 
+> **One-line summary:** Put explicit `compact` steps in the plan so compaction is a
+> design decision, not an emergency.
+
 ### 16.4 Beyond Summarization
 
 - **State externalization.** Move large state (test fixtures, file bodies) to a store and keep only handles in context. The strongest form of compaction isn't summarizing the data — it's never putting it there.
 - **Tiered residency à la MemGPT**, with the deterministic pin set as the floor beneath the model's paging decisions.
 
+Plain notes: **test fixtures** = fixed sample data used by tests. **Handles** = short
+references (like a file path or ID) instead of the full content.
+
+> **One-line summary:** The best compaction is avoiding the bulk in the first place:
+> store big state outside and keep only references in context.
+
 ---
 
 ## References
+
+Sources behind this module. How to read it: papers explain the research, frameworks
+are tools you can use today, production systems are shipped implementations.
 
 ### Papers & Research
 
@@ -732,6 +1092,10 @@ difference between an agent that survives long runs and one that is merely lucky
 - **SWE-agent: Agent-Computer Interfaces for Automated Software Engineering** · https://arxiv.org/abs/2405.15793
 - **A Survey on LLM-based Software Engineering Agents** · https://arxiv.org/abs/2402.06530
 
+Plain notes: **attention sinks** (StreamingLLM) = the first tokens of a context,
+which models attend to reliably no matter how long the run gets. **Fine-tuning**
+(LongLoRA) = cheaply retraining a model to handle longer contexts.
+
 ### Frameworks & Tools
 
 1. **Anthropic Claude Code** — https://docs.anthropic.com/en/docs/claude-code — `/compact` and auto-compact
@@ -740,6 +1104,10 @@ difference between an agent that survives long runs and one that is merely lucky
 4. **LangGraph** — https://langchain-ai.github.io/langgraph/ — summarization node pattern
 5. **tiktoken** — https://github.com/openai/tiktoken — exact token counting for triggers
 6. **LiteLLM** — https://docs.litellm.ai/ — token accounting per call
+
+Plain notes: **LangGraph** = a library for building agent workflows as graphs; its
+"summarization node" is a step that compacts mid-flow. **tiktoken / LiteLLM** = the
+two tools that give you the exact token counts the trigger depends on.
 
 ### Production Systems
 
@@ -760,6 +1128,13 @@ difference between an agent that survives long runs and one that is merely lucky
 - `13-trajectory-observability/README.md` — the `compaction` event and its audit trail
 - `15-approval-gates/README.md` — pending approvals are part of the pin set
 
+Plain notes: **fan-out** = copying context to several sub-calls at once. **GDPR** =
+the EU privacy law, which constrains what memory may store. **Audit trail** = the
+queryable record of what happened.
+
+> **One-line summary:** Six papers, six tools, four shipped systems, and nine
+> sibling modules — this module sits in the middle of them all.
+
 ---
 
 *Document: Harness 14. Context Compaction — HARNESS ENGINEERING EDITION*
@@ -771,6 +1146,8 @@ difference between an agent that survives long runs and one that is merely lucky
 
 > Added from the article **"Effective context engineering for AI agents"** (Anthropic, 09/2025) —
 > more concrete guidance on how to write a compaction prompt and what is actually safe to remove.
+
+This update translates Anthropic's field guidance into the terms of this module.
 
 ### 1. Tool Result Clearing — The "Lightest Touch" Compaction
 
@@ -786,9 +1163,13 @@ Developer Platform.
 Principle: tool results deep in conversation history have already served their purpose;
 the model has extracted the needed information from them — **the raw result now just takes up space**.
 
+> **One-line summary:** Old tool results are the safest first thing to clear — the
+> model already read them, so the raw text is now dead weight.
+
 ### 2. Compaction Prompt Tuning — Start with Recall, Then Iterate Precision
 
-Anthropic recommends a 2-phase process for writing a compaction prompt:
+Anthropic recommends a 2-phase process for writing a compaction prompt. **Recall** =
+did we keep everything important? **Precision** = did we keep only what's important?
 
 1. **Phase 1 — Maximize recall:** Ask the summarizer to capture **every important piece
    of information** first. It doesn't need to be compact yet — as long as nothing is missed.
@@ -810,6 +1191,9 @@ Anthropic recommends a 2-phase process for writing a compaction prompt:
 - Tool definitions already read (the model doesn't need a reminder of how to use the tool)
 - Messages already summarized in the previous compaction
 
+> **One-line summary:** Write the compaction prompt in two passes — first keep
+> everything important (recall), then trim until only the important remains (precision).
+
 ### 3. Contract With Module 02-Build-Context
 
 Compaction output is the **`history` field** in the `BuiltContext` structure (module 02).
@@ -822,14 +1206,24 @@ The pin set derives from that boundary:
 
 ```
 BuiltContext (→ 02)
-├── system  ───────────────────► PIN (không bao giờ cắt)
-├── goal    ───────────────────► PIN (không bao giờ cắt)
-├── retrieved ─────────────────► evictable (theo utility)
-├── history ────────────────────► evictable (theo utility) ← COMPACTION ĐỔ VÀO ĐÂY
-└── immediate ─────────────────► evictable (theo utility)
+├── system  ───────────────────► PIN (never cut)
+├── goal    ───────────────────► PIN (never cut)
+├── retrieved ─────────────────► evictable (by utility)
+├── history ────────────────────► evictable (by utility) ← COMPACTION LANDS HERE
+└── immediate ─────────────────► evictable (by utility)
 ```
 
+Reading the diagram: `BuiltContext` is the assembled prompt from module 02. Only
+`system` and `goal` are pinned; everything else can be evicted, and compaction
+writes its output into `history`.
+
+> **One-line summary:** In module 02's assembled context, only `system` and `goal`
+> are uncuttable — compaction's output replaces the `history` field.
+
 ### 4. "Keep vs Drop" Table
+
+How to read it: left column = never drop, in any compaction; right column = safe to
+drop *after* the information has been read or summarized.
 
 | Keep (never drop) | Can drop (after reading) |
 |-------------------|--------------------------|
@@ -843,6 +1237,9 @@ BuiltContext (→ 02)
 a tool result is something needed earlier (you read it to extract information), so after extraction
 it becomes "no longer needed" and falls into the droppable group.
 
+> **One-line summary:** Keep decisions, open bugs, task state, active paths, and
+> invariants; drop already-read tool output, old definitions, and chatter.
+
 ### 5. Sample Code — should_compact + compact
 
 <details>
@@ -852,6 +1249,12 @@ it becomes "no longer needed" and falls into the droppable group.
 
 </details>
 
+A minimal Python version of §8.2: check the trigger, keep the 5 most recent files,
+and compact the rest.
+
+> **One-line summary:** The smallest working version: trigger check + keep the 5
+> most recent files + compact everything older.
+
 ### 6. Related In This Repo
 
 - [02-build-context](../02-build-context/README.md) — Compaction output is the
@@ -859,3 +1262,9 @@ it becomes "no longer needed" and falls into the droppable group.
   with compaction so context always stays high-signal.
 - [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 3**
   (build context) pairs with **Layer 4** (compaction/memory) in the agent architecture.
+
+Plain notes: **just-in-time retrieval** = fetching information exactly when needed,
+instead of loading it up front. **High-signal** = mostly useful content, little noise.
+
+> **One-line summary:** Compaction plugs into module 02's context assembly and sits
+> in Layer 4 of the architecture, next to memory.

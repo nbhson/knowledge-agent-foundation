@@ -6,13 +6,17 @@
 
 ## 1. Jev Không Làm Được Gì
 
+Phần này trả lời câu hỏi: Jev *không* làm được việc gì? Biết điều này trước giúp bạn không giao nhầm việc, không tốn tiền debug những lỗi "không thể có".
+
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** Jev là **System One Model** cho quyết định có schema biết trước — nó **không sinh text, không giải thích, không viết tool args, không đọc file, không xử lý ảnh**, và các bài toán **arithmetic / counting / date comparison** nên giữ trong code.
+> **Khái niệm:** Jev là **System One Model** (mô hình kiểu "phản xạ", đối lập LLM kiểu "suy nghĩ chậm") cho quyết định có schema biết trước — schema = bộ ô trả lời bạn định nghĩa sẵn, ví dụ "kế toán/kỹ thuật/bán hàng". Jev **không sinh text, không giải thích, không viết tool args, không đọc file, không xử lý ảnh**, và các bài toán **arithmetic / counting / date comparison** (tính toán/đếm/so sánh ngày) nên giữ trong code. Ba loại đáp án của Jev: **Choice** = chọn 1 ô trong các ô bạn cho, **Score** = chấm điểm theo mức, **Noul** = trả lời có/không.
 > **Ẩn dụ/so sánh:** Jev là **đèn giao thông**, không phải **người hướng dẫn** — đèn sáng xanh/vàng/đỏ cực nhanh và đáng tin trong phạm vi đèn, nhưng không thể chỉ đường cho bạn hay giải thích vì sao đèn chuyển màu.
 > **Vì sao quan trọng:** Mỗi lần giao nhầm việc cho Jev (bắt nó viết, tính toán, giải thích) bạn sẽ gặp lỗi khó gỡ nhất: API vẫn trả về kết quả *đúng định dạng* nhưng **không có ý nghĩa cho việc đó** — vì Jev không sinh text, chỉ trả quyết định có kiểu.
 
 ### 1.1 Bảng Giới Hạn Lớn
+
+**Cách đọc bảng này:** cột "Jev KHÔNG..." là việc đừng giao cho Jev; cột "Lý do" cho biết vì sao; cột "Thay bằng" chỉ công cụ nên đảm nhiệm thay. Ví dụ, dòng đầu: Jev không viết được email vì nó không sinh chữ — hãy để LLM viết.
 
 | Jev KHÔNG... | Lý do | Thay bằng |
 |---------------|-------|-----------|
@@ -24,7 +28,11 @@
 | **Arithmetic / counting / date comparison** | Bài toán chính xác thuần toán — sai số không có chỗ trong calibrated decision | **Code** tính (Python/SQL) |
 | **Vượt 64k token context** | Tổng 32k state + longest question; vượt → `ModelHTTPError: max_tokens_exceeded` | Cắt state, tách questions |
 
+Giải mã vài từ trong bảng: **tool arguments** = tham số mà agent truyền vào khi gọi một công cụ (vd: tên file, nội dung email); **fallback** = phương án dự phòng khi Jev không đủ sức; **multimodal** = nhận nhiều loại đầu vào (ảnh + chữ); **64k token context** = trần bộ nhớ vào của một lần gọi API — token là đơn vị đếm chữ của mô hình, 64k token ≈ 50 trang văn bản.
+
 ### 1.2 "Đọc Sao Cho Dễ"
+
+Khung dưới đây tóm tắt mục 1 thành một hình duy nhất: vế trái là Jev làm tốt, vế phải là việc Jev không làm.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -47,17 +55,23 @@
 
 > 📄 **Code ví dụ:** [`examples/01-1-3-code-giu-toan-trong-code.py`](examples/01-1-3-code-giu-toan-trong-code.py)
 
+> **Tóm gọn 1 câu:** Jev chỉ trả quyết định có kiểu trong bộ ô bạn định sẵn — mọi việc sinh chữ, giải thích, tính toán, đọc file đều thuộc về LLM hoặc code.
+
 ---
 
 ## 2. Type-Safety ≠ Correctness
+
+Phần này cảnh báo một bẫy rất dễ mắc: tưởng output "đúng định dạng" là yên tâm. Đây là lỗi khiến người ta bỏ phần kiểm tra rồi bị sự cố ngược.
 
 > **📌 Khái Niệm Cơ Bản**
 >
 > **Khái niệm:** Type safety chỉ **đóng không gian answer** — output luôn nằm trong options/levels bạn định nghĩa, không "phát minh" option ngoài schema. Nhưng **nội dung chọn vẫn có thể sai**, đôi khi với **confidence cao**. Đây là hai trục độc lập: *hình dạng đúng* ≠ *nội dung đúng*.
 > **Ẩn dụ/so sánh:** Giống **trắc nghiệm có đáp án điền sẵn trên phiếu** — bạn không thể viết đáp án lạ ngoài 4 ô A/B/C/D (type safe), nhưng **vẫn tô sai ô** (incorrect). Phiếu đẹp không đảm bảo trắc nghiệm đúng.
-> **Vì sao quan trọng:** Câu quote cần nhớ — **"type safety is not factual correctness"** (Almeida / Hacker News discussion). Mọi design phải thừa nhận: *A closed answer space stops out-of-schema inventions; it does not guarantee the selected category is correct.*
+> **Vì sao quan trọng:** Câu quote cần nhớ — **"type safety is not factual correctness"** (Almeida / Hacker News discussion). Mọi design phải thừa nhận: *A closed answer space stops out-of-schema inventions; it does not guarantee the selected category is correct.* (Dịch: không gian đáp án đóng chặn việc bịa đáp án lạ; nhưng không đảm bảo ô được chọn là đúng.)
 
 ### 2.1 Hai Trục Độc Lập
+
+Khung dưới đây là ma trận 2×2: trục dọc là "có nằm trong schema không", trục ngang là "nội dung đúng hay sai".
 
 ```
                     Nội dung ĐÚNG          Nội dung SAI
@@ -76,6 +90,8 @@
 
 ### 2.2 Điềm Cảnh Cụ Thể
 
+**Cách đọc bảng này:** cột "Hiện tượng" là điều bạn sẽ thấy trong thực tế; cột "Giải thích" cho biết tại sao nó xảy ra. Ví dụ, dòng đầu: Jev chọn sai mà vẫn báo tự tin 0.9 — vì confidence đo độ tập trung của phân phối, không đo độ đúng.
+
 | Hiện tượng | Giải thích |
 |-----------|-----------|
 | Jev chọn sai với confidence 0.9 | Phân phối **peak sai chỗ** — model tập trung nhầm option; confidence đo độ tập trung, không đo đúng |
@@ -83,17 +99,21 @@
 | "Không bao giờ hallucinate option" | Đúng — nhưng đó chỉ là **hình dạng**, không phải **sự thật** |
 
 **Hệ quả thiết kế:**
-- Đừng bỏ verification chỉ vì "output type-safe rồi".
+- Đừng bỏ verification chỉ vì "output type-safe rồi" (verification = bước kiểm tra độc lập sau khi có kết quả).
 - Verified cascade ([05](../05-patterns/)) + eval ([§4](#4-đánh-giá-trước-khi-production)) vẫn bắt buộc.
-- Confidence band + fallback vẫn cần — kể cả band HIGH ([04](../04-calibration/)).
+- Confidence band + fallback vẫn cần — kể cả band HIGH ([04](../04-calibration/)) (band = dải mức tự tin, HIGH/MEDIUM/LOW; fallback = phương án dự phòng).
 
 > **Quote:** *"Type safety is not factual correctness."* — Diogo Almeida / discussion HN
 >
 > **Quote:** *"A closed answer space stops out-of-schema inventions; it does not guarantee the selected category is correct."*
 
+> **Tóm gọn 1 câu:** Jev không bao giờ bịa ô trả lời lạ, nhưng vẫn có thể chọn sai ô trong schema — đôi khi còn tự tin 0.9 — nên kiểm tra và fallback vẫn bắt buộc.
+
 ---
 
 ## 3. State Hygiene
+
+Phần này trả lời: sao cùng một câu hỏi, lần này Jev chắc chắn mà lần kia mơ hồ? Câu trả lời thường nằm ở dữ liệu đầu vào (state) chứ không phải ở mô hình.
 
 > **📌 Khái Niệm Cơ Bản**
 >
@@ -102,6 +122,8 @@
 > **Vì sao quan trọng:** State là **input duy nhất** Jev có. State bẩn → probability sai ngay cả khi model calibration tốt. Và state thừa cũng **tốn token** ($0.042/1M) và **rìa 64k limit** (32k state + longest question → `ModelHTTPError: max_tokens_exceeded`).
 
 ### 3.1 Nguyên Tắc
+
+Khung dưới đây là checklist nên/không nên khi chuẩn bị state — dùng trước mỗi lần gọi Jev.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -122,11 +144,15 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+Giải mã: **PII** = dữ liệu cá nhân (tên, email, số thẻ...); **prune** = dọn bỏ phần cũ không cần; **drift** = chất lượng suy giảm dần theo thời gian; **conversation history** = toàn bộ lời qua lại trong chat trước đó.
+
 ### 3.2 Ví Dụ: Chọn Đúng Đoạn Context
 
 > 📄 **Code ví dụ:** [`examples/02-3-2-vi-du-chon-ung-oan-context.py`](examples/02-3-2-vi-du-chon-ung-oan-context.py)
 
 ### 3.3 Đo Ảnh Hưởng Của State
+
+**Cách đọc bảng này:** mỗi dòng là một thí nghiệm bạn tự chạy để xem state ảnh hưởng ra sao; cột "Kỳ vọng" là kết quả dự đoán nếu giả thuyết đúng. Ví dụ, dòng đầu: bỏ thêm 30% nội dung không liên quan vào state — nếu accuracy tụt, điều đó xác nhận state bẩn thật sự làm hỏng quyết định.
 
 | Experiment | Kỳ vọng |
 |-----------|---------|
@@ -134,17 +160,23 @@
 | State vượt budget | `ModelHTTPError: max_tokens_exceeded` — fail cứng, không warn soft |
 | State PII đầy đủ trong log | Vi phạm privacy — tách storage ([§6](#6-observability-trong-production)) |
 
+> **Tóm gọn 1 câu:** State bẩn là nguyên nhân số một làm Jev chắc chắn-sai — chỉ đưa đúng đoạn liên quan, gọn dưới trần token, và đừng nhét dữ liệu cá nhân vào.
+
 ---
 
 ## 4. Đánh Giá Trước Khi Production
 
+Phần này trả lời: trước khi để Jev tự hành động thật, làm sao biết con số 0.8 của nó đáng tin với dữ liệu **của bạn**?
+
 > **📌 Khái Niệm Cơ Bản**
 >
-> **Khái niệm:** **Test trên labelled examples của bạn** — không tin benchmark tổng quát cho domain cụ thể. Đo **calibration thực tế** (prob đã báo vs outcome thật) và **per-class accuracy** trước khi để Jev auto-act. Bắt buộc trước mọi production rollout.
+> **Khái niệm:** **Test trên labelled examples của bạn** — không tin benchmark tổng quát cho domain cụ thể (labelled example = mẫu có sẵn đáp án đúng do chuyên gia gán; benchmark = bảng điểm công khai). Đo **calibration thực tế** (prob đã báo vs outcome thật) và **per-class accuracy** trước khi để Jev auto-act. Bắt buộc trước mọi production rollout.
 > **Ẩn dụ/so sánh:** Giống **thử thùng nước mới lắp trong nhà** — mở van xem rò rỉ chỗ nào trước khi tin nó cả năm. Eval set = xả nước thử.
 > **Vì sao quan trọng:** Guidance 0.8→80% là trung bình; **domain của bạn có thể lệch**. Threshold 0.6 tool-call được chọn trên **một support-ticket set nội bộ nhỏ** — chưa validated cho trường hợp của bạn. Không eval = đang deploy hy vọng.
 
 ### 4.1 Xây Eval Set
+
+Đây là 6 bước dựng bộ đề kiểm tra cho Jev — từ dữ liệu thật của bạn, không phải dữ liệu mẫu:
 
 ```
 1. Thu thập labelled examples TỪ DATA CỦA BẠN
@@ -156,7 +188,11 @@
 6. Chạy lại holdout — tránh tune & test cùng 1 set
 ```
 
+Giải mã: **gold label** = đáp án chuẩn coi như đúng; **calibration curve** = đồ thị so "xác suất đã báo" với "tỉ lệ đúng thật" theo từng khoảng (bucket); **holdout** = một phần dữ liệu giữ riêng để test cuối, không dùng để chỉnh ngưỡng — tránh "thi trúng đề".
+
 ### 4.2 Bảng Metrics
+
+**Cách đọc bảng này:** mỗi dòng là một chỉ số đo chất lượng Jev; cột "Câu trả lời" là câu hỏi mà chỉ số đó trả lời; cột "Công thức / cách đọc" là cách tính. Ví dụ, dòng đầu: ECE đo xem "báo 0.8 thì có thật ~80% đúng không" — càng gần 0 càng tốt.
 
 | Metric | Câu trả lời | Công thức / cách đọc |
 |--------|-------------|----------------------|
@@ -168,7 +204,9 @@
 | **Precision @ auto-act** | Trong phần auto-act, bao nhiêu đúng? | % correct trong bucket HIGH |
 | **Escalate load** | Human chịu bao nhiêu ticket? | % dưới threshold |
 
-> **Lưu ý:** danh sách fan-out và nested questions **chưa được đo chuẩn** (chưa có benchmark standard) — nếu dùng, tự đo riêng trên eval set của bạn, đừng so sánh chéo với numbers bên ngoài.
+Giải mã thêm: **near-tie** = hai ô đầu điểm gần ngang nhau (margin mỏng — nên hỏi người); **coverage** = tỉ lệ mẫu được tự hành động; **escalate load** = gánh nặng chuyển cho người. Bảy chỉ số này đọc cùng nhau mới thấy trọn bức tranh: một ngưỡng làm precision cao có thể làm escalate load trầm trọng.
+
+> **Lưu ý:** danh sách fan-out và nested questions **chưa được đo chuẩn** (chưa có benchmark standard) — nếu dùng, tự đo riêng trên eval set của bạn, đừng so sánh chéo với numbers bên ngoài (fan-out = bóc tách một câu hỏi lớn thành nhiều câu hỏi con chạy song song).
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -177,9 +215,13 @@
 
 </details>
 
+> **Tóm gọn 1 câu:** Đừng tin benchmark trên mạng — dựng eval set từ dữ liệu của bạn, đo calibration và accuracy từng lớp, rồi mới chỉnh ngưỡng và cho tự hành động.
+
 ---
 
 ## 5. Tuning Threshold
+
+Phần này trả lời: con số ngưỡng (threshold) lấy ở đâu và chỉnh ra sao — vì đây là núm vặn cân bằng giữa "tự động nhiều" và "sai thì mất nhiều".
 
 > **📌 Khái Niệm Cơ Bản**
 >
@@ -188,6 +230,8 @@
 > **Vì sao quan trọng:** Threshold sai tạo hai loại tổn thất ngược nhau: quá thấp → auto-act sai (incident); quá cao → escalate tràn (mất benefit speed/cost, human ngập). Chỉ labelled data của bạn cân được hai bên.
 
 ### 5.1 Tradeoff Curve
+
+Khung dưới đây minh họa cái giá của việc nâng/hạ ngưỡng — hai phía luôn đổi chỗ cho nhau:
 
 ```
    threshold
@@ -203,6 +247,8 @@
 ```
 
 ### 5.2 Quy Trình Tune
+
+**Cách đọc bảng này:** mỗi dòng là một bước, làm theo thứ tự 1→6; bước 3–4 là nơi bạn "vặn núm" ngưỡng và đọc kết quả. Ví dụ, bước 4: nếu đội bạn đòi precision ≥ 95% (trong phần tự động, sai không quá 5%), hãy chọn ngưỡng thấp nhất mà vẫn đạt — để coverage cao nhất có thể.
 
 | Bước | Hành động |
 |------|-----------|
@@ -226,9 +272,13 @@
 - Higher threshold → **hand off less, right more often when it does** — nhưng coverage auto-act giảm; cân cả hai axis.
 - Tune **per-question** thay vì một số global khi risk các câu khác nhau.
 
+> **Tóm gọn 1 câu:** Ngưỡng 0.6 chỉ là điểm xuất phát chưa được kiểm chứng — chỉnh từ dữ liệu của bạn, cân bằng "tự động nhiều" với "sai ít", và mỗi câu hỏi rủi ro khác nhau thì ngưỡng khác nhau.
+
 ---
 
 ## 6. Observability Trong Production
+
+Phần này trả lời: khi Jev đã chạy thật, làm sao truy vết được "nó đã quyết gì, dựa trên đâu" — và làm sao không rò rỉ dữ liệu nhạy cảm qua log?
 
 > **📌 Khái Niệm Cơ Bản**
 >
@@ -237,6 +287,8 @@
 > **Vì sao quan trọng:** Không có audit trail thì: incident không truy vết được; calibration không đo được (thiếu outcome link); drift không phát hiện; và rò rỉ PII nếu vô tình log state.
 
 ### 6.1 Decision Audit Trail
+
+Khung dưới đây liệt kê 9 thứ bắt buộc phải ghi vào log cho mỗi quyết định của Jev — và thứ tuyệt đối không ghi:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -267,7 +319,11 @@
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
+Giải mã: **outcome (backfill)** = kết quả thật điền vào sau (vd: ticket #4821 sau này được xác nhận đúng hay sai nhóm); **redact** = che/mờ hóa dữ liệu nhạy cảm; **ACL** = bảng phân quyền truy cập. Nhờ đủ 9 mục này, sau đó bạn tra ngược được: "ticket #4821 hôm đó được route vào đâu, xác suất bao nhiêu, theo ngưỡng nào".
+
 ### 6.2 Checklist Production
+
+**Cách đọc bảng này:** mỗi dòng là một việc cần làm khi vận hành thật; cột "Thành phần" là tên việc, cột "Làm gì" là yêu cầu cụ thể. Ví dụ, dòng "Version pin": khi audit phải ghi đúng số version `jev-1.13.0`, đừng ghi `jev-latest` — vì bí danh đổi được còn số version thì không.
 
 | Thành phần | Làm gì |
 |-----------|--------|
@@ -280,15 +336,21 @@
 
 Xem chi tiết mẫu log entry: [04 — Logging & Observability](../04-calibration/#6-logging--observability).
 
+> **Tóm gọn 1 câu:** Log đủ 9 thứ để tra ngược mọi quyết định, không bao giờ log state thô chứa dữ liệu cá nhân, và theo dõi confidence drift để kịp phát hiện chất lượng suy giảm.
+
 ---
 
 ## 7. Anti-Patterns
+
+Phần này liệt kê 9 cách dùng Jev sai phổ biến — đọc để tránh khỏi hố trước, khỏi phải học qua sự cố.
 
 > **📌 Khái Niệm Cơ Bản**
 >
 > **Khái niệm:** Danh sách các cách **sai phổ biến** khi đưa Jev vào production — mỗi cái dẫn đến một mode thất bại im lặng (silent failure): kết quả sai nhưng hệ thống tin tưởng.
 > **Ẩn dụ/so sánh:** Giống **8 lỗ hổng trên bo mạch** — máy vẫn chạy, đến lúc nào đó cháy.
 > **Vì sao quan trọng:** Hầu hết incident với Jev không đến từ model "dở" mà đến từ **kỳ vọng sai** (coi nó là oracle) và **thiếu fallback/eval**.
+
+**Cách đọc bảng này:** cột "Anti-pattern" là cách dùng sai; cột "Vì sao sai" là cơ chế khiến nó hỏng; cột "Thay bằng" là cách làm đúng kèm link tới phần giải chi tiết. Ví dụ, dòng 1: dùng Jev như oracle (thần phán mọi điều đúng) — sai vì nó chỉ calibrated cho schema biết trước, không phải sự thật tuyệt đối.
 
 | # | Anti-pattern | Vì sao sai | Thay bằng |
 |---|-------------|-----------|-----------|
@@ -302,9 +364,13 @@ Xem chi tiết mẫu log entry: [04 — Logging & Observability](../04-calibrati
 | 8 | **Không hygiene state** | Detail thừa → accuracy tụt + vượt 64k → `max_tokens_exceeded` | State nhỏ, liên quan ([§3](#3-state-hygiene)) |
 | 9 | **Dùng Jev để gửi mail / charge / xoá** (tool side-effect) | Jev **phân loại** — không phán xét an toàn tuyệt đối, không sinh args | Gating Noul + auth layer + LLM args ([05 §4](../05-patterns/), [06 §3](../06-jev-and-llm/)) |
 
+> **Tóm gọn 1 câu:** Phần lớn sự cố đến từ kỳ vọng sai chứ không phải model dở — đừng coi Jev là thần phán, đừng bắt nó viết/tính, và đừng bỏ eval + fallback.
+
 ---
 
 ## 8. Khi Nào Không Dùng Jev
+
+Phần này là bản phân công lao động cuối cùng: việc nào thuộc Jev, việc nào thuộc LLM, việc nào thuộc code — chọn sai là vừa hỏng việc vừa tốn tiền.
 
 > **📌 Khái Niệm Cơ Bản**
 >
@@ -313,6 +379,8 @@ Xem chi tiết mẫu log entry: [04 — Logging & Observability](../04-calibrati
 > **Vì sao quan trọng:** Mỗi lần chọn sai tool, bạn mất cả hai: vừa không đạt việc (Jev không viết được text), vừa tốn tiền (gọi LLM cho việc 5ms routing).
 
 ### 8.1 Flowchart Chọn Công Cụ
+
+Khung dưới đây là cây quyết định: bắt đầu từ câu "cần gì?", đi theo nhánh tương ứng để chọn công cụ:
 
 ```
                     ┌─────────────────────────┐
@@ -330,15 +398,17 @@ Xem chi tiết mẫu log entry: [04 — Logging & Observability](../04-calibrati
      │  (writes /      │  │   CODE   │   ┌──────────────────────┐
      │   explanations) │  │ (Python/ │   │        JEV           │
      └─────────────────┘  │  SQL)    │   │  System One Model    │
-                          └──────────┘   │  Choice/Score/Noul   │
-                                         │  70-500ms · calibrated│
-                                         └──────────────────────┘
+                           └──────────┘   │  Choice/Score/Noul   │
+                                          │  70-500ms · calibrated│
+                                          └──────────────────────┘
 
      KẾT HỢP THƯỜNG: Jev decide → threshold → (cần text?) → LLM viết
                      mọi side-effect tool → code + auth + optional Jev gate
 ```
 
 ### 8.2 Bảng Quyết Định Nhanh
+
+**Cách đọc bảng này:** cột "Tình huống" là việc bạn đang có; cột "Dùng" là công cụ nên chọn; cột "Vì sao" là lý do ngắn. Ví dụ, dòng đầu: route ticket vào queue là việc chọn 1 ô trong schema cố định — Jev làm trong 70–500ms với chi phí gần như bằng không.
 
 | Tình huống | Dùng | Vì sao |
 |-----------|------|--------|
@@ -352,6 +422,8 @@ Xem chi tiết mẫu log entry: [04 — Logging & Observability](../04-calibrati
 | Sinh tool args phức tạp | **FallbackModel (LLM)** | Jev không sinh text args |
 | Re-rank 20 passage theo relevance | **Jev Score** + code sort | Song song, rẻ |
 | Không có schema / exploratory | **LLM** | Jev cần answer space đóng |
+
+> **Tóm gọn 1 câu:** Cần chữ thì LLM, cần chính xác tuyệt đối thì code, cần quyết nhanh trong bộ ô biết trước thì Jev — và mấy việc có hậu quả thật (gửi mail, xóa, charge) luôn cần code + auth, Jev chỉ làm cổng gợi ý.
 
 ---
 

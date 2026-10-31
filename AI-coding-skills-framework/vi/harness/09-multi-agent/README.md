@@ -73,7 +73,9 @@ Bạn từng xem một bộ phim **heist** (cướp ngân hàng) như *Ocean's E
 
 Một AI agent đơn lẻ có thể giỏi ở nhiều thứ, nhưng khi task đủ phức tạp — như *"Implement payment system với test, docs, và security review"* — một agent sẽ **overload**. Context window bị lãng phí vì phải chứa knowledge cho mọi lĩnh vực, không có peer review để phát hiện sai sót, và worst case: **agent tự confirm sai lầm của mình**.
 
-**Giải pháp**: Multi-Agent Architecture — mỗi agent là **chuyên gia 1 lĩnh vực**, phối hợp qua communication protocol, có checks & balances để đảm bảo chất lượng.
+**Giải pháp**: Multi-Agent Architecture — mỗi agent là **chuyên gia 1 lĩnh vực**, phối hợp qua communication protocol, có checks & balances để đảm bảo chất lượng. (Communication protocol = bộ quy tắc "nói chuyện" giữa các agent; checks & balances = cơ chế kiểm tra chéo, như một người làm, một người duyệt.)
+
+> **Tóm gọn 1 câu:** Multi-agent = chia một task khó cho nhiều agent chuyên môn hóa, phối hợp và kiểm tra chéo nhau, giống đội cướp Ocean's Eleven mỗi người một việc.
 
 ### Tại Sao Multi-Agent Quan Trọng?
 
@@ -81,11 +83,15 @@ Một AI agent đơn lẻ có thể giỏi ở nhiều thứ, nhưng khi task đ
 
 #### 3 Bằng Chứng Khoa Học
 
+Cách đọc bảng này: mỗi hàng là một nghiên cứu; cột "Phát Hiện Quan Trọng" cho biết nghiên cứu đó đo được gì. Ví dụ, hàng 1 nghĩa là: khi giao cùng các bài code khó, kiến trúc nhiều agent giải được 68% trong khi một agent đơn lẻ chỉ giải được 41%.
+
 | # | Nghiên Cứu | Phát Hiện Quan Trọng |
 |---|-----------|----------------------|
 | 1 | **AutoGen (Microsoft, 2025)** | Multi-agent architecture giải quyết **68% complex coding tasks** thành công, so với **41%** của single-agent |
 | 2 | **CrewAI Research (2025)** | Agent teams với role specialization tăng **52% code quality** (measured by review scores) |
 | 3 | **Google DeepMind (2025)** | Multi-agent debate pattern giảm **35% hallucination rate** trong code generation |
+
+(Giải thích nhanh: *hallucination* = model "bịa" ra nội dung nghe có vẻ đúng nhưng thực ra sai, ví dụ gọi hàm không tồn tại.)
 
 #### Triết lý cốt lõi:
 
@@ -95,7 +101,9 @@ Multi-Agent = Specialization + Communication + Coordination + Checks & Balances
 
 Mỗi agent = **chuyên gia 1 lĩnh vực**. Giống bệnh viện đa khoa — bác sĩ tổng quát (Orchestrator), bác sĩ tim (Backend Agent), bác sĩ ngoại (Frontend Agent), dược sĩ (Testing Agent). Họ không làm tất cả — họ làm **tốt nhất** phần của mình.
 
-**Nếu bỏ qua**: Single agent overload, không có peer review, dễ tạo code sai mà không phát hiện, và context window bị waste bởi phải chứa knowledge cho mọi lĩnh vực.
+**Nếu bỏ qua**: Single agent overload, không có peer review, dễ tạo code sai mà không phát hiện, và context window bị waste bởi phải chứa knowledge cho mọi lĩnh vực. (Peer review = người khác chấm lại bài của bạn, như reviewer chấm paper; overload = quá tải, phải ôm việc vượt sức.)
+
+> **Tóm gọn 1 câu:** Multi-agent đáng quan tâm vì số liệu thực cho thấy nó giải được nhiều task khó hơn, code chất lượng hơn và "bịa" ít hơn — nhờ chuyên môn hóa và kiểm tra chéo.
 
 ## Tổng Quan
 
@@ -137,7 +145,11 @@ Mỗi agent = **chuyên gia 1 lĩnh vực**. Giống bệnh viện đa khoa — 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Multi-agent = một đội agent chia vai (planner lên kế hoạch, coder viết code, reviewer duyệt...) và một orchestrator đóng vai quản lý điều phối cả đội.
+
 ## Nội Dung
+
+Cách đọc bảng này: cột "#" là số thứ tự, cột "Chủ đề" là link bấm đến được tới từng mục, cột "Mô tả" giải thích mục đó nói về điều gì. Ví dụ, mục 4 là "bộ nhớ dùng chung" — nơi các agent cùng đọc/ghi dữ liệu.
 
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
@@ -152,6 +164,8 @@ Mỗi agent = **chuyên gia 1 lĩnh vực**. Giống bệnh viện đa khoa — 
 | 9 | [Performance Optimization](#9-performance-optimization) | Tối ưu hiệu suất |
 | 10 | [Anti-Patterns & Solutions](#10-anti-patterns--solutions) | Các lỗi thường gặp |
 | 11 | [Production Deployment](#11-production-deployment) | Triển khai thực tế |
+
+> **Tóm gọn 1 câu:** Mục lục 11 chủ đề đi theo vòng đời của một hệ multi-agent: phân vai → giao tiếp → điều phối → dùng chung bộ nhớ → xử lý xung đột → chọn kiến trúc → ví dụ thật → debug → tối ưu → tránh lỗi → đưa vào production.
 
 ---
 
@@ -197,6 +211,8 @@ Mỗi agent = **chuyên gia 1 lĩnh vực**. Giống bệnh viện đa khoa — 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** 16 vai trò agent được chia thành 4 tầng — điều phối ra quyết định, thực thi làm việc, kiểm soát chất lượng duyệt bài, hỗ trợ xử lý việc lặt vặt — như sơ đồ tổ chức của một công ty.
+
 ### 1.2 Detailed Agent Definitions
 
 Code này định nghĩa từng vai trò agent bằng Python: mỗi role có **system prompt riêng** (hướng dẫn hành vi), **giới hạn số agent chạy đồng thời**, **token trung bình** và **danh sách công cụ** được phép dùng. Khối code lớn nhưng thực chất chỉ là "thẻ công việc" liệt kê ai làm gì và được phép dùng gì. Mục đích: chuẩn hóa để agent không làm việc ngoài phạm vi của mình.
@@ -207,6 +223,10 @@ Code này định nghĩa từng vai trò agent bằng Python: mỗi role có **s
 > 📄 **Code ví dụ:** [`examples/01-1-2-detailed-agent-definitions.py`](examples/01-1-2-detailed-agent-definitions.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Mỗi vai trò agent là một "thẻ công việc" (system prompt riêng + giới hạn chạy đồng thời + token + danh sách công cụ được phép) để agent không làm việc ngoài phạm vi của mình.
+
+> **Tóm gọn 1 câu:** Section phân vai: 16 vai trò chia 4 tầng như sơ đồ tổ chức công ty, và mỗi vai trò được "đóng khung" bằng system prompt + giới hạn + bộ công cụ riêng.
 
 ---
 
@@ -294,6 +314,10 @@ Section này so sánh 6 cách để các agent "trò chuyện" với nhau: truy�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(Chú giải nhanh các cột ✓/✗: ✓ = điểm mạnh, ✗ = điểm yếu. Ví dụ "eventual consistency" = dữ liệu chỉ "nhất quán muộn" — agent vừa ghi xong, agent khác đọc ngay vẫn có thể thấy bản cũ, vài giây sau mới cập nhật.)
+
+> **Tóm gọn 1 câu:** Có 6 cách để các agent giao tiếp — dây chuyền tuần tự, chia việc song song, bảng tin chung, hỏi-đáp trực tiếp, quản lý phân cấp, phát sự kiện — mỗi cách đánh đổi tốc độ lấy độ phức tạp; chọn theo hình dạng bài toán của bạn.
+
 ### 2.2 Message Protocol
 
 Code này chuẩn hóa "phong bì thư" mà các agent trao đổi: mỗi message có **người gửi, người nhận, loại tin** (giao việc, báo xong, hỏi thông tin...), **payload** (nội dung), dấu thời gian, độ ưu tiên và thời gian sống. Hàm `MessageRouter` đóng vai bưu cục: nhận thư, xếp hàng đợi cho từng agent, gửi broadcast nếu cần. Ẩn dụ: nếu không có format chuẩn, agent A "viết tay" còn agent B "đọc số" thì thông tin sẽ vỡ vụn.
@@ -304,6 +328,10 @@ Code này chuẩn hóa "phong bì thư" mà các agent trao đổi: mỗi messag
 > 📄 **Code ví dụ:** [`examples/02-2-2-message-protocol.py`](examples/02-2-2-message-protocol.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Message protocol = chuẩn "phong bì thư" thống nhất (ai gửi, ai nhận, loại tin, nội dung, độ ưu tiên) để mọi agent đọc hiểu tin của nhau, với một router đóng vai bưu cục xếp hàng và chuyển thư.
+
+> **Tóm gọn 1 câu:** Section giao tiếp: 6 kiểu trò chuyện giữa các agent, kèm chuẩn thư tin (message protocol) để không có chuyện agent A "viết tay" mà agent B "đọc số".
 
 ---
 
@@ -348,6 +376,8 @@ Bảng so sánh 6 chiến lược điều phối với các cột: **khi nào n�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Có 6 chiến lược điều phối — việc nối đuôi nhau thì xếp dây chuyền, việc độc lập thì chạy song song, dự án lớn thì quản lý phân việc, sáng tạo thì dùng bảng chung, cần thống nhất thì để tranh luận, hệ thống lỏng lẻo thì phát sự kiện.
+
 ### 3.2 Orchestrator Implementation
 
 Code này là bản cài đặt sống của một orchestrator: nó **nhận danh sách task, sắp xếp theo thứ tự phụ thuộc** (task nào phải chờ task nào), **giao đúng agent** theo loại task, **thử lại khi lỗi** và theo dõi token tiêu thụ. Hàm `_resolve_execution_order` giống "lịch làm việc" tự động xếp việc nào làm trước. Ẩn dụ: orchestrator là quản lý dự án — lên lịch, phân việc, chốt từng đầu mục.
@@ -358,6 +388,10 @@ Code này là bản cài đặt sống của một orchestrator: nó **nhận da
 > 📄 **Code ví dụ:** [`examples/03-3-2-orchestrator-implementation.py`](examples/03-3-2-orchestrator-implementation.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Orchestrator = quản lý dự án của đội agent: sắp thứ tự task theo phụ thuộc, giao đúng agent, thử lại khi lỗi, và theo dõi token tiêu tốn.
+
+> **Tóm gọn 1 câu:** Section điều phối: chọn 1 trong 6 chiến lược theo hình dạng bài toán, rồi cài orchestrator đóng vai quản lý dự án lo lịch, phân việc và retry.
 
 ---
 
@@ -403,6 +437,8 @@ Sơ đồ cho thấy 2 tầng bộ nhớ: **Global Memory** (bảng trắng chun
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Bộ nhớ chia 2 tầng — bảng trắng chung cho những gì cả đội cần biết, ngăn kéo riêng cho dữ liệu của từng agent — để mọi người "nhớ giống nhau" phần việc chung.
+
 ### 4.2 Shared Memory Manager
 
 Code này cài đặt "bảng trắng" an toàn để nhiều agent đọc/ghi cùng lúc mà không giẫm chân nhau — nhờ `Lock` (khóa đồng bộ), mỗi thao tác ghi sẽ không bị agent khác chèn giữa chừng. Ngoài global memory, nó còn lưu **artifact** (file, kết quả test) và **nhật ký thay đổi** ghi ai đã sửa gì. Ẩn dụ: giống két sắt ngân hàng — mỗi lần mở/đóng phải tuần tự, và mọi giao dịch đều được ghi sổ.
@@ -413,6 +449,10 @@ Code này cài đặt "bảng trắng" an toàn để nhiều agent đọc/ghi c
 > 📄 **Code ví dụ:** [`examples/04-4-2-shared-memory-manager.py`](examples/04-4-2-shared-memory-manager.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Shared Memory Manager = "bảng trắng" có khóa (Lock): nhiều agent đọc/ghi an toàn không giẫm chân nhau, file và kết quả lưu thành artifact, mọi thay đổi đều ghi sổ.
+
+> **Tóm gọn 1 câu:** Section bộ nhớ chung: bảng trắng chung + ngăn kéo riêng cho từng agent, và một manager có khóa để nhiều agent ghi cùng lúc không hỏng dữ liệu.
 
 ---
 
@@ -470,6 +510,10 @@ Sơ đồ liệt kê 5 loại xung đột phổ biến giữa các agent — cù
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(Giải thích vài thuật ngữ trong sơ đồ: *last-write-wins* = ai ghi sau thì thắng, đơn giản nhưng nguy hiểm vì làm mất bản của người ghi trước; *three-way merge* = gộp hai bản sửa dựa trên bản gốc chung, như merge request trên Git; *optimistic locking* = cứ làm đi, ghi xong phát hiện đụng nhau thì làm lại; *pessimistic locking* = chìa khóa file cầm trong tay rồi mới được sửa.)
+
+> **Tóm gọn 1 câu:** 5 loại xung đột thường gặp (đụng file, trái cách làm, tranh tài nguyên, lệch trạng thái, kết quả mâu thuẫn) — mỗi loại đã có sẵn một giải pháp chuẩn để áp đúng chỗ.
+
 ### 5.2 Conflict Resolution Manager
 
 Code này triển khai cơ chế "giữ hòa bình" giữa các agent: khóa file (agent khác không được sửa khi đang có người dùng), chấm điểm phương án khi hai agent bất đồng quan điểm, và ghi nhật ký mọi xung đột đã giải quyết. Hàm `_score_approach` cho điểm lý lẽ — lập luận càng cụ thể (có "because", "trade-off", "tested") càng dễ thắng. Ẩn dụ: giống trọng tài chấm điểm bài tranh biện để chọn người thuyết phục hơn.
@@ -480,6 +524,10 @@ Code này triển khai cơ chế "giữ hòa bình" giữa các agent: khóa fil
 > 📄 **Code ví dụ:** [`examples/05-5-2-conflict-resolution-manager.py`](examples/05-5-2-conflict-resolution-manager.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Conflict Resolution Manager = trọng tài của đội agent: khóa file khi ai đó đang sửa, chấm điểm lý lẽ khi hai bên bất đồng, và ghi nhật ký mọi va chạm đã xử lý.
+
+> **Tóm gọn 1 câu:** Section xung đột: nhận diện 5 loại va chạm (đụng file, trái quan điểm, tranh tài nguyên, lệch trạng thái, mâu thuẫn kết quả) và một manager trọng tài xử lý từng loại.
 
 ---
 
@@ -541,6 +589,10 @@ Code này triển khai cơ chế "giữ hòa bình" giữa các agent: khóa fil
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Trả lời 5 câu hỏi theo sơ đồ (một agent gánh được không? việc độc lập không? có pipeline rõ không? cần tranh luận không? nhiều sub-task không?) để chọn đúng kiến trúc — và nhớ multi-agent tốn 2-4× token nên phải đáng giá mới dùng.
+
+> **Tóm gọn 1 câu:** Section chọn kiến trúc: trả lời các câu hỏi lọc theo sơ đồ quyết định — task đơn giản dùng 1 agent là đủ, đừng vác dao mổ bò giết gà.
+
 ---
 
 ## 7. Real-World Implementations
@@ -562,6 +614,8 @@ Code này triển khai cơ chế "giữ hòa bình" giữa các agent: khóa fil
 
 </details>
 
+> **Tóm gọn 1 câu:** Pipeline review tự động chạy 4 bước nối đuôi (thu thập diff → review code → review bảo mật → review hiệu năng) rồi gộp ý kiến — như quy trình merge request cần nhiều reviewer bấm Approve.
+
 ### 7.2 Feature Development Team
 
 Code này mô phỏng một đội phát triển feature hoàn chỉnh theo kiểu **hierarchical**: Architect thiết kế trước → nhiều Coder làm song song các module độc lập → Tester viết test → Reviewer chốt chất lượng. Điểm đáng chú ý: `implement-core` và `implement-api` đều phụ thuộc `design` nhưng không phụ thuộc nhau, nên chạy song song được. Ẩn dụ: giống đội xây nhà — thợ điện và thợ ống nước làm cùng lúc nhưng cùng chờ bản thiết kế.
@@ -573,6 +627,8 @@ Code này mô phỏng một đội phát triển feature hoàn chỉnh theo ki�
 
 </details>
 
+> **Tóm gọn 1 câu:** Đội phát triển feature chạy kiểu phân cấp: Architect thiết kế trước, các Coder làm song song những phần độc lập, rồi Tester và Reviewer chốt chất lượng — như đội xây nhà chờ bản vẽ xong mới vào việc.
+
 ### 7.3 Debug Squad
 
 Code này lập một "đội xử lý sự cố" 4 bước tuần tự: Debugger tìm nguyên nhân → Coder sửa → Tester chạy regression → Reviewer kiểm lại chất lượng. Mỗi bước phụ thuộc bước trước (qua `depends_on`), nên luồng chạy đúng thứ tự: bắt bug, vá lỗi, kiểm lại, duyệt. Ẩn dụ: giống quy trình xử lý sự cố ở công ty — support chẩn đoán, engineer sửa, QA xác nhận, lead duyệt.
@@ -583,6 +639,10 @@ Code này lập một "đội xử lý sự cố" 4 bước tuần tự: Debugge
 > 📄 **Code ví dụ:** [`examples/08-7-3-debug-squad.py`](examples/08-7-3-debug-squad.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Đội xử lý sự cố chạy 4 bước tuần tự — tìm bug, vá lỗi, chạy lại test, duyệt chất lượng — vì mỗi bước cần kết quả của bước trước.
+
+> **Tóm gọn 1 câu:** Section ví dụ thật: 3 thiết kế mẫu sẵn sàng sao chép — pipeline review nối đuôi, đội phát triển feature kiểu phân cấp, và đội debug tuần tự.
 
 ---
 
@@ -640,6 +700,8 @@ Sơ đồ này là "cẩm nang chẩn bệnh" cho multi-agent: với mỗi tri�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Debug multi-agent = tra bảng theo triệu chứng (không phản hồi, giao sai việc, lặp vô hạn, kết quả xung đột, chất lượng kém) → kiểm tra từng nguyên nhân → áp đúng cách khắc phục.
+
 ### 8.2 Debug Logger
 
 Code này là bộ công cụ "xem lại băng ghi hình trận đấu" cho multi-agent: `trace_message_flow` in lại toàn bộ tin nhắn giữa các agent theo thời gian, `inspect_agent_state` xem một agent đang biết gì, còn `generate_timeline` dựng lại trình tự sự kiện. Khi hệ thống lỗi, đây là nơi xem "ai đã nói gì, làm gì, khi nào". Ẩn dụ: giống xem camera an ninh để biết ai va phải ai.
@@ -650,6 +712,10 @@ Code này là bộ công cụ "xem lại băng ghi hình trận đấu" cho mult
 > 📄 **Code ví dụ:** [`examples/09-8-2-debug-logger.py`](examples/09-8-2-debug-logger.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Debug Logger = băng ghi hình trận đấu: in lại luồng tin nhắn, xem một agent đang biết gì, dựng lại trình tự sự kiện — để biết "ai nói gì, làm gì, khi nào".
+
+> **Tóm gọn 1 câu:** Section gỡ lỗi: tra theo triệu chứng để tìm nguyên nhân (thường nằm ở "giữa" các agent), và dùng bộ logger như camera an ninh để xem lại toàn bộ diễn biến.
 
 ---
 
@@ -702,6 +768,8 @@ Danh sách 5 chiến lược tối ưu cho hệ thống đa agent: giảm token,
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** 5 đòn tối ưu: gửi tóm tắt thay vì cả ngữ cảnh, chạy song song tối đa, giảm số tin nhắn, giữ đội hình vừa đủ, và cache (nhớ đệm) những thứ dùng lại nhiều lần.
+
 ### 9.2 Cost Estimation
 
 Bảng ước lượng "ngân sách token" cho multi-agent: chi phí = chi phí mỗi agent × số agent × chi phí giao tiếp. Nó phá giá từng vai trò (orchestrator ~2K, coder ~5K token...), cộng thêm "phí bưu điện" (message, handoff, xung đột), rồi đưa ra các kịch bản điển hình. Ẩn dụ: giống ước toán chi phí dự án — biết giá từng đầu việc thì mới dự đoán được tổng chi tiêu.
@@ -740,6 +808,12 @@ Bảng ước lượng "ngân sách token" cho multi-agent: chi phí = chi phí 
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+(Chú giải: *token* = đơn vị tính chi phí khi model đọc và sinh chữ, tương tự như cước điện thoại tính theo số ký tự; *ROI* = tỷ lệ giữa cái nhận lại so với tiền bỏ ra.)
+
+> **Tóm gọn 1 câu:** Công thức ngân sách: chi phí = giá mỗi agent × số agent × phí giao tiếp; multi-agent tốn 2-5× token nhưng chất lượng có thể tăng 20-40% — đáng tiền nhất ở review, audit bảo mật và test.
+
+> **Tóm gọn 1 câu:** Section tối ưu: 5 đòn giảm chi phí (tóm tắt thay vì chuyển nguyên dữ liệu, chạy song song, ít nhắn tin, đội vừa đủ, cache) và công thức ước lượng ngân sách token trước khi chạy.
 
 ---
 
@@ -794,6 +868,10 @@ Danh sách 8 "cái bẫy" mà hầu hết người xây multi-agent từng vấp
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** 8 cái bẫy kinh điển (dùng thừa agent, nói chuyện quá nhiều, lệ thuộc một điểm, vai không rõ, không xử lý xung đột, nổ token, tranh cãi vô hạn, mất ngữ cảnh) — mỗi bẫy có giải pháp ghi sẵn ngay bên dưới.
+
+> **Tóm gọn 1 câu:** Section phản mẫu: 8 sai lầm khiến đa số hệ multi-agent thất bại — soi project vào từng bẫy, gặp đúng thì áp giải pháp kèm theo.
+
 ---
 
 ## 11. Production Deployment
@@ -837,6 +915,12 @@ Checklist này chia 3 giai đoạn trước khi hệ thống multi-agent lên pr
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+(Chú giải: *latency* = độ trễ, thời gian chờ từ lúc gửi đến lúc nhận phản hồi; *token anomaly* = mức tiêu thụ token đột biến bất thường, thường là dấu hiệu agent bị lỗi vòng lặp.)
+
+> **Tóm gọn 1 câu:** Trước khi lên production phải đủ 3 nhóm ô kiểm: chuẩn bị (vai rõ, routing đã test, có giới hạn token), giám sát (token, độ trễ, xung đột) và tối ưu định kỳ — bỏ trống ô nào là chưa nên chạy thật.
+
+> **Tóm gọn 1 câu:** Section triển khai: checklist 17 ô chia 3 giai đoạn — chưa tick đủ ô chuẩn bị và giám sát thì đừng đưa hệ multi-agent ra production.
 
 ---
 
@@ -898,6 +982,10 @@ Checklist này chia 3 giai đoạn trước khi hệ thống multi-agent lên pr
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(Chú giải: *handoff* = bàn giao việc giữa hai agent, kèm "hợp đồng" rõ ràng về người gửi đưa gì và người nhận cần gì; *chaos test* = cố tình phá một thành phần xem hệ thống có sống sót không.)
+
+> **Tóm gọn 1 câu:** 10 nguyên tắc vàng: bắt đầu đơn giản, vai rõ, giao tiếp có cấu trúc, bàn giao rõ ràng, phòng lỗi, theo dõi chi phí, log đầy đủ, test cả hệ thống, cải tiến liên tục — và biết khi nào KHÔNG nên dùng multi-agent.
+
 ---
 
 ## 12. Case Studies — Real-World Multi-Agent Architectures
@@ -907,6 +995,8 @@ Checklist này chia 3 giai đoạn trước khi hệ thống multi-agent lên pr
 > - **Khái niệm:** Case Studies (Nghiên cứu điển hình) là phân tích kiến trúc multi-agent của các hệ thống thực nổi tiếng — Claude Code, Devin, OpenHands — để rút ra bài học về thiết kế vai trò, luồng làm việc và cách chọn kiến trúc.
 > - **Ẩn dụ/so sánh:** Giống nghiên cứu sơ đồ chiến thuật của các đội bóng hàng đầu trước khi xây dựng đội hình của chính bạn.
 > - **Vì sao quan trọng:** Học từ hệ thống đã chạy sản xuất giúp bạn không phải "phát minh lại bánh xe".
+
+> **Tóm gọn 1 câu:** Ba hệ thống thật (Claude Code, Devin, OpenHands) dùng chung một tư duy: một bộ điều phối, nhiều agent chuyên biệt, và môi trường an toàn để chạy — khác nhau chỉ ở mức chia vai và phạm vi tự chủ.
 
 ### 12.1 Claude Code — Anthropic's Multi-Agent Architecture
 
@@ -956,6 +1046,8 @@ Hãy hình dung Claude Code như một nhóm ba người bạn cùng làm một 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Claude Code = planner lên dàn ý → coder thực hiện từng phần (vòng lặp đọc-sửa-kiểm tra) → reviewer duyệt và có quyền trả lại — và điểm mấu chốt: cùng một model nhưng prompt khác nhau thì hành xử khác nhau.
+
 ### 12.2 Devin — Autonomous Software Engineering Agent
 
 Devin của Cognition AI thì làm theo kiểu một kỹ sư tự chủ nhiều "ngăn não" chuyên biệt — mỗi module chuyên lo một việc riêng, nhưng phối hợp nhịp nhàng với nhau:
@@ -989,6 +1081,10 @@ Devin của Cognition AI thì làm theo kiểu một kỹ sư tự chủ nhiều
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(Chú giải: *LLM* = model ngôn ngữ lớn, "cái não" sinh chữ của agent; *sandbox* = môi trường ảo bị nhốt lại, agent phá thì chỉ hỏng trong đó chứ không đụng máy thật; *VM* = máy ảo, một "máy tính trọn bộ" chạy bên trong máy thật.)
+
+> **Tóm gọn 1 câu:** Devin = một kỹ sư tự chủ với 3 module não (lập kế hoạch, suy luận, tự soi lại), dùng được editor/browser/terminal, và toàn bộ hành động diễn ra trong một máy ảo sandbox an toàn.
+
 ### 12.3 OpenHands (OpenDevin) — Open-Source Multi-Agent
 
 Code này mô phỏng kiến trúc theo kiểu OpenHands/Devin: một **bộ não trung tâm (LLM)** tự quyết hành động theo vòng lặp **quan sát → quyết định → hành động → quan sát lại** (thấy trong `run_agent_loop`), sống trong một **sandbox** an toàn và tự động thử lại khi lỗi. Cách đọc: chú ý hàm `run_agent_loop` — đó là trái tim của toàn bộ pattern này. Ẩn dụ: giống người chơi cờ vừa đi vừa nhìn bàn cờ, mỗi nước đi đều đánh giá kết quả rồi mới đi tiếp.
@@ -1000,6 +1096,8 @@ Code này mô phỏng kiến trúc theo kiểu OpenHands/Devin: một **bộ nã
 
 </details>
 
+> **Tóm gọn 1 câu:** OpenHands/Devin-style = vòng lặp "quan sát → quyết định → hành động → quan sát lại" chạy bên trong sandbox, tự thử lại khi lỗi — hàm `run_agent_loop` chính là trái tim của pattern này.
+
 ---
 
 ## 13. Advanced Multi-Agent Patterns
@@ -1009,6 +1107,8 @@ Code này mô phỏng kiến trúc theo kiểu OpenHands/Devin: một **bộ nã
 > - **Khái niệm:** Advanced Multi-Agent Patterns (Mô hình đa agent nâng cao) là các mẫu kiến trúc tinh vi — MapReduce, Debate, Critique-Revision, Ensemble — dùng nhiều agent song song để nâng chất lượng vượt hẳn một agent đơn lẻ.
 > - **Ẩn dụ/so sánh:** Giống tổ chức một vòng thi: giao nhiều người cùng làm rồi chọn bài tốt nhất (ensemble), hay để họ phản biện nhau trước khi chốt phương án (debate).
 > - **Vì sao quan trọng:** Đây là nhóm pattern giúp giảm hallucination và tăng độ tin cậy khi chất lượng là ưu tiên hàng đầu.
+
+> **Tóm gọn 1 câu:** 4 pattern nâng cao dùng "sức mạnh của số đông": chia việc song song (MapReduce), tranh luận tới chốt (Debate), viết-chấm-sửa lặp lại (Critique-Revision), và làm nhiều bản chọn bản tốt nhất (Ensemble).
 
 ### 13.1 MapReduce Pattern for Code Generation
 
@@ -1021,6 +1121,8 @@ MapReduce là mẫu "chia để trị": **MAP** tách task lớn thành các sub
 
 </details>
 
+> **Tóm gọn 1 câu:** MapReduce = chia để trị: tách task lớn thành các phần độc lập cho nhiều agent chạy song song (MAP), rồi gộp kết quả (REDUCE) — hợp với việc tách được, không hợp với việc phụ thuộc chéo nhau.
+
 ### 13.2 Debate Pattern — Multi-Agent Discussion
 
 Debate pattern cho nhiều agent "tranh luận" để đi đến quyết định tin cậy hơn: vòng 1 mỗi agent nêu lập trường, vòng 2 phản biện đối thủ, vòng 3 chốt lại, rồi một **judge agent** chấm điểm ai thuyết phục nhất. Cách đọc: `_judge_decision` cho điểm dựa trên số lập luận và độ dài nội dung — chính là mô phỏng đơn giản của nguyên tắc "bài hùng biện tốt sẽ thắng". Ẩn dụ: giống hội đồng phản biện trước khi chốt một khoản vay — nghe hết các bên rồi mới quyết định.
@@ -1031,6 +1133,8 @@ Debate pattern cho nhiều agent "tranh luận" để đi đến quyết định
 > 📄 **Code ví dụ:** [`examples/12-13-2-debate-pattern-multi-agent-discussion.py`](examples/12-13-2-debate-pattern-multi-agent-discussion.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Debate pattern = để các agent nêu lập trường, phản biện nhau rồi một judge chấm chọn bên thuyết phục hơn — quyết định tin cậy hơn nhưng tốn token hơn.
 
 ### 13.3 Critique-Revision Pattern
 
@@ -1043,6 +1147,8 @@ Pattern này mô phỏng đúng quy trình "viết - chấm - sửa" lặp lại
 
 </details>
 
+> **Tóm gọn 1 câu:** Critique-Revision = vòng lặp "viết → chấm → sửa": một agent chấm điểm bản nháp của agent kia, sửa đến khi đạt ngưỡng chất lượng hoặc hết số vòng — bản sau luôn tốt hơn bản trước.
+
 ### 13.4 Ensemble Pattern — Multiple Agents, Best Output
 
 Ensemble pattern chạy **nhiều agent cùng lúc làm cùng một task**, mỗi agent đưa ra một kết quả; một judge chấm điểm tất cả và chọn output tốt nhất. Nó giống "ensemble" trong machine learning — gộp nhiều ý kiến khác nhau để giảm rủi ro. Cách đọc: chú ý `_generate_recommendation` — nếu các agent đồng thuận (variance thấp) thì kết quả đáng tin; bất đồng mạnh thì phải rà kỹ. Ẩn dụ: giống làm nhiều bản nháp trước khi chốt bản cuối — ai làm hay nhất thì lấy.
@@ -1053,6 +1159,8 @@ Ensemble pattern chạy **nhiều agent cùng lúc làm cùng một task**, mỗ
 > 📄 **Code ví dụ:** [`examples/14-13-4-ensemble-pattern-multiple-agents-best-output.py`](examples/14-13-4-ensemble-pattern-multiple-agents-best-output.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Ensemble = nhiều agent làm cùng một việc, judge chấm và lấy output tốt nhất; các agent đồng thuận thì kết quả đáng tin, bất đồng mạnh thì phải rà kỹ.
 
 ---
 
@@ -1099,6 +1207,8 @@ Hình tam giác này cho thấy test multi-agent cần làm ở **nhiều tầng
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Kim tự tháp test 5 tầng — routing đúng chưa, message chuẩn chưa, từng agent tốt chưa, phối hợp ăn khớp chưa, và chịu được sự cố không — làm từ dưới lên vì tầng dưới là nền móng.
+
 ### 14.2 Test Implementation
 
 Code này cài đặt sẵn các bài test làm ví dụ: `test_routing_accuracy` kiểm tra task có vào đúng agent không, `test_agent_failure_recovery` cho một agent "chết" xem hệ thống có vẫn chạy, `test_token_budget_enforcement` kiểm tra giới hạn token, `test_conflict_resolution` kiểm tra khóa file và hòa giải. Cách dùng: bạn có thể mở rộng chính bộ test này cho hệ thống của mình. Ẩn dụ: giống bộ bài kiểm tra lái xe trước khi cho ra đường — cứ điểm nào FAIL là chưa đủ điều kiện.
@@ -1109,6 +1219,10 @@ Code này cài đặt sẵn các bài test làm ví dụ: `test_routing_accuracy
 > 📄 **Code ví dụ:** [`examples/15-14-2-test-implementation.py`](examples/15-14-2-test-implementation.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Bộ test mẫu bọc sẵn 4 kịch bản: giao đúng agent, sống sót khi một agent chết, không vượt giới hạn token, và khóa file + hòa giải hoạt động đúng — bạn có thể mở rộng cho hệ thống của mình.
+
+> **Tóm gọn 1 câu:** Section kiểm thử: test theo kim tự tháp 5 tầng từ routing lên chaos test — hệ nhiều agent hay không lỗi đơn lẻ nhưng lỗi tổ hợp.
 
 ---
 
@@ -1151,6 +1265,10 @@ Bảng quyết định "đáng hay không" cho từng loại task: so sánh mứ
 └────────────────────────────────────────────────────────────────────┘
 ```
 
+Cách đọc bảng: cột "Single"/"Multi" cho biết mức độ hợp với mỗi kiến trúc (5 sao = hợp nhất), cột "Quality" là mức tăng chất lượng, "Cost" là hệ số chi phí so với 1 agent, "Verdict" là kết luận. Ví dụ, hàng "Security audit": một agent đơn lẻ chỉ được 2 sao nhưng multi-agent đạt 5 sao và chất lượng tăng 40% với chi phí gấp đôi → nên dùng multi.
+
+> **Tóm gọn 1 câu:** Multi-agent đáng tiền khi chất lượng tăng trên 20% ở task chuyên môn hóa cao (review, bảo mật, test, debug đa file); việc đơn giản như sửa bug nhỏ hay viết docs thì một agent là đủ.
+
 ### 15.2 Token Cost Comparison
 
 Code này viết một bộ tính toán ROI cho multi-agent bằng Python: mỗi `CostEstimate` chứa token của single vs multi plus phần trăm cải thiện chất lượng, từ đó tự tính `cost_ratio`, `roi` và đưa ra khuyến nghị `RECOMMEND` / `CONSIDER` / `AVOID`. Cách chạy: đoạn `print()` cuối cùng sẽ in bảng so sánh cho từng loại task. Ẩn dụ: giống máy tính bỏ túi quyết định chi tiêu — nhập số vào là ra ngay nên hay không nên.
@@ -1162,11 +1280,17 @@ Code này viết một bộ tính toán ROI cho multi-agent bằng Python: mỗi
 
 </details>
 
+> **Tóm gọn 1 câu:** Bộ tính toán ROI tự nhập số liệu (token single vs multi, % chất lượng tăng) và trả khuyến nghị RECOMMEND / CONSIDER / AVOID — như máy tính "nên hay không nên" cho từng loại task.
+
+> **Tóm gọn 1 câu:** Section chi phí-lợi ích: bảng quyết định + công cụ tính ROI để biết task nào multi-agent đáng tiền, task nào chỉ đang đốt token.
+
 ---
 
 ## 16. Chịu Lỗi, Messaging & Isolation
 
 Khi mang ra production, chuyện "có bạn lăn ra ốm" là bình thường: agent có thể crash, treo máy, ghi trùng nhau hay vô tình để lộ secret. Vì vậy section này đóng vai trò như lớp áo giáp gia cố thêm: phát hiện lỗi rồi giao lại việc, nhắn tin cho nhau rõ ràng, thống nhất quy tắc dùng chung bộ nhớ, và nhốt mỗi agent trong sandbox riêng. Cứ hình dung như một đội bếp ăn — nếu một đầu bếp gục xuống, bạn khác tiếp quản ngay ticket của anh ấy (reassignment), mỗi order đều có số thứ tự (ordering), chỉ một đầu bếp được trình bày món ăn (write conflict), và nhân viên vệ sinh thì không được bén mảng tới két sắt (secret containment).
+
+> **Tóm gọn 1 câu:** Section này thêm lớp áo giáp cho hệ multi-agent khi chạy thật: phát hiện agent chết và giao lại việc, nhắn tin đúng thứ tự và đúng người, quy tắc ghi bộ nhớ không giẫm chân, và nhốt mỗi agent trong sandbox riêng có secret riêng.
 
 ### 16.1 Chịu Lỗi — Phát Hiện Crash / Timeout / Treo
 
@@ -1183,9 +1307,15 @@ REASSIGNMENT:
 QUORUM (judges/voters): 2f+1 agents tolerate f faults; require majority (e.g. 2/3)
 ```
 
-Nói cho dễ nhớ: mỗi task đều có một "vé giữ chỗ" gồm `lease_id + deadline + max_attempts`; supervisor thì không giữ trạng thái trong bụng mà tựa vào hàng đợi (queue như Redis/BullMQ); và hãy ưu tiên viết worker theo kiểu idempotent để khi giao lại việc thì retry vẫn an toàn.
+Từng dòng code nói gì: `HEARTBEAT` = mỗi 5 giây agent "phất cờ" báo supervisor (người giám sát) rằng "tôi còn sống". `TIMEOUT RULES` = 3 kiểu chết: mất tín hiệu trên 15 giây là coi như crash, làm quá hạn là timeout, còn sống nhưng hơn 60 giây không có tiến triển là nghi treo. `REASSIGNMENT` = cách giao lại việc: đóng băng "vé giữ chỗ" của agent cũ (fencing token = số vé tăng dần, vé cũ tự hết hạn nên agent cũ viết gì cũng bị từ chối), đưa task trở lại hàng đợi kèm transcript (biên bản) công việc đã làm, quá 3 lần thì chuyển cho người thật quyết. `QUORUM` = luật bỏ phiếu: cần 2f+1 cử tri để chịu được f lỗi — ví dụ 3 voter bỏ phiếu thì 1 cái chết vẫn không cản được kết quả.
+
+Nói cho dễ nhớ: mỗi task đều có một "vé giữ chỗ" gồm `lease_id + deadline + max_attempts`; supervisor thì không giữ trạng thái trong bụng mà tựa vào hàng đợi (queue như Redis/BullMQ); và hãy ưu tiên viết worker theo kiểu idempotent (làm lại nhiều lần vẫn ra cùng kết quả — như chuyển cùng một khoản tiền hai lần không bị trừ hai lần) để khi giao lại việc thì retry vẫn an toàn.
+
+> **Tóm gọn 1 câu:** Agent chết/treo là chuyện thường: supervisor phát hiện qua heartbeat, đóng băng vé và giao lại việc cho agent khác (tối đa 3 lần rồi chuyển người thật), còn quyết định quan trọng thì bỏ phiếu theo đa số.
 
 ### 16.2 Đảm Bảo Messaging — Thứ Tự, Phân Phối, Giới Hạn Payload
+
+Cách đọc bảng: cột "Đảm Bảo" là vấn đề cần bảo đảm (tin đến đúng thứ tự? đến đủ? không quá cỡ?), cột "Lựa Chọn Mặc Định" là cách xử lý khuyên dùng, cột "Quy Tắc" là luật cụ thể để làm điều đó. Ví dụ, hàng "Thứ tự": tin nhắn xếp theo số thứ tự FIFO (first-in-first-out = vào trước ra trước, như xếp hàng mua vé) cho từng task, sai thứ tự thì từ chối.
 
 | Đảm Bảo | Lựa Chọn Mặc Định | Quy Tắc |
 |---|---|---|
@@ -1195,12 +1325,20 @@ Nói cho dễ nhớ: mỗi task đều có một "vé giữ chỗ" gồm `lease_
 | Giới hạn payload (Payload caps) | Header 64 KB + body 512 KB; lớn hơn → artifact ref (path + hash) | Drop + log message quá cỡ |
 | Timeout | Request/reply mặc định 30s; progress streaming heartbeat 5s | Mất reply → retry với backoff, rồi giao lại việc (§16.1) |
 
+(Giải thích nhanh: *at-least-once* = tin được gửi đến ít nhất một lần, có thể lặp — nên cần `msg_id` để nhận ra và bỏ tin trùng; *backoff* = chờ lâu dần giữa các lần thử lại, ví dụ 1s → 2s → 4s, tránh dồn nút hệ thống.)
+
+> **Tóm gọn 1 câu:** Nhắn tin giữa các agent phải bảo đảm 5 điều: đúng thứ tự, đến đủ (nhưng khử tin trùng), không retry bừa cho việc không lặp lại được, không quá cỡ, và có giờ giới hạn kèm chính sách retry.
+
 ### 16.3 Nhất Quán Bộ Nhớ — Dùng Chung hay Riêng, Xung Đột Ghi
 
 - **Riêng tư là mặc định, chia sẻ có chọn lọc:** mỗi agent giữ một cuốn sổ nháp riêng; chỉ khi có ý hay, fact mới thì mới dán lên tấm bảng chung (blackboard).
 - **Hàng dùng chung thì ghi theo kiểu có phiên bản:** `blackboard.write(key, value, expectedVersion)` — theo ngữ nghĩa CAS; nếu thấy lệch phiên bản thì đọc lại rồi merge, tuyệt đối không ghi đè mù quáng.
 - **Mỗi artifact chỉ một "chủ bút":** orchestrator cắt cử rõ ai được ghi file/section nào (ví dụ chỉ `coder` được ghi `auth.ts`); reviewer chỉ góp ý bằng comment, không xía tay sửa trực tiếp.
 - **Mỗi agent ở một ngăn riêng:** key trong bộ nhớ đặt theo namespace `agent_id/task_id/*`; muốn đọc chéo sang nhà nhau thì phải đi qua projection trong allow-list (để prompt thô hay secret không bị rò rỉ).
+
+Giải thích nhanh thuật ngữ: *CAS (compare-and-swap)* = chỉ ghi được nếu số phiên bản bạn đọc lúc đầu vẫn còn nguyên — lệch phiên bản nghĩa là có người sửa trước bạn, phải đọc lại rồi gộp chứ không ghi đè. *Namespace* = cách đặt tên phân cấp như thư mục (`coder/task-1/...`), nhờ đó quyền truy cập dễ khóa theo từng ngăn.
+
+> **Tóm gọn 1 câu:** Mặc định mỗi agent giữ sổ riêng; chỉ dữ liệu dùng chung mới lên bảng đen, ghi theo kiểu có phiên bản (CAS), mỗi file một chủ bút, và đọc chéo phải qua cổng allow-list.
 
 ### 16.4 Sandbox Cho Từng Agent + Giữ Secret
 
@@ -1230,6 +1368,8 @@ nét riêng của chuyện *nhiều agent sống chung một nhà* chứ không 
 
 </details>
 
+> **Tóm gọn 1 câu:** Đồ nghề (shell, mạng, file) phát theo đúng vai từ ma trận policy chung, secret là vé ngắn hạn 5-15 phút riêng cho từng agent và bị bôi đen khỏi log — nhờ audit kèm `agent_id + lease_id` nên mọi rò rỉ đều truy được về nguồn.
+
 ### 16.5 Checklist + Ví Dụ Thực Tế
 
 **Checklist bỏ túi:** [ ] đã nối heartbeat + deadline + detector treo [ ] có fencing token mỗi lần requeue [ ] có max_attempts + đường escalate rõ ràng [ ] nhắn tin FIFO theo từng task + khử trùng bằng `msg_id` [ ] giới hạn payload, cái to thì gửi artifact ref [ ] ghi kiểu CAS + một artifact một chủ bút [ ] tool phát theo allow-list role + secret ngắn hạn đúng phạm vi + bôi đen log.
@@ -1238,9 +1378,13 @@ nét riêng của chuyện *nhiều agent sống chung một nhà* chứ không 
 
 **Tham chiếu file**: Spec đầy đủ về sub-agent (vòng đời, contract spawn, vai trò, budget, kiểm thử), xem [`SUBAGENT.md`](SUBAGENT.md)
 
+> **Tóm gọn 1 câu:** Checklist bỏ túi gồm 7 ô (heartbeat, fencing token, giới hạn lần thử, FIFO + khử trùng, giới hạn payload, CAS + một chủ bút, allow-list + secret ngắn hạn + bôi đen log) — Claude Code đang chạy đúng bộ quy tắc này với quorum 2-of-3.
+
 ---
 
 ## Tài Liệu Tham Khảo
+
+Dưới đây là 4 nhóm link để đọc sâu hơn: framework dùng được ngay, bài nghiên cứu nền tảng, hệ thống chạy thật, và pattern kiến trúc kinh điển. Cách đọc: mỗi dòng là một link (bấm được) kèm một câu giải thích nó là gì.
 
 ### Frameworks
 - [LangGraph Multi-Agent](https://langchain-ai.github.io/langgraph/concepts/multi_agent/) — LangChain multi-agent orchestration
@@ -1249,6 +1393,8 @@ nét riêng của chuyện *nhiều agent sống chung một nhà* chứ không 
 - [OpenHands](https://github.com/All-Hands-AI/OpenHands) — Open-source AI coding agent (formerly OpenDevin)
 - [Swarm by OpenAI](https://github.com/openai/swarm) — Lightweight multi-agent orchestration
 
+> **Tóm gọn 1 câu:** Cả 5 link trên đều là framework dựng multi-agent dùng được ngay — bắt đầu từ LangGraph hay CrewAI nếu bạn mới học.
+
 ### Research & Papers
 - [Multi-Agent Systems - MIT](https://ocw.mit.edu/courses/6-825-techniques-in-artificial-intelligence-sma-5504-fall-2002/) — MIT course on MAS
 - [Blackboard Architecture Pattern](https://wwwPatterns.com/catalog/patterns/view/Blackboard) — Classic coordination pattern
@@ -1256,16 +1402,24 @@ nét riêng của chuyện *nhiều agent sống chung một nhà* chứ không 
 - [ReAct: Synergizing Reasoning and Acting](https://arxiv.org/abs/2210.03629) — Reasoning + Action in LLMs
 - [Toolformer: Language Models Can Teach Themselves to Use Tools](https://arxiv.org/abs/2302.04761) — Tool use in language models
 
+> **Tóm gọn 1 câu:** Nhóm này là nền lý thuyết: bài giảng MIT, pattern Blackboard kinh điển, mô hình Actor, và 2 bài nghiên cứu nổi tiếng về suy luận + dùng tool.
+
 ### Production Systems
 - [Devin by Cognition AI](https://www.cognition.ai/) — Autonomous software engineer
 - [Claude Code by Anthropic](https://docs.anthropic.com/en/docs/claude-code) — CLI coding agent
 - [GitHub Copilot Workspace](https://githubnext.com/projects/copilot-workspace) — Multi-agent dev environment
 - [Cursor Agent Mode](https://cursor.sh/) — AI-first code editor with agent capabilities
 
+> **Tóm gọn 1 câu:** Nhóm này là 4 sản phẩm chạy thật để tham khảo cách làm — Devin tự chủ nhất, Claude Code dạng CLI, còn Copilot Workspace và Cursor nhét vào trình soạn thảo.
+
 ### Architecture Patterns
 - [Saga Pattern](https://microservices.io/patterns/data/saga.html) — Distributed transactions
 - [CQRS Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cQRS) — Command Query Responsibility Segregation
 - [Event Sourcing](https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing) — State via events
+
+> **Tóm gọn 1 câu:** Nhóm này là 3 pattern phân tán kinh điển từ thế giới microservices — hữu ích khi hệ multi-agent của bạn chạy qua nhiều máy hoặc nhiều process.
+
+> **Tóm gọn 1 câu:** (Section tham khảo) 4 nhóm link — framework dùng ngay, lý thuyết, sản phẩm thật, pattern kinh điển — mỗi dòng một link bấm được kèm một câu giải thích.
 
 ---
 
@@ -1277,9 +1431,13 @@ nét riêng của chuyện *nhiều agent sống chung một nhà* chứ không 
 > - **Ẩn dụ/so sánh:** Anthropic Research giống một xưởng phim có đạo diễn (LeadResearcher) và nhiều ekip quay song song (subagents); A2A giống "hợp đồng lao động chung" giúp các công ty (framework khác nhau) thuê việc cho nhau mà không phải mở sổ nội bộ.
 > - **Vì sao quan trọng:** Đây là data thật từ production (không phải benchmark lab) — cho biết chính xác multi-agent đắt bao nhiêu (15× tokens), hiệu quả bao nhiêu (+90.2%), và khi nào KHÔNG nên dùng.
 
+> **Tóm gọn 1 câu:** Phần cập nhật này tổng hợp số liệu thật từ Anthropic (multi-agent mạnh +90.2% nhưng đắt 15× token) và chuẩn A2A cho agent "bắt tay" nhau qua framework khác nhau — kèm 8 nguyên tắc prompt và 2 quyết định thiết kế (output qua file, sync vs async).
+
 ### 17.1 Kết quả production (Anthropic Research, 06/2025)
 
 Báo cáo "How we built our multi-agent research system" của Anthropic là một trong số ít nguồn có **số liệu production thật** (không phải synthetic benchmark). Các con số dưới đây trả lời trực tiếp câu hỏi "multi-agent có đáng không?" — và quan trọng không kém: "khi nào thì KHÔNG nên dùng?".
+
+Cách đọc bảng này: cột "Chỉ số" là thứ được đo, "Giá trị" là con số tìm ra, "Ý nghĩa" dịch con số thành lời. Ví dụ, hàng đầu tiên nghĩa là: trên bài test nội bộ về nghiên cứu, kiến trúc "1 lead + nhiều subagent" mạnh hơn một agent đơn lẻ đến 90.2%.
 
 | Chỉ số | Giá trị | Ý nghĩa |
 |---|---|---|
@@ -1287,6 +1445,8 @@ Báo cáo "How we built our multi-agent research system" của Anthropic là m�
 | Token usage | Giải thích **80% variance** hiệu năng | Trên BrowseComp, lượng token tiêu thụ là yếu tố số 1 dự đoán kết quả |
 | 3 yếu tố giải thích 95% | Token usage + tool calls count + model choice | Không còn yếu tố bí ẩn nào khác —optimize cả 3 |
 | Token economics | Chat 1× · Agent đơn ≈ 4× · Multi-agent ≈ **15×** | Multi-agent đắt gấp ~4 lần agent đơn — phải đáng giá mới dùng |
+
+(Giải thích: *internal research eval* = bài test nội bộ đo chất lượng; *variance* = mức độ chênh lệch giữa các kết quả — hiểu đơn giản là "80% lý do vì sao hệ tốt hay kém đến từ lượng token"; *BrowseComp* = một benchmark, tức bài thi chuẩn hóa, đo khả năng duyệt web tìm thông tin.)
 
 **Khi nào dùng / không dùng multi-agent:**
 
@@ -1315,6 +1475,10 @@ LeadResearcher (Opus)
    └─ 5. CitationAgent xử lý citations riêng (tách khỏi luồng nghiên cứu)
 ```
 
+(Giải thích: *synthesize* = tổng hợp, ghép các mẩu kết quả từ nhiều subagent thành một câu trả lời trọn vẹn; *interleaved thinking* = "nghĩ xen kẽ" — sau mỗi lần dùng tool, agent dừng lại suy nghĩ về kết quả vừa nhận rồi mới đi tiếp, thay vì nghĩ một lần ở đầu rồi chạy mù.)
+
+> **Tóm gọn 1 câu:** Kiến trúc Anthropic: LeadResearcher lên kế hoạch và lưu vào memory bền vững, spawn các subagent mỗi em nhận đúng 4 thứ (mục tiêu, định dạng output, hướng dẫn tool, giới hạn phạm vi), các em nghĩ sau mỗi tool call, rồi lead tổng hợp và một agent riêng lo citation.
+
 ### 17.2 A2A Protocol (Linux Foundation, 2026)
 
 A2A (Agent-to-Agent Protocol) là chuẩn mở cho **agent nói chuyện với agent** — bổ sung cho MCP (agent nói chuyện với tool), không cạnh tranh.
@@ -1324,6 +1488,8 @@ A2A (Agent-to-Agent Protocol) là chuẩn mở cho **agent nói chuyện với a
 | Phạm vi | agent → tool | agent → agent |
 | Mô hình | Agent gọi tool/data trong hệ của nó | Agent delegate + nhận kết quả từ agent khác |
 | Quan hệ | Bổ sung nhau — không cạnh tranh | |
+
+Cách đọc bảng: hàng "Phạm vi" cho biết chuẩn này nối ai với ai — MCP nối một agent với các tool trong hệ của nó (ví dụ agent gọi trình đọc file), còn A2A nối agent này với agent kia (ví dụ agent của bạn giao việc cho agent của bên khác). Hàng cuối khẳng định hai cái bổ sung nhau, không thay thế nhau.
 
 **Điểm cốt lõi của A2A:**
 - Agents được build bằng **framework/vendor khác nhau** (LangGraph, CrewAI, ADK, custom) vẫn **discover + delegate + share results** được với nhau
@@ -1337,6 +1503,8 @@ A2A (Agent-to-Agent Protocol) là chuẩn mở cho **agent nói chuyện với a
 - ❌ Development kit (không thay framework build agent)
 - ❌ Sub-agent protocol (sub-agent trong cùng 1 hệ thống dùng native primitives / MCP, không cần A2A)
 - ❌ Thay thế MCP (2 cái giải quyết 2 bài toán khác nhau)
+
+> **Tóm gọn 1 câu:** A2A = chuẩn mở để agent của framework này "giao việc" cho agent của framework kia qua interface chung, không lộ nội bộ — còn MCP thì lo agent ↔ tool, hai cái đi cùng nhau chứ không tranh nhau.
 
 ### 17.3 8 nguyên tắc prompting cho multi-agent
 
@@ -1352,17 +1520,23 @@ Rút ra từ chính production Research system của Anthropic — 8 quy tắc g
    | Comparison | 2–4 subagents, 10–15 calls mỗi subagent |
    | Complex research | 10+ subagents |
 
+   (Cách đọc: "tool call" = một lần agent dùng công cụ, ví dụ một lần tìm kiếm hay mở file — query càng khó thì cấp càng nhiều agent và nhiều lượt dùng tool.)
+
 4. **Tool design critical** — heuristic: examine all tools trước, match tool to intent, prefer specialized over generic.
 5. **Let agents improve themselves** — một agent chuyên "tool-testing" viết lại tool descriptions → giảm **40% task completion time**.
 6. **Start wide, then narrow down** — chống lỗi query quá dài + cụ thể quá sớm (giống tìm kiếm trên Google: broad first, refine later).
 7. **Guide thinking** — extended thinking cho lead, interleaved thinking sau mỗi tool result cho subagents.
 8. **Parallel tool calling** — 3–5 subagents song song + 3+ tools song song mỗi subagent → giảm tới **90% research time**.
 
+> **Tóm gọn 1 câu:** 8 nguyên tắc chỉ huy subagents: mô phỏng trước lỗi thật, giao việc đủ 4 thành phần, cấp nhân lực theo độ khó của query, thiết kế tool tốt, cho agent tự cải thiện, tìm kiếm rộng trước rồi hẹp, dẫn dắt suy nghĩ, và chạy song song tối đa.
+
 ### 17.4 Sub-agent output qua filesystem
 
 Giảm hiện tượng **"game of telephone"** (thông tin bị méo qua nhiều tầng truyền miệng): thay vì subagent copy toàn bộ output qua conversation history, subagent **ghi kết quả ra filesystem/artifact store**, rồi trả về **lightweight references** (path + hash). Orchestrator đọc file khi cần chi tiết — không phải giữ toàn bộ output trong context của mình.
 
 > So sánh: thay vì mỗi nhân viên đọc to cả báo cáo 50 trang trong phòng họp, họ gửi link file — ai cần chi tiết thì tự mở.
+
+> **Tóm gọn 1 câu:** Thay vì "chuyền miệng" toàn bộ output qua hội thoại (dễ méo như trò telephone), subagent ghi kết quả ra file và chỉ trả về đường dẫn + hash — orchestrator muốn chi tiết thì tự mở file, giữ context của lead gọn nhẹ.
 
 ### 17.5 Sync vs Async
 
@@ -1373,6 +1547,8 @@ Anthropic chạy subagents **synchronously** — đơn giản, dễ debug, nhưn
 | **Sync** (Anthropic dùng) | Đơn giản, deterministic, dễ debug | Bottleneck — lead không steer subagent giữa chừng |
 | **Async** | Parallelism cao hơn | Phức tạp: result coordination + state consistency + error propagation |
 
+Cách đọc bảng: "Sync" = lead chờ từng subagent chạy xong mới làm tiếp (dễ theo dõi vì mọi việc xảy ra tuần tự; *deterministic* = chạy lại bao nhiêu lần vẫn ra cùng một trình tự); "Async" = nhiều subagent chạy cùng lúc nhưng lead khó can thiệp giữa chừng và phải lo đồng bộ kết quả.
+
 **Code minh họa — Orchestrator-Worker với effort-scaling rules:**
 
 <details>
@@ -1381,5 +1557,7 @@ Anthropic chạy subagents **synchronously** — đơn giản, dễ debug, nhưn
 > 📄 **Code ví dụ:** [`examples/18-17-5-sync-vs-async.py`](examples/18-17-5-sync-vs-async.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Sync = chờ từng subagent xong (đơn giản, dễ debug, nhưng lead không can thiệp giữa chừng); Async = chạy song song nhiều hơn (nhanh, nhưng phải tự lo đồng bộ kết quả và lan truyền lỗi) — Anthropic chọn sync cho đơn giản.
 
 > Cross-link: xem thêm [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — Section 3.5 (Orchestration) và 4.2/4.4 (mẫu production).

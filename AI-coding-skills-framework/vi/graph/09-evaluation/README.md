@@ -29,18 +29,26 @@ Sếp hỏi 3 câu:
 
 Không có evaluation framework, bạn **không biết** GraphRAG đúng bao nhiêu %, hallucinate bao nhiêu %, và **tại sao** sai (extraction sai? retrieval sai? generation sai?).
 
+Giải thích 3 từ khóa: **hallucinate** = bịa ra thông tin không có trong dữ liệu; **extraction** = bước trích xuất thực thể/quan hệ từ tài liệu vào graph; **retrieval** = bước tìm dữ liệu trong graph; **generation** = bước LLM viết câu trả lời. Lỗi có thể nằm ở bất kỳ bước nào — evaluation là cách chỉ ra bước nào.
+
 **Evaluation là cách biến "demo hay" thành "production đáng tin".**
+
+> **Tóm gọn 1 câu:** Demo trả lời ngon chưa đủ — cần bộ đo để biết hệ thống đúng bao nhiêu phần trăm, bịa bao nhiêu, và sai ở bước nào.
 
 ### Tại Sao Evaluation Quan Trọng?
 
 > *"Không đo được thì không cải thiện được. Không tách được retrieval vs generation thì không biết sửa ở đâu."*
 > — RAG Evaluation Best Practices (2024)
 
+Cách đọc bảng này: mỗi dòng là một nghiên cứu; cột **Phát Hiện** ghi điều được đo ra. Ví dụ dòng 1: **LLM-as-judge** = dùng một LLM khác làm "giám khảo" chấm câu trả lời, với 2 tiêu chí comprehensiveness (đầy đủ) và diversity (đa chiều); **p<0.01** = khác biệt có ý nghĩa thống kê, không phải trùng hợp.
+
 | # | Nguồn | Phát Hiện |
 |---|-------|-----------|
 | 1 | **Microsoft GraphRAG (2024)** | LLM-as-judge (comprehensiveness, diversity) phân biệt GraphRAG vs vanilla RAG với **p<0.01** |
 | 2 | **RAGAS Framework (2024)** | Tách faithfulness (generation) vs context relevance (retrieval) giúp **giảm 50% debug time** |
 | 3 | **OGB + FB15k-237** | KG completion: Hits@10 và MRR là metrics chuẩn — không dùng accuracy thuần |
+
+> **Tóm gọn 1 câu:** Nghiên cứu chỉ ra: tách chỉ số theo từng giai đoạn (tìm — trả lời — dự đoán) là cách đánh giá chuẩn, và nó rút ngắn việc truy lỗi đi một nửa.
 
 ---
 
@@ -70,6 +78,10 @@ Không có evaluation framework, bạn **không biết** GraphRAG đúng bao nhi
                      └─────────────────────────────────┘
 ```
 
+Đọc sơ đồ này thế nào: bên trái là 4 thứ cần đo (bản thân graph, phần tìm, phần trả lời, phần dự đoán quan hệ), giữa là bộ chỉ số tương ứng, dưới là các bộ đề thi chuẩn (**benchmark**) và bảng báo cáo (**dashboard** = trang theo dõi số liệu trực quan).
+
+> **Tóm gọn 1 câu:** Framework đánh giá gồm 4 lớp đo đúng theo 4 giai đoạn của pipeline, gom về các benchmark chuẩn và bảng báo cáo.
+
 ---
 
 ## Nội Dung
@@ -82,6 +94,10 @@ Không có evaluation framework, bạn **không biết** GraphRAG đúng bao nhi
 | 4 | [KG Completion](#4-knowledge-graph-completion-metrics) | Hits@K, MRR, MR |
 | 5 | [Benchmarks](#5-benchmarks--datasets) | HotpotQA, GraphRAG-Bench, KGHaluBench, evidence recall |
 | 6 | [Framework](#6-evaluation-framework) | Code evaluation pipeline |
+
+Cách đọc bảng này: 6 nhóm chỉ số theo thứ tự đọc. Ví dụ dòng 1: *Coverage, connectivity, density* = độ phủ, độ liên thông, độ dày — ba thước đo "graph có đầy đủ và liền mạch không".
+
+> **Tóm gọn 1 câu:** Đo theo thứ tự: graph khỏe → tìm đúng → trả lời trung thành → dự đoán chính xác, rồi mới so trên benchmark chuẩn.
 
 ---
 
@@ -100,9 +116,13 @@ Không có evaluation framework, bạn **không biết** GraphRAG đúng bao nhi
 > - **Invalid Edge Rate** = edges **vi phạm quy tắc** (Person → MANAGES → Document) — 100% phải bằng 0.
 > - **Temporal Freshness** = edge cũ **hết hạn** nhưng chưa cập nhật — trả lời bằng thông tin lỗi thời.
 
+> **Tóm gọn 1 câu:** Đo sức khỏe graph bằng 9 thước (phủ, sạch, liên thông, dày vừa, ít node cô lập, không vi phạm, còn tươi) — graph xấu thì mọi chỉ số phía sau đều vô nghĩa.
+
 ### 1.1 Metrics Cho Bản Thân Graph
 
 Trước khi đo retrieval/generation, phải đo **graph có tốt không**:
+
+Cách đọc bảng này: cột **Ý nghĩa** định nghĩa chỉ số, cột **Tốt khi** cho ngưỡng nên đạt. Ví dụ: *Node Coverage > 80%* nghĩa là hơn 80% thực thể thật trong tài liệu đã được trích vào graph; *Invalid Edge Rate = 0%* nghĩa là không được có cạnh nào vi phạm quy tắc ontology (**ontology** = bộ quy tắc định nghĩa loại node/edge được phép có).
 
 ```
 ┌──────────────────────┬──────────────────────────────────┬──────────────────────┐
@@ -120,6 +140,8 @@ Trước khi đo retrieval/generation, phải đo **graph có tốt không**:
 └──────────────────────┴──────────────────────────────────┴──────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Chín chỉ số trên là "bảng khám sức khỏe" của graph — mỗi cái có ngưỡng rõ ràng, cái nào dưới ngưỡng thì sửa cái đó trước.
+
 <details>
 <summary>Python Code — Graph Quality Metrics (Click để xem)</summary>
 
@@ -130,6 +152,8 @@ Trước khi đo retrieval/generation, phải đo **graph có tốt không**:
 ### 1.2 Coverage — So Với Ground Truth
 
 > 📄 **Code ví dụ:** [`examples/02-1-2-coverage-so-voi-ground-truth.py`](examples/02-1-2-coverage-so-voi-ground-truth.py)
+
+> **Tóm gọn 1 câu:** Coverage = so graph với "đáp án chuẩn" (ground truth) do người làm thủ công, để biết trích xuất hụt bao nhiêu phần trăm sự thật.
 
 ---
 
@@ -145,7 +169,11 @@ Trước khi đo retrieval/generation, phải đo **graph có tốt không**:
 >
 > **Biểu thức Pre/Recall như phong phanh trong fishing:** Precision = trong rổ cá, mấy con ăn được. Recall = trong ao, mình vớt được bao nhiêu con cá có.
 
+> **Tóm gọn 1 câu:** Retrieval evaluation = đo phần "tìm" bằng 3 chỉ số: lấy ra đúng mấy (precision), bắt đủ mấy (recall), đáp án đúng đứng hạng mấy (MRR) — tìm sai thì LLM giỏi mấy cũng trả lời sai.
+
 ### 2.1 Metrics Cho Retrieval
+
+Cách đọc bảng này: cột **Ý nghĩa** định nghĩa chỉ số, cột **Công thức** cho cách tính. Ví dụ: *Precision@K* = trong K kết quả lấy ra, bao nhiêu % là đúng; *ground truth* = đáp án chuẩn đã biết trước; *Hop Accuracy* = độ chính xác của từng bước đi trên graph (**hop** = 1 bước nhảy từ node này sang node kề nó).
 
 ```
 ┌──────────────────────┬──────────────────────────────────┬──────────────────────┐
@@ -160,6 +188,8 @@ Trước khi đo retrieval/generation, phải đo **graph có tốt không**:
 └──────────────────────┴──────────────────────────────────┴──────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Sáu chỉ số trên đo phần "tìm": trúng mấy trong K kết quả đầu, bắt đủ chưa, đúng đứng hạng mấy, và từng bước đi trên graph có đúng không.
+
 <details>
 <summary>Python Code — Retrieval Evaluation (Click để xem)</summary>
 
@@ -170,6 +200,8 @@ Trước khi đo retrieval/generation, phải đo **graph có tốt không**:
 ### 2.2 So Sánh Vanilla RAG vs GraphRAG Retrieval
 
 > 📄 **Code ví dụ:** [`examples/04-2-2-so-sanh-vanilla-rag-vs-graphrag.py`](examples/04-2-2-so-sanh-vanilla-rag-vs-graphrag.py)
+
+> **Tóm gọn 1 câu:** Chạy cả hai hệ thống trên cùng bộ câu hỏi, đo P@5/R@5/MRR riêng — GraphRAG phải thắng ở câu nhiều bước, còn vanilla RAG thường thắng ở câu tra cứu đơn giản.
 
 ---
 
@@ -186,6 +218,10 @@ Trước khi đo retrieval/generation, phải đo **graph có tốt không**:
 >
 > **Cách đo (LLM-as-judge):** Tách câu trả lời thành các **claims** (mệnh đề nhỏ) → kiểm tra từng claim có trong context không. Hallucination Rate = 1 - Faithfulness.
 
+> **Tóm gọn 1 câu:** Hai câu hỏi chính cho phần trả lời: "có bịa không" (faithfulness) và "có trúng câu hỏi không" (answer relevance) — đo bằng cách tách mệnh đề rồi cho LLM khác làm giám khảo.
+
+Cách đọc bảng này: cột **Ý nghĩa** định nghĩa, cột **Đo thế nào** cho cách đo. Ví dụ: *Hallucination Rate = 1 - faithfulness* nghĩa là tỉ lệ bịa bằng 100% trừ đi độ trung thành — trung thành 0.9 thì bịa 10%.
+
 ```
 ┌──────────────────────┬──────────────────────────────────┬──────────────────────┐
 │ Metric               │ Ý nghĩa                          │ Đo thế nào           │
@@ -200,6 +236,8 @@ Trước khi đo retrieval/generation, phải đo **graph có tốt không**:
 └──────────────────────┴──────────────────────────────────┴──────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Năm chỉ số RAGAS-style đo chất lượng câu trả lời: không bịa, trúng câu hỏi, context có ích, tỉ lệ bịa thấp, trích dẫn đúng nguồn.
+
 <details>
 <summary>Python Code — Faithfulness & Hallucination Detection (Click để xem)</summary>
 
@@ -211,11 +249,15 @@ Trước khi đo retrieval/generation, phải đo **graph có tốt không**:
 
 > 📄 **Code ví dụ:** [`examples/06-3-2-llm-as-judge-cho-global-sensemaking.py`](examples/06-3-2-llm-as-judge-cho-global-sensemaking.py)
 
+> **Tóm gọn 1 câu:** Với câu hỏi tổng hợp ("cả tổ chức đang làm gì?") không có đáp án đúng duy nhất — dùng LLM làm giám khảo chấm theo độ đầy đủ và đa chiều.
+
 ---
 
 ## 4. Knowledge Graph Completion Metrics
 
 Cho link prediction / KG completion (GNN, TransE, v.v.):
+
+Cách đọc bảng này: đây là các chỉ số cho bài "đoán quan hệ còn thiếu". Ví dụ: *Hits@10 > 0.5* = hơn 50% câu hỏi có đáp án đúng nằm trong 10 gợi ý đầu; *MR < 100* = đáp án đúng trung bình đứng dưới hạng 100; *AUC > 0.8* = model phân biệt tốt giữa quan hệ có thật và quan hệ bịa.
 
 ```
 ┌──────────────┬──────────────────────────────────┬──────────────────────┐
@@ -227,6 +269,8 @@ Cho link prediction / KG completion (GNN, TransE, v.v.):
 │ AUC          │ Area under ROC cho link predict  │ Cao (>0.8)           │
 └──────────────┴──────────────────────────────────┴──────────────────────┘
 ```
+
+> **Tóm gọn 1 câu:** Đo dự đoán quan hệ bằng thứ hạng (Hits@K, MRR, MR) chứ không dùng accuracy thuần — vì người dùng thật chỉ đọc vài gợi ý đầu.
 
 <details>
 <summary>Python Code — KG Completion Evaluation (Click để xem)</summary>
@@ -240,6 +284,8 @@ Cho link prediction / KG completion (GNN, TransE, v.v.):
 ## 5. Benchmarks & Datasets
 
 ### 5.1 Benchmarks Cho GraphRAG
+
+Cách đọc bảng này: mỗi dòng là một "đề thi" sẵn có (**benchmark** = bộ câu hỏi + đáp án chuẩn để so sánh các hệ thống). Ví dụ: *HotpotQA* = 2-hop QA (**QA** = question answering, hỏi-đáp); *EM, F1* = khớp chữ chính xác / điểm hài hòa; *KGHaluBench* = đề thi chuyên đo tỉ lệ bịa khi dùng graph.
 
 ```
 ┌──────────────────────┬──────────────────────┬──────────────────────────────┐
@@ -256,7 +302,11 @@ Cho link prediction / KG completion (GNN, TransE, v.v.):
 └──────────────────────┴──────────────────────┴──────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Dùng đề thi sẵn (HotpotQA, GraphRAG-Bench...) cho nhanh, nhưng với dữ liệu nội bộ thì phải tự tạo benchmark riêng theo domain của mình.
+
 ### 5.2 Benchmarks Cho KG Completion
+
+Cách đọc bảng này: mỗi dòng là một bộ dữ liệu chuẩn cho bài "điền thiếu quan hệ" (**triple** = bộ 3 *chủ ngữ–quan hệ–tân ngữ*, ví dụ `Alice —WORKS_ON→ Phoenix`). Ví dụ: *FB15k-237* có 310 nghìn triple từ Freebase của Google; *OGB-WikiKG2* tới 17 triệu triple từ Wikidata.
 
 ```
 ┌──────────────────────┬──────────────────────┬──────────────────────────────┐
@@ -269,9 +319,13 @@ Cho link prediction / KG completion (GNN, TransE, v.v.):
 └──────────────────────┴──────────────────────┴──────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** So model với nhau trên các bộ triple chuẩn (FB15k-237, WN18RR, OGB-WikiKG2) bằng Hits@10 và MRR — không so bằng cảm tính.
+
 ### 5.3 Tạo Custom Benchmark
 
 > 📄 **Code ví dụ:** [`examples/08-5-3-tao-custom-benchmark.py`](examples/08-5-3-tao-custom-benchmark.py)
+
+> **Tóm gọn 1 câu:** Benchmark riêng = lấy câu hỏi thật của người dùng + đáp án chuẩn do người kiểm tra, để đo hệ thống trên đúng dữ liệu của mình.
 
 ### 5.4 Những "Lỗ Hổng Đánh Giá" Trong GraphRAG (2025-2026)
 
@@ -289,9 +343,11 @@ Cho link prediction / KG completion (GNN, TransE, v.v.):
 - **Summary hallucination**: community summary của LLM "bịa" chi tiết không có trong graph.
 - **KGHaluBench** đo riêng rate hallucination khi bối cảnh gốc là graph thay vì text. Cần đánh giá **riêng từng nguồn** — đừng gộp chung vào 1 chỉ số faithfulness.
 
-**4. Systematic Eval RAG vs GraphRAG — đừng tự tin thái quá** — Kết quả benchmark có hệ thống 2025-2026: GraphRAG thắng trên multi-hop/global nhưng **thua vanilla RAG trên single-hop/factoid**. Vì vậy evaluation của bạn nên **chia 3 track** (single-hop / multi-hop / global) và báo cáo riêng — như Module 05 đã cảnh báo.
+**4. Systematic Eval RAG vs GraphRAG — đừng tự tin thái quá** — Kết quả benchmark có hệ thống 2025-2026: GraphRAG thắng trên multi-hop/global nhưng **thua vanilla RAG trên single-hop/factoid**. (**Single-hop/factoid** = câu hỏi tra cứu một ý, ví dụ "Phoenix ngân sách bao nhiêu?".) Vì vậy evaluation của bạn nên **chia 3 track** (single-hop / multi-hop / global) và báo cáo riêng — như Module 05 đã cảnh báo.
 
 > 📄 **Code ví dụ:** [`examples/09-5-4-nhung-lo-hong-anh-gia-trong.py`](examples/09-5-4-nhung-lo-hong-anh-gia-trong.py)
+
+> **Tóm gọn 1 câu:** Điểm số tổng hợp che giấu lỗi — phải đo thêm bằng chứng đưa vào, theo dõi trôi hướng ở từng bước, và báo riêng tỉ lệ bịa từ graph và từ tóm tắt.
 
 ---
 
@@ -303,6 +359,8 @@ Cho link prediction / KG completion (GNN, TransE, v.v.):
 > 📄 **Code ví dụ:** [`examples/10-6-evaluation-framework.py`](examples/10-6-evaluation-framework.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Pipeline đánh giá hoàn chỉnh = chạy cả 4 lớp đo (graph, retrieval, generation, KG completion) trong một lần, xuất ra báo cáo so sánh được theo từng phiên bản.
 
 ---
 
@@ -325,6 +383,8 @@ Cho link prediction / KG completion (GNN, TransE, v.v.):
 2. Cho LLM generate với context đúng vs không có context
 3. Đo faithfulness — có context phải >0.8, không context hallucination cao
 
+> **Tóm gọn 1 câu:** Ba lab chứng minh rằng bộ đo của bạn "bắt được" khác biệt: graph tệ phải ra điểm tệ, GraphRAG phải thắng câu nhiều bước, và không có context thì tỉ lệ bịa phải tăng.
+
 ---
 
 ## Tài Liệu Tham Khảo
@@ -339,11 +399,13 @@ Cho link prediction / KG completion (GNN, TransE, v.v.):
 - *RAG vs GraphRAG: A Systematic Evaluation* (arXiv 2025) — tách 3 track single/multi/global
 - *A Survey on Evaluation of Knowledge Graph Quality* — Paulheim (2017)
 
+> **Tóm gọn 1 câu:** Đây là nguồn gốc của từng chỉ số trong bài — đọc thêm khi cần dẫn chứng hoặc đi sâu.
+
 ---
 
 ## GraphRAG — Cập nhật 2026
 
-Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query phức tạp (multi-hop) tốt hơn vector-only RAG.
+Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query phức tạp (multi-hop) tốt hơn vector-only RAG. (**Multi-hop** = câu hỏi phải đi qua nhiều bước quan hệ; **RAG** = đưa tài liệu liên quan vào prompt trước khi LLM trả lời.)
 
 **Tin mới 2025-2026:**
 - **LazyGraphRAG** (Microsoft, cuối 2024): defer LLM summarisation tới query time — indexing cost ngang vector RAG, quality ngang full GraphRAG, query cost thấp hơn ~700×. Đã tích hợp Microsoft Discovery (2025) và Azure Local.
@@ -353,5 +415,7 @@ Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query p
 - **Knowledge Graph Market**: 1.48B USD (2025) → 2.04B USD (2026). GraphRAG chuyển từ "enterprise luxury" → production baseline.
 
 Ref: https://microsoft.github.io/graphrag/
+
+> **Tóm gọn 1 câu:** GraphRAG đã thành chuẩn production (chi phí xuống ngang vector RAG nhờ LazyGraphRAG) — nên đo nó theo chuẩn production cũng là chuyện cần làm ngay.
 
 *Hoàn thành Graph Engineering Track — quay lại [README](../README.md) để tổng kết.*

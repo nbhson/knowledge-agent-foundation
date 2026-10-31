@@ -1,6 +1,6 @@
 # ❓ FAQ — Jev + LLM: Division of Labor (Real Stories, Plain Language)
 
-If a question is unclear, read the section in `../README.md` (named in brackets).
+If a question is unclear, read the section in `../README.md` (named in brackets). Glossary up front: **Jev** = the decision model (state in, typed answer out, no text generation); **LLM** = large language model, the kind of AI that writes text; **state** = the material being judged; **question** = the typed verdict you ask for (Choice = pick one option, Score = rate on a scale, Noul = yes/no returning P(yes)); **threshold** = the cut-off line a probability must clear.
 
 ---
 
@@ -8,7 +8,7 @@ If a question is unclear, read the section in `../README.md` (named in brackets)
 
 **What you see**
 
-You send state plus a question to `https://api.typesafe.ai/v1/systemone` and the answer contains only `selected`, `probabilities`, and `confidence`. No sentences, no draft, nothing to send. Meanwhile the same call cost $0.042 per 1M input tokens, returned in 70–500 ms, and output was free — which is exactly the pricing of a classifier, not a writer.
+You send state plus a question to `https://api.typesafe.ai/v1/systemone` and the answer contains only `selected`, `probabilities`, and `confidence` (the picked option, its odds across all options, and how decisive the pick was). No sentences, no draft, nothing to send. Meanwhile the same call cost $0.042 per 1M input tokens, returned in 70–500 ms, and output was free — which is exactly the pricing of a classifier, not a writer.
 
 **Why**
 
@@ -16,7 +16,7 @@ Jev cannot generate language. It is a decision layer: state goes in, a bounded t
 
 **What to do**
 
-Split the work before you call anything. Ask Jev *always* for classify / route / gate / verify, because those questions cost almost nothing in time. Ask the LLM only when text is required. Let ordinary code execute the decision — it is deterministic, free, and auditable.
+Split the work before you call anything. Ask Jev *always* for classify / route / gate / verify, because those questions cost almost nothing in time. Ask the LLM only when text is required. Let ordinary code execute the decision — it is deterministic, free, and auditable (deterministic = same input, same output, every time).
 
 > 📄 **Example code:** [`examples/01-q1-i-asked-jev-to-write-a-reply.py`](examples/01-q1-i-asked-jev-to-write-a-reply.py)
 
@@ -25,6 +25,8 @@ Use the rule of thumb from §5: if a branch condition is about *meaning* ("is th
 **Verify**
 
 Grep your pipeline for task labels containing write, draft, summarize, or explain and confirm none of them hit Jev. Every path should end in one of three places: a typed result, generated text, or an executed action. A draft request that returns probabilities and no text is a routing bug, not an outage.
+
+> **One-line summary:** Jev decides, it never writes — send drafting work to the LLM and treat a textless reply as a routing bug, not an outage.
 
 ---
 
@@ -36,7 +38,7 @@ The prompt says *"Which of these three steps should run next: retry, refetch, es
 
 **Why**
 
-State is the material; questions belong in Jev's `questions` field. A question placed in the prompt gets judged by the LLM instead of Jev, and the LLM has no calibrated probabilities to give you. That is anti-pattern #2 in §7: it looks identical in the editor and behaves completely differently at run time.
+State is the material; questions belong in Jev's `questions` field. A question placed in the prompt gets judged by the LLM instead of Jev, and the LLM has no calibrated probabilities to give you (calibrated = the stated number matches the real success rate). That is anti-pattern #2 in §7: it looks identical in the editor and behaves completely differently at run time.
 
 **What to do**
 
@@ -51,17 +53,19 @@ State is the material; questions belong in Jev's `questions` field. A question p
 
 The response body has three fields — `selected`, `probabilities`, `confidence` — and `agent_state["model_route"]` holds them after the call. If you get prose back, the question is still in the prompt. Time one decision: about 70–500 ms, not the 2–10 s you were paying.
 
+> **One-line summary:** Situation goes in `state`, question goes in `questions` — a question hidden in the prompt buys slow, unauditable prose.
+
 ---
 
 ## Q3. Jev answered with confidence 0.99 and the wrong branch ran automatically — can that really happen? [→ §7, §4]
 
 **What you see**
 
-A `choice` question returns `confidence ≈ 1.0`, the code trusts it, and the agent takes the wrong action with no human in the loop. Nothing logged as an error. The team had also copied the threshold straight from the docs — `typesafe_tool_call_threshold` at its default **0.6** — and never built a labelled evaluation set.
+A `choice` question returns `confidence ≈ 1.0`, the code trusts it, and the agent takes the wrong action with no human in the loop. Nothing logged as an error. The team had also copied the threshold straight from the docs — `typesafe_tool_call_threshold` at its default **0.6** — and never built a labelled evaluation set (labelled = examples where you already know the right answer).
 
 **Why**
 
-Confidence is clarity, not correctness (§7, anti-pattern #3). A model can be confidently wrong *inside the schema*, and a high number on a question you never evaluated is a decoration. When thresholds come from defaults instead of your own labelled data, you have no idea of the real error rate (anti-pattern #4).
+Confidence is clarity, not correctness (§7, anti-pattern #3). A model can be confidently wrong *inside the schema* (a valid value from your own option list — the shape is legal, the content can still be wrong), and a high number on a question you never evaluated is a decoration. When thresholds come from defaults instead of your own labelled data, you have no idea of the real error rate (anti-pattern #4).
 
 **What to do**
 
@@ -75,6 +79,8 @@ Confidence is clarity, not correctness (§7, anti-pattern #3). A model can be co
 **Verify**
 
 Deliberately feed the agent a case where the confident answer is wrong and confirm the fallback takes the step instead of the tool firing. Your evaluation report should show a measured error rate per question, not a threshold copied from documentation.
+
+> **One-line summary:** A confident 0.99 can still be wrong — keep a fallback, cap retries, and set thresholds from your own labelled data.
 
 ---
 
@@ -93,7 +99,7 @@ The LLM proposes; something else must permit. Approval policy is not a predictio
 1. Put the gateway between the proposed tool call and the real side effect.
 2. Only gate tools that change something. A small `DESTRUCTIVE` set — `delete_files`, `charge_account`, `send_email` — is enough to start; everything else passes through.
 3. Ask a `noul` question and compare the probability to a threshold. The reference uses **0.80** for destructive tools — tune it from labelled examples, not from a default.
-4. Below threshold → block and hand off to an approval system (human gate, allowlist).
+4. Below threshold → block and hand off to an approval system (human gate, allowlist = a whitelist of pre-approved tools or actions).
 5. Log `request_id`, `p_yes`, threshold, and model version. Never log the raw state.
 6. Existing frameworks already have the hook: LangChain's `AutoModeMiddleware`, or Pydantic AI's `typesafe_tool_call_threshold`.
 
@@ -102,6 +108,8 @@ The LLM proposes; something else must permit. Approval policy is not a predictio
 **Verify**
 
 Call `delete_files` yourself in a test and confirm it returns `{"allow": False, "gate": "blocked"}` and reaches the approval queue. Check that the audit log holds the four fields and no state. A run with an empty audit record is an unlogged side effect.
+
+> **One-line summary:** Put a gate between the proposed tool call and the real side effect — only a high P(yes) plus your allowlist lets it through, and every decision gets logged.
 
 ---
 
@@ -118,7 +126,7 @@ Model routing treats difficulty as a `choice` question with three options: trivi
 **What to do**
 
 1. Ask one `choice` question about difficulty: trivial → fast model, moderate → mid model, hard → capable model.
-2. Run it as middleware in front of the model call, not as a separate step the user waits on.
+2. Run it as middleware in front of the model call, not as a separate step the user waits on (middleware = a small check that runs automatically inside the request path).
 3. If confidence is below **0.70**, do not gamble on the cheap model — escalate to the capable one.
 4. Store the full distribution in agent state. The probabilities are the audit signal that tells you how sure the router was.
 
@@ -127,6 +135,8 @@ Model routing treats difficulty as a `choice` question with three options: trivi
 **Verify**
 
 Look at the route distribution over a week of real traffic: most requests should land on the fast model, and hard ones should be a small share. Sample the hard-routed tasks and confirm they genuinely were hard. If nearly everything routes to the capable model, your difficulty question is not discriminating.
+
+> **One-line summary:** Route model choice as one cheap Jev question — easy tasks get the fast model, low confidence escalates to the capable one.
 
 ---
 

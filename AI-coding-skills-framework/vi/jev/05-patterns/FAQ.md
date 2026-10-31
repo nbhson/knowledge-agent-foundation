@@ -1,6 +1,6 @@
 # ❓ FAQ — Bốn Kiểu Việc Thật Với Jev Trong Production
 
-Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
+Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông. Giải nghĩa nhanh: **routing/triage** = phân loại và điều hướng công việc; **ngưỡng (threshold)** = ranh giới để quyết định tự làm hay chuyển người; **độ trễ (latency)** = thời gian chờ một lần gọi.
 
 ---
 
@@ -27,6 +27,8 @@ Bạn đọc "năm kiểu mẫu áp dụng" và không biết bắt đầu từ 
 
 Đo tỉ lệ định tuyến đúng trên 200 ticket đã có nhãn, cộng với tỉ lệ phần trăm được xử lý tự động. Nếu độ đúng cao mà tỉ lệ tự động quá thấp, ngưỡng của bạn đang chặt quá; nếu ngược lại thì đang lỏng quá.
 
+> **Tóm gọn 1 câu:** Bắt đầu từ routing/triage: một câu chọn nhóm + một câu chấm ưu tiên trong một lượt gọi — dễ đo, dễ hủy, giải quyết phần đau nhất ngay.
+
 ---
 
 ## Q2. Tôi có 100.000 bản ghi cần phân loại — có nổi không? [→ §3 Classification & map-reduce]
@@ -50,7 +52,9 @@ Phép tính đó dựa trên giá của một loại công cụ khác. Jev tính
 
 **Kiểm tra**
 
-Chạy thử 1.000 bản ghi, đo ba thứ: tổng thời gian chờ, tổng chi phí, và tỉ lệ phần trăm vào hàng chờ xem lại. Ba con số này là cơ sở để bạn trình kế hoạch cho quản lý.
+Chạy thử 1.000 bản ghi, đo ba thứ: tổng thời gian chờ, tổng chi phí, và tỉ lệ phần trăm vào hàng chờ xem lại. Ba con số này là cơ sở để bạn trình kế hoạch cho quản lý. (Bất đồng bộ (async) = gửi nhiều yêu cầu cùng lúc mà không chờ từng cái xong; map-reduce = bước "lập bản đồ" từng bản ghi rồi bước "gộp" kết quả.)
+
+> **Tóm gọn 1 câu:** 100.000 bản ghi là khả thi vì giá quá rẻ ($0.042/M token, output miễn phí) và độ trễ tính theo từng quyết định — chia map-reduce và chạy lô song song.
 
 ---
 
@@ -75,7 +79,9 @@ Agent của bạn đề xuất lệnh xóa tệp dữ liệu trong thư mục pr
 
 **Kiểm tra**
 
-Đo tỉ lệ chặn sai (hỏi người mà không cần) và tỉ lệ cho qua sai (không hỏi mà nên hỏi) riêng biệt trên 100 tình huống thật. Nếu tỉ lệ cho qua sai bằng 0 thì cổng đang chỉ là hình thức.
+Đo tỉ lệ chặn sai (hỏi người mà không cần) và tỉ lệ cho qua sai (không hỏi mà nên hỏi) riêng biệt trên 100 tình huống thật. Nếu tỉ lệ cho qua sai bằng 0 thì cổng đang chỉ là hình thức. (Tỉ lệ chặn sai = "false block" — chặn oan ca vô hại; tỉ lệ cho qua sai = "false allow" — bỏ lỡ ca nguy hiểm.)
+
+> **Tóm gọn 1 câu:** Jev chỉ là tín hiệu phân loại nhanh, không phải phán xét an toàn tuyệt đối — đặt song song hai điều kiện (p và độ chắc chắn) và giữ lớp phân quyền thật là nguồn quyền cuối cùng.
 
 ---
 
@@ -98,11 +104,13 @@ Cách rẻ nhất là đảo chiều vai trò: **Jev đọc và phán, mô hình
 
 > 📄 **Code ví dụ:** [`examples/04-q4-toi-muon-kiem-tra-ket-qua-mo.py`](examples/04-q4-toi-muon-kiem-tra-ket-qua-mo.py)
 
-Có ba chỗ đặt cược bước kiểm tra này: sau mỗi kết quả công cụ và mỗi sản phẩm tạo ra trước khi đi bước sau; làm bộ lọc nhanh trước khi chạy bộ kiểm thử đầy đủ trong vòng lặp; và kiểm tra nội dung thay đổi trước khi hợp nhất. Một điều tuyệt đối đừng làm: đòi Jev giải thích vì sao bản nháp sai — nó chỉ trả điểm và xác suất, phần giải thích là việc của mô hình lớn.
+Có ba chỗ đặt cược bước kiểm tra này: sau mỗi kết quả công cụ và mỗi sản phẩm tạo ra trước khi đi bước sau; làm bộ lọc nhanh trước khi chạy bộ kiểm thử đầy đủ trong vòng lặp; và kiểm tra nội dung thay đổi trước khi hợp nhất. Một điều tuyệt đối đừng làm: đòi Jev giải thích vì sao bản nháp sai — nó chỉ trả điểm và xác suất, phần giải thích là việc của mô hình lớn. (Bám đúng chính sách (grounded) = nội dung có căn cứ trong văn bản chính sách đưa vào state; hợp nhất (merge) = gộp thay đổi vào nhánh chính của repo.)
 
 **Kiểm tra**
 
 Đo tỉ lệ bản nháp bị chặn oan và tỉ lệ bản nháp hỏng lọt qua, trên 100 cặp (chính sách, bản nháp) thật của bạn. Bước kiểm tra chỉ đáng giữ nếu tỉ lệ lọt oan thấp hơn tỉ lệ hỏng lọt qua.
+
+> **Tóm gọn 1 câu:** Rẻ nhất là đảo chiều vai trò — Jev đọc và phán "bám đúng chính sách không", mô hình lớn chỉ viết; mỗi lần kiểm chỉ tốn 70–500ms và gần như không tốn token đầu ra.
 
 ---
 
@@ -127,7 +135,9 @@ Jev làm được, và hợp với hệ thống tìm kiếm dựa trên truy xu�
 
 **Kiểm tra**
 
-Đo trên 50 câu hỏi có đoạn văn đúng đã biết: đoạn văn đúng có nằm trong 3 đoạn đầu sau khi xếp hạng không. So sánh con số này với việc đưa cả 20 đoạn cho mô hình lớn — nếu không tốt hơn, đừng giữ bước xếp hạng.
+Đo trên 50 câu hỏi có đoạn văn đúng đã biết: đoạn văn đúng có nằm trong 3 đoạn đầu sau khi xếp hạng không. So sánh con số này với việc đưa cả 20 đoạn cho mô hình lớn — nếu không tốt hơn, đừng giữ bước xếp hạng. (RAG = Retrieval-Augmented Generation — mô hình lớn trả lời dựa trên các đoạn văn truy xuất từ nguồn dữ liệu của bạn.)
+
+> **Tóm gọn 1 câu:** Được — Jev chấm từng đoạn bằng thang mức có thứ tự rồi sort, giá liên tục (3.4 vs 3.1) giúp phân biệt thứ hạng tinh hơn nhãn cứng.
 
 ---
 

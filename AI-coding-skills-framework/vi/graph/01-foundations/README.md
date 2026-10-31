@@ -27,11 +27,15 @@ Năm 1736, Euler giải bài toán **7 cây cầu Königsberg**: có thể đi q
 
 **Graph không phải cấu trúc dữ liệu mới. Nó là cách nhìn thế giới như một mạng lưới quan hệ.**
 
+> **Tóm gọn 1 câu:** Graph = cách nhìn mọi thứ như mạng lưới quan hệ (node = điểm, edge = đường nối), từ mạng xã hội tới tri thức doanh nghiệp.
+
 ### Tại Sao Foundations Quan Trọng?
 
 > *"Không hiểu graph types và representations, bạn sẽ chọn sai DB, viết sai query, và đo sai metric."*
 
 #### 3 Bằng Chứng
+
+**Cách đọc bảng này:** cột "#" là số thứ tự; "Nguồn" là ai phát hiện ra; "Phát Hiện" là kết luận kèm số liệu. Ví dụ, bằng chứng 1: chọn sai cách lưu graph thưa có thể chậm tới 100 lần.
 
 | # | Nguồn | Phát Hiện |
 |---|-------|-----------|
@@ -45,6 +49,8 @@ Năm 1736, Euler giải bài toán **7 cây cầu Königsberg**: có thể đi q
 
 Module này cung cấp **nền tảng lý thuyết và thực hành** để mọi module sau dựa vào:
 
+(Đọc sơ đồ: học theo mũi tên — bắt đầu từ định nghĩa graph, rồi phân loại, cách lưu, thước đo, mô hình dữ liệu, và sẵn sàng sang module 02.)
+
 ```mermaid
 flowchart TD
     A["Graph = (V, E)"] --> B["Types: Directed, Weighted, Heterogeneous, Temporal"]
@@ -54,9 +60,13 @@ flowchart TD
     E --> F["Sẵn sàng cho 02-Knowledge Graph"]
 ```
 
+> **Tóm gọn 1 câu:** Module này là nền móng: định nghĩa graph → phân loại → cách lưu → thước đo → mô hình dữ liệu — nắm chắc rồi mới qua module 02.
+
 ---
 
 ## Nội Dung
+
+**Cách đọc bảng này:** cột "#" là số thứ tự phần; "Chủ đề" có link bấm tới được; "Mô tả" nói ngắn gọn phần đó dạy gì. Ví dụ, phần 3 là các cách lưu graph vào bộ nhớ.
 
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
@@ -67,9 +77,13 @@ flowchart TD
 | 5 | [Property Graph vs RDF](#5-property-graph-vs-rdf-triple-store) | So sánh mô hình, khi nào dùng gì |
 | 6 | [Labs](#6-labs-thực-hành) | NetworkX hands-on |
 
+> **Tóm gọn 1 câu:** 6 phần đi từ "graph là gì" tới bài thực hành NetworkX — mỗi phần một khái niệm, có ví dụ kèm theo.
+
 ---
 
 ## 1. Graph Là Gì? Định Nghĩa & Thuật Ngữ
+
+> Phần này định nghĩa graph bằng ngôn ngữ toán và bằng tiếng đời thường, kèm bộ thuật ngữ dùng xuyên suốt các module sau.
 
 ### 1.1 Định Nghĩa Toán Học
 
@@ -86,7 +100,7 @@ E = { (Alice, APPROVES, Contract C-2024),
       (Contract C-2024, BELONGS_TO, Project Phoenix) }
 ```
 
-**Triple (Subject, Predicate, Object)** chính là một edge có hướng:
+**Triple (Subject, Predicate, Object)** chính là một edge có hướng: (triple = bộ ba "chủ thể – quan hệ – đối tượng", đơn vị nhỏ nhất của tri thức)
 
 ```
 (S) Alice  —[REPORTS_TO]→ (O) Bob
@@ -110,6 +124,8 @@ Subject   Predicate         Object
 | **Neighbor** | Nodes kề trực tiếp (1-hop) — "xóm giềng" | Neighbors của Alice = {Bob, Contract} |
 | **Subgraph** | Một phần của graph — lấy 1 node và tất cả nodes xung quanh | Subgraph 1-hop của Phoenix = Phoenix + tất cả nodes nối trực tiếp |
 | **Community** | Nhóm nodes liên kết chặt chẽ với nhau, ít liên kết với bên ngoài | Team AI trong org chart — họ làm việc chung, báo cáo chung |
+
+> **Tóm gọn 1 câu:** Graph = node (thứ) + edge (quan hệ) + nhãn/thuộc tính; học 9 thuật ngữ trong bảng trên là đủ đọc hiểu mọi module sau.
 
 ### 1.3 Ví Dụ Trực Quan
 
@@ -136,6 +152,8 @@ Subject   Predicate         Object
 
 ## 2. Các Loại Graph
 
+> Phần này phân loại graph theo đặc điểm quan hệ (có hướng? có trọng số? có thời gian?) — chọn sai loại ngay từ đầu là nguyên nhân phổ biến của kết quả sai.
+
 ### 2.1 Phân Loại Chi Tiết
 
 > **📌 Hiểu nhanh:** "Loại graph" chính là câu trả lời cho câu hỏi *"Quan hệ của bạn có đặc điểm gì?"* — Có hướng không? Có trọng số không? Có nhiều loại thực thể không? Nếu chọn sai loại ngay từ đầu, bạn rất dễ viết code lệch và truy vấn cho ra kết quả sai.
@@ -157,6 +175,8 @@ Subject   Predicate         Object
 ```
 
 #### Giải thích từng loại theo cách dễ hiểu:
+
+**Cách đọc bảng này:** cột "Loại" là tên graph; "Dịch ra tiếng người" là ý nghĩa nôm na; hai cột cuối là tình huống gặp và ví dụ cụ thể. Ví dụ, Directed = quan hệ một chiều như đường một chiều.
 
 | Loại | "Dịch ra tiếng người" | Khi nào thì gặp? | Ví dụ cụ thể |
 |------|----------------------|-------------------|--------------|
@@ -199,6 +219,8 @@ Subject   Predicate         Object
 
 > 📄 **Code ví dụ:** [`examples/01-2-2-khi-nao-dung-loai-nao.py`](examples/01-2-2-khi-nao-dung-loai-nao.py)
 
+> **Tóm gọn 1 câu:** Chọn loại graph theo đặc điểm quan hệ thật của bạn (hướng, trọng số, thời gian, số loại thực thể) — sai ngay từ đầu thì mọi truy vấn sau đều sai theo.
+
 ---
 
 ## 3. Biểu Diễn Graph (Representations)
@@ -228,6 +250,8 @@ Cách 3 — Edge List (danh sách cạnh):     giống "danh sách cặp đôi"
 
 ### 3.1 So Sánh Chi Tiết
 
+**Cách đọc bảng này:** cột "Tốn bộ nhớ" dùng ký hiệu O(...) — đọc nôm na là "dung lượng lớn nhanh cỡ nào khi graph to ra"; cột "Duyệt graph" là tốc độ tìm đường; hai cột cuối là hình dung và tình huống nên chọn. Ví dụ, Adjacency List gọn và phù hợp cho hầu hết graph tri thức thưa.
+
 | Cách biểu diễn | Tốn bộ nhớ | Duyệt graph | Hình dung nôm na | Phù hợp nhất khi |
 |----------------|------------------|----------------------|-------------|----------|
 | **Adjacency List** | O(V + E) — nhỏ gọn | O(degree) — nhanh | Danh bạ "ai quen ai" | Sparse graphs (hầu hết KG) |
@@ -237,6 +261,8 @@ Cách 3 — Edge List (danh sách cạnh):     giống "danh sách cặp đôi"
 | **Property Table** | O(V + E) — như DB | O(index) — rất nhanh | Bảng tính có cột thuộc tính | Neo4j, Kuzu (DB native) |
 
 #### Giải thích từng cách — "khi nào chọn gì":
+
+**Cách đọc bảng này:** mỗi hàng là một cách lưu; cột giữa là điểm mạnh, điểm yếu; cột cuối là nên dùng khi nào. Ví dụ, Edge List đơn giản nhất nhưng tìm "ai quen ai" phải quét hết.
 
 | Cách lưu | Ưu điểm | Nhược điểm | Tình huống dùng |
 |----------|---------|------------|-----------------|
@@ -269,6 +295,8 @@ Bạn có bao nhiêu nodes?
 
 **Gợi ý cho người mới bắt đầu:** cứ dùng **Adjacency List** (NetworkX) trước. Chỉ đổi sang cách khác khi bạn đã *đo được* vấn đề cụ thể (chạy chậm, tốn bộ nhớ). Đừng tối ưu sớm khi chưa rõ vấn đề thực sự nằm ở đâu.
 
+> **Tóm gọn 1 câu:** Cùng một graph lưu được nhiều cách — mặc định dùng Adjacency List, chỉ đổi sang CSR/database khi đo được vấn đề thật.
+
 ---
 
 ## 4. Metrics & Đặc Trưng Của Graph
@@ -292,6 +320,8 @@ Bạn có bao nhiêu nodes?
 | **Modularity** | Các nhóm có **tách biệt rõ ràng** không? | Q cao = cộng đồng rõ ràng (team A tách team B) |
 | **Density** | Graph **đặc** (nhiều kết nối) hay **thưa**? | Mạng xã hội đầy đủ (dense) vs email cá nhân (sparse) |
 
+> **Tóm gọn 1 câu:** Bắt đầu với 3 metric cơ bản (Degree, Path Length, Clustering), rồi mới lên Betweenness/PageRank/Modularity — mỗi metric trả lời một câu hỏi riêng.
+
 ### 4.2 Code — Tính Metrics
 
 <details>
@@ -305,6 +335,8 @@ Bạn có bao nhiêu nodes?
 
 > **Nguyên tắc:** hãy chọn metric theo **câu hỏi bạn đang muốn trả lời**, chứ không phải theo kiểu "metric nào nghe hay".
 
+**Cách đọc bảng này:** cột "Mục đích" là điều bạn muốn biết; "Metric" là thước đo tương ứng; cột cuối là ví dụ câu hỏi thật. Ví dụ, muốn tìm nút thắt cổ chai → đo Betweenness.
+
 | Mục đích | Metric | Câu hỏi ví dụ |
 |----------|--------|---------------|
 | Tìm người quan trọng nhất (nhiều kết nối) | Degree Centrality | "Ai là trung tâm của mạng lưới nội bộ?" |
@@ -314,11 +346,16 @@ Bạn có bao nhiêu nodes?
 | Đo độ phức tạp codebase | Density + avg degree | "File nào nhiều dependencies nhất, dễ gãy khi thay đổi?" |
 | Đặt `max_hops` cho traversal | Diameter + avg path length | "Traverse bao nhiêu hops là đủ để không bỏ sót thông tin?" |
 
+> **Tóm gọn 1 câu:** Đo trước khi tin — mỗi câu hỏi thực tế chỉ cần 1-2 metric đúng, bảng trên là bản dịch từ "câu hỏi" sang "thước đo".
+
 ---
 
 ## 5. Property Graph vs RDF Triple Store
 
+> Phần này so sánh hai mô hình lưu dữ liệu đồ thị, để bạn biết chọn mô hình nào cho dự án của mình.
+
 ```
+(Đọc bảng trên: cột giữa là Property Graph — Neo4j/Kuzu, thuộc tính nằm thẳng trên node/cạnh, schema linh hoạt; cột phải là RDF Triple Store — dữ liệu theo bộ ba + URI, schema chặt theo ontology, suy luận OWL có sẵn nhưng thuộc tính trên cạnh thì phức tạp.)
 ┌─────────────────────────┬──────────────────────────────────┬──────────────────────────────────┐
 │ Khía cạnh               │ Property Graph (Neo4j, Kuzu)     │ RDF Triple Store (Jena, Virtuoso)│
 ├─────────────────────────┼──────────────────────────────────┼──────────────────────────────────┤
@@ -342,9 +379,13 @@ Ví dụ RDF (SPARQL):
 
 > 📄 **Code ví dụ:** [`examples/05-5-property-graph-vs-rdf-triple-store.sparql`](examples/05-5-property-graph-vs-rdf-triple-store.sparql)
 
+> **Tóm gọn 1 câu:** Mặc định chọn Property Graph (Neo4j/Kuzu/NetworkX); chỉ dùng RDF khi bạn làm linked open data hoặc cần suy luận OWL có sẵn.
+
 ---
 
 ## 6. Labs Thực Hành
+
+> Phần này là 3 bài tập tay với NetworkX: xây graph đầu tiên, so tốc độ duyệt, và dựng graph từ codebase của chính bạn.
 
 ### Lab 1: Xây Graph Đầu Tiên với NetworkX
 
@@ -357,6 +398,8 @@ Ví dụ RDF (SPARQL):
 ### Lab 3: Tạo Codebase Graph Mini
 
 > 📄 **Code ví dụ:** [`examples/08-lab-3-tao-codebase-graph-mini.py`](examples/08-lab-3-tao-codebase-graph-mini.py)
+
+> **Tóm gọn 1 câu:** Học graph bằng tay là nhanh nhất — làm đủ 3 lab, mỗi lab kiểm tra được kết quả bằng mắt (in ra node, đo thời gian, đếm cạnh).
 
 ---
 
@@ -381,6 +424,8 @@ Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query p
 - **Knowledge Graph Market**: 1.48B USD (2025) → 2.04B USD (2026). GraphRAG chuyển từ "enterprise luxury" → production baseline.
 
 Ref: https://microsoft.github.io/graphrag/
+
+> **Tóm gọn 1 câu:** Tin mới 2025-2026: GraphRAG ngày càng rẻ (LazyGraphRAG, LightRAG) và đang thành chuẩn production; chi tiết đã nằm trong bảng ở mục 11.
 
 ---
 

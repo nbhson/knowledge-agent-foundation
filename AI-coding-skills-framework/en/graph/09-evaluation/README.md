@@ -19,22 +19,30 @@
 
 ### Opening Story
 
-You've built your GraphRAG and demo it to your boss: *"Ask anything, it answers!"*
+This section shows why evaluation matters through a real demo that goes half-wrong.
+
+You've built your GraphRAG (a RAG system that answers from a knowledge graph instead of plain text chunks) and demo it to your boss: *"Ask anything, it answers!"*
 
 The boss asks 3 questions:
 
 1. *"What's the Phoenix project budget?"* → Answer: "500 million" ✅ (correct, it's in the doc)
 2. *"Who approved Phoenix?"* → Answer: "Alice" ✅ (correct, but confidence is 0.6 — low!)
-3. *"How many people are on the AI team?"* → Answer: "15 people" ❌ (the doc says 10 — the LLM hallucinated)
+3. *"How many people are on the AI team?"* → Answer: "15 people" ❌ (the doc says 10 — the LLM hallucinated, meaning it made the number up)
 
 Without a good way to measure, you **don't know** how often your GraphRAG is right, how often it makes things up, and **why** it goes wrong (bad extraction? bad lookup? bad writing?).
 
 **Evaluation is how you turn a fun demo into something you can trust in production.**
 
+> **One-line summary:** Until you measure each stage, you cannot tell a lucky demo from a reliable system.
+
 ### Why Is Evaluation Important?
+
+This section lists research findings that justify the metrics used later.
 
 > *"If you can't measure it, you can't improve it. If you can't separate retrieval from generation, you don't know where to fix."*
 > — RAG Evaluation Best Practices (2024)
+
+How to read it: column 1 is the row number; column 2 names the study; column 3 is what it proved. For instance, row 2 says: measure "did the model stick to the facts" (generation) separately from "did search find the right documents" (retrieval), and debugging gets twice as fast.
 
 | # | Source | Finding |
 |---|-------|-----------|
@@ -42,9 +50,15 @@ Without a good way to measure, you **don't know** how often your GraphRAG is rig
 | 2 | **RAGAS Framework (2024)** | Separating faithfulness (generation) from context relevance (retrieval) cuts **debug time by 50%** |
 | 3 | **OGB + FB15k-237** | KG completion: Hits@10 and MRR are the standard metrics — don't use plain accuracy |
 
+Glossary for the table: **LLM-as-judge** = a second model grades the answers on your behalf. **p<0.01** = the difference is statistically significant, not luck. **RAGAS** = a standard RAG evaluation framework. **OGB / FB15k-237** = public graph datasets used as standard tests. **Hits@10 / MRR** = ranking scores explained in section 4.
+
+> **One-line summary:** Research shows you must grade retrieval and generation separately — one blended score hides where the system is broken.
+
 ---
 
 ## Overview
+
+This section maps the whole evaluation framework: four stages, in order, feeding one benchmark and reporting layer.
 
 ```
                     ┌─────────────────────────────────┐
@@ -74,6 +88,8 @@ Without a good way to measure, you **don't know** how often your GraphRAG is rig
 
 ## Contents
 
+How to read it: column 1 is the section number; column 2 links to it; column 3 says in one line what it covers. For instance, section 2 is where Precision/Recall/MRR are defined.
+
 | # | Topic | Description |
 |---|--------|-------|
 | 1 | [Graph Quality](#1-graph-quality-metrics) | Coverage, connectivity, density |
@@ -99,8 +115,12 @@ Without a good way to measure, you **don't know** how often your GraphRAG is rig
 > - **Isolated Nodes** = nodes **with no relationships at all** — useless, just taking up space.
 > - **Invalid Edge Rate** = edges **violating the rules** (Person → MANAGES → Document) — must be 0%.
 > - **Temporal Freshness** = old edges that have **expired** but weren't updated — answering with stale information.
+>
+> **One-line summary:** If the graph itself is incomplete or broken, perfect code downstream cannot save the answers.
 
 ### 1.1 Metrics for the Graph Itself
+
+This section lists the nine numbers, what each means, and the bar each must clear.
 
 Before measuring retrieval/generation, measure **whether the graph is good**:
 
@@ -120,6 +140,8 @@ Before measuring retrieval/generation, measure **whether the graph is good**:
 └──────────────────────┴──────────────────────────────────┴──────────────────────┘
 ```
 
+How to read it: each row is one health check. "Metric" names it, "Meaning" says what it counts, "Good when" gives the target. For instance, Node Coverage > 80% means at least 4 out of 5 real entities must have been extracted; Invalid Edge Rate 0% means not a single edge may break the ontology (the schema that says which relation types are allowed between which node types).
+
 <details>
 <summary>Python Code — Graph Quality Metrics (Click to view)</summary>
 
@@ -128,6 +150,8 @@ Before measuring retrieval/generation, measure **whether the graph is good**:
 </details>
 
 ### 1.2 Coverage — Against Ground Truth
+
+This section explains coverage: compare what the graph extracted against a list of facts known to be true (the "ground truth").
 
 > 📄 **Example code:** [`examples/02-1-2-coverage-against-ground-truth.py`](examples/02-1-2-coverage-against-ground-truth.py)
 
@@ -144,8 +168,12 @@ Before measuring retrieval/generation, measure **whether the graph is good**:
 > - **MRR** = *how fast the correct answer appears* — "at what rank is the correct answer?" Correct at the top (rank 1) → score 1.0; at rank 5 → 0.2.
 >
 > **Think of the Precision/Recall formulas through a fishing analogy:** Precision = of the fish in the basket, how many are edible. Recall = of the fish in the pond, how many of the fish that exist did you catch.
+>
+> **One-line summary:** Retrieval evaluation asks one question — "did the system pull the right context?" — because a great model fed the wrong context still answers wrong.
 
 ### 2.1 Metrics for Retrieval
+
+This section defines the six retrieval scores and their formulas.
 
 ```
 ┌──────────────────────┬──────────────────────────────────┬──────────────────────┐
@@ -160,6 +188,8 @@ Before measuring retrieval/generation, measure **whether the graph is good**:
 └──────────────────────┴──────────────────────────────────┴──────────────────────┘
 ```
 
+How to read it: each row is one retrieval score. For instance, Precision@K with K=5 counts how many of the 5 retrieved items were actually relevant; MRR (Mean Reciprocal Rank) = average of 1 ÷ the rank of the first correct hit, so rank 1 scores 1.0 and rank 5 scores 0.2. "Ground truth" = the list of correct answers prepared in advance. "LLM-as-judge" = a second model grades the result for you.
+
 <details>
 <summary>Python Code — Retrieval Evaluation (Click to view)</summary>
 
@@ -168,6 +198,8 @@ Before measuring retrieval/generation, measure **whether the graph is good**:
 </details>
 
 ### 2.2 Comparing Vanilla RAG vs GraphRAG Retrieval
+
+This section shows how to A/B-test plain vector search ("vanilla RAG") against graph-based retrieval on the same questions.
 
 > 📄 **Example code:** [`examples/04-2-2-comparing-vanilla-rag-vs-graphrag-retrieval.py`](examples/04-2-2-comparing-vanilla-rag-vs-graphrag-retrieval.py)
 
@@ -185,6 +217,8 @@ Before measuring retrieval/generation, measure **whether the graph is good**:
 > **Analogies:** Faithfulness = "does the witness stick to the evidence or make things up?" Answer Relevance = "does the answer hit the heart of the question?"
 >
 > **How to measure (LLM-as-judge):** Split the answer into **claims** (small statements) → check whether each claim is in the context. Hallucination Rate = 1 - Faithfulness.
+>
+> **One-line summary:** Grade every sentence of the answer against the retrieved context — any sentence with no backing is a hallucination.
 
 ```
 ┌──────────────────────┬──────────────────────────────────┬──────────────────────┐
@@ -200,6 +234,8 @@ Before measuring retrieval/generation, measure **whether the graph is good**:
 └──────────────────────┴──────────────────────────────────┴──────────────────────┘
 ```
 
+How to read it: each row is one answer-quality score and how it is measured. For instance, Faithfulness is judged by asking a second model ("LLM-as-judge") whether every claim in the answer appears in the context; Hallucination Rate is simply 1 minus Faithfulness.
+
 <details>
 <summary>Python Code — Faithfulness & Hallucination Detection (Click to view)</summary>
 
@@ -209,13 +245,17 @@ Before measuring retrieval/generation, measure **whether the graph is good**:
 
 ### 3.2 LLM-as-Judge for Global Sensemaking (Microsoft Pattern)
 
+This section covers Microsoft's pattern for broad "big-picture" questions ("global sensemaking" = questions about themes across the whole corpus), where a judge model scores answers on comprehensiveness and diversity.
+
 > 📄 **Example code:** [`examples/06-3-2-llm-as-judge-for-global-sensemaking.py`](examples/06-3-2-llm-as-judge-for-global-sensemaking.py)
 
 ---
 
 ## 4. Knowledge Graph Completion Metrics
 
-For link prediction / KG completion (GNN, TransE, etc.):
+This section covers link prediction — guessing missing facts. KG completion = filling gaps in the graph, e.g. predicting that `Alice –WORKS_ON– X` exists because similar people do.
+
+For link prediction / KG completion (GNN, TransE, etc. — neural models that learn from graph structure):
 
 ```
 ┌──────────────┬──────────────────────────────────┬──────────────────────┐
@@ -228,6 +268,8 @@ For link prediction / KG completion (GNN, TransE, etc.):
 └──────────────┴──────────────────────────────────┴──────────────────────┘
 ```
 
+How to read it: each row is one ranking score. For instance, Hits@10 asks "was the right answer in the model's top 10 guesses?"; MR (Mean Rank) is the average rank of the right answer, so **lower is better**. AUC = a 0–1 quality score from the ROC curve (a standard trade-off plot of hits vs false alarms).
+
 <details>
 <summary>Python Code — KG Completion Evaluation (Click to view)</summary>
 
@@ -239,7 +281,11 @@ For link prediction / KG completion (GNN, TransE, etc.):
 
 ## 5. Benchmarks & Datasets
 
+This section lists the public test sets to use instead of inventing your own.
+
 ### 5.1 Benchmarks for GraphRAG
+
+How to read it: each row pairs a task type with a ready-made test set and its scoring metrics. For instance, a 2-hop question ("A approved B — what else did A do?") is tested on HotpotQA and scored with EM and F1. EM (Exact Match) = the answer must match the gold string exactly; F1 = partial word-overlap credit.
 
 ```
 ┌──────────────────────┬──────────────────────┬──────────────────────────────┐
@@ -255,7 +301,11 @@ For link prediction / KG completion (GNN, TransE, etc.):
 └──────────────────────┴──────────────────────┴──────────────────────────────┘
 ```
 
+Note on the table: " hops" = relationship steps followed to answer (1 hop = one edge). "KGQA" = question answering over a knowledge graph. "Explainability" = whether the system can show the reasoning path, not just the answer.
+
 ### 5.2 Benchmarks for KG Completion
+
+How to read it: each row is a public dataset of facts (triples = `subject–relation–object` statements) used to test link prediction. "Triples" says how many facts the dataset holds; the metric column lists the ranking scores to report. For instance, FB15k-237 holds 310K facts from Freebase and is scored with Hits@10 and MRR.
 
 ```
 ┌──────────────────────┬──────────────────────┬──────────────────────────────┐
@@ -270,14 +320,18 @@ For link prediction / KG completion (GNN, TransE, etc.):
 
 ### 5.3 Creating a Custom Benchmark
 
+This section shows how to build a benchmark from your own documents — with the caveat that a self-made test set only proves what your pipeline already reads well, so human review is still required.
+
 > 📄 **Example code:** [`examples/08-5-3-creating-a-custom-benchmark.py`](examples/08-5-3-creating-a-custom-benchmark.py)
 
 ### 5.4 The "Evaluation Gaps" in GraphRAG (2025-2026)
 
+This section lists four blind spots that standard evaluation pipelines miss — reading it helps you avoid grading only half the problem.
+
 > **📌 Core Concept — evaluating GraphRAG by measuring only retrieval/faithfulness is NOT enough.** New research shows 3 common gaps in today's evaluation pipelines:
 
 **1. Missing "Evidence Recall" & "Context Relevancy"** — most systems only measure *"does the answer match the expected answer"* (EM/F1), not *"was the evidence fed to the LLM correct/sufficient"*.
-- **Evidence Recall** = of the evidence the LLM received (chunks + graph paths), what % was **actually needed to answer** the question.
+- **Evidence Recall** = of the evidence the LLM received (chunks + graph paths), what % was **actually needed to answer** the question. Low recall means the model may have answered by luck.
 - **Context Relevancy** = how much **irrelevant filler** was in the evidence fed in. Measured with a small question: *"In this context, which sentences do not help answer the question?"*
 - Why it matters: high EM/F1 with skewed evidence → the system can't be trusted (retrieval was wrong but the LLM "bluffed" its way to the right answer — *lucky*).
 
@@ -292,9 +346,13 @@ For link prediction / KG completion (GNN, TransE, etc.):
 
 > 📄 **Example code:** [`examples/09-5-4-the-evaluation-gaps-in-graphrag-2025.py`](examples/09-5-4-the-evaluation-gaps-in-graphrag-2025.py)
 
+> **One-line summary:** Check what evidence reached the model and grade single-hop, multi-hop, and global questions on separate tracks — a single score hides both lucky answers and lost categories.
+
 ---
 
 ## 6. Evaluation Framework
+
+This section points to the complete runnable evaluation pipeline — the four stages above glued into one script.
 
 <details>
 <summary>Python Code — Complete Evaluation Pipeline (Click to view)</summary>
@@ -306,6 +364,8 @@ For link prediction / KG completion (GNN, TransE, etc.):
 ---
 
 ## 7. Hands-On Labs
+
+This section gives three exercises to run yourself — each proves one metric works as claimed. "Ground truth" = a prepared list of correct answers to score against.
 
 ### Lab 1: Evaluate Graph Quality
 
@@ -323,6 +383,8 @@ For link prediction / KG completion (GNN, TransE, etc.):
 1. Create 20 QA pairs with `context` + `expected answer`
 2. Have the LLM generate with the correct context vs without context
 3. Measure faithfulness — with context it should be >0.8, without context the hallucination rate is high
+
+> **One-line summary (Labs):** Each lab proves one claim: the graph metrics detect bad graphs, hybrid retrieval beats vector-only on multi-hop, and faithfulness collapses when context is removed.
 
 ---
 
@@ -342,6 +404,8 @@ For link prediction / KG completion (GNN, TransE, etc.):
 
 ## GraphRAG — 2026 Update
 
+This section tracks what changed recently, so you do not build to 2024 assumptions. LazyGraphRAG = a cheaper GraphRAG variant that puts off expensive LLM summarisation until query time.
+
 Microsoft GraphRAG (2024-2025): uses knowledge graphs to enhance RAG. Complex (multi-hop) queries outperform vector-only RAG.
 
 **New 2025-2026 developments:**
@@ -354,3 +418,5 @@ Microsoft GraphRAG (2024-2025): uses knowledge graphs to enhance RAG. Complex (m
 Ref: https://microsoft.github.io/graphrag/
 
 *End of the Graph Engineering Track — return to [README](../README.md) for the wrap-up.*
+
+> **One-line summary (file):** Evaluate graph → retrieval → generation → completion, in that order, with stage-specific metrics and public benchmarks — never trust one blended number.

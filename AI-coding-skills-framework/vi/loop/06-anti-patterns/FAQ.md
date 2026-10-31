@@ -1,6 +1,6 @@
 # ❓ FAQ — Loop hỏng thật (10 sai lầm + cách loop thực sự hỏng)
 
-Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
+Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông — nó trỏ tới mục tương ứng trong README các anti-pattern ("anti-pattern" = cách làm tưởng hay nhưng thực ra gây hại).
 
 Từ viết tắt dùng trong file: **CI** = hệ thống chạy kiểm tra tự động khi bạn đẩy code; **verifier** = phần kiểm chứng kết quả (người hoặc agent khác); **state** = file lưu trạng thái giữa các lần chạy; **denylist** = danh sách file tuyệt đối không được đụng.
 
@@ -8,21 +8,23 @@ Từ viết tắt dùng trong file: **CI** = hệ thống chạy kiểm tra tự
 
 ## Q1. Loop cứ sửa đi sửa lại cùng một lỗi, 5 lần chưa xong — dừng thế nào? [→ §2.1 Infinite Fix Loop + anti-pattern #2]
 
+Phần này giải cách chặn vòng lặp sửa lỗi vô hạn — lỗi phổ biến và tốn tiền nhất của loop.
+
 **Bạn sẽ thấy**
 
-Cùng một yêu cầu gộp code (pull request) bị loop vá lại liên tục: lần 1 CI đỏ, lần 2 CI vẫn đỏ, lần 3 CI xanh nhưng một bộ test khác lại đỏ. Mỗi vòng lặp đẩy thêm một lượng lớn token vào tài khoản. Loop không bao giờ dừng, vì trong cấu hình không có chỗ nào buộc nó phải dừng. Mức độ thiệt hại: **S2 — có hại**, tức code sai có thể lọt vào nhánh chính.
+Cùng một yêu cầu gộp code (pull request) bị loop vá lại liên tục: lần 1 CI đỏ, lần 2 CI vẫn đỏ, lần 3 CI xanh nhưng một bộ test khác lại đỏ. Mỗi vòng lặp đẩy thêm một lượng lớn token vào tài khoản. Loop không bao giờ dừng, vì trong cấu hình không có chỗ nào buộc nó phải dừng. Mức độ thiệt hại: **S2 — có hại**, tức code sai có thể lọt vào nhánh chính. ("S2" = mức nghiêm trọng thứ 2 trong thang S1 lãng phí → S3 sự cố nặng.)
 
 **Vì sao**
 
-Không có trần số lần thử (hard cap) nghĩa là câu "cứ thử tới khi CI xanh" không bao giờ thoát. Ba nguyên nhân gốc hay gặp: verifier quá yếu; verifier chạy cùng phiên với người viết nên nhìn mọi thứ đều ổn; và chẩn đoán sai nguyên nhân — loop đang chữa triệu chứng chứ không phải bệnh. Test chạy lúc được lúc không (flaky test) rất dễ bị nhầm thành lỗi mới.
+Không có trần số lần thử (hard cap) nghĩa là câu "cứ thử tới khi CI xanh" không bao giờ thoát. Ba nguyên nhân gốc hay gặp: verifier quá yếu; verifier chạy cùng phiên với người viết nên nhìn mọi thứ đều ổn; và chẩn đoán sai nguyên nhân — loop đang chữa triệu chứng chứ không phải bệnh. Test chạy lúc được lúc không ("flaky test") rất dễ bị nhầm thành lỗi mới.
 
 **Làm gì**
 
-1. Đặt trần cứng, ví dụ 3 lần thử. Lần thứ 3 vẫn đỏ thì dừng và chuyển việc.
+1. Đặt trần cứng, ví dụ 3 lần thử. Lần thứ 3 vẫn đỏ thì dừng và chuyển việc — đừng tin "thử thêm lần nữa là được".
 2. Ghi số lần thử vào `STATE.md` ngay từ lần đầu, để loop tự biết mình đã tới đâu.
-3. Tách verifier khỏi người viết: khác model hoặc khác mức cố gắng (effort), và đổi câu lệnh sang kiểu "tìm lý do để từ chối".
-4. Test không ổn định phải được phân loại riêng, không đưa vào danh sách lỗi cần sửa.
-5. Khi chuyển việc, đính kèm đủ bối cảnh: log CI, diff, số lần thử, đường dẫn file.
+3. Tách verifier khỏi người viết: khác model hoặc khác mức cố gắng ("effort"), và đổi câu lệnh sang kiểu "tìm lý do để từ chối" — một agent vừa viết vừa duyệt thì luôn thấy bản thân ổn.
+4. Test không ổn định phải được phân loại riêng, không đưa vào danh sách lỗi cần sửa — nếu không loop sẽ đốt token chữa một "bệnh" không tồn tại.
+5. Khi chuyển việc, đính kèm đủ bối cảnh: log CI, diff ("diff" = tập thay đổi), số lần thử, đường dẫn file — người nhận đỡ phải mò lại từ đầu.
 
 ```
 so_lan = state.read("attempt_count") + 1
@@ -32,13 +34,19 @@ if so_lan >= 3:
     return
 ```
 
+Cách đọc code: đếm số lần thử tăng dần trong state; tới 3 thì đẩy việc vào mục "chờ người" trong `STATE.md` và dừng ("escalate" = đẩy lên người).
+
 **Kiểm tra**
 
 Đặt trần 3 rồi cố tình tạo một lỗi không sửa được. Xem loop có dừng đúng lần thứ 3 và có ghi vào mục "chờ người" trong `STATE.md` không. Trong `loop-run-log.md` phải thấy số lần thử tăng đều mỗi lần chạy.
 
+> **Tóm gọn 1 câu:** Đặt trần cứng 3 lần thử, ghi số lần vào state, và tách verifier khỏi người viết — không trần thì "cứ thử tới khi xanh" không bao giờ dừng.
+
 ---
 
 ## Q2. Cho chính agent đó viết code rồi tự duyệt, thậm chí tự gộp — có ổn không? [→ anti-pattern #1, #9 + §2.3 Verifier Theater]
+
+Phần này giải vì sao người viết code không được là người duyệt code của chính mình — và nhất là không được tự gộp.
 
 **Bạn sẽ thấy**
 
@@ -46,15 +54,15 @@ Verifier báo "duyệt" trong khi CI vẫn đỏ, hoặc người review mở co
 
 **Vì sao**
 
-Đây là cái bẫy tự xác nhận: cùng một model, cùng bối cảnh, vừa viết vừa duyệt thì nó bảo vệ chính cách viết của mình. Câu lệnh kiểm chứng mơ hồ kiểu "nhìn có ổn không" cũng khiến nó gật đầu cho hết. Tệ hơn, có verifier không hề chạy test, chỉ đọc diff.
+Đây là cái bẫy tự xác nhận: cùng một model, cùng bối cảnh, vừa viết vừa duyệt thì nó bảo vệ chính cách viết của mình. Câu lệnh kiểm chứng mơ hồ kiểu "nhìn có ổn không" cũng khiến nó gật đầu cho hết. Tệ hơn, có verifier không hề chạy test, chỉ đọc diff — gọi là "verifier theater" (kiểm chứng trò hát rơm: có vẻ như có kiểm tra, thật ra không).
 
 **Làm gì**
 
-1. Tách verifier thành sub-agent hoặc model riêng, stance mặc định là TỪ CHỐI.
-2. Buộc verifier chạy test và lint, rồi bắt nó trích ra dòng output thật — không nhận phán quyết suông.
-3. Không bao giờ cho loop tự gộp khi chưa có danh sách đường dẫn được phép (allowlist) tường minh; đường dẫn nằm trong danh sách cấm (denylist) thì bắt buộc có người gộp tay.
-4. Với việc chạy không cần người canh (unattended), dùng model mạnh hơn cho phần kiểm chứng.
-5. Mỗi lần chạy phải ghi thêm vào `loop-run-log.md`, không chỉ có `STATE.md`.
+1. Tách verifier thành sub-agent hoặc model riêng, stance mặc định là TỪ CHỐI — "sub-agent" = agent con; "stance mặc định" = tư thế ban đầu là nghi ngờ, không phải tin ngay.
+2. Buộc verifier chạy test và lint ("lint" = công cụ soi lỗi định dạng/cú pháp), rồi bắt nó trích ra dòng output thật — không nhận phán quyết suông.
+3. Không bao giờ cho loop tự gộp khi chưa có danh sách đường dẫn được phép (allowlist = "danh sách trắng") tường minh; đường dẫn nằm trong danh sách cấm (denylist) thì bắt buộc có người gộp tay.
+4. Với việc chạy không cần người canh ("unattended"), dùng model mạnh hơn cho phần kiểm chứng — kiểm chứng là khâu đáng đầu tư nhất.
+5. Mỗi lần chạy phải ghi thêm vào `loop-run-log.md`, không chỉ có `STATE.md` — log chỉ-thêm mới là bằng chứng không thể sửa.
 
 ```
 verifier_prompt = "Tìm lý do để TỪ CHỐI bản diff này. Chạy test và lint,
@@ -62,13 +70,19 @@ verifier_prompt = "Tìm lý do để TỪ CHỐI bản diff này. Chạy test v�
 allow_auto_merge = paths ⊆ allowlist(trong gate.yaml)
 ```
 
+Cách đọc code: dòng 1 là chỉ thị cho verifier — nhiệm vụ của nó là tìm lỗi, không phải khen; dòng 2 nghĩa là chỉ tự gộp khi mọi file đã đổi nằm trọn trong allowlist khai trong `gate.yaml` (file cấu hình cổng duyệt).
+
 **Kiểm tra**
 
 Cố tình tạo một bản diff có lỗi rõ ràng và đưa cho verifier duyệt. Nếu nó vẫn duyệt thì verifier đang làm trò. Thử gộp file nằm trong denylist, phải bị chặn và báo cho người.
 
+> **Tóm gọn 1 câu:** Người viết không được tự duyệt: verifier phải là agent riêng với tư thế từ chối, phải chứng minh bằng output test thật, và tự gộp chỉ xảy ra trong allowlist.
+
 ---
 
 ## Q3. Bot ping tôi mỗi 5 phút, cả team đã tắt bot — giờ làm sao? [→ §2.4 Notification Fatigue + anti-pattern #7]
+
+Phần này giải cách chữa "tê liệt thông báo" — tình trạng thông báo quá nhiều đến mức không ai đọc nữa.
 
 **Bạn sẽ thấy**
 
@@ -81,18 +95,22 @@ Thông báo được gửi cho *mọi* lần chạy, thay vì chỉ cho *những
 **Làm gì**
 
 1. Chỉ báo khi cần quyết định của người: có thay đổi đề xuất, có lần thử hết trần, có việc nằm quá 24 giờ chưa ai xử lý.
-2. Với loop chỉ báo cáo (report-only, mức L1), dùng chế độ tóm tắt theo ngày thay vì ping từng lần.
-3. Siết lại luật xếp mức ưu tiên trong phần triage, không nâng hết lên "cao".
-4. Ghi rõ điều kiện tạm dừng và dừng hẳn (pause/kill) vào file `LOOP.md`, kèm mẫu ngân sách.
-5. Đo lại sau một tuần: bao nhiêu thông báo gửi, bao nhiêu được mở ra đọc.
+2. Với loop chỉ báo cáo (report-only, mức L1), dùng chế độ tóm tắt theo ngày thay vì ping từng lần — một email tóm tắt ngày là đủ.
+3. Siết lại luật xếp mức ưu tiên trong phần triage, không nâng hết lên "cao" — khi mọi việc đều khẩn thì không còn gì khẩn.
+4. Ghi rõ điều kiện tạm dừng và dừng hẳn (pause/kill) vào file `LOOP.md`, kèm mẫu ngân sách — loop phải có điểm kết thúc, không chạy 24/7 vô định.
+5. Đo lại sau một tuần: bao nhiêu thông báo gửi, bao nhiêu được mở ra đọc — tỉ lệ mở thấp là bằng chứng bạn vẫn đang spam.
 
 **Kiểm tra**
 
 Trong một tuần chạy thật, số thông báo phải giảm rõ và không có thông báo nào không hành động được. Mọi việc nằm trong mục "chờ người" quá 24 giờ đều phải sinh một cảnh báo.
 
+> **Tóm gọn 1 câu:** Chỉ ping khi cần người quyết định, gom phần còn lại thành tóm tắt ngày — spam thông báo là giết luôn kênh cảnh báo thật của chính bạn.
+
 ---
 
 ## Q4. `STATE.md` toàn trỏ tới PR đã merge, ticket đã đóng — loop đang làm việc trên cái bóng? [→ §2.2 State Rot + §2.5 Token Burn]
+
+Phần này giải cách chữa "state mục nát" — khi file trạng thái chứa toàn việc đã xong, và chi phí đi kèm. "Merge" = gộp code vào nhánh chính; "ticket" = phiếu công việc.
 
 **Bạn sẽ thấy**
 
@@ -100,27 +118,31 @@ File `STATE.md` liệt kê những yêu cầu gộp code đã được merge t�
 
 **Vì sao**
 
-Không có bước dọn dẹp (prune) cuối mỗi lần chạy, và state không được đọc lại ở đầu lần chạy. Khi nhiều loop cùng ghi vào một file không có cấu trúc (schema), nội dung lẫn lộn và thêm rác. Phía chi phí: nhịp chạy dưới một phút với sub-agent nặng, không thoát sớm khi danh sách việc đã rỗng, và retry cả cả dây chuyền khi gặp lỗi mạng tạm thời.
+Không có bước dọn dẹp ("prune") cuối mỗi lần chạy, và state không được đọc lại ở đầu lần chạy. Khi nhiều loop cùng ghi vào một file không có cấu trúc ("schema"), nội dung lẫn lộn và thêm rác. Phía chi phí: nhịp chạy dưới một phút với sub-agent nặng, không thoát sớm khi danh sách việc đã rỗng, và retry ("retry" = chạy lại) cả dây chuyền khi gặp lỗi mạng tạm thời.
 
 **Làm gì**
 
-1. Cuối mỗi lần chạy, xoá các mục đã merge hoặc đã đóng khỏi `STATE.md`.
-2. Đầu mỗi lần chạy, kiểm tra `Last run` và kiểm tra lại các mã định danh còn sống không.
-3. Tách state: mỗi pattern một file riêng, hoặc chia mục rõ ràng kèm luật dọn.
-4. Chạy một lượt triage rẻ tiền trước; nếu danh sách rỗng thì dừng, không vào chuỗi agent đầy đủ.
+1. Cuối mỗi lần chạy, xoá các mục đã merge hoặc đã đóng khỏi `STATE.md` — danh sách chỉ chứa việc đang sống.
+2. Đầu mỗi lần chạy, kiểm tra `Last run` và kiểm tra lại các mã định danh ("ID") còn sống không — nhánh còn tồn tại, PR còn mở hay không.
+3. Tách state: mỗi pattern một file riêng, hoặc chia mục rõ ràng kèm luật dọn — tránh hai loop ghi lẫn vào nhau.
+4. Chạy một lượt triage rẻ tiền trước; nếu danh sách rỗng thì dừng, không vào chuỗi agent đầy đủ — đừng triệu hồi cả đội chỉ để báo "không có gì".
 5. Đặt ngân sách token theo ngày; vượt ngân sách thì tạm dừng loop, hết việc thì xoá lịch chạy.
 
 **Kiểm tra**
 
 Giả lập 3 mục đã đóng trong `STATE.md`, chạy loop một lần, xem chúng có biến mất không. Khi danh sách rỗng, log phải cho thấy lượt triage rẻ và không có lần gọi sub-agent nào.
 
+> **Tóm gọn 1 câu:** Dọn state cuối mỗi lần chạy và thoát sớm khi danh sách rỗng — loop làm việc trên dữ liệu cũ vừa sai vừa đốt tiền.
+
 ---
 
 ## Q5. Loop tự refactor cả mấy module không liên quan, đụng cả file migration database — chặn thế nào? [→ §2.6 Over-Reach + anti-pattern #9]
 
+Phần này giải cách chặn loop "qua tay" — được giao việc nhỏ nhưng tự tiện sửa lớn. "Refactor" = viết lại cấu trúc code; "migration" = file đổi cấu trúc database.
+
 **Bạn sẽ thấy**
 
-Một việc nhỏ như sửa lỗi null check kéo theo diff 40 file: refactor cả module không liên quan, "sửa" vấn đề thiết kế, chạm vào file cấm. Đây là đường đi ngắn nhất từ lỗi nhỏ tới sự cố production. Mức độ: **S2**, leo thẳng lên **S3** nếu file bị đụng là migration, cấu hình hạ tầng hoặc khoá.
+Một việc nhỏ như sửa lỗi null check ("null check" = đoạn code xử lý giá trị rỗng) kéo theo diff 40 file: refactor cả module không liên quan, "sửa" vấn đề thiết kế, chạm vào file cấm. Đây là đường đi ngắn nhất từ lỗi nhỏ tới sự cố production. Mức độ: **S2**, leo thẳng lên **S3** nếu file bị đụng là migration, cấu hình hạ tầng hoặc khoá.
 
 **Vì sao**
 
@@ -128,15 +150,17 @@ Kỹ năng "sửa nhỏ nhất" của agent quá dễ dãi; không có danh sác
 
 **Làm gì**
 
-1. Khai danh sách cấm trong chính kỹ năng (skill) chứ không để trong prompt yếu.
-2. Áp nguyên tắc "diff nhỏ nhất có thể"; verifier kiểm tra lại danh sách file đã bị chạm.
-3. Để triage chỉ được tín hiệu (báo cáo), không được tự động giao việc kiến trúc.
+1. Khai danh sách cấm trong chính kỹ năng ("skill") chứ không để trong prompt yếu — chỉ thị trong skill là ràng buộc, chỉ thị trong prompt là lời khuyên model có thể quên.
+2. Áp nguyên tắc "diff nhỏ nhất có thể"; verifier kiểm tra lại danh sách file đã bị chạm — bản sửa phải chạm đúng những file cần sửa.
+3. Để triage chỉ được tín hiệu ("signal only" = chỉ báo cáo), không được tự động giao việc kiến trúc — việc refactor là quyết định của người.
 4. Không tự gộp cho bất kỳ file nào nằm trong danh sách cấm.
-5. Nếu nhiều loop chạy song song, mỗi loop sửa trong một git worktree riêng và ghi khoá "PR #1234 — đang xử lý" vào state.
+5. Nếu nhiều loop chạy song song, mỗi loop sửa trong một git worktree riêng (bản sao tạm của repo) và ghi khoá "PR #1234 — đang xử lý" vào state — tránh hai loop cùng sửa một PR.
 
 **Kiểm tra**
 
 Một nhiệm vụ nhỏ mà không liên quan phải cho diff dưới 5 file. Chạm file trong danh sách cấm thì bị chặn và báo lên. Khi hai loop cùng một nhánh, phải thấy khoá worktree chứ không phải hai thay đổi chồng lên nhau.
+
+> **Tóm gọn 1 câu:** Chặn over-reach bằng denylist ghi trong skill + nguyên tắc diff nhỏ nhất + verifier đếm file bị đụng — một việc nhỏ mà diff 40 file là loop đã tự cho phép mình làm chuyện khác.
 
 ---
 

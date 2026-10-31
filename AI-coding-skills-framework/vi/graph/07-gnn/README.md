@@ -27,17 +27,29 @@ Bạn có Knowledge Graph với 10,000 người và projects. Bạn muốn:
 
 **Rule-based reasoning** (module 06) làm được với rules thủ công — nhưng không scale khi có hàng trăm loại quan hệ. **GNN** học tự động từ cấu trúc graph: không cần viết rule, chỉ cần examples.
 
+Giải thích nhanh 3 từ khóa trong 3 câu hỏi trên:
+
+- **Link prediction** = đoán quan hệ mới. Ví dụ: đoán Alice sẽ WORKS_ON project nào tiếp theo.
+- **Node classification** = gắn nhãn cho từng node. Ví dụ: đoán người này thuộc team nào.
+- **KG completion** = điền phần thiếu vào Knowledge Graph. Ví dụ: graph thiếu cạnh "Alice WORKS_ON Phoenix" → GNN đoán ra cạnh đó.
+
 > *"Rules tell the graph what you know. GNNs discover what you don't know you know."*
+
+> **Tóm gọn 1 câu:** GNN học trực tiếp từ cấu trúc graph để đoán quan hệ mới, gắn nhãn node và điền dữ liệu thiếu — thay vì phải viết tay từng rule cho từng loại quan hệ.
 
 ### Tại Sao GNN Quan Trọng?
 
 > *"GNN là deep learning cho dữ liệu có cấu trúc quan hệ — như CNN là deep learning cho ảnh."*
+
+Cách đọc bảng này: mỗi dòng là một nghiên cứu; cột **Phát Hiện** cho biết GNN tốt hơn phương pháp cũ bao nhiêu. Ví dụ dòng 1: **MLP** = mạng neural thường chỉ đọc thông tin riêng của từng node, không nhìn quan hệ; **MRR** = điểm xếp hạng, đáp án đúng càng lên đầu danh sách thì điểm càng gần 1.0.
 
 | # | Nguồn | Phát Hiện |
 |---|-------|-----------|
 | 1 | **OGB Benchmark (2024)** | GNN tăng **15-25% accuracy** trên node classification vs MLP chỉ dùng node features |
 | 2 | **Knowledge Graph Completion (FB15k-237)** | R-GCN + scoring function đạt **MRR 0.35** vs TransE 0.29 |
 | 3 | **Anthropic (2025)** | GNN-based link prediction gợi ý **missing relations** với precision 72% trên enterprise KG |
+
+> **Tóm gọn 1 câu:** Con số nghiên cứu cho thấy GNN đoán chính xác hơn hẳn phương pháp cũ trên cả phân loại node lẫn điền thiếu quan hệ vào graph.
 
 ---
 
@@ -63,6 +75,10 @@ Knowledge Graph
     └──► KG Completion ──► Dự đoán missing triples
 ```
 
+Đọc sơ đồ này thế nào: data vào = Knowledge Graph (các node + features); giữa = các lớp GNN "truyền tin nhắn" giữa các node; ra = 3 loại kết quả — gắn nhãn node, đoán quan hệ mới, đoán dữ liệu thiếu (**missing triples** = bộ 3 *chủ ngữ–quan hệ–tân ngữ* còn thiếu, ví dụ `Alice —WORKS_ON→ Phoenix`).
+
+> **Tóm gọn 1 câu:** GNN nhận graph làm đầu vào, cho các node "trò chuyện" qua các lớp, rồi xuất ra embedding dùng cho mọi bài toán đoán quan hệ.
+
 ---
 
 ## Nội Dung
@@ -78,6 +94,10 @@ Knowledge Graph
 | 7 | [Heterogeneous & Temporal](#7-heterogeneous--temporal-gnn) | RGCN/HAN/HGT, TGN cho graph động |
 | 8 | [PyG](#8-triển-khai-với-pyg) | Training pipeline |
 
+Cách đọc bảng này: đây là lộ trình 8 chủ đề nên đọc theo thứ tự. Cột **Mô tả** ghi ý chính của từng phần. Ví dụ dòng 1: *Message passing* = cách các node gửi thông tin cho nhau; *aggregation* = gộp thông tin nhận được; *update* = cập nhật thông tin của chính node.
+
+> **Tóm gọn 1 câu:** Phần nội dung đi từ trực quan (GNN là gì) đến từng dòng model (GCN, GraphSAGE, GAT), rồi đến ứng dụng và code thực tế.
+
 ---
 
 ## 1. GNN Là Gì? Intuition
@@ -90,6 +110,8 @@ Knowledge Graph
 > **Analogies:**
 > - **MLP = Học sinh học thuộc bài**: Biết từng dòng lý thuyết (node features) nhưng không hiểu tài liệu nối nhau thế nào.
 > - **GNN = Muốn hiểu bài, hỏi bạn cùng lớp**: Embedding của bạn = (kiến thức của bạn) + (kiến thức bạn bè). Lớp càng sâu → hỏi càng nhiều bạn bè gián tiếp.
+
+> **Tóm gọn 1 câu:** GNN khác MLP ở chỗ nó không chỉ đọc thông tin riêng của từng node, mà còn đọc cả mối quan hệ giữa các node — như hỏi bạn cùng lớp thay vì chỉ học thuộc bài.
 
 ### 1.1 Message Passing Framework
 
@@ -111,6 +133,8 @@ Ví dụ minh họa — "Alice cần hiểu team của mình":
 
 → Sau K layers, Alice biết thông tin cách K bước trong graph
 ```
+
+> **Tóm gọn 1 câu:** Message passing = mỗi node hỏi dần các node lân cận; càng nhiều lớp, node càng biết thông tin từ càng xa (K lớp = biết xa K bước).
 
 ```
 Layer k cho node v:
@@ -153,6 +177,8 @@ Ví dụ: Alice và Carol chưa từng gặp nhau (không có edge trực tiếp
        → MLP: embeddings khác nhau (vì features ban đầu khác) — không biết họ liên quan
 ```
 
+> **Tóm gọn 1 câu:** GNN mạnh hơn MLP vì embedding của mỗi node chứa cả thông tin từ các node lân cận — hai người cùng làm một project sẽ được nhận diện là "liên quan", dù profile gốc khác nhau.
+
 ---
 
 ## 2. GCN — Graph Convolutional Network
@@ -182,6 +208,8 @@ H^{(l+1)} = σ( D^{-1/2} Â D^{-1/2} H^{(l)} W^{(l)} )
 
 **Cảnh báo cho người mới:** Đừng hiểu lầm GCN là "tự động học quan hệ". GCN chỉ **trung bình hóa** neighbors (uniform), không phân biệt neighbor nào quan trọng. Nếu bạn cần phân biệt tầm quan trọng → dùng GAT (Section 3).
 
+> **Tóm gọn 1 câu:** GCN = lấy trung bình có trọng số của "chính tôi + bạn bè tôi", rồi lọc nhiễu — đơn giản, nhanh, nhưng coi mọi neighbor ngang hàng nhau.
+
 <details>
 <summary>Python Code — GCN Layer Từ Scratch (Click để xem)</summary>
 
@@ -198,6 +226,8 @@ H^{(l+1)} = σ( D^{-1/2} Â D^{-1/2} H^{(l)} W^{(l)} )
 
 </details>
 
+> **Tóm gọn 1 câu:** Ghép 2 lớp GCN lại là đủ để phân loại node thực tế — mỗi lớp cho node biết thêm thông tin từ xa 1 bước.
+
 ---
 
 ## 3. GraphSAGE & GAT
@@ -211,6 +241,8 @@ H^{(l+1)} = σ( D^{-1/2} Â D^{-1/2} H^{(l)} W^{(l)} )
 > - **GCN = Học thuộc khu phố**: Biết rõ từng ngõ ngách của khu đó. Khu phố mới → học lại từ đầu.
 > - **GraphSAGE = Học cách lắng nghe**: Hỏi bạn bè rồi tổng hợp → áp dụng ở bất kỳ đâu, có bạn mới thì hỏi bạn mới.
 > - **GAT = Chọn bạn chơi mà chơi**: Không phải bạn nào cũng có trọng lượng như nhau — thầy cô quan trọng hơn bạn lướt qua.
+
+> **Tóm gọn 1 câu:** Ba dòng model = ba mức "thông minh" dần: GCN học thuộc từng khu phố, GraphSAGE học cách hỏi bất cứ ai, GAT còn biết chọn ai đáng hỏi nhất.
 
 ### 3.1 GraphSAGE — Inductive
 
@@ -231,6 +263,8 @@ GraphSAGE aggregators (3 cách gộp bạn bè):
   → Ghép "tôi cũ" + "bạn bè tôi" lại, biến hóa bằng bộ lọc học được
 ```
 
+> **Tóm gọn 1 câu:** GraphSAGE học một "công thức hỏi bạn bè" dùng được cho mọi node — nên node mới xuất hiện cũng embed được ngay, không cần huấn luyện lại.
+
 ### 3.2 GAT — Attention
 
 GAT học **attention weight** cho từng neighbor — không phải ai cũng quan trọng như nhau.
@@ -250,10 +284,12 @@ Bước 3 — Gộp có trọng số:
   h_v' = σ( Σ_{u∈N(v)} α_{vu} · W h_u )
   → "Bạn quan trọng → đóng góp nhiều; bạn kém quan trọng → đóng góp ít"
 
-Multi-head (nhiều "góc nhìn"):
+  Multi-head (nhiều "góc nhìn"):
   h_v' = CONCAT(head_1, ..., head_K)  hoặc  MEAN(heads)
   → Giống như hỏi K chuyên gia riêng lẻ rồi gộp — giảm variance, ổn định hơn
 ```
+
+> **Tóm gọn 1 câu:** GAT chấm điểm từng neighbor xem "ai quan trọng với tôi" rồi gộp theo tỷ trọng — nên node kết nối nhiều không bị bạn bè ít quan trọng "pha loãng".
 
 <details>
 <summary>Python Code — GAT Với PyG (Click để xem)</summary>
@@ -263,6 +299,8 @@ Multi-head (nhiều "góc nhìn"):
 </details>
 
 ### 3.3 So Sánh
+
+Cách đọc bảng này: mỗi dòng là một tiêu chí so sánh giữa 3 model; ✅ = có, ❌ = không. Ví dụ dòng "Inductive?": GCN ❌ nghĩa là GCN **không** xử lý được node mới mà không huấn luyện lại; dòng "Scalability" nói chi phí tăng thế nào khi graph lớn (O(N²) = tốn theo bình phương số node — graph càng to càng đắt đỏ).
 
 ```
 ┌─────────────────┬──────────────┬──────────────┬──────────────┐
@@ -275,6 +313,8 @@ Multi-head (nhiều "góc nhìn"):
 │                 │ Semi-superv. │ inductive    │ Ranked neighbors│
 └─────────────────┴──────────────┴──────────────┴──────────────┘
 ```
+
+> **Tóm gọn 1 câu:** Graph nhỏ dùng GCN cho rẻ; graph lớn cần node mới → GraphSAGE; cần phân biệt neighbor quan trọng → GAT.
 
 ---
 
@@ -289,9 +329,13 @@ Multi-head (nhiều "góc nhìn"):
 
 </details>
 
+> **Tóm gọn 1 câu:** Link prediction = tính "độ hợp cặp" giữa hai node bằng embedding rồi chọn cặp có điểm cao nhất — chính là cách gợi ý quan hệ còn thiếu.
+
 ### 4.2 Node Classification — "Người này thuộc team nào?"
 
 > 📄 **Code ví dụ:** [`examples/05-4-2-node-classification-nguoi-nay-thuoc-team.py`](examples/05-4-2-node-classification-nguoi-nay-thuoc-team.py)
+
+> **Tóm gọn 1 câu:** Node classification = lấy embedding cuối cùng của node (đã "hội ý" với cả graph) rồi đưa qua một lớp phân loại để gắn nhãn.
 
 ---
 
@@ -310,11 +354,17 @@ h_v^{(l+1)} = σ( Σ_{r∈R} Σ_{u∈N_r(v)} (1/c_{v,r}) W_r^{(l)} h_u^{(l)} + W
   W_0 = self-loop weights
 ```
 
+Đọc công thức thế nào: khác GCN chỉ có một ma trận trọng số duy nhất, R-GCN (**Relational GCN** = GCN phân loại quan hệ) cho **mỗi loại quan hệ một ma trận riêng**. Ví dụ: cạnh `MANAGES` đi qua "lăng kính" riêng, cạnh `WORKS_ON` đi qua lăng kính khác — nên ý nghĩa từng quan hệ không bị trộn lẫn.
+
 > 📄 **Code ví dụ:** [`examples/06-5-1-r-gcn-relational-gcn.py`](examples/06-5-1-r-gcn-relational-gcn.py)
+
+> **Tóm gọn 1 câu:** R-GCN = GCN nhưng mỗi loại quan hệ có một bộ trọng số riêng — để "MANAGES" và "WORKS_ON" không bị hiểu lẫn thành một thứ.
 
 ### 5.2 Scoring Functions Cho KG Completion
 
 Sau khi có embeddings từ R-GCN, dùng scoring function để predict missing triples:
+
+Cách đọc bảng này: mỗi dòng là một công thức chấm điểm (**scoring function** = hàm cho điểm cao khi triple *(chủ ngữ h, quan hệ r, tân ngữ t)* "có khả năng đúng"). Ví dụ dòng TransE: head + relation nên "đi tới" tail — đơn giản, nhanh, nhưng kém với quan hệ đối xứng.
 
 ```
 ┌──────────────┬──────────────────────────────────┬──────────────────────┐
@@ -326,6 +376,8 @@ Sau khi có embeddings từ R-GCN, dùng scoring function để predict missing 
 │ RotatE       │ -||h ◦ r - t|| (rotation)        │ Composition, inversion│
 └──────────────┴──────────────────────────────────┴──────────────────────┘
 ```
+
+> **Tóm gọn 1 câu:** Scoring function là "giám khảo chấm điểm cặp (h, r, t)" — chọn loại nào tùy quan hệ của bạn đối xứng hay có thứ tự.
 
 ---
 
@@ -340,6 +392,8 @@ Sau khi có embeddings từ R-GCN, dùng scoring function để predict missing 
 >
 > **Analogies:** Giống trò chơi **"điện thoại hỏng"**: qua nhiều vòng thì message càng ngày càng mất gốc — thông tin từ xa bị "pha loãng".
 
+> **Tóm gọn 1 câu:** Over-smoothing = đào GNN quá sâu thì mọi node trở nên giống hệt nhau và mô hình không phân biệt được ai với ai — nên thực tế chỉ dùng 2-3 lớp.
+
 ### 6.2 Over-Squashing + Expressivity (WL Test)
 
 > **Over-squashing** = **nút thắt cổ chai** trong graph. Node ở vùng nhiều kết nối "chặn" đường truyền thông tin từ vùng xa → nodes ở xa nhau gần như **không liên lạc được** dù GNN có lên 10 lớp. Đường đi dài bị nén mất chi tiết.
@@ -352,11 +406,15 @@ Sau khi có embeddings từ R-GCN, dùng scoring function để predict missing 
 > - **Rewiring / graph surgery** — nối thêm cạnh ngắn giữa nodes xa (gọi là "graph rewiring")
 > - **Chỉ dùng 2-3 lớp** thay vì đào sâu — thực tế GraphSAGE 2 lớp hiệu quả hơn 10 lớp
 
+> **Tóm gọn 1 câu:** Hai "bệnh" của GNN sâu là node bị dồn về giống nhau (over-smoothing) và thông tin xa bị nén mất (over-squashing); chữa bằng residual, chuẩn hóa, nối thêm cạnh, hoặc không đào sâu.
+
 ### 6.3 Graph Transformers — Vượt Qua Over-Smoothing
 
 > **Graph Transformers (GraphGPS, GT)** dùng **self-attention trên toàn graph**: node có thể "nhìn" mọi node khác trực tiếp với đúng 1 lượt tính — **không phải qua chuỗi hops** nên không bị over-smoothing/over-squashing. Vượt trội trên dữ liệu cần **đường đi dài quan trọng**, graph có cấu trúc cục bộ phức tạp.
 >
 > **Giá phải trả:** attention matrix O(N²) memory cho N nodes → khó scale graph hàng triệu nodes. Giải pháp lai (GraphGPS): message-passing giữ local context + chỉ 1 block attention global.
+
+> **Tóm gọn 1 câu:** Graph Transformer cho mọi node nhìn thẳng mọi node khác nên không mắc hai bệnh của GNN sâu — đổi lại tốn bộ nhớ O(N²), nên dùng kiểu lai (GraphGPS) cho graph lớn.
 
 ---
 
@@ -376,6 +434,8 @@ Sau khi có embeddings từ R-GCN, dùng scoring function để predict missing 
 
 > 📄 **Code ví dụ:** [`examples/07-7-heterogeneous-temporal-gnn.py`](examples/07-7-heterogeneous-temporal-gnn.py)
 
+> **Tóm gọn 1 câu:** KG thật có nhiều loại node/edge nên cần R-GCN, HAN hoặc HGT thay vì GNN thường; graph có thời gian thì dùng TGN.
+
 ---
 
 ## 8. Triển Khai Với PyG
@@ -386,6 +446,8 @@ Sau khi có embeddings từ R-GCN, dùng scoring function để predict missing 
 > 📄 **Code ví dụ:** [`examples/08-8-trien-khai-voi-pyg.py`](examples/08-8-trien-khai-voi-pyg.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** PyG là thư viện Python chuẩn để dựng và huấn luyện GNN — pipeline đầy đủ gồm nạp graph, dựng model, train, và đo trên tập test.
 
 ---
 
@@ -409,6 +471,10 @@ Sau khi có embeddings từ R-GCN, dùng scoring function để predict missing 
 2. Train R-GCN + DistMult scoring
 3. Hỏi: `(Alice, WORKS_ON, ?)` → rank tất cả entities, kiểm tra rank của đáp án đúng
 
+Từ khóa trong labs: **AUC** = diện tích dưới đường cong ROC, đo khả năng phân biệt đúng/sai (1.0 = hoàn hảo, 0.5 = đoán mò); **negative sampling** = tạo ra các cặp sai cố tình để model học cách loại bỏ; **semi-supervised** = chỉ có rất ít node được gắn nhãn (4 node trong Lab 1).
+
+> **Tóm gọn 1 câu:** Ba lab đi từ dễ đến khó: phân loại node trên graph nhỏ, đoán cạnh bị giấu, rồi điền thiếu quan hệ cho một KG mini.
+
 ---
 
 ## Tài Liệu Tham Khảo
@@ -423,11 +489,13 @@ Sau khi có embeddings từ R-GCN, dùng scoring function để predict missing 
 - PyG Docs — *Creating Your Own GNN* (https://pytorch-geometric.readthedocs.io/)
 - OGB — *Open Graph Benchmark* (https://ogb.stanford.edu/)
 
+> **Tóm gọn 1 câu:** Đây là nguồn gốc của từng kỹ thuật trong bài — đọc thêm khi cần đi sâu vào công thức hay benchmark.
+
 ---
 
 ## GraphRAG — Cập nhật 2026
 
-Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query phức tạp (multi-hop) tốt hơn vector-only RAG.
+Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query phức tạp (multi-hop) tốt hơn vector-only RAG. (**Multi-hop** = câu hỏi phải đi qua nhiều bước quan hệ, ví dụ "ai duyệt project của người từng quản lý AI team?". **RAG** = đưa tài liệu liên quan vào prompt trước khi LLM trả lời.)
 
 **Tin mới 2025-2026:**
 - **LazyGraphRAG** (Microsoft, cuối 2024): defer LLM summarisation tới query time — indexing cost ngang vector RAG, quality ngang full GraphRAG, query cost thấp hơn ~700×. Đã tích hợp Microsoft Discovery (2025) và Azure Local.
@@ -437,6 +505,8 @@ Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query p
 - **Knowledge Graph Market**: 1.48B USD (2025) → 2.04B USD (2026). GraphRAG chuyển từ "enterprise luxury" → production baseline.
 
 Ref: https://microsoft.github.io/graphrag/
+
+> **Tóm gọn 1 câu:** GraphRAG đã từ "xa xỉ của doanh nghiệp lớn" thành chuẩn production — với LazyGraphRAG, chi phí đã ngang vector RAG.
 
 ---
 

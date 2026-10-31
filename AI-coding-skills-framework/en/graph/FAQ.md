@@ -1,52 +1,60 @@
 # ❓ FAQ — Graph Engineering (Real Stories, Plain Language)
 
-If a question is unclear, read the section in `README.md` (named in brackets).
+If a question is unclear, read the section in `README.md` (named in brackets). RAG = retrieval-augmented generation: search your documents first, then let the model answer from what was found.
 
 ---
 
 ## Q1. My chatbot answers simple questions just fine — do I really need a graph? [→ Why Does Graph Engineering Matter?]
 
+This section explains when a knowledge graph is worth building and when it is not.
+
 **What you see**
 
-You point a retrieval-augmented chatbot (RAG: search documents first, then let the model answer) at a 10,000-page repository — contracts, reports, org charts, emails — and ask: *"Who approved the Phoenix project contract, and what AI-related projects has that person managed before?"*
+You point a retrieval-augmented chatbot (RAG) at a 10,000-page repository — contracts, reports, org charts, emails — and ask: *"Who approved the Phoenix project contract, and what AI-related projects has that person managed before?"*
 
 Vector search returns 5 chunks containing the word "Phoenix". Not one of them contains both the approver and the AI projects in the same passage. The model picks the most plausible-sounding name and states it as fact. You cannot prove where the answer came from.
 
 **Why**
 
-Vector search compares the *wording* of a question to the *wording* of a passage. It has no idea that Nguyen Van A is connected to the Phoenix contract by an `APPROVED_BY` link. Chunking is like tearing a city map into pieces and trying to reassemble it at query time. Multi-hop questions — "who, and what else they own" — are exactly the ones that break.
+Vector search compares the *wording* of a question to the *wording* of a passage. It has no idea that Nguyen Van A is connected to the Phoenix contract by an `APPROVED_BY` link (a stored fact of the form "Phoenix –approved by– Nguyen Van A"). Chunking (splitting documents into fixed-size pieces for the index) is like tearing a city map into pieces and trying to reassemble it at query time. Multi-hop questions — "who, and what else they own" — are exactly the ones that break.
 
 **What to do**
 
 1. Do not rebuild anything yet. Write 20 real questions your users ask, and mark which ones need two or more relationship steps.
 2. If failures cluster on "who approved", "reports to", "what else did they manage", you have a graph case. If they cluster on "what does this paragraph say", keep vector search and save the money.
-3. Start with one narrow domain (contracts, or the org chart) — not the whole 10,000 pages. Extract entities and relations into triples.
+3. Start with one narrow domain (contracts, or the org chart) — not the whole 10,000 pages. Extract entities and relations into triples (`subject–relation–object` facts, e.g. `Phoenix –APPROVED_BY– Nguyen Van A`).
 4. Keep vector search for recall and add graph only for the multi-hop step.
 
 **Verify**
 
 Ask the 20 questions again. Every correct multi-hop answer must come with a printed path, like `Phoenix → APPROVED_BY → Nguyen Van A → MANAGED → Atlas (AI)`. If a path cannot be printed, the answer is a guess.
 
+> **One-line summary:** If your failing questions need two or more relationship hops, build a graph; if they are answered by one paragraph, vector search is enough.
+
 ---
 
 ## Q2. Should I replace my vector database with a graph database? [→ Core philosophy]
 
+This section answers the all-or-nothing question: no — the two stores solve different problems.
+
 **What you see**
 
-A team asks the all-or-nothing question: "we run ChromaDB today, so do we rip it out and move to Neo4j?" Half-built migration, three weeks of work, and the multi-hop questions still fail at the end.
+A team asks the all-or-nothing question: "we run ChromaDB today (a vector database), so do we rip it out and move to Neo4j (a graph database)?" Half-built migration, three weeks of work, and the multi-hop questions still fail at the end.
 
 **Why**
 
 They are not alternatives. They answer different questions.
+
+How to read it: column 1 names the store type; column 2 states the only question it can answer. For instance, a vector database finds passages that *resemble* your question; a graph database finds entities *related* to each other.
 
 | Store | Question it answers |
 |---|---|
 | Vector database | "Which passage *resembles* the question?" |
 | Graph database | "Which entities are *related*, how many hops away, with what evidence?" |
 
-GraphRAG is simply both used together: vector for recall, graph for precision and reasoning. Replacing recall with precision is not a trade — it is a downgrade plus extra work.
+GraphRAG is simply both used together: vector for recall (casting a wide net), graph for precision and reasoning (following exact links). Replacing recall with precision is not a trade — it is a downgrade plus extra work.
 
-The README's analogy is a city map: vector search says "there's a restaurant nearby", a graph says who owns it, what else they own, and the shortest route there. Scale is not the excuse either — this stack already runs in production on Neo4j Aura or self-hosted clusters with billions of nodes.
+The README's analogy is a city map: vector search says "there's a restaurant nearby", a graph says who owns it, what else they own, and the shortest route there. Scale is not the excuse either — this stack already runs in production on Neo4j Aura (managed cloud) or self-hosted clusters with billions of nodes.
 
 **What to do**
 
@@ -60,9 +68,13 @@ Two query paths, chosen by question type: plain similarity for "what does this d
 
 Pick a question whose answer is split across two separate documents. Vector-only search returns the wrong half; the hybrid query returns the joined answer plus the edge that joined them. If that test does not pass, the two stores are not actually connected.
 
+> **One-line summary:** Keep both stores — vector for wide recall, graph for exact relationships — and route each question to the one that can answer it.
+
 ---
 
 ## Q3. There are 9 sub-folders here — where do I actually start? [→ Learning Path]
+
+This section tells you which folder to open for your actual goal, so you don't read all nine.
 
 **What you see**
 
@@ -75,6 +87,8 @@ Numbered folders invite reading in order. But this track is a set of decision po
 **What to do**
 
 Pick your goal first, then read only that row:
+
+How to read it: column 1 is a goal in plain words; column 2 is the folder that serves it. For instance, if your goal is "turn raw documents into a graph", open `02-knowledge-graph/` and skip the rest for now.
 
 | Your real goal | Read |
 |---|---|
@@ -94,13 +108,17 @@ Say out loud, in one sentence, which folder answers your current problem. If you
 
 One warning about the two "advanced" folders. `07-gnn/` and `06-graph-reasoning/` are where people get stuck for weeks, and both are optional on day one. Nothing in `05-graph-rag/` requires them. Leave them until a real question forces the issue — see Q6.
 
+> **One-line summary:** Choose the folder by your current goal, not by folder number — the two "advanced" folders can wait until a real question needs them.
+
 ---
 
 ## Q4. A new contract arrives every day — do I have to rebuild everything from scratch? [→ Overview, Graph Lifecycle]
 
+This section explains which pipeline stages must re-run when one document changes, and which can be skipped.
+
 **What you see**
 
-The README's warning is blunt: without a graph, you cannot update knowledge without re-embedding everything. Meanwhile the pipeline you built — extract, build, store, embed, query, reason, evaluate — is defined as one long chain, and nobody on the team knows which link is safe to re-run.
+The README's warning is blunt: without a graph, you cannot update knowledge without re-embedding everything (re-embedding = recomputing the numeric vectors used for similarity search — slow and costly). Meanwhile the pipeline you built — extract, build, store, embed, query, reason, evaluate — is defined as one long chain, and nobody on the team knows which link is safe to re-run.
 
 **Why**
 
@@ -118,6 +136,8 @@ changed_doc_ids = ["contract_1042"]
 4. Reason   → no-op (read-only)
 ```
 
+In plain words: extract facts only from the changed documents, update (upsert = insert new or overwrite existing) only those nodes and edges, and re-embed only the nodes that changed.
+
 Tag every node and edge with the document id that produced it. Without that tag, an incremental update cannot know what to overwrite, and you are back to full rebuilds. Microsoft-style extraction also helps: a gleaning loop (ask the model again for entities it missed) pulls out 3–5× more entities than a single pass, so you do it once, correctly, rather than three times.
 
 **What to do, continued**
@@ -128,9 +148,13 @@ Use `08-graph-workflow/` — ETL pipelines (extract, transform, load: move raw d
 
 Ingest one new document. Count what changed: only the new entities and edges appear, pre-existing triples are byte-identical, and you can still serve queries from the previous snapshot.
 
+> **One-line summary:** Tag every fact with its source document, then re-run only extract/store/embed for changed documents — no full rebuilds.
+
 ---
 
 ## Q5. How do I know the graph is any good, or am I just building an expensive toy? [→ Overview, Evaluation]
+
+This section explains which numbers prove the graph pays for itself — storage size is not one of them.
 
 **What you see**
 
@@ -138,26 +162,30 @@ Six months in, the graph has 400,000 nodes and nobody can say whether answers im
 
 **Why**
 
-A graph database reports storage stats, not quality. What actually matters is coverage (how much of the source text turned into usable triples), connectivity (are related entities actually linked, or are they two lonely islands), hallucination rate, and path precision — whether the returned path is the right one.
+A graph database reports storage stats, not quality. What actually matters is coverage (how much of the source text turned into usable triples), connectivity (are related entities actually linked, or are they two lonely islands), hallucination rate (share of answers with no supporting evidence), and path precision — whether the returned path is the right one.
 
 **What to do**
 
 Measure four things, then compare against your vector-only baseline on the same question set:
 
 1. **Coverage** — percentage of source documents that produced at least one extracted relation. A low number usually means the extraction prompt is too narrow, not that the documents are empty.
-2. **Connectivity** — how many entities have more than one edge. Isolated nodes are the signature of a deduplication failure (see `02-knowledge-graph/`).
+2. **Connectivity** — how many entities have more than one edge. Isolated nodes (entities with no links at all) are the signature of a deduplication failure (see `02-knowledge-graph/`).
 3. **Hallucination rate** — answers with no supporting path. Target the 25–30% reduction reported for hybrid vector + graph retrieval on a 10K-document enterprise benchmark.
 4. **Path precision** — of the paths returned, how many survive human checking.
 
-Use a real public benchmark instead of inventing one: HotpotQA or 2WikiMultihopQA for multi-hop questions, FB15k-237 or WN18RR for link prediction, OGB for graph learning tasks.
+Use a real public benchmark instead of inventing one: HotpotQA or 2WikiMultihopQA for multi-hop questions, FB15k-237 or WN18RR for link prediction, OGB for graph learning tasks. (These are standard public test sets, so your numbers are comparable to published results.)
 
 **Verify**
 
 Report a before/after table: same 20 questions, vector-only versus hybrid, with multi-hop accuracy and hallucination rate on both sides. If the two columns are identical, the graph is not earning its keep — find out why before adding more data.
 
+> **One-line summary:** Prove the graph with four quality numbers against a vector-only baseline — if the columns match, the graph is an expensive toy so far.
+
 ---
 
 ## Q6. Do I need to train a neural network before I can use a graph? [→ Learning Path]
+
+This section explains why most questions need only queries and rules — machine learning comes last.
 
 **What you see**
 
@@ -171,14 +199,18 @@ GNNs solve two specific problems: predicting a *missing* edge, and classifying a
 
 Climb only as far as you need:
 
+How to read it: the four levels go from cheapest to most expensive. Start at Level 0 and only climb when a real question forces it. For instance, "who approved this" is Level 0 — a plain query.
+
 1. **Level 0 — traversal.** Cypher queries, shortest path, pattern matching. Handles "who approved this", "what does this person manage".
 2. **Level 1 — rules.** Explicit inference over the graph: if `A REPORTED_TO B` and `B REPORTED_TO C`, then `A` is two hops from `C`. See `06-graph-reasoning/` for inference rules and temporal reasoning (ignoring edges that expired).
-3. **Level 2 — embeddings.** Node2Vec or GraphSAGE turn a node's neighbours into a vector, useful for "find similar projects" — see `04-graph-embeddings/`.
-4. **Level 3 — GNN.** Only now, and only for link prediction on benchmarks like FB15k-237. Frameworks: PyG or DGL.
+3. **Level 2 — embeddings.** Node2Vec or GraphSAGE (algorithms that turn a node's neighbourhood into a vector) are useful for "find similar projects" — see `04-graph-embeddings/`.
+4. **Level 3 — GNN.** Only now, and only for link prediction on benchmarks like FB15k-237. Frameworks: PyG or DGL (libraries for training graph neural networks).
 
 **Verify**
 
 Answer a week of real questions using only Levels 0 and 1. If almost everything resolves, stop — you do not need Level 3, and shipping it adds a model to train, serve, and explain.
+
+> **One-line summary:** Plain queries and rules answer most real questions — train a GNN only when you must predict links nobody recorded.
 
 ---
 

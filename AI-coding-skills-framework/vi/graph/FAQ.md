@@ -19,7 +19,7 @@ Vector search trả lời được câu hỏi *"đoạn nào giống câu hỏi?
 1. Nhìn câu hỏi của mình: chỉ cần tìm một đoạn thì vector đủ; cần nối qua nhiều thực thể thì cần graph.
 2. Trong graph, mỗi sự thật là một **cạnh** giữa hai node, ví dụ `Phoenix —[APPROVED_BY]→ Nguyễn Văn A —[MANAGED]→ Atlas`.
 3. Truy vấn theo số bước: một truy vấn đi 2 bước là đủ cho câu trên, và trả về cả đường đi chứ không chỉ tên.
-4. Nếu cần cả hai, dùng chung: vector để nhớ (recall), graph để chính xác (precision).
+4. Nếu cần cả hai, dùng chung: vector để nhớ (recall), graph để chính xác (precision). (**Recall** = nhớ được nhiều kết quả liên quan; **precision** = kết quả trả về chính xác, không lan man.)
 
 ```text
 Harness = môi trường 1 agent chạy
@@ -28,9 +28,13 @@ Graph   = nền tri thức bền vững mà cả hai cùng dùng
 GraphRAG = Vector (nhớ) + Graph (chính xác + suy luận)
 ```
 
+Giải thích 4 từ trong khung trên: **Harness** = "bộ y trang" cho một agent (công cụ, ngữ cảnh, quyền hạn); **Loop** = harness thêm lịch chạy định kỳ, ghi trạng thái và tự kiểm chứng; **Graph** = kho tri thức nối các sự thật thành mạng; **GraphRAG** = cách tra cứu dùng cả vector lẫn graph.
+
 **Kiểm tra**
 
 Lấy 20 câu hỏi thật của bạn, đánh dấu câu nào cần nhiều bước. Nếu trên dưới một phần ba số câu cần nhiều bước thì mới đáng xây; nếu hầu hết là tra cứu một ý thì vector RAG là đủ.
+
+> **Tóm gọn 1 câu:** Vector search chỉ so khớp chữ; graph lưu sẵn chuỗi quan hệ nên trả lời được câu hỏi đi nhiều bước kèm đường dẫn chứng minh — câu hỏi của bạn cần loại nào thì xem nó có nhiều bước không.
 
 ---
 
@@ -42,7 +46,7 @@ Bạn đang phân vân: xây Knowledge Graph tốn công trích xuất, thiết 
 
 **Vì sao**
 
-Ba con số đo được: GraphRAG tăng **30–40%** độ bao phủ trên câu hỏi tổng hợp, thắng **70%** số lượt đánh giá; kết hợp vector và graph giảm **25–30%** tỉ lệ bịa; trên câu hỏi nhiều bước, độ chính xác là **68% so với 41%** của hệ thống chỉ dùng vector.
+Ba con số đo được: GraphRAG tăng **30–40%** độ bao phủ trên câu hỏi tổng hợp, thắng **70%** số lượt đánh giá; kết hợp vector và graph giảm **25–30%** tỉ lệ bịa; trên câu hỏi nhiều bước, độ chính xác là **68% so với 41%** của hệ thống chỉ dùng vector. (**Câu hỏi tổng hợp** = hỏi chung cả kho tài liệu, ví dụ "chủ đề chính là gì?"; **A/B** ở dưới = chạy hai phiên bản trên cùng bộ câu hỏi để so sánh.)
 
 **Làm gì**
 
@@ -54,6 +58,8 @@ Ba con số đo được: GraphRAG tăng **30–40%** độ bao phủ trên câu
 **Kiểm tra**
 
 Báo cáo phải tách ít nhất ba nhóm: hỏi một bước, hỏi nhiều bước, hỏi tổng hợp. Một điểm gộp chung sẽ không cho bạn biết nên đầu tư tiếp hay dừng.
+
+> **Tóm gọn 1 câu:** Xây graph đáng tiền khi khoảng một phần ba câu hỏi thật của bạn cần đi nhiều bước — kiểm chứng bằng A/B với 30 câu hỏi thật trước khi đầu tư.
 
 ---
 
@@ -83,9 +89,13 @@ Các module phụ thuộc nhau theo thứ tự: không có cách trích xuất t
 | Câu hỏi nhiều bước, tìm đường đi | `06-graph-reasoning/` |
 | Đo chất lượng graph & GraphRAG | `09-evaluation/` |
 
+Cách đọc bảng này: cột trái là mục tiêu của bạn, cột phải là thư mục nên đọc. Ví dụ: muốn tự động trích xuất thực thể từ tài liệu → mở `02-knowledge-graph/`.
+
 **Kiểm tra**
 
 Sau khi đọc tới module 05, bạn phải tự trả lời được: câu hỏi này cần đi mấy bước trên graph, và bằng chứng của từng bước là gì. Không trả lời được thì quay lại module trước.
+
+> **Tóm gọn 1 câu:** Đọc theo thứ tự 01 → 09; chưa tới module thật thì chỉ cần nắm: graph là mạng các sự thật nối nhau, trích xuất trước, truy vấn sau, đo cuối cùng.
 
 ---
 
@@ -103,12 +113,14 @@ Chúng trả lời hai câu hỏi khác nhau: vector database trả lời "đo�
 
 1. Giữ cơ sở dữ liệu vector cho phần **nội dung văn bản**: đặt chỉ mục vector trên các node tài liệu.
 2. Dùng graph cho phần **thực thể và quan hệ**: node người, dự án, rồi đi nhiều bước trên đó.
-3. Trong hệ thống phổ biến 2025–2026, phần dựng dùng thư viện chuyển đồ thị của LangChain rồi nạp vào Neo4j; phần truy vấn dùng chuỗi Cypher được sinh từ câu hỏi tiếng Việt.
+3. Trong hệ thống phổ biến 2025–2026, phần dựng dùng thư viện chuyển đồ thị của LangChain rồi nạp vào Neo4j; phần truy vấn dùng chuỗi Cypher được sinh từ câu hỏi tiếng Việt. (**LangChain** = thư viện ghép LLM vào ứng dụng; **Neo4j** = phần mềm quản trị graph phổ biến nhất; **Cypher** = ngôn ngữ truy vấn của Neo4j, giống SQL nhưng dành cho graph.)
 4. Chỉ chạy vector khi câu hỏi đơn giản; khi câu hỏi có ràng buộc nhiều bước thì chuyển sang graph.
 
 **Kiểm tra**
 
 Đo tỉ lệ bịa trên bộ câu hỏi nội bộ, so sánh trước và sau khi bật phần graph. Biện minh quyết định bằng số liệu, không bằng cảm tính.
+
+> **Tóm gọn 1 câu:** Giữ cả hai: vector lưu nội dung văn bản, graph lưu thực thể và quan hệ — kết hợp lại chính là GraphRAG, không cần bỏ một cái nào.
 
 ---
 
@@ -124,7 +136,7 @@ Có bốn mẫu hệ thống đã công bố, mỗi mẫu cho một bài toán k
 
 **Làm gì**
 
-1. **Microsoft GraphRAG** — mẫu tham khảu cho câu hỏi tổng hợp: tài liệu → trích xuất thực thể và quan hệ bằng mô hình ngôn ngữ → tìm cộng đồng bằng thuật toán Leiden → tóm tắt từng cộng đồng → trả lời bằng cách gom tóm tắt.
+1. **Microsoft GraphRAG** — mẫu tham khảu cho câu hỏi tổng hợp: tài liệu → trích xuất thực thể và quan hệ bằng mô hình ngôn ngữ → tìm cộng đồng bằng thuật toán Leiden → tóm tắt từng cộng đồng → trả lời bằng cách gom tóm tắt. (**Cộng đồng** = nhóm thực thể liên quan chặt với nhau, do thuật toán **Leiden** — thuật toán gom nhóm trên graph — tự tìm ra.)
 2. Vòng lặp trích xuất có lặp lại, nên lượng thực thể tìm được nhiều hơn 3 đến 5 lần so với một lượt.
 3. **Neo4j + LangChain** — mẫu cho doanh nghiệp: dùng chuyển đổi đồ thị của LangChain để dựng, và chuỗi hỏi đáp Cypher để truy vấn; quy mô tới hàng tỷ node.
 4. **DeepSeek** lưu lịch sử thao tác của agent dạng đồ thị sự kiện, nên có thể nhánh và phát lại như nhánh git.
@@ -134,9 +146,13 @@ Có bốn mẫu hệ thống đã công bố, mỗi mẫu cho một bài toán k
 File —[DEFINES]→ Function —[CALLS]→ Function —[TESTED_BY]→ TestFile
 ```
 
+Đọc sơ đồ thế nào: mũi tên ghi quan hệ, ví dụ `DEFINES` = file này định nghĩa hàm đó; `CALLS` = hàm này gọi hàm kia; `TESTED_BY` = hàm được file test nào kiểm tra.
+
 **Kiểm tra**
 
 Thử nguyên lý luận mẫu 1 trên kho tài liệu thật của bạn: hỏi ba câu tổng hợp ở tầng "cả tổ chức này đang làm gì", so sánh với vector RAG thuần trên đúng ba câu đó.
+
+> **Tóm gọn 1 câu:** Có bốn mẫu hệ thống đã chạy thật (Microsoft, Neo4j+LangChain, DeepSeek, codebase graph) — chọn mẫu gần bài toán của bạn nhất rồi bắt chước, đừng thiết kế lại từ đầu.
 
 ---
 
@@ -154,13 +170,15 @@ Cần đo bốn lớp riêng biệt: chất lượng bản thân graph, chất l
 
 1. Đo **chất lượng graph**: độ phủ thực thể và quan hệ, độ liên thông, tỉ lệ trùng lặp, số node không nối với ai.
 2. Đo **chất lượng truy xuất**: độ chính xác trong 5 kết quả đầu, độ đầy đủ, và độ chính xác của các đường đi trả về.
-3. Đo **chất lượng câu trả lời**: mỗi mệnh đề có bằng chứng trong graph không, và có đúng câu hỏi không.
+3. Đo **chất lượng câu trả lời**: mỗi mệnh đề có bằng chứng trong graph không, và có đúng câu hỏi không. (**Mệnh đề** = một lời khẳng định nhỏ tách ra từ câu trả lời, ví dụ "Phoenix ngân sách 500 triệu".)
 4. Đo **chất lượng dự đoán quan hệ thiếu**: tỉ lệ đáp án đúng nằm trong top 10 và thứ hạng trung bình của đáp án đúng.
 5. Chạy lại bộ đo này mỗi lần đổi pipeline, và lưu lại báo cáo để so sánh phiên bản.
 
 **Kiểm tra**
 
 Một câu hỏi trả lời sai phải truy được về lớp: chất lượng graph, truy xuất, hay diễn giải. Nếu không chỉ ra được thì hệ thống đánh giá của bạn chưa dùng được.
+
+> **Tóm gọn 1 câu:** Đo đủ 4 lớp (graph — truy xuất — câu trả lời — dự đoán quan hệ) và lưu báo cáo mỗi lần chạy, để câu nào sai cũng truy ra được lớp nào có lỗi.
 
 ---
 

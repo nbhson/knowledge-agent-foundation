@@ -2,9 +2,13 @@
 
 Nếu câu hỏi nào khó hiểu thì đọc `../README.md` phần trong ngoặc vuông.
 
+*(MCP = Model Context Protocol — chuẩn kết nối chung giữa ứng dụng AI và công cụ/dữ liệu ngoài, như "ổ cắm USB-C" cho công cụ AI.)*
+
 ---
 
 ## Q1. MCP là cái gì, khác gì với tự viết adapter cho từng tool? [→ Câu Chuyện Mở Đầu, MCP Là Gì?]
+
+*(adapter = đoạn code cầu nối giữa hai hệ thống không tương thích.)*
 
 **Bạn sẽ thấy**
 
@@ -13,6 +17,8 @@ Bạn cần agent đọc GitHub, đọc database, đọc file. Bạn đang viế
 **Vì sao**
 
 Cái bạn đang làm chính là vấn đề MCP sinh ra để giải quyết. Trước MCP, mỗi ứng dụng phải tự viết tích hợp riêng cho từng công cụ. MCP là một giao thức thống nhất (dùng JSON-RPC — một định dạng tin nhắn chuẩn), nên bạn viết **một** MCP server cho công cụ của mình, rồi mọi ứng dụng hỗ trợ MCP đều dùng được. README gọi nó là "USB-C của công cụ AI": một chuẩn, mọi thiết bị.
+
+*Cách đọc bảng này: cột "Khái niệm" là vai trò trong mô hình MCP, cột "Vai trò" giải thích nó làm gì. Ví dụ, MCP Server là nơi cung cấp công cụ, còn MCP Client là ứng dụng AI đến dùng.*
 
 | Khái niệm | Vai trò |
 |---|---|
@@ -31,6 +37,8 @@ Cái bạn đang làm chính là vấn đề MCP sinh ra để giải quyết. T
 
 Thử bỏ adapter cũ, nối cùng công cụ đó qua MCP server vào một ứng dụng khác. Nếu chạy được thì bạn đã mua lại được tính dùng lại; nếu không, hãy xem chỗ nào bạn vẫn gắn cứng tên ứng dụng.
 
+> **Tóm gọn 1 câu:** MCP là cổng cắm chuẩn "một server — mọi ứng dụng AI dùng được", thay vì viết adapter riêng cho từng cặp ứng dụng–công cụ.
+
 ---
 
 ## Q2. Tool với Resource khác nhau thế nào, tôi nên đặt cái gì ở đâu? [→ MCP Là Gì?]
@@ -43,16 +51,20 @@ Bạn không biết nên đưa thứ gì vào đâu. Kết quả là bạn đưa
 
 Tools là **hành động**: agent chủ động gọi, có thể thay đổi thế giới (ghi issue, tạo nhánh, chạy lệnh). Resources là **dữ liệu**: server phơi bày ra cho agent đọc lấy làm ngữ cảnh. Nếu bạn đóng gói một file cấu hình tĩnh thành tool, agent phải gọi mỗi lần chỉ để đọc — lãng phí và chậm.
 
+*(Ví dụ: nội dung file hướng dẫn để đọc → resources; lệnh "tạo issue mới" → tool.)*
+
 **Làm gì**
 
 1. Chỉ thành tool khi thao tác **ghi** hoặc **tốn thời gian thực sự**: tạo issue, gán nhãn, chạy truy vấn.
 2. Đưa dữ liệu tĩnh vào resources: danh sách file, mô tả repo, tài liệu, lịch sử.
-3. Đặt tên tool theo động từ hành động để agent không nhầm với dữ liệu.
+3. Đặt tên tool theo động từ hành động để agent không nhầm với dữ liệu (ví dụ `create_issue`, không phải `issues`).
 4. Nhớ mỗi lượt gọi tool đều là một bước quyết định của agent — đừng biến việc đọc dữ liệu thành chuỗi lượt gọi.
 
 **Kiểm tra**
 
 Lấy một tác vụ chỉ cần đọc (ví dụ xem nội dung issue đang mở) và đếm số lượt gọi tool. Nếu phải gọi nhiều lượt chỉ để ghép dữ liệu, hãy xem lại xem phần nào nên là resources.
+
+> **Tóm gọn 1 câu:** Tool = hành động làm thay đổi thế giới; Resource = dữ liệu chỉ đọc để làm ngữ cảnh — thứ nào chỉ đọc thì đưa vào resources cho rẻ và nhanh.
 
 ---
 
@@ -64,13 +76,13 @@ Bạn thêm hai server: một cái có sẵn từ trước, một cái do bạn 
 
 **Vì sao**
 
-Cấu hình nằm trong một khối duy nhất, mỗi server một mục có tên. Hai server đặt trùng tên sẽ đè lên nhau. Còn `npx` với cờ `-y` nghĩa là tự động tải và chạy package đó lúc khởi động — nếu server đó hỏng hoặc mất mạng, phần khởi động dừng lại và bạn mất luôn cả những server vốn đang chạy tốt.
+Cấu hình nằm trong một khối duy nhất, mỗi server một mục có tên. Hai server đặt trùng tên sẽ đè lên nhau. Còn `npx` với cờ `-y` nghĩa là tự động tải và chạy package đó lúc khởi động (npx = trình chạy package Node.js; cờ `-y` = tự gật "có" thay vì hỏi) — nếu server đó hỏng hoặc mất mạng, phần khởi động dừng lại và bạn mất luôn cả những server vốn đang chạy tốt.
 
 **Làm gì**
 
 1. Đặt tên khác nhau cho mỗi server, không đụng tên server có sẵn.
 2. Đặt tên tool theo kèm nguồn để tránh trùng: ví dụ `github_search_code`, không phải `search`.
-3. Thêm mỗi server kèm phần quyền riêng qua biến môi trường, không ghi khoá thẳng vào cấu hình.
+3. Thêm mỗi server kèm phần quyền riêng qua biến môi trường, không ghi khoá thẳng vào cấu hình (biến môi trường = nơi lưu khoá ngoài file, ví dụ `API_KEY`, để khoá không lọt vào code).
 4. Cân nhắc bỏ cờ `-y` ở máy chạy thật để phải duyệt trước khi tải code lạ.
 
 > 📄 **Code ví dụ:** [`examples/01-q3-them-mcp-server-moi-vao-du-an.json`](examples/01-q3-them-mcp-server-moi-vao-du-an.json)
@@ -80,6 +92,8 @@ Cấu hình nằm trong một khối duy nhất, mỗi server một mục có t�
 **Kiểm tra**
 
 Bật lại từng server và đếm số tool xuất hiện sau mỗi lần. Nếu thêm server mới làm giảm số tool của server cũ, hãy kiểm tra trùng tên. Nếu một server hỏng làm mất hết tool, hãy bật `disabled` cho riêng server đó thay vì sửa cả cấu hình.
+
+> **Tóm gọn 1 câu:** Đặt tên server và tool không trùng nhau, khoá để ở biến môi trường, bật từng server một — và tắt `disabled` riêng server hỏng thay vì sửa cả khối cấu hình.
 
 ---
 
@@ -99,13 +113,15 @@ Vì thêm một tool vào danh mục không đồng nghĩa với việc cho phé
 
 > 📄 **Code ví dụ:** [`examples/02-q4-tool-lay-tu-mcp-server-thi-co.py`](examples/02-q4-tool-lay-tu-mcp-server-thi-co.py)
 
-2. Giữ `autoApprove` trong cấu hình MCP ở dạng danh sách rỗng cho tới khi bạn thật sự duyệt tay từng loại thao tác.
+2. Giữ `autoApprove` trong cấu hình MCP ở dạng danh sách rỗng cho tới khi bạn thật sự duyệt tay từng loại thao tác (autoApprove = danh sách thao tác được tự động gật đầu, không hỏi người).
 3. Tool ghi dữ liệu thật thì tách quyền riêng, không dùng chung với tool chỉ đọc.
 4. Với quyền ghi, đặt giới hạn tần suất thấp hơn và bắt buộc có bước duyệt.
 
 **Kiểm tra**
 
 Chạy một lượt gọi trần vượt quá giới hạn phải bị chặn và ghi vào nhật ký. Thử một thao tác ghi xem có bắt buộc duyệt không. Kiểm tra mọi thao tác ghi đều để lại dấu vết: ai gọi, lúc nào, ghi vào đâu.
+
+> **Tóm gọn 1 câu:** Tool từ MCP phải khai báo đủ quyền, rate limit và nguồn như tool nội bộ — để `autoApprove` rỗng cho tới khi duyệt tay từng loại thao tác ghi.
 
 ---
 
@@ -117,7 +133,7 @@ Hôm qua agent gọi tool từ GitHub chạy bình thường. Sáng nay không c
 
 **Vì sao**
 
-Cấu hình MCP có ba nút điều khiển thường bị bỏ qua: `disabled` (tắt server), `autoApprove` (danh sách thao tác được duyệt tự động), và phần `env` nơi khoá được đọc từ biến môi trường. Nếu server bị tắt có chủ đích từ phiên trước, bạn sẽ không thấy bất kỳ tool nào. Nếu khoá không có trong môi trường, chuỗi `${API_KEY}` sẽ rỗng và lượt gọi thất bại ngay từ đầu. Đây là lý do thất bại nhiều hơn là lỗi protocol.
+Cấu hình MCP có ba nút điều khiển thường bị bỏ qua: `disabled` (tắt server), `autoApprove` (danh sách thao tác được duyệt tự động), và phần `env` nơi khoá được đọc từ biến môi trường. Nếu server bị tắt có chủ đích từ phiên trước, bạn sẽ không thấy bất kỳ tool nào. Nếu khoá không có trong môi trường, chuỗi `${API_KEY}` sẽ rỗng (`${API_KEY}` là cách ghi "chèn giá trị từ biến môi trường vào đây") và lượt gọi thất bại ngay từ đầu. Đây là lý do thất bại nhiều hơn là lỗi protocol (protocol = quy tắc giao tiếp của MCP).
 
 **Làm gì**
 
@@ -130,6 +146,8 @@ Cấu hình MCP có ba nút điều khiển thường bị bỏ qua: `disabled` 
 **Kiểm tra**
 
 Bật tắt có chủ đích một server rồi khởi động lại: phải thấy đúng nhóm tool biến mất, không phải toàn bộ danh sách. Thử gọi một tool khi bỏ trống khoá: lỗi phải nói rõ là thiếu xác thực, không phải lỗi chung chung.
+
+> **Tóm gọn 1 câu:** Ba nguyên nhân chính trước khi nghi lỗi protocol: server bị `disabled`, khoá chưa nạp vào biến môi trường, hoặc timeout quá ngắn với `npx` — kiểm tra theo thứ tự đó.
 
 ---
 

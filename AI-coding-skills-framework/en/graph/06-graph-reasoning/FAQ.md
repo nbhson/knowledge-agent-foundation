@@ -1,6 +1,6 @@
 # ❓ FAQ — Graph Reasoning (Real Stories, Plain Language)
 
-If a question is unclear, read the section in `../README.md` (named in brackets).
+If a question is unclear, read the section in `../README.md` (named in brackets). Each answer has four parts: **What you see** (the symptom), **Why** (the cause), **What to do** (the fix), and **Verify** (how to confirm the fix worked).
 
 ---
 
@@ -20,7 +20,7 @@ Dave is gone. He is a direct colleague of Alice, connected by `Alice —[KNOWS, 
 
 **Why**
 
-Two silent filters did it. `allowed_edge_types={"MANAGES", "WORKS_ON"}` drops `KNOWS` because a "team" is built from authority edges, not acquaintance edges — correct by design. `min_confidence=0.7` then drops Dave anyway, because his only edge sits at **0.60**. Extraction pipelines routinely emit low-confidence edges for the messy cases (same name, two people, inferred from an email signature), so a confidence floor is healthy — but it is a **floor nobody declared**, so the graph silently answers a different question than you asked.
+Two silent filters did it. `allowed_edge_types={"MANAGES", "WORKS_ON"}` drops `KNOWS` because a "team" is built from authority edges, not acquaintance edges — correct by design. `min_confidence=0.7` then drops Dave anyway, because his only edge sits at **0.60** (confidence = a 0-to-1 score for "how sure the extraction was that this edge is real"). Extraction pipelines routinely emit low-confidence edges for the messy cases (same name, two people, inferred from an email signature), so a confidence floor is healthy — but it is a **floor nobody declared**, so the graph silently answers a different question than you asked.
 
 **What to do**
 
@@ -36,6 +36,8 @@ Two silent filters did it. `allowed_edge_types={"MANAGES", "WORKS_ON"}` drops `K
 
 Run the same traversal with `min_confidence=0.0` and diff the two node lists. Any node that disappears must appear in the answer as an explicit exclusion. Lab 1 does this properly: compare unconstrained BFS against constrained BFS on a 1K-node / 5K-edge graph and check both *nodes visited* and *time*.
 
+> **One-line summary:** Filters silently remove nodes — decide edge types and the confidence floor deliberately, then log everything the filters drop.
+
 ---
 
 ## Q2. The same traversal worked on 20 demo nodes and now it hangs on the real graph — why? [→ §1.2 Sampling for Large Graphs]
@@ -46,7 +48,7 @@ Your demo graph has 6 nodes. Your production graph has over **1 million nodes**.
 
 **Why**
 
-BFS cost grows with *breadth*, not depth. A person with 40 direct contacts, each of whom has 40, is already 1,600 nodes at 2 hops and **64,000 at 3 hops**. You cannot prompt your way out of this: the failure is fan-out, and more hops make it exponentially worse. The demo hid the problem because a 6-node graph has no fan-out.
+BFS cost grows with *breadth*, not depth. (BFS = Breadth-First Search — visiting neighbors level by level, like ripples spreading on water.) A person with 40 direct contacts, each of whom has 40, is already 1,600 nodes at 2 hops and **64,000 at 3 hops**. You cannot prompt your way out of this: the failure is fan-out (each node multiplying the number of nodes to visit), and more hops make it exponentially worse. The demo hid the problem because a 6-node graph has no fan-out.
 
 **What to do**
 
@@ -60,7 +62,9 @@ BFS cost grows with *breadth*, not depth. A person with 40 direct contacts, each
 
 **Verify**
 
-Log `max_neighbors_per_hop`, `visited_count` and `returned_count` on every call. If `visited_count` grows by more than ~10× when you go from 1 hop to 2, the node you're starting from is a hub — treat that as a finding, and sample around it.
+Log `max_neighbors_per_hop`, `visited_count` and `returned_count` on every call. If `visited_count` grows by more than ~10× when you go from 1 hop to 2, the node you're starting from is a hub (a node with very many connections) — treat that as a finding, and sample around it.
+
+> **One-line summary:** Cap the number of neighbors expanded per hop, not the depth — fan-out, not hop count, is what makes big traversals explode.
 
 ---
 
@@ -72,7 +76,7 @@ Question: *"How is Bob connected to Project Atlas?"* You return `nx.shortest_pat
 
 **Why**
 
-Each path-finding kind answers a different question: **shortest path** = fewest steps, **all paths** = what exists (up to N hops), **K-shortest** = the top-K alternatives, **weighted shortest** (Dijkstra, where weight = 1/confidence) = most trustworthy, **constrained** = only through specific edge types. Handing the model a single path removes its ability to reason; it can only narrate what you already chose. Multi-hop reasoning on a graph is reported to lift accuracy by **27%** over single-hop retrieval on HotpotQA — but only if the alternatives are actually in front of the model.
+Each path-finding kind answers a different question: **shortest path** = fewest steps, **all paths** = what exists (up to N hops), **K-shortest** = the top-K alternatives, **weighted shortest** (Dijkstra, a classic algorithm whose weight = 1/confidence here, so weak edges cost more) = most trustworthy, **constrained** = only through specific edge types. Handing the model a single path removes its ability to reason; it can only narrate what you already chose. Multi-hop reasoning on a graph is reported to lift accuracy by **27%** over single-hop retrieval on HotpotQA (a public benchmark of questions that need chaining two facts) — but only if the alternatives are actually in front of the model.
 
 **What to do**
 
@@ -87,6 +91,8 @@ Each path-finding kind answers a different question: **shortest path** = fewest 
 **Verify**
 
 Ask the question twice — once with the shortest path only, once with all paths — and check whether the answer changes. If it does, the single path was hiding a real ambiguity and your original answer was luck, not reasoning.
+
+> **One-line summary:** Return several paths with their evidence instead of one shortest path — a single path forces the model to narrate your choice rather than reason.
 
 ---
 
@@ -114,6 +120,8 @@ It is not a hallucination — it's **inference**, and the edge was never written
 
 Lab 2: define 5 rules, run `apply_rules` on a 50-node graph, then hand-check every inferred edge for logical correctness and count false positives. A rule with a non-zero false-positive rate is not finished, regardless of how many edges it produced.
 
+> **One-line summary:** It is inference, not hallucination — tag derived edges with rule name, confidence, and evidence so downstream users can tell derived facts from stored ones.
+
 ---
 
 ## Q5. The answer is right about the person but wrong about the time — "who ran the AI team in Q2?" [→ §5 Temporal Reasoning]
@@ -139,6 +147,8 @@ Temporal knowledge graphs report a **35% cut in stale answers** — answers buil
 **Verify**
 
 Lab 3: build a 20-edge temporal graph and ask *"Who managed team X on 2023-06-01 vs 2024-06-01?"* — the two answers must differ. If they match, your `update_temporal_edge` is not expiring the old edge, and every historical query you serve is quietly wrong.
+
+> **One-line summary:** Every changeable edge needs `valid_from`/`valid_until` and every query needs a date — close old edges on write, never delete them.
 
 ---
 

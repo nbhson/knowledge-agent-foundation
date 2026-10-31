@@ -2,6 +2,8 @@
 
 Câu hỏi nào khó hiểu thì đọc `README.md` phần trong ngoặc vuông.
 
+*(evaluation = đo chất lượng hệ thống AI bằng con số thay vì cảm giác. Mỗi câu hỏi dưới đây là một tình huống thật.)*
+
 ---
 
 ## Q1. PromptFoo, Deepeval, RAGAS, LangSmith, Giskard — chọn cái nào? [→ Tổng Quan Các Công Cụ]
@@ -9,6 +11,8 @@ Câu hỏi nào khó hiểu thì đọc `README.md` phần trong ngoặc vuông.
 **Bạn sẽ thấy**
 
 Bạn muốn biết việc đổi prompt từ "bạn là assistant hữu ích" sang "bạn là senior engineer" có thật sự tốt hơn không. Năm công cụ trả lời năm kiểu câu hỏi khác nhau:
+
+*Cách đọc bảng này: cột "Hỏi được câu nào" là câu duy nhất công cụ đó trả lời tốt nhất; cột "Cách dùng" là hình thức làm việc với nó. Ví dụ, PromptFoo chuyên so prompt này với prompt kia — bạn viết file cấu hình, nó ra bảng so sánh điểm.*
 
 | Công cụ | Hỏi được câu nào | Cách dùng |
 |---|---|---|
@@ -18,9 +22,11 @@ Bạn muốn biết việc đổi prompt từ "bạn là assistant hữu ích" s
 | LangSmith | hệ thống đang chạy production có ổn không | tracing + evals trên trace thật |
 | Giskard | model có bias, bịa, hay yếu khi bị tấn công không | scan model + dataset tự động |
 
+*(Chú giải: pytest = khung viết test tự động quen thuộc của Python; RAG = hệ trả lời có tra cứu tài liệu trước; trace = bản ghi từng bước hệ thống chạy thật; bias = thiên vị, bịa = hallucination; prompt injection = kẻ xấu nhét lệnh vào câu hỏi để điều khiển agent.)*
+
 **Vì sao**
 
-Vì chúng đo những thứ khác nhau. PromptFoo chạy ở tầng ứng dụng: bạn đưa vào một bộ câu hỏi mẫu, nó chạy hết lên các biến thể prompt và các model khác nhau rồi xếp bảng. Deepeval viết test theo kiểu pytest, dùng các chỉ số có mô hình ngôn ngữ chấm điểm. RAGAS chỉ dành cho hệ thống có truy xuất tài liệu, đo ba thứ: câu trả lời có bám đúng tài liệu không, có liên quan câu hỏi không, các đoạn tài liệu lấy ra có đủ và đúng không. LangSmith gắn với runtime production — nó dùng trace thật để chạy eval, không phải dataset tĩnh. Giskard thì đi từ hướng ngược lại: trước khi chạy production, nó quét sẵn model và dataset để tìm điểm yếu (bias, hallucination, prompt injection).
+Vì chúng đo những thứ khác nhau. PromptFoo chạy ở tầng ứng dụng: bạn đưa vào một bộ câu hỏi mẫu, nó chạy hết lên các biến thể prompt và các model khác nhau rồi xếp bảng. Deepeval viết test theo kiểu pytest, dùng các chỉ số có mô hình ngôn ngữ chấm điểm (LLM-as-judge = dùng một AI chấm bài thay cho người). RAGAS chỉ dành cho hệ thống có truy xuất tài liệu, đo ba thứ: câu trả lời có bám đúng tài liệu không, có liên quan câu hỏi không, các đoạn tài liệu lấy ra có đủ và đúng không. LangSmith gắn với runtime production — nó dùng trace thật để chạy eval, không phải dataset tĩnh. Giskard thì đi từ hướng ngược lại: trước khi chạy production, nó quét sẵn model và dataset để tìm điểm yếu (bias, hallucination, prompt injection).
 
 **Làm gì**
 
@@ -37,6 +43,8 @@ Vì chúng đo những thứ khác nhau. PromptFoo chạy ở tầng ứng dụn
 
 Chạy cùng một bộ câu hỏi mẫu qua PromptFoo rồi xem bảng so sánh. Nếu bảng hiện đủ cột điểm, chi phí và độ trễ cho từng cặp prompt-model, công cụ đang hoạt động.
 
+> **Tóm gọn 1 câu:** Chọn theo câu hỏi bạn cần trả lời — so prompt dùng PromptFoo, test tự động dùng Deepeval, RAG dùng RAGAS, production dùng LangSmith, scan an toàn dùng Giskard; cả năm có thể dùng cùng nhau vì chúng đo khác nhau.
+
 ---
 
 ## Q2. Cần bao nhiêu câu test để bắt đầu? [→ Lộ Trình Đề Xuất]
@@ -47,7 +55,7 @@ Bạn mở thư mục `02-setup` và thấy ghi `(TODO)`. Bạn ngồi viết 30
 
 **Vì sao**
 
-Vì bộ test nhỏ mà chạy mỗi lần thì bạn còn dám sửa prompt. Bộ test lớn thì bạn chạy một lần rồi bỏ, và khi đó nó không còn tác dụng gì. Lộ trình gợi ý **20 đến 50 câu**, tập trung vào một nhiệm vụ chính.
+Vì bộ test nhỏ mà chạy mỗi lần thì bạn còn dám sửa prompt (test = bộ câu hỏi mẫu + đáp án chuẩn, chạy để chấm điểm hệ thống). Bộ test lớn thì bạn chạy một lần rồi bỏ, và khi đó nó không còn tác dụng gì. Lộ trình gợi ý **20 đến 50 câu**, tập trung vào một nhiệm vụ chính.
 
 Số lượng quan trọng hơn hình thức: 30 câu phủ đúng các tình huống thật có giá trị hơn 300 câu sinh tự động.
 
@@ -63,13 +71,15 @@ Số lượng quan trọng hơn hình thức: 30 câu phủ đúng các tình hu
 
 Chạy bộ test hai lần trên cùng một mã phiên bản. Điểm phải giống hệt nhau. Nếu lệch, bạn đang chấm điểm bằng mô hình không ổn định và cần sửa cách chấm trước khi tin vào con số.
 
+> **Tóm gọn 1 câu:** Bắt đầu với 20–50 câu thật (gồm cả câu xấu và câu ngoài phạm vi), giữ 1/3 chỉ để kiểm thử, và đo chi phí trước khi quyết tần suất chạy.
+
 ---
 
 ## Q3. Chạy eval tốn tiền — có kiểm soát được không? [→ PromptFoo — Config-Driven Eval]
 
 **Bạn sẽ thấy**
 
-Bạn định chạy 4 prompt × 2 model × 50 câu = 400 lượt gọi mỗi lần kiểm thử. Hóa ra số tiền lớn hơn ngân sách chạy ứng dụng cả tháng.
+Bạn định chạy 4 prompt × 2 model × 50 câu = 400 lượt gọi mỗi lần kiểm thử (lượt gọi = một request gửi tới model, tốn tiền theo token). Hóa ra số tiền lớn hơn ngân sách chạy ứng dụng cả tháng.
 
 **Vì sao**
 
@@ -88,6 +98,8 @@ Vì eval là công việc lặp lại. Ứng dụng chạy mỗi ngày vài tră
 
 Đặt ngưỡng chi phí xuống thấp có chủ ý, ví dụ 0,01 USD, rồi chạy lại: kết quả phải đỏ và cho biết vượt ngân sách. Nếu vẫn xanh thì khẳng định chi phí chưa thực sự hoạt động.
 
+> **Tóm gọn 1 câu:** Kiểm soát được — chặn chi phí ngay trong khẳng định (assertion = điều kiện "phải đúng, sai là báo đỏ"), chạy nhỏ ở local trước, chạy bộ lớn theo lịch đêm.
+
 ---
 
 ## Q4. Thêm phần truy xuất tài liệu có cải thiện thật không? [→ Ragas — RAG-Specific Metrics]
@@ -98,7 +110,9 @@ Sau khi thêm RAG với lấy 5 đoạn tài liệu nhiều nhất, câu trả l
 
 **Vì sao**
 
-Vì khoảng trắng dữ liệu của RAG là câu hỏi khó nhất: khi câu trả lời sai, bạn không biết lỗi ở khâu lấy tài liệu hay ở khâu trả lời. Ba chỉ số của Ragas tách hai nguyên nhân đó ra:
+Vì khoảng trắng dữ liệu của RAG là câu hỏi khó nhất (khoảng trắng = blind spot, chỗ mù không nhìn thấy được): khi câu trả lời sai, bạn không biết lỗi ở khâu lấy tài liệu hay ở khâu trả lời. Ba chỉ số của Ragas tách hai nguyên nhân đó ra:
+
+*Cách đọc bảng này: cột "Chỉ số" là tên đo lường của Ragas; cột "Đo cái gì" nói nó kiểm tra khâu nào; cột "Lỗi nói lên gì" cho biết số thấp nghĩa là lỗi ở đâu. Ví dụ, context_precision thấp = lỗi ở khâu tìm tài liệu, không phải ở model.*
 
 | Chỉ số | Đo cái gì | Lỗi nói lên gì |
 |---|---|---|
@@ -121,9 +135,13 @@ Chỉ số `context_precision` thấp trong khi `faithfulness` cao là kết lu�
 
 Chủ ý làm sai một đoạn trả lời cho một câu hỏi, rồi chạy lại: `faithfulness` phải tụt. Nếu không tụt thì chỉ số đang không đo đúng thứ.
 
+> **Tóm gọn 1 câu:** Có — đọc cả ba chỉ số Ragas cùng lúc: context_precision thấp nghĩa là lỗi khâu tìm tài liệu, faithfulness thấp nghĩa là lỗi khâu trả lời; sửa đúng khâu hỏng thay vì đổi model bừa.
+
 ---
 
 ## Q5. Làm sao biết hôm nay mình tạo ra bản tệ hơn hôm qua? [→ Case Studies Thực Tế — Regression Detection Trong CI]
+
+*(regression detection = phát hiện bản mới làm hệ thống xấu đi; CI = quy trình kiểm tra tự động chạy mỗi lần commit.)*
 
 **Bạn sẽ thấy**
 
@@ -137,7 +155,7 @@ Mục tiêu của bài đánh giá không phải chứng minh hệ thống tốt
 
 **Làm gì**
 
-1. Chốt một mốc đo: ví dụ prompt gốc đạt 82%, đặt làm chuẩn so sánh.
+1. Chốt một mốc đo: ví dụ prompt gốc đạt 82%, đặt làm chuẩn so sánh (mốc chuẩn = baseline, con số mọi thay đổi sau này đối chiếu vào).
 2. Cho bộ đánh giá chạy tự động mỗi khi bạn đổi prompt, rồi so với mốc đó.
 3. Đặt ngưỡng chặn: giảm quá 5% làm đỏ bước kiểm tra, không cho phát hành.
 4. Khi đỏ, đọc bảng so sánh để xem biến nào làm điểm rơi.
@@ -147,6 +165,8 @@ Mục tiêu của bài đánh giá không phải chứng minh hệ thống tốt
 **Kiểm tra**
 
 Cố tình thêm một câu lệnh làm câu trả lời dài dòng vào prompt rồi chạy lại. Hệ thống phải đỏ và con số phải rơi. Nếu vẫn xanh thì mốc so sánh chưa được lưu đúng chỗ.
+
+> **Tóm gọn 1 câu:** Chốt một điểm chuẩn (baseline), chạy eval tự động mỗi lần đổi prompt, và chặn phát hành khi điểm tụt quá ngưỡng — con số sẽ bắt lỗi thay cho người dùng.
 
 ---
 

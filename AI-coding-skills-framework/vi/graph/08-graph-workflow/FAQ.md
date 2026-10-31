@@ -17,7 +17,7 @@ Dựng lại toàn bộ tốn chi phí tuyến tính theo số tài liệu, kể
 **Làm gì**
 
 1. Chỉ trích xuất trên tài liệu mới, rồi hỏi graph: thực thể này đã tồn tại chưa; có thì cập nhật thuộc tính, chưa có thì thêm.
-2. Ghi bằng `MERGE` chứ không dùng `INSERT` — chạy lại 100 lần kết quả vẫn như nhau.
+2. Ghi bằng `MERGE` chứ không dùng `INSERT` — chạy lại 100 lần kết quả vẫn như nhau. (**MERGE** = lệnh của Neo4j nghĩa là "có rồi thì cập nhật, chưa có thì thêm mới"; **INSERT** = chèn thêm một dòng mới, chạy lại sẽ nhân đôi dữ liệu. Tính chất "chạy lại nhiều lần vẫn ra một kết quả" gọi là *idempotent*.)
 3. Chọn chế độ theo tần suất: nạp lần đầu dùng batch, hằng ngày dùng micro-batch 10–100 tài liệu, thay đổi tức thì dùng streaming.
 4. Ghi lại mã tài liệu nguồn vào mỗi node/cạnh để sau này xoá được đúng nhóm.
 
@@ -26,6 +26,8 @@ Dựng lại toàn bộ tốn chi phí tuyến tính theo số tài liệu, kể
 **Kiểm tra**
 
 Nạp 1.000 tài liệu, sau đó thêm 10 tài liệu: so sánh thời gian và chi phí của cách dựng lại 1.010 tài liệu với cách chỉ xử lý 10 tài liệu. Chạy cùng một tài liệu 3 lần, số node phải giữ nguyên — không được nhân đôi.
+
+> **Tóm gọn 1 câu:** Chỉ xử lý tài liệu mới và ghi bằng `MERGE` là giảm ~90% chi phí cập nhật, đồng thời chạy lại bao nhiêu lần cũng không nhân đôi dữ liệu.
 
 ---
 
@@ -41,16 +43,18 @@ Gộp không chỉ là đổi tên. Nếu chỉ dùng lệnh đổi nhãn rồi 
 
 **Làm gì**
 
-1. Chọn một node chuẩn (canonical) làm đích đến.
+1. Chọn một node chuẩn (canonical) làm đích đến. (**Canonical** = bản chuẩn duy nhất được giữ lại; 199 node còn lại là bản trùng sẽ bị gộp vào nó.)
 2. **Chuyển cả cạnh ra lẫn cạnh vào** của mọi node trùng sang node chuẩn, giữ nguyên thuộc tính.
 3. Chỉ xoá node trùng **sau khi** đã chuyển đủ cạnh.
-4. Trong Cypher thì tạo cạnh mới ở node chuẩn, sao chép thuộc tính rồi mới xoá cạnh cũ.
+4. Trong Cypher thì tạo cạnh mới ở node chuẩn, sao chép thuộc tính rồi mới xoá cạnh cũ. (**Cypher** = ngôn ngữ truy vấn của Neo4j, giống SQL nhưng dành cho graph.)
 
 > 📄 **Code ví dụ:** [`examples/02-q2-gop-200-thuc-the-trung-ten-quan.py`](examples/02-q2-gop-200-thuc-the-trung-ten-quan.py)
 
 **Kiểm tra**
 
-Trước khi gộp, lưu lại tổng số cạnh. Sau khi gộp 200 node, tổng số cạnh phải bằng hoặc lớn hơn (các cạnh trùng lặp có thể chồng lên nhau). Chạy lại bộ câu hỏi multi-hop quanh node chuẩn và xác nhận không câu nào mất đường.
+Trước khi gộp, lưu lại tổng số cạnh. Sau khi gộp 200 node, tổng số cạnh phải bằng hoặc lớn hơn (các cạnh trùng lặp có thể chồng lên nhau). Chạy lại bộ câu hỏi multi-hop quanh node chuẩn và xác nhận không câu nào mất đường. (**Multi-hop** = câu hỏi phải đi qua nhiều bước quan hệ trên graph, ví dụ "người quản lý dự án X từng làm dự án nào?")
+
+> **Tóm gọn 1 câu:** Gộp thực thể đúng cách = dồn hết cạnh về một node chuẩn rồi mới xoá bản trùng — cạnh không mất, đường đi nhiều bước không đứt.
 
 ---
 
@@ -68,14 +72,16 @@ Graph luôn thay đổi: người đổi bộ phận, dự án bị hủy, hợp
 
 1. Cho mọi cạnh hai thuộc tính `valid_from` và `valid_until`; `valid_until` rỗng nghĩa là đang hiệu lực. Ghi thêm `created_at` và `created_by`.
 2. Cập nhật thì **đóng hạn cạnh cũ** rồi tạo cạnh mới, không xoá.
-3. Song song giữ sổ ghi mọi thao tác tạo/cập nhật/xoá, kèm `actor` như `user:alice`, `pipeline:etl`, `loop:daily-triage`, và `prev_state` để quay lui.
-4. Xoá cũng chỉ là **ghi thêm một sự kiện**, nên luôn quay lui được.
+3. Song song giữ sổ ghi mọi thao tác tạo/cập nhật/xoá, kèm `actor` như `user:alice`, `pipeline:etl`, `loop:daily-triage`, và `prev_state` để quay lui. (**Actor** = "ai đã làm"; `prev_state` = trạng thái trước khi sửa, để hoàn tác.)
+4. Xoá cũng chỉ là **ghi thêm một sự kiện**, nên luôn quay lui được. (Cách ghi mọi thay đổi thành chuỗi sự kiện này gọi là *event sourcing* — giống sổ nhật ký, không bao giờ tẩy xóa, chỉ thêm dòng mới.)
 
 > 📄 **Code ví dụ:** [`examples/03-q3-nhan-vien-chuyen-team-roi-hoi-quy.py`](examples/03-q3-nhan-vien-chuyen-team-roi-hoi-quy.py)
 
 **Kiểm tra**
 
 Hỏi cùng một node ở hai mốc thời gian khác nhau, kết quả phải khác và đúng dữ liệu. Thử quay lui về một sự kiện và đối chiếu trạng thái graph trước đó với bản ghi.
+
+> **Tóm gọn 1 câu:** Cho mỗi cạnh ngày bắt đầu/kết thúc và ghi sổ mọi thao tác — xong là trả lời được "hồi quý 1 ai quản lý" và luôn quay lui được khi gộp nhầm.
 
 ---
 
@@ -91,10 +97,10 @@ Ba thứ thường thiếu: không có điểm dừng giữa chừng để quay 
 
 **Làm gì**
 
-1. Đánh dấu `checkpoint` cho các bước quan trọng; khi bước sau lỗi chế độ `fail`, tự quay về điểm gần nhất và ghi trạng thái `rolled_back`.
+1. Đánh dấu `checkpoint` cho các bước quan trọng; khi bước sau lỗi chế độ `fail`, tự quay về điểm gần nhất và ghi trạng thái `rolled_back`. (**Checkpoint** = điểm lưu giữa chừng, giống nút save trong game; `rolled_back` = trạng thái "đã quay lui".)
 2. Mỗi bước khai rõ xử lý lỗi: `fail` (dừng cả pipeline), `skip` (bỏ qua bước đó), hoặc `retry` (thử lại).
-3. Thử lại có lùi thời gian chờ: lần 1 chờ 2 giây, lần 2 chờ 4 giây, lần 3 thì mới ném lỗi.
-4. Dùng circuit breaker: 5 lần lỗi liên tiếp thì ngừng gọi, 60 giây sau mới thử lại — tránh đốt tiền vào một dịch vụ đang chết.
+3. Thử lại có lùi thời gian chờ: lần 1 chờ 2 giây, lần 2 chờ 4 giây, lần 3 thì mới ném lỗi. (Cách chờ dài dần mỗi lần thử này gọi là *backoff*.)
+4. Dùng circuit breaker: 5 lần lỗi liên tiếp thì ngừng gọi, 60 giây sau mới thử lại — tránh đốt tiền vào một dịch vụ đang chết. (**Circuit breaker** = aptomat: dịch vụ lỗi dồn dập thì "ngắt điện" tạm thời thay vì gọi đi gọi lại.)
 5. Bắt buộc báo cáo số liệu mỗi lần chạy: số thực thể vào/ra, tỉ lệ gộp trùng, số lỗi, thời gian từng bước.
 
 > 📄 **Code ví dụ:** [`examples/04-q4-batch-nap-giua-chung-bi-loi-khoi.py`](examples/04-q4-batch-nap-giua-chung-bi-loi-khoi.py)
@@ -102,6 +108,8 @@ Ba thứ thường thiếu: không có điểm dừng giữa chừng để quay 
 **Kiểm tra**
 
 Cố tình làm bước `validate` lỗi giữa pipeline và xác nhận trạng thái là `rolled_back`, dữ liệu về đúng điểm gần nhất. Quy trình lỗi ở bước cuối không được ghi báo cáo "thành công".
+
+> **Tóm gọn 1 câu:** Có checkpoint + khai trước chính sách lỗi (dừng/bỏ qua/thử lại) là giảm 80% thời gian khôi phục — và pipeline lỗi phải được báo là lỗi, không phải "thành công".
 
 ---
 
@@ -117,16 +125,18 @@ Khác biệt nằm ở mức độ: lịch chạy, xử lý lỗi, trạng thái
 
 **Làm gì**
 
-1. Dùng **Prefect** cho nghiệp vụ Python: mỗi bước là một `@task`, tự thử lại 3 lần cách nhau 10 giây, và có thể đặt lịch theo biểu thức cron `0 * * * *`.
+1. Dùng **Prefect** cho nghiệp vụ Python: mỗi bước là một `@task`, tự thử lại 3 lần cách nhau 10 giây, và có thể đặt lịch theo biểu thức cron `0 * * * *`. (**Prefect** = thư viện Python để viết pipeline có lịch chạy và tự thử lại; `@task` = đánh dấu một hàm là "một bước công việc"; cron `0 * * * *` = "chạy đúng phút 0 của mỗi giờ".)
 2. Dùng **GitHub Actions** khi muốn nạp ngay khi có người push tài liệu mới vào `data/raw_docs/*.md`.
 3. Dùng **Airflow** khi đã có nhiều luồng dữ liệu phụ thuộc nhau cần vẽ thành đồ thị phụ thuộc.
-4. **crontab** chỉ hợp với script nhỏ chạy cục bộ; muốn tự chạy lại và tự phân tích lỗi thì đừng dùng.
+4. **crontab** chỉ hợp với script nhỏ chạy cục bộ; muốn tự chạy lại và tự phân tích lỗi thì đừng dùng. (**crontab** = trình hẹn giờ có sẵn của Linux, chỉ biết "đúng giờ thì chạy", không biết thử lại hay báo lỗi.)
 
 > 📄 **Code ví dụ:** [`examples/05-q5-nen-chay-bang-airflow-prefect-github-actions.py`](examples/05-q5-nen-chay-bang-airflow-prefect-github-actions.py)
 
 **Kiểm tra**
 
 Đặt lịch chạy thật 2–3 ngày và xác nhận: lần chạy sau không xử lý lại tài liệu cũ, lỗi tạm thời được thử lại, và khi số node mới vượt 100 thì việc tìm cộng đồng được chạy lại.
+
+> **Tóm gọn 1 câu:** Chọn công cụ theo mức độ cần: crontab cho script nhỏ, Prefect/GitHub Actions cho pipeline Python thường ngày, Airflow khi có nhiều luồng dữ liệu phụ thuộc nhau.
 
 ---
 

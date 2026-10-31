@@ -6,6 +6,11 @@
 
 ## 🎯 Đối Tượng
 
+> **Cách đọc bảng này:** cột **Nhóm** là nghề của bạn; cột **Mục đích** là bạn sẽ dùng framework đó để làm gì.
+> Ví dụ: nếu bạn là Backend Developer, hãy đọc kỹ các phần về LLM và RAG (tìm kiếm tri thức).
+> "LLM" = Large Language Model, tức mô hình ngôn ngữ lớn như GPT, Claude. "RAG" = Retrieval-Augmented Generation,
+> tức cách cho AI tra cứu tài liệu trước khi trả lời.
+
 | Nhóm | Mục đích |
 |------|----------|
 | **AI Engineers** | Thiết kế và triển khai AI Agent systems |
@@ -14,7 +19,13 @@
 | **Tech Leads** | Đánh giá và chọn kiến trúc AI phù hợp |
 | **Researchers** | Tham khảo pattern và best practices |
 
+> **Tóm gọn 1 câu:** Ai cũng học được — từ kỹ sư AI tới DevOps — tùy vai trò mà bạn tập trung vào phần khác nhau.
+
 ## 📋 Tiên Quyết
+
+> **Cách đọc bảng này:** cột **Kiến thức** là những gì bạn cần biết trước; cột **Mức độ** cho biết cần sâu đến đâu
+> (Cơ bản = biết khái niệm là đủ); cột **Ghi chú** giải thích vì sao cần.
+> Ví dụ: bạn không cần giỏi Python — chỉ cần đọc hiểu code và chạy được script.
 
 | Kiến thức | Mức độ | Ghi chú |
 |-----------|--------|---------|
@@ -23,31 +34,56 @@
 | REST API | Cơ bản | Giao tiếp với Ollama, MCP servers |
 | Git | Cơ bản | Quản lý code và automation |
 
+> **Giải nghĩa nhanh:** *Token* = đơn vị nhỏ nhất mà AI đọc được, khoảng một từ hoặc vài ký tự.
+> *Prompt* = câu lệnh/dối thoại bạn đưa cho AI. *REST API* = cách hai phần mềm gọi nhau qua HTTP.
+> *Ollama* = phần mềm chạy AI ngay trên máy bạn, miễn phí. *MCP server* = "cổng cắm tool" chuẩn để agent gọi công cụ bên ngoài.
+
+> **Tóm gọn 1 câu:** Bạn chỉ cần Python cơ bản + khái niệm LLM là đủ bắt đầu — phần còn lại framework sẽ dạy dần.
+
 ## 🛠️ Cách Sử Dụng
+
+Phần này nói về **cách bắt đầu dùng framework**: cài gì trước, học theo thứ tự nào, và thực hành ra sao.
 
 ### Bước 1: Cài đặt môi trường
 
 <details>
 <summary><b>Bước 1: Cài đặt môi trường (Click to expand/collapse)</b></summary>
 
+
 > 📄 **Code ví dụ:** [`examples/01-buoc-1-cai-at-moi-truong.sh`](examples/01-buoc-1-cai-at-moi-truong.sh)
 
 > **Ghi chú Oct-2026.** Hai dòng `ollama pull` trên chỉ là ví dụ hồi Jul-2026 thôi,
-> bạn đổi model khác vẫn chạy đúng pattern. Một số lựa chọn mới:
+> bạn đổi model khác vẫn chạy đúng pattern. (`ollama pull` = tải model AI về máy,
+> ví dụ `ollama pull gemma3:12b` tải model Gemma kích thước 12 tỷ tham số.)
+> Một số lựa chọn mới:
 > `qwen3.6`, `deepseek-v4-flash/pro (context tới 1M)`, `gemma4 26B-A4B`, `gpt-oss:20b/120b (nhẹ nhờ MXFP4)`,
 > `muse-glimmer 30b`, `minimax-m3`, `glm-5.2`, `granite4.2`. Nhớ dùng Ollama bản mới (>=0.6) nhé.
+> (MXFP4 = định dạng nén số 4-bit, giúp model chạy nhẹ hơn trên máy thường.)
 
 </details>
 
+> **Tóm gọn 1 câu:** Bước 1 chỉ là chạy script cài Ollama và tải một model về máy — file cài mẫu nằm trong examples/.
+
 ### Bước 2: Học theo lộ trình
-Bắt đầu từ **Phase 1** (Core Skills) rồi học dần lên **Phase 6** (Evaluation) nhé. Mỗi module đều có README riêng kèm code mẫu để bạn vừa đọc vừa làm theo.
+Bắt đầu từ **Phase 1** (Core Skills) rồi học dần lên **Phase 6** (Evaluation) nhé. ("Phase" = giai đoạn.)
+Mỗi module đều có README riêng kèm code mẫu để bạn vừa đọc vừa làm theo. (README = file giới thiệu đi kèm thư mục.)
+
+> **Tóm gọn 1 câu:** Học theo thứ tự Phase 1 → 6, mỗi module đều có hướng dẫn và code đi kèm.
 
 ### Bước 3: Thực hành
-- Clone repo về rồi chạy thử code mẫu trong từng module nhé
-- Thử chỉnh parameters xem kết quả thay đổi ra sao
-- Cuối cùng ghép các module lại với nhau thành một pipeline hoàn chỉnh
+- Clone repo về rồi chạy thử code mẫu trong từng module nhé ("clone" = tải bản sao repo về máy)
+- Thử chỉnh parameters xem kết quả thay đổi ra sao ("parameters" = các thông số cấu hình, ví dụ nhiệt độ sinh câu chữ)
+- Cuối cùng ghép các module lại với nhau thành một pipeline hoàn chỉnh ("pipeline" = chuỗi bước nối tiếp nhau)
+
+> **Tóm gọn 1 câu:** Chạy code mẫu, chỉnh thông số xem kết quả đổi ra sao, rồi ghép các module thành pipeline hoàn chỉnh.
+
+> **Tóm gọn 1 câu:** Cài Ollama + model, học tuần tự Phase 1 → 6, rồi tự tay chạy và chỉnh code mẫu ở từng module.
 
 ## ⚡ Quick Reference
+
+> **Cách đọc bảng này:** cột trái là **cái bạn muốn làm**, cột phải là **module cần học** (bấm link để nhảy tới).
+> Ví dụ: muốn AI tìm thông tin trong docs hay database → học module 01 "Retrieve Memory".
+> "Module" = một bài học độc lập kèm code. "Context window" = bộ nhớ tạm AI đọc được trong một lần trả lời.
 
 | Bạn muốn... | Học module |
 |-------------|------------|
@@ -68,24 +104,42 @@ Bắt đầu từ **Phase 1** (Core Skills) rồi học dần lên **Phase 6** (
 | Gate thao tác không đảo ngược cho con người | [15 - Approval Gates](#mặt-phẳng-kiểm-soát-harness-modules-1215) |
 | **Xây kiến trúc hệ thống agent hoàn chỉnh (8 Layer)** | [AGENT_SYSTEM_ARCHITECTURE.md](AGENT_SYSTEM_ARCHITECTURE.md) |
 
-> **Ghi chú về đánh số.** Module harness là `01`–`15`. Nhãn `Part` bên dưới
-> (`Part I` … `Part XIII`) đánh số *các phần của framework*, là namespace khác —
+> **Ghi chú về đánh số.** Module harness là `01`–`15`. ("Harness" = khung vận hành bọc quanh model:
+> lo chạy code, gọi tool, ghi log, xin phép — mọi thứ ngoài việc "suy nghĩ".)
+> Nhãn `Part` bên dưới (`Part I` … `Part XIII`) đánh số *các phần của framework*, là namespace khác —
+> (namespace = "hệ thống đánh số khác", như số nhà và số CCCD cùng chỉ một người)
 > đó là lý do `Part XII` là Loop Engineering và `Part XIII` là Graph Engineering,
-> trong khi module harness `12` là Sandbox Execution. Loop Engineering nằm ở
-> thư mục `loop/` cấp cao nhất, không nằm trong `harness/`.
+> trong khi module harness `12` là Sandbox Execution. (Sandbox = "chuồng nhốt" cách ly code khi chạy thử.)
+> Loop Engineering nằm ở thư mục `loop/` cấp cao nhất, không nằm trong `harness/`.
+
+> **Tóm gọn 1 câu:** Bảng tra nhanh này cho bạn biết "muốn làm X thì học module nào" — và đừng nhầm số module (01–15) với số Part (I–XIII).
 
 ### Giao thức & SDK chuẩn (2026)
 
+> **Mục này nói gì:** các "chuẩn giao tiếp" mà các agent năm 2026 dùng để nói chuyện với tool,
+> với nhau, và để đóng gói kỹ năng. Biết 5 cái tên dưới đây là đủ đọc hiểu phần còn lại.
+
 > **Tóm tắt nhanh (chi tiết ở [AGENT_SYSTEM_ARCHITECTURE.md](AGENT_SYSTEM_ARCHITECTURE.md)):**
 > - **MCP** (Model Context Protocol, spec `2026-07-28`) — agent↔tool. Mọi module gọi tool nên đi qua MCP.
+>   (Nói đơn giản: MCP là "ổ cắm điện chuẩn" — agent cắm tool nào vào cũng chạy, không cần code riêng từng tool.)
 > - **A2A** (Agent-to-Agent, Linux Foundation — Google ra mắt 04/2025, donate 06/2025) — agent↔agent, bổ sung cho MCP.
+>   (MCP nối agent với tool; A2A nối agent với agent.)
 > - **Agent Skills** (open standard 12/2025, [agentskills.io](https://agentskills.io)) — đóng gói chuyên môn thành SKILL.md.
+>   (Tức là gói kiến thức nghề nghiệp thành 1 file mô tả để agent đọc và "biện" thêm kỹ năng.)
 > - **SDK chính thống**: Claude Agent SDK (trước đây là Claude Code SDK), OpenAI Agents SDK, Google ADK (GA 04/2025), LangGraph, CrewAI, AWS Strands.
+>   (SDK = bộ thư viện chính thức giúp bạn code nhanh; GA = General Availability, tức phát hành chính thức.)
 > - **GraphRAG 2026**: LazyGraphRAG + LightRAG giảm chi phí ~700× so với GraphRAG gốc (chi tiết ở [GRAPH_ENGINEERING.md](GRAPH_ENGINEERING.md) và `graph/05-graph-rag/`).
+>   (GraphRAG = cho AI tra cứu theo "sơ đồ quan hệ" thay vì chỉ tìm văn bản thô.)
+
+> **Tóm gọn 1 câu:** MCP là chuẩn để agent gọi tool, A2A là chuẩn để agent nói chuyện với nhau, Agent Skills là cách đóng gói chuyên môn — biết 3 tên này là đủ.
 
 ---
 
 ## Cấu Trúc Học Tập
+
+> **Đọc cây này thế nào:** đây là bản đồ thư mục của framework. Số `01`–`15` là module harness
+> (mỗi module = 1 bài học kèm code), arrow `←` là chú thích ngắn. Ba nhóm chính:
+> `harness/` (kỹ năng lõi + nâng cao + lớp kiểm soát), `loop/` (vòng lặp tự chạy), `graph/` (tri thức dạng đồ thị).
 
 AI/
 ├── AI_AGENT_FRAMEWORK.md                   ← TRANG CHỦ
@@ -135,7 +189,12 @@ AI/
    └── 09-evaluation/                        ← ĐÁNH GIÁ
 ```
 
+> **Tóm gọn 1 câu:** Repo chia 3 khu: `harness/` cho kỹ năng lõi và hệ an toàn, `loop/` cho vòng lặp tự chạy, `graph/` cho tri thức dạng đồ thị.
+
 ## Lộ Trình Học
+
+> **Đọc sơ đồ này thế nào:** mỗi ô là một module, mũi tên `───►` là thứ tự dữ liệu chảy.
+> 6 Phase là 6 giai đoạn học: lấy thông tin → xử lý → lưu trữ → tổ chức → phối hợp → đánh giá.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -189,7 +248,13 @@ AI/
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Học 6 phase theo thứ tự: lấy thông tin → xử lý → lưu trữ → tổ chức → phối hợp → đánh giá.
+
 ## Môi Trường Thực Hành
+
+> **Cách đọc bảng này:** cột **Component** là thành phần hệ thống; **Model / Tool** là phần mềm cụ thể dùng cho phần đó;
+> cột **Chạy** cho biết chạy ở đâu. Tất cả đều chạy **local** (trên máy bạn, miễn phí) — không bắt buộc dùng dịch vụ đám mây trả phí.
+> "Embedding" = biến chữ thành dãy số (vector) để máy so sánh độ giống nhau. "Vector Store" = nơi lưu và tìm các dãy số đó.
 
 | Component | Model / Tool | Chạy |
 |-----------|-------------|------|
@@ -201,7 +266,18 @@ AI/
 | BM25 | Custom Python | Local |
 | MCP Server | GitHub MCP, Custom tools | Local |
 
+> **Giải nghĩa vài thuật ngữ trong bảng:** *BM25* = thuật toán tìm kiếm theo từ khóa, đếm từ xuất hiện nhiều.
+> *GNN* = Graph Neural Network, mạng nơ-ron học trên dữ liệu dạng đồ thị. *Docker* = công cụ gói app vào "hộp" chạy được mọi máy.
+> *Embedded* = chạy ngay trong tiến trình app, không cần cài server riêng.
+
+> **Tóm gọn 1 câu:** Toàn bộ môi trường thực hành chạy miễn phí trên máy bạn bằng Ollama + các thư viện Python, không cần trả tiền cloud.
+
 ## Chi Tiết Từng Phần
+
+> **Phần này nói gì:** mỗi `Part` là một nhóm bài học. Mỗi bảng liệt kê các chủ đề trong đó,
+> kèm link nhảy thẳng tới README của module tương ứng. Cột **Mô tả** giải thích chủ đề đó xử lý vấn đề gì.
+
+> **Tóm gọn 1 câu:** Đây là mục lục chi tiết: 13 Part = 13 nhóm kỹ năng, mỗi kỹ năng dẫn link tới bài học đầy đủ.
 
 ### Part I: Retrieve Memory & Knowledge
 > Làm sao tìm đúng thông tin?
@@ -214,6 +290,12 @@ AI/
 | 1.4 | [Knowledge Graph](harness/01-retrieve-memory-knowledge/README.md#4-knowledge-graph) | Entity relationships, graph traversal |
 | 1.5 | [Multi-Source Retrieval](harness/01-retrieve-memory-knowledge/README.md#5-multi-source-retrieval) | Fusing results từ nhiều nguồn |
 
+> **Đọc bảng:** "Semantic similarity" = so sánh **ý nghĩa** câu chữ (AI hiểu "xe hơi" ≈ "automobile").
+> "Term frequency" = đếm **từ khóa** xuất hiện mấy lần. Hybrid = làm cả hai rồi gộp kết quả.
+> Knowledge Graph = sơ đồ quan hệ dạng "A — làm việc tại → B".
+
+> **Tóm gọn 1 câu:** Phần này dạy 5 cách tìm thông tin: theo ý nghĩa, theo từ khóa, gộp cả hai, theo đồ thị quan hệ, và gộp nhiều nguồn.
+
 ### Part II: Build Context
 > Làm sao tổ chức thông tin hiệu quả?
 
@@ -224,6 +306,11 @@ AI/
 | 2.3 | [Prompt Templates](harness/02-build-context/README.md#3-prompt-templates) | System/user/assistant roles |
 | 2.4 | [Hierarchical Context](harness/02-build-context/README.md#4-hierarchical-context) | Summary → Detail structure |
 | 2.5 | [Multi-turn Context](harness/02-build-context/README.md#5-multi-turn-context) | Conversation memory management |
+
+> **Đọc bảng:** Context window = "bàn làm việc" của AI — chỗ chứa mọi thứ nó đọc được trong 1 lượt, có giới hạn số token.
+> "Sliding window" = giữ phần mới nhất, bỏ phần cũ nhất. "System/user/assistant roles" = 3 vai trò trong prompt: quy định, hỏi, trả lời.
+
+> **Tóm gọn 1 câu:** Phần này dạy cách nhét đúng thông tin, vừa đủ và có tổ chức, vào ô nhớ giới hạn của AI.
 
 ### Part III: Update Memory & Knowledge Store
 > Làm sao lưu lại thông tin mới?
@@ -236,6 +323,12 @@ AI/
 | 3.4 | [KB Maintenance](harness/03-update-memory-store/README.md#4-kb-maintenance) | CRUD knowledge base |
 | 3.5 | [Event Sourcing](harness/03-update-memory-store/README.md#5-event-sourcing-pattern) | Full audit trail |
 
+> **Đọc bảng:** "Dedupe" = bỏ trùng lặp (như gộp 2 ghi chú nói cùng một chuyện).
+> "CRUD" = 4 thao tác cơ bản: Create, Read, Update, Delete. "Event sourcing" = lưu từng sự kiện theo thứ tự,
+> như nhật ký — muốn xem lại lúc nào cũng xem được ("audit trail" = dấu vết kiểm tra đầy đủ).
+
+> **Tóm gọn 1 câu:** Phần này dạy cách ghi thông tin mới vào bộ nhớ dài hạn, dọn trùng lặp, và giữ được nhật ký đầy đủ để tra lại.
+
 ### Part IV: Plan & Decompose Task
 > Làm sao chia nhỏ task phức tạp?
 
@@ -246,6 +339,12 @@ AI/
 | 4.3 | [Agent Workflows](harness/04-plan-decompose-task/README.md#3-agent-workflows) | ReAct, Multi-agent, State Machine |
 | 4.4 | [State Management](harness/04-plan-decompose-task/README.md#4-state-management) | Checkpoint, rollback |
 | 4.5 | [ReAct Pattern](harness/04-plan-decompose-task/README.md#5-react-pattern) | Thought → Action → Observation |
+
+> **Đọc bảng:** "Sequential" = làm lần lượt từng việc; "parallel" = làm cùng lúc nhiều việc; "hierarchical" = chia cây: việc lớn thành việc nhỏ.
+> ToT = Tree of Thought, tức để AI "suy nghĩ nhiều nhánh" rồi chọn nhánh tốt. ReAct = vòng lặp: nghĩ → làm → xem kết quả → nghĩ tiếp.
+> "Checkpoint/rollback" = lưu điểm an toàn để quay lại nếu sai (như nút save trong game).
+
+> **Tóm gọn 1 câu:** Phần này dạy cách bẻ việc lớn thành các việc nhỏ làm được, rồi cho AI chạy theo vòng lặp "nghĩ — làm — kiểm tra".
 
 ### Part V: Prompt Builder
 > Làm sao viết prompt tốt nhất?
@@ -258,6 +357,12 @@ AI/
 | 5.4 | [Guardrails](harness/05-prompt-builder/README.md#4-guardrails) | Safety filters, validation |
 | 5.5 | [Output Format](harness/05-prompt-builder/README.md#5-output-format-control) | JSON, Markdown, Table |
 
+> **Đọc bảng:** Template = mẫu câu có chỗ điền biến, ví dụ "Viết tóm tắt cho file {tên_file}".
+> Few-shot = đưa vài ví dụ mẫu vào prompt để AI bắt chước. CoT (Chain-of-Thought) = yêu cầu AI suy nghĩ từng bước thay vì nhảy đến đáp án.
+> Guardrails = "lan can an toàn": lọc chặn yêu cầu nguy hiểm và kiểm tra output trước khi dùng.
+
+> **Tóm gọn 1 câu:** Phần này dạy cách viết prompt có mẫu, có ví dụ, có suy luận từng bước, có lan can an toàn, và ra đúng định dạng mong muốn.
+
 ### Part VI: Decide Tools / MCP Calls
 > Khi nào dùng tool nào?
 
@@ -267,6 +372,11 @@ AI/
 | 6.2 | [Intent Classification](harness/06-decide-tools-mcp/README.md#2-intent-classification) | Rule-based & LLM-based |
 | 6.3 | [MCP Protocol](harness/06-decide-tools-mcp/README.md#3-mcp-model-context-protocol) | Model Context Protocol |
 | 6.4 | [Tool Executor](harness/06-decide-tools-mcp/README.md#4-tool-executor-with-error-handling) | Error handling & retry |
+
+> **Đọc bảng:** "Registry" = danh mục tool có sẵn, agent chọn trong đó. "Intent classification" = đoán ý người dùng
+> muốn gì — bằng luật cứng (rule-based) hoặc nhờ AI tự phán (LLM-based). "Retry" = thử lại khi tool lỗi, ví dụ gọi API bị timeout thì thử lần 2.
+
+> **Tóm gọn 1 câu:** Phần này dạy cách agent chọn đúng tool cho từng nhu cầu, gọi qua chuẩn MCP, và tự thử lại khi gặp lỗi.
 
 ---
 
@@ -281,6 +391,13 @@ AI/
 | 7.4 | [Error Recovery](harness/07-workflow/README.md#4-error-recovery) | Retry, circuit breaker |
 | 7.5 | [Observability](harness/07-workflow/README.md#5-observability) | Logging, metrics |
 
+> **Đọc bảng:** "Conditional" = rẽ nhánh theo điều kiện (nếu X thì làm A, không thì làm B).
+> Pipeline = dây chuyền: dữ liệu vào đầu, từng bước biến đổi (transform), lọc (filter), rồi xuất ra cuối (sink).
+> FSM = finite state machine, máy trạng thái: agent chỉ ở 1 trạng thái tại 1 thời điểm (idle → chạy → xong).
+> Circuit breaker = "cầu chì": lỗi quá nhiều lần thì ngừng gọi luôn, khỏi đổ thêm tải.
+
+> **Tóm gọn 1 câu:** Phần này dạy cách nối các bước thành dây chuyền có nhánh, có cầu chì chống lỗi, và có log để biết chuyện gì xảy ra.
+
 ### Part VIII: Task Management
 > Làm sao quản lý và theo dõi tasks?
 
@@ -292,6 +409,12 @@ AI/
 | 8.4 | [Task State Management](harness/08-task/README.md#4-task-state-management) | Lifecycle, valid transitions |
 | 8.5 | [Dependency Management](harness/08-task/README.md#5-dependency-management) | DAG, topological sort |
 
+> **Đọc bảng:** Eisenhower matrix = chia việc theo 4 ô: gấp+quan trọng làm trước, không gấp không quan trọng bỏ.
+> Token budget = trạm số token AI được phép tiêu cho task đó. TDD = Test-Driven Development, viết test trước rồi mới viết code.
+> DAG = sơ đồ có hướng không vòng lặp — biểu thị "việc B phải chờ việc A xong". Topological sort = xếp thứ tự hợp lý từ DAG đó.
+
+> **Tóm gọn 1 câu:** Phần này dạy cách xếp loại, chia nhỏ, ưu tiên và sắp thứ tự các task sao cho việc nào cũng làm đúng lúc.
+
 ### Part IX: Multi-Agent Systems
 > Làm sao phối hợp nhiều agents?
 
@@ -302,6 +425,12 @@ AI/
 | 9.3 | [Orchestration](harness/09-multi-agent/README.md#3-orchestration-strategies) | Sequential, parallel, debate, voting |
 | 9.4 | [Shared Memory](harness/09-multi-agent/README.md#4-shared-memory) | Versioned, tagged, locked |
 | 9.5 | [Conflict Resolution](harness/09-multi-agent/README.md#5-conflict-resolution) | File lock, voting, deadlock detection |
+
+> **Đọc bảng:** Mỗi agent là một AI đảm nhận một vai, như một đội nhóm: Planner chia việc, Coder viết code, Reviewer soi lỗi, Tester chạy test.
+> P2P = peer-to-peer, agent nói thẳng với nhau không qua sếp. Debate/voting = cho các agent tranh luận rồi bầu chọn kết quả.
+> File lock = khoá file để 2 agent không ghi cùng lúc. Deadlock = hai agent chờ nhau mãi mãi — cần cơ chế phát hiện để thoát.
+
+> **Tóm gọn 1 câu:** Phần này dạy cách chia vai cho nhiều agent, cho chúng giao tiếp, dùng chung bộ nhớ, và xử lý mâu thuẫn khi cùng đụng tới một thứ.
 
 ### Part X: Automation
 > Làm sao tự động hóa các task lặp đi lặp lại?
@@ -315,6 +444,12 @@ AI/
 | 10.5 | [Git Automation](harness/10-automation/README.md#5-git-automation) | Hooks, commit conventions |
 | 10.6 | [Monitoring & Alerts](harness/10-automation/README.md#6-monitoring--alerts) | Thresholds, dashboards |
 
+> **Đọc bảng:** Event = chạy khi có việc xảy ra (có PR mới → tự review). Scheduled = chạy theo giờ (cron = trình hẹn giờ của Linux).
+> Reactive = phản ứng khi có chuyện bất thường. Self-healing = tự sửa lỗi của chính mình.
+> CI/CD = dây chuyền tự động build, test, deploy (triển khai) mỗi khi có code mới. Hooks = "móc" tự chạy script tại thời điểm cố định, ví dụ trước mỗi commit.
+
+> **Tóm gọn 1 câu:** Phần này dạy cách cho máy tự làm việc lặp lại: theo giờ, theo sự kiện, kèm tự sửa lỗi và báo động khi có chuyện.
+
 ### Part XI: Evaluation
 > Làm sao đánh giá hiệu quả AI coding?
 
@@ -327,11 +462,19 @@ AI/
 | 11.5 | [Continuous Improvement](harness/11-evaluation/README.md#5-continuous-improvement) | Trend analysis, suggestions |
 | 11.6 | [Reporting & Dashboards](harness/11-evaluation/README.md#6-reporting--dashboards) | Markdown/JSON reports |
 
+> **Đọc bảng:** Dimensions = các khía cạnh chấm điểm: chạy đúng chưa, code đẹp chưa, an toàn chưa, nhanh chưa.
+> Metrics = số liệu đo cụ thể (ví dụ độ phức tạp code). Benchmark = bộ đề thi chuẩn để so AI này với AI khác.
+> "Auto-eval pipeline" = dây chuyền chấm điểm tự động, khỏi chấm tay.
+
+> **Tóm gọn 1 câu:** Phần này dạy cách chấm điểm AI theo nhiều khía cạnh, tự động chạy đánh giá, và theo dõi xu hướng để cải tiến liên tục.
+
 ### Mặt Phẳng Kiểm Soát (Harness Modules 12–15)
 > Làm sao chạy, quan sát, kiểm soát và xin phép người dùng khi giao việc cho agent?
 
 Modules `12`–`15` **không phải bước trong pipeline**. Chúng là lớp nền mà mọi
-module ở trên đều dựa vào. Mỗi module chuẩn hoá đúng một câu hỏi của nó; các module khác
+module ở trên đều dựa vào. (Nói như đời thường: các module 01–11 là "nhân viên làm việc",
+còn 12–15 là "hệ thống an toàn của toà nhà" — ai trong toà cũng nhờ nó.)
+Mỗi module chuẩn hoá đúng một câu hỏi của nó; các module khác
 chỉ trỏ tới chứ không làm lại.
 
 | # | Chủ đề | Mô tả |
@@ -340,6 +483,18 @@ chỉ trỏ tới chứ không làm lại.
 | 13 | [Trajectory & Observability](harness/13-trajectory-observability/README.md) | Luồng `TrajectoryEvent` append-only, join key, retention, redaction |
 | 14 | [Compaction & Context](harness/14-compaction-context/README.md) | Trigger nén, pin set, pruning, khối resume |
 | 15 | [Approval Gates](harness/15-approval-gates/README.md) | Risk tier, payload cổng, timeout-deny, phán quyết con người, audit trail |
+
+> **Đọc bảng, giải nghĩa từng dòng:**
+> **12** — Sandbox = "chuồng nhốt" cách ly code không tin cậy (chạy trong container, không đụng được ra ngoài).
+> Threat model = liệt kê kẻ thù/rủi ro cần phòng. Runner harden = gia cố trình chạy code. Ma trận policy = bảng quy định ai được chạy gì.
+> **13** — TrajectoryEvent = bản ghi từng bước agent làm; append-only = chỉ được thêm, không được sửa/xóa (nhật ký kiên cố).
+> Retention = giữ bao lâu rồi xóa; redaction = che thông tin nhạy cảm (mật khẩu, token) trước khi lưu.
+> **14** — Compaction = nén bớt context khi gần đầy bộ nhớ. Pin set = danh sách nội dung "ghim" không bao giờ bị nén bỏ.
+> Pruning = tỉa bớt nội dung kém quan trọng. Khối resume = bản ghi giúp tiếp tục từ điểm dừng.
+> **15** — Approval gates = cổng duyệt: thao tác nguy hiểm phải chờ người bấm duyệt. Risk tier = xếp mức rủi ro.
+> Timeout-deny = không duyệt trong X giây thì coi như từ chối (an toàn mặc định).
+
+> **Tóm gọn 1 câu:** Bốn module này là hệ an toàn chung: cách ly khi chạy, ghi nhật ký từng bước, nén bộ nhớ khi đầy, và bắt duyệt người thật trước khi làm việc nguy hiểm.
 
 > Nhãn Roman `Part XII`/`XIII` ở dưới thuộc cách chia phần của framework (Loop, Graph).
 > Hai nhãn này không liên quan tới số thứ tự module harness.
@@ -357,6 +512,13 @@ chỉ trỏ tới chứ không làm lại.
 | 12.6 | [Anti-Patterns](loop/06-anti-patterns/README.md) | 10 anti-patterns + failure mode catalog |
 | 12.7 | [Tools](loop/07-tools/README.md) | loop-init, loop-audit, loop-cost, ecosystem |
 
+> **Đọc bảng:** Loop = vòng lặp agent tự chạy lặp lại theo lịch (ví dụ: mỗi sáng dò PR mới và nhắc review).
+> L1-L3 = 3 mức độ tự chủ: từ chạy có giám sát tới chạy gần như độc lập. Denylist = "danh sách cấm" việc loop không được làm.
+> Human gates = điểm bắt buộc dừng chờ người duyệt. Anti-pattern = cách làm nghe hợp lý nhưng thực ra gây hại.
+> pr-babysitter = loop "trông nom" pull request tới khi được merge.
+
+> **Tóm gọn 1 câu:** Phần này dạy cách dựng vòng lặp agent tự chạy hằng ngày mà vẫn an toàn: có giới hạn, có log, có người bấm duyệt ở chỗ nguy hiểm.
+
 ### Part XIII: Graph Engineering
 > Làm sao xây dựng hệ thống tri thức dạng đồ thị cho AI agents?
 
@@ -372,13 +534,23 @@ chỉ trỏ tới chứ không làm lại.
 | 13.8 | [Graph Workflow](graph/08-graph-workflow/README.md) | Pipeline ETL, incremental updates, versioning, orchestration |
 | 13.9 | [Evaluation](graph/09-evaluation/README.md) | Coverage, hallucination, path precision, benchmarks |
 
+> **Đọc bảng:** Graph = đồ thị: các điểm (node) nối với nhau bằng cạnh (edge) — ví dụ "An — làm_việc_tại → Công ty X".
+> Entity = đối tượng (người, sản phẩm); relation = quan hệ giữa chúng; ontology = "khung phân loại" quy định loại nào nối loại nào.
+> Cypher = ngôn ngữ truy vấn của Neo4j (kiểu SQL nhưng cho đồ thị). ETL = Extract-Transform-Load: lấy dữ liệu, biến đổi, nạp vào.
+> Link prediction = đoán mối nối còn thiếu ("An có thể biết B không?"). Temporal reasoning = suy luận theo thời gian ("sự kiện này xảy ra trước cái nào?").
+
+> **Tóm gọn 1 câu:** Phần này dạy cách biến tài liệu thành sơ đồ quan hệ (ai nối ai, cái gì thuộc cái gì) rồi cho AI tra cứu và suy luận trên sơ đồ đó.
+
 ---
 
 ## 🧠 Hiểu Framework Này
 
+> **Mục này nói gì:** câu hỏi quan trọng nhất trước khi học — "vậy model AI nằm ở đâu trong hệ thống?"
+> Trả lời: model chỉ là một mảnh; phần lớn hệ thống là code thường mà bạn điều khiển được.
+
 > **Framework này giống như "bộ máy điều phối" — còn AI model chỉ lo phần "suy nghĩ".**
 
-Framework giúp bạn hiểu **cách ráp các mảnh lại với nhau** — model chỉ là một mảnh trong đó thôi. Bạn có thể chạy **Ollama miễn phí ngay trên máy mình** hoặc **gọi API trả phí**, tùy ngân sách của bạn.
+Framework giúp bạn hiểu **cách ráp các mảnh lại với nhau** — model chỉ là một mảnh trong đó thôi. Bạn có thể chạy **Ollama miễn phí ngay trên máy mình** hoặc **gọi API trả phí**, tùy ngân sách của bạn. ("Điều phối" = orchestration: sắp xếp ai làm gì, làm khi nào, như quản đốc nhịp việc của cả đội.)
 
 ### Flow minh họa: RAG Chatbot cần gì?
 
@@ -399,6 +571,8 @@ Tài liệu của bạn (PDF, docs, DB)
         ↓
       Câu trả lời
 ```
+
+> **Tóm gọn 1 câu:** Một chatbot RAG = 3 bước code (tìm → sắp xếp → ghép prompt) + đúng 1 chỗ cần model: đọc context và trả lời.
 
 ### Flow minh họa: GraphRAG cần gì?
 
@@ -421,7 +595,11 @@ Tài liệu của bạn (PDF, docs, DB)
       Câu trả lời + đường dẫn chứng minh (path)
 ```
 
+> **Tóm gọn 1 câu:** GraphRAG thêm bước dựng "sơ đồ quan hệ" trước khi trả lời — đổi lại bạn nhận được câu trả lời kèm đường dẫn chứng minh.
+
 ### Phân biệt rõ: Phần nào cần model?
+
+> **Cách đọc bảng này:** cột giữa trả lời câu hỏi "có cần AI model không?" — dấu ✅ nghĩa là cần, ❌ nghĩa là chỉ code thường là đủ.
 
 | Phần | Cần model? | Mô tả |
 |------|-----------|-------|
@@ -432,12 +610,18 @@ Tài liệu của bạn (PDF, docs, DB)
 | **Workflow** (Module 07) | ❌ Không cần | Chỉ là orchestration logic |
 | **CI/CD Automation** (Module 10) | ❌ Không cần | GitHub Actions, scripts |
 
+> **Tóm gọn 1 câu:** Chỉ có 2 chỗ thật sự cần AI model — biến chữ thành vector (embedding) và sinh câu trả lời (LLM); phần còn lại là code thường.
+
 ### 2 loại model cần thiết
+
+> **Cách đọc bảng:** framework chỉ cần đúng 2 loại model. Cột "Local" là chạy trên máy bạn (miễn phí), cột "API" là gọi dịch vụ trả phí.
 
 | Loại | Vai trò | Local (miễn phí) | API (trả phí) |
 |------|---------|-------------------|---------------|
 | **Embedding model** | Biến text thành vector (dùng cho search) | `nomic-embed-text` qua Ollama | OpenAI text-embedding-3-small |
 | **LLM** (Large Language Model) | Tạo câu trả lời | `gemma3:12b`, `llama3`, `qwen2.5` qua Ollama | GPT-4o, Claude, Gemini |
+
+> **Tóm gọn 1 câu:** Bạn cần đúng 2 loại model — một loại biến chữ thành số để tìm kiếm, một loại sinh câu trả lời — cả hai đều có bản miễn phí chạy local.
 
 ### Tóm lại
 
@@ -446,15 +630,22 @@ Tài liệu của bạn (PDF, docs, DB)
 
 Nói ngắn gọn: framework giúp bạn **biết cách ráp các mảnh lại với nhau** — model chỉ là một mảnh trong đó. Cứ chạy **Ollama miễn phí trên máy** cho tiết kiệm, hoặc **gọi API trả phí** khi cần mạnh hơn, tùy túi tiền của bạn.
 
+> **Tóm gọn 1 câu:** 6 phần là code thường, 4 phần cần model — và mọi thứ chạy được miễn phí trên máy bạn với Ollama.
+
 ---
 
 ## 🚀 Sau Khi Học Xong — Dự Án Thực Tế
+
+> **Mục này nói gì:** 20 dự án mẫu xếp theo độ khó, để bạn biết học xong mỗi module thì làm được gì.
+> Mỗi dự án ghi rõ: dùng module nào, mất bao lâu, ra kết quả gì.
 
 Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Planning, Prompting, Tooling, Workflow, Task Management, Multi-Agent, Automation tới Evaluation — bạn có thể làm được **rất nhiều dự án thực tế**. Dưới đây là **20 dự án** chia theo cấp độ và lĩnh vực để bạn tham khảo dần.
 
 ---
 
 ### 🟢 Cấp Độ Cơ Bản — Bắt Đầu Ngay (Module 01-05)
+
+> **Từ "Tech Stack" dưới đây nghĩa là "danh sách công nghệ dùng để build"** — ví dụ ChromaDB là một vector database nhúng gọn trong app.
 
 #### 1. 📚 Personal Knowledge Base (PKB)
 
@@ -466,6 +657,7 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
   - Module 03 — Write-back Memory, KB Maintenance (CRUD)
   - Module 06 — Tool Selection (CLI tool, search tool)
 - **Tính năng**: Import markdown/notes → Chunk → Embed → Semantic search CLI
+  ("Chunk" = cắt tài liệu thành từng đoạn nhỏ; "Embed" = biến mỗi đoạn thành vector; "CLI" = app gõ lệnh trong terminal)
 - **Kết quả**: `pkb search "cách deploy Docker"` → tìm đúng trong 1000+ notes
 
 #### 2. 📄 Document Q&A Chatbot
@@ -489,6 +681,7 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
   - Module 01 — Vector Search, BM25, Hybrid Search, Re-ranking
   - Module 02 — Context Compression (tóm tắt kết quả)
 - **Tính năng**: Query → Parallel BM25 + Vector → Merge → Rerank → Top-K
+  (Query = câu tìm kiếm; Parallel = chạy song song 2 cách tìm; Rerank = chấm lại điểm kết quả rồi xếp lại hạng; Top-K = lấy K kết quả tốt nhất)
 - **Kết quả**: Search chính xác hơn 40% so với chỉ BM25 hoặc chỉ Vector
 
 #### 4. 📊 Markdown to Structured Data
@@ -511,13 +704,16 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
   - Module 05 — Prompt Builder (review prompts), Guardrails (safety)
   - Module 10 — Git Automation (hooks, webhooks)
 - **Tính năng**: PR created → Bot reviews → Comment suggestions on PR
-- **Kết quả**: Auto code review, bắt bugs sớm,uggest best practices
+- **Kết quả**: Auto code review, bắt bugs sớm, gợi ý best practices (best practices = cách làm chuẩn được khuyến khích)
+
+> **Tóm gọn 1 câu:** Năm dự án đầu nhẹ nhàng: mỗi cái chỉ dùng 2-3 module, build trong vài ngày, đủ để hiểu nền tảng.
 
 ---
 
 ### 🟢 Cấp Độ Daily-Use — Hữu Ích Mỗi Ngày (Module 01-10)
 
 > **Đây là các dự án nhỏ, làm trong 1-3 ngày nhưng xài MỖI NGÀY ở công việc thật.**
+> (Các từ như "Webhook" dưới đây: webhook = cơ chế GitHub/Slack tự gọi URL của bạn khi có sự kiện xảy ra.)
 
 #### 6. 📋 Auto Daily Work Log
 
@@ -707,9 +903,14 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
   ```
 - **Kết quả**: Code review toàn diện hơn, không bỏ sót edge cases.
 
+> **Tóm gọn 1 câu:** Tám bot nhỏ phục vụ công việc hằng ngày — từ ghi log, viết standup, tới tóm tắt PR — mỗi cái build chưa tới 3 ngày.
+
 ---
 
 ### 📊 Tóm Tắt Daily-Use Projects
+
+> **Cách đọc bảng này:** mỗi dòng là một dự án vừa nêu ở trên. "Tần suất dùng" = bạn sẽ dùng nó mấy lần một ngày;
+> "Thời gian build" = mất bao lâu để dựng; "Tiết kiệm" = mỗi lần dùng đỡ tốn của bạn bao nhiêu thời gian.
 
 | # | Dự án | Tần suất dùng | Thời gian build | Tiết kiệm |
 |---|-------|---------------|-----------------|------------|
@@ -724,16 +925,22 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
 
 > **💰 Tổng thời gian tiết kiệm ước tính: 1-2 GIỜ/ngày** — ~20-40 giờ/tháng!
 > 
-> Ít nhất 1-2 dự án trong số này sẽ **trả giá khóa học** trong tuần đầu tiên sử dụng.
+> Ít nhất 1-2 dự án trong số này sẽ **hoàn lại công sức học framework** ngay trong tuần đầu tiên sử dụng.
+
+> **Tóm gọn 1 câu:** Tám dự án nhỏ, mỗi cái chỉ tốn 0.5–3 ngày build, nhưng gộp lại tiết kiệm 1-2 giờ mỗi ngày cho công việc thật.
 
 ---
 
 ### 🟡 Cấp Độ Trung Bình — Cần Nhiều Modules (Module 01-08)
 
+> **Mục này nói gì:** các dự án "béo" hơn — cần ghép 4-6 module, chạy production (tức dùng thật cho người dùng thật, không phải demo).
+
 #### 14. 🏗️ Enterprise RAG Platform
 
 - **Mô tả**: Hệ thống RAG production-grade với multi-source retrieval, caching, monitoring
+  (production-grade = chất lượng đủ để dùng thật; caching = lưu sẵn kết quả đã tính để trả lời nhanh hơn lần sau)
 - **Tech Stack**: Ollama + Qdrant + FastAPI + Redis (cache) + Prometheus
+  (Qdrant = vector database; FastAPI = framework Python làm API; Redis = kho cache siêu nhanh; Prometheus = công cụ thu số liệu monitor)
 - **⏱️ Thời gian build**: 2-3 tuần (MVP), 4-6 tuần (production-ready với monitoring)
 - **Module áp dụng**:
   - Module 01 — Hybrid Search, Multi-Source Retrieval, Knowledge Graph
@@ -742,7 +949,8 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
   - Module 05 — Prompt Templates, Few-shot Examples, Guardrails
   - Module 07 — Pipeline Design, Error Recovery, Observability
 - **Tính năng**: Multi-source ingestion → Hybrid search → Context assembly → Cached responses → Monitored pipeline
-- **Kết quả**: Production RAG system xử lý 10K+ documents, <200ms latency
+  (ingestion = nạp dữ liệu vào; context assembly = ghép các mảnh thông tin thành context hoàn chỉnh)
+- **Kết quả**: Production RAG system xử lý 10K+ documents, <200ms latency (latency = thời gian chờ mỗi câu trả lời)
 
 #### 15. 💬 Customer Support AI Agent
 
@@ -795,9 +1003,13 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
 - **Tính năng**: Chat → Extract facts → Store → Recall in future conversations
 - **Kết quả**: Bot nhớ user preferences, personalize responses theo thời gian
 
+> **Tóm gọn 1 câu:** Cấp trung bình là các hệ thống ghép nhiều module lại, đủ vững để chạy thật với người dùng thật.
+
 ---
 
 ### 🔴 Cấp Độ Nâng Cao — Hệ Thống Phức Táp (Module 04-11)
+
+> **Mục này nói gì:** các dự án lớn nhất ngoài Expert — agent tự lập kế hoạch, tự code, tự sửa lỗi; cần hiểu chắc cả 11 module.
 
 #### 19. 🤖 AI Coding Agent (Tự Xây Dựng)
 
@@ -810,7 +1022,7 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
   - Module 07 — State Machine (idle → planning → coding → reviewing → testing)
   - Module 08 — Task Decomposition, Dependency Management
 - **Tính năng**: User request → Plan → Read files → Write code → Run tests → Fix errors → Commit
-- **Kết quả**: Agent tự động hoàn thành coding tasks từ description
+- **Kết quả**: Agent tự động hoàn thành coding tasks từ description (description = mô tả bằng chữ bạn đưa cho agent)
 
 #### 20. 🏢 Multi-Agent Development Team
 
@@ -862,11 +1074,15 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
   - Module 05 — Guardrails (safety filters), Chain-of-Thought (reasoning)
   - Module 11 — Evaluation Dimensions (correctness, safety, faithfulness)
 - **Tính năng**: Research question → Decompose sub-questions → Retrieve from papers/docs → Reason with CoT → Answer with citations
-- **Kết quả**: Expert-level research assistance với verifiable sources
+- **Kết quả**: Expert-level research assistance với verifiable sources (verifiable = có thể kiểm chứng lại được)
+
+> **Tóm gọn 1 câu:** Cấp nâng cao là các hệ thống phức tạp: agent tự code, đội agent làm thay team, pipeline tự sửa lỗi, và trợ lý chuyên ngành có trích dẫn kiểm chứng được.
 
 ---
 
 ### 🟣 Cấp Độ Expert — Hệ Thống Tổng Hợp (Tất Cả Modules)
+
+> **Mục này nói gì:** hai dự án "tổng hợp tất cả" — dùng mọi module trong framework, mất từ vài tháng tới cả năm. Là đích đến, không phải chỗ bắt đầu.
 
 #### 24. 🌐 Autonomous AI Development Platform
 
@@ -924,7 +1140,7 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
   - Module 09 — Multi-agent (Frontend agent + Backend agent + API agent)
   - Module 10 — Code Generation Automation, Git Automation
 - **Tính năng**: App spec → Architect designs API → Parallel code gen → Cross-platform build → Unified test
-- **Kết quả**: Tạo MVP cho 3 platforms từ 1 spec trong vài giờ
+- **Kết quả**: Tạo MVP cho 3 platforms từ 1 spec trong vài giờ (MVP = bản tối thiểu dùng được; parallel = nhiều agent sinh code cùng lúc)
 
 #### 28. 🏗️ Infrastructure-as-Code AI Assistant
 
@@ -941,9 +1157,15 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
 - **Tính năng**: "Deploy a scalable web app" → Generate Terraform + Docker + K8s + CI/CD configs
 - **Kết quả**: Dựng hạ tầng tự động, đúng best practices
 
+> **Tóm gọn 1 câu:** Hai dự án Expert dùng trọn 11 module, mất 3-12 tháng — là đích đến của lộ trình, không phải chỗ xuất phát.
+
 ---
 
 ### 📊 Tổng Quan Dự Án & Module
+
+> **Cách đọc bảng này:** đây là bản liệt kê nhanh cả 20 dự án. Cột **Cấp độ** dùng màu: 🟢 dễ → 🟡 trung bình → 🔴 khó → 🟣 expert.
+> Cột **Modules áp dụng** là các module bạn cần học trước. Độ phức tạp (số ⭐) càng nhiều càng khó.
+> Lưu ý: số thứ tự trong bảng này khác với phần mô tả chi tiết ở trên (bảng gộp lại theo thứ tự dự án).
 
 | # | Dự án | Cấp độ | Modules áp dụng | Độ phức tạp |
 |---|-------|--------|-----------------|-------------|
@@ -968,11 +1190,16 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
 | 19 | Cross-Platform App Generator | 🟣 Expert | 04, 06, 07, 09, 10 | ⭐⭐⭐⭐⭐ |
 | 20 | Infrastructure-as-Code AI | 🟣 Expert | 01, 04, 05, 06, 07, 10 | ⭐⭐⭐⭐⭐ |
 
+> **Tóm gọn 1 câu:** Bảng này là mục lục nhanh của 20 dự án — dùng để chọn dự án theo mức ⭐ và module cần học.
+
 ---
 
 ### 🗺️ Ma Trận Module → Dự Án
 
 > Mỗi module giúp được bao nhiêu dự án — nhìn vào là bạn thấy ngay phần kiến thức nào đáng học nhất.
+>
+> **Cách đọc bảng:** cột **Số dự án sử dụng** = trong 20 dự án, có bao nhiêu cái cần module đó.
+> Ví dụ "15/20" nghĩa là 15 trên 20 dự án đều dùng module 01 — nên học nó trước tiên.
 
 | Module | Tên Module | Số dự án sử dụng | Dự án tiêu biểu |
 |--------|-----------|------------------|-----------------|
@@ -988,9 +1215,14 @@ Với **11 module** bao phủ trọn vẹn từ Retrieval, Context, Memory, Plan
 | **10** | Automation | **9/20** | CI/CD, Code Gen, Git Automation |
 | **11** | Evaluation | **6/20** | Self-Healing CI/CD, Research Assistant |
 
+> **Tóm gọn 1 câu:** Module 01 (Retrieve) và 05 (Prompt Builder) được dùng trong 15/20 dự án — học hai cái này trước là ăn chắc phần lớn giá trị.
+
 ---
 
 ### 📈 Lộ Trình Thực Hành Theo Cấp Độ
+
+> **Mục này nói gì:** nếu chỉ có ~6 tháng rảnh buổi tối, hãy làm các dự án theo đúng thứ tự tuần này tới tuần khác như sơ đồ dưới.
+> Số `#1`, `#6`... trỏ tới dự án cùng số ở phần trên.
 
 ```
 🟢 CẤP ĐỘ CƠ BẢN (1-2 tuần mỗi dự án)
@@ -1032,9 +1264,14 @@ Tuần 21-26: #16 Autonomous AI Development Platform
             → Học: Tổng hợp TẤT CẢ modules thành hệ thống hoàn chỉnh
 ```
 
+> **Tóm gọn 1 câu:** Làm lần lượt 1 dự án nhỏ mỗi 2 tuần, từ dễ tới khó, là bạn phủ được toàn bộ framework trong khoảng nửa năm.
+
 ---
 
 ### 💼 Cơ Hội Nghề Nghiệp & Mức Lương
+
+> **Cách đọc bảng này:** mỗi dòng là một nghề. Cột giữa cho biết framework dạy bạn đúng kỹ năng nào của nghề đó
+> (theo số module). Lương là tham khảo năm 2025 — "M/tháng" = triệu Việt Nam mỗi tháng, "$K/năm" = nghìn đô la Mỹ mỗi năm.
 
 | Vai trò | Kỹ năng cốt lõi từ Framework | Mức lương VN (2025) | Mức lương Global |
 |---------|------------------------------|--------------------|--------------------|
@@ -1045,9 +1282,13 @@ Tuần 21-26: #16 Autonomous AI Development Platform
 | **Tech Lead (AI Products)** | Module 04, 08, 09: Planning, Multi-agent orchestration | 40-100M/tháng | $150K-250K/năm |
 | **AI Freelancer / Consultant** | Toàn bộ framework: Build custom AI solutions | 50-200M/tháng (project-based) | $100-300/giờ |
 
+> **Tóm gọn 1 câu:** Kỹ năng từ framework mở ra 6 hướng nghề, từ AI Engineer tới freelancer, với mức lương tham khảo 30-80 triệu/tháng ở VN.
+
 ---
 
 ### 💡 Tips Để Bắt Đầu
+
+> **Mục này nói gì:** 4 nguyên tắc luyện tập để bạn không bỏ cuộc giữa chừng. Đọc sơ đồ dưới như một dàn ý: mỗi nhánh là một mẹo.
 
 ```
 1. BẮT ĐẦU NHỎ
@@ -1072,9 +1313,13 @@ Tuần 21-26: #16 Autonomous AI Development Platform
    └── Real problems = Real portfolio = Real job opportunities
 ```
 
+> **Tóm gọn 1 câu:** Bắt đầu từ dự án nhỏ nhất, làm vấn đề thật của chính mình, khoe tiến độ ra ngoài, rồi ghép dần các dự án nhỏ thành hệ thống lớn.
+
 ---
 
 ## 💡 Ví Dụ Thực Tế
+
+> **Mục này nói gì:** hai minh họa nhanh cho "ghép module thành hệ thống": một pipeline RAG đơn giản và một đội nhiều agent chia nhau làm code.
 
 ### Ví dụ 1: Xây dựng RAG Pipeline đơn giản
 
@@ -1085,7 +1330,11 @@ Tuần 21-26: #16 Autonomous AI Development Platform
 
 </details>
 
+> **Tóm gọn 1 câu:** Pipeline RAG đơn giản nhất gồm 3 bước: cắt tài liệu, biến thành vector, rồi nhét đoạn liên quan vào prompt cho model trả lời.
+
 ### Ví dụ 2: Multi-Agent Workflow
+
+> **Đọc sơ đồ:** công việc chảy từ trái sang phải — Planner chia việc, Coder viết code, Reviewer soi, Tester kiểm tra, cuối cùng Deployer triển khai lên môi trường thật.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1110,9 +1359,14 @@ Tuần 21-26: #16 Autonomous AI Development Platform
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Ghép các module theo đúng trật tự là bạn có ngay chatbot-tra-cứu-tài liệu hoặc cả đội AI chia nhau viết code.
+
 ---
 
 ## 📊 Tóm Tắt Kiến Thức
+
+> **Cách đọc bảng này:** mỗi dòng là một kỹ năng. Ba cột Level cho thấy cùng một kỹ năng có 3 mức làm:
+> Level 1 là cách thô nhất, Level 3 là cách "xịn" nhất. Ví dụ dòng Search: đếm từ khóa → so ý nghĩa → gộp cả hai rồi xếp lại hạng.
 
 | Kỹ năng | Level 1 (Cơ bản) | Level 2 (Trung bình) | Level 3 (Nâng cao) |
 |---------|-------------------|----------------------|---------------------|
@@ -1126,9 +1380,13 @@ Tuần 21-26: #16 Autonomous AI Development Platform
 | **Automation** | Simple scripts | CI/CD pipelines | Self-healing systems |
 | **Evaluation** | Manual testing | Automated metrics | Continuous improvement loop |
 
+> **Tóm gọn 1 câu:** Cùng một kỹ năng, bạn đi từ cách thô (level 1) tới cách chuẩn production (level 3) — bảng này là bản đồ nâng cấp từng bước.
+
 ---
 
 ## 🔗 Liên Kết Hữu Ích
+
+> **Cách đọc bảng này:** các công cụ miễn phí hay dùng kèm framework. "Vector database" = nơi lưu và tìm các dãy số biểu diễn ý nghĩa.
 
 | Nguồn | Mô tả |
 |-------|-------|
@@ -1138,6 +1396,8 @@ Tuần 21-26: #16 Autonomous AI Development Platform
 | [MCP Protocol](https://modelcontextprotocol.io) | Model Context Protocol |
 | [LangChain](https://langchain.com) | Framework cho LLM applications |
 | [LlamaIndex](https://www.llamaindex.ai) | Data framework cho LLM |
+
+> **Tóm gọn 1 câu:** Sáu công cụ nền tảng — Ollama chạy model, FAISS/ChromaDB lưu vector, MCP nối tool, LangChain/LlamaIndex ráp ứng dụng.
 
 ---
 

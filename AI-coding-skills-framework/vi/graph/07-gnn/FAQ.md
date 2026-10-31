@@ -8,7 +8,7 @@ Câu hỏi nào khó hiểu thì đọc `README.md` phần được nêu trong n
 
 **Bạn sẽ thấy**
 
-Bạn viết được khoảng 5 luật thì ổn. Nhưng graph thật có hàng trăm loại quan hệ: `MANAGES`, `WORKS_ON`, `REPORTS_TO`, `APPROVES`, `HAS_BUDGET`, `REVIEWS`... Mỗi loại một quy tắc, tổng cộng lại là một bộ luật không ai bảo trì nổi. Đối chiếu số liệu: GNN tăng **15–25% độ chính xác** so với mô hình chỉ dùng đặc trưng node; hoàn thành KG đạt MRR **0.35** (bộ đo trung bình nghịch đảo thứ hạng) so với TransE chỉ 0.29.
+Bạn viết được khoảng 5 luật thì ổn. Nhưng graph thật có hàng trăm loại quan hệ: `MANAGES`, `WORKS_ON`, `REPORTS_TO`, `APPROVES`, `HAS_BUDGET`, `REVIEWS`... Mỗi loại một quy tắc, tổng cộng lại là một bộ luật không ai bảo trì nổi. Đối chiếu số liệu: GNN tăng **15–25% độ chính xác** so với mô hình chỉ dùng đặc trưng node; hoàn thành KG đạt MRR **0.35** (MRR = trung bình nghịch đảo thứ hạng — điểm càng gần 1 nghĩa là đáp án đúng càng đứng đầu) so với TransE chỉ 0.29.
 
 **Vì sao**
 
@@ -18,12 +18,14 @@ Luật viết tay chỉ học được quan hệ bạn đã nghĩ ra. GNN học 
 
 1. Viết luật cho các quan hệ **hiển nhiên và ổn định** (bắc cầu quản lý, `WORKS_ON` suy ra giám sát) — những cái này giải thích được với người đọc.
 2. Dùng GNN cho phần **nhiều quy tắc, mẫu nhiều**: dự đoán ai sẽ làm dự án tiếp, gợi ý quan hệ còn thiếu.
-3. Nếu chỉ cần tìm quan hệ thiếu: dùng dự đoán cạnh (link prediction) — đo độ đúng bằng AUC, kết quả tham khảo từ Anthropic 2025 đạt **độ chính xác 72%** trên KG doanh nghiệp.
+3. Nếu chỉ cần tìm quan hệ thiếu: dùng dự đoán cạnh (link prediction) — đo độ đúng bằng AUC (AUC = thước đo 0→1, càng gần 1 càng phân biệt tốt đúng/sai), kết quả tham khảo từ Anthropic 2025 đạt **độ chính xác 72%** trên KG doanh nghiệp.
 4. Nhớ đo cả phần trùng lặp: nếu node mới có embedding gần node cũ, đó là dấu hiệu nên gộp.
 
 **Kiểm tra**
 
-Trên cùng một graph, chạy GNN phân loại với chỉ 4 node có nhãn (kiểu học nửa giám sát) và so với một mô hình chỉ đọc đặc trưng node. Mô hình có đọc cạnh phải thắng; nếu không thắng thì graph chưa mang thông tin hữu ích hoặc số lớp quá sâu.
+Trên cùng một graph, chạy GNN phân loại với chỉ 4 node có nhãn (kiểu học nửa giám sát — chỉ 1 phần node có "đáp án" để học) và so với một mô hình chỉ đọc đặc trưng node. Mô hình có đọc cạnh phải thắng; nếu không thắng thì graph chưa mang thông tin hữu ích hoặc số lớp quá sâu.
+
+> **Tóm gọn 1 câu:** Luật viết tay hợp vài quan hệ hiển nhiên; phần còn lại — quan hệ nhiều, mẫu phức tạp — GNN tự học từ cấu trúc và làm chính xác hơn.
 
 ---
 
@@ -41,13 +43,15 @@ Mỗi lớp GCN lấy trung bình có trọng số của chính mình và các b
 
 1. Giữ lớp mỏng: thực tế GraphSAGE 2 lớp hiệu quả hơn mô hình 10 lớp — đừng chôn sâu.
 2. Thêm kết nối tắt (residual): cho phép lớp sau bỏ qua lớp trước, giữ lại thông tin gốc.
-3. Chuẩn hoá đặc trưng sau mỗi lớp để các vector không co lại về điểm giữa.
+3. Chuẩn hoá đặc trưng sau mỗi lớp để các vector không co lại về điểm giữa (điểm giữa = mọi vector rút về cùng một chỗ, không còn phân biệt được).
 4. Nối thêm cạnh ngắn giữa các node ở xa (graph rewiring) để thông tin không phải đi qua nút thắt cổ chai.
 5. Nếu thật sự cần nhìn xa, chuyển sang Graph Transformer: node "nhìn thẳng" mọi node khác, nhưng đổi lại bộ nhớ tăng theo bình phương số node.
 
 **Kiểm tra**
 
 Vẽ độ đúng theo số lớp 1→10. Nếu đường cong đi lên rồi đi xuống dưới điểm ban đầu, bạn đang dính over-smoothing. Thêm residual và chạy lại, đường cong phải phẳng hoặc tốt hơn.
+
+> **Tóm gọn 1 câu:** Thêm lớp = thêm vòng "lấy trung bình với bạn bè" nên mọi node dần giống nhau — giữ 2-3 lớp, thêm residual, hoặc dùng Graph Transformer nếu cần nhìn xa.
 
 ---
 
@@ -60,6 +64,8 @@ Bạn đã huấn luyện xong, thử vài người mới vào thì không sao. 
 **Vì sao**
 
 Ba mô hình khác nhau ở cách lấy thông tin bạn bè:
+
+> **Cách đọc bảng này:** so sánh 3 mô hình theo khả năng xử lý node mới và chi phí. "O(N²)" = chi phí tăng theo bình phương số node (node gấp 10 lần thì chậm gấp ~100 lần); "O(E)" = tăng theo số cạnh, nhẹ hơn nhiều. Ví dụ, node mới xuất hiện liên tục → chọn GraphSAGE.
 
 | Mô hình | Có học trước node mới? | Chi phí | Hợp nhất khi |
 |---|---|---|---|
@@ -78,6 +84,8 @@ Ba mô hình khác nhau ở cách lấy thông tin bạn bè:
 
 Huấn luyện trên 80% node, giấu 20%. Thêm node mới chưa từng xuất hiện rồi suy ra vector — GraphSAGE và GAT cho kết quả dùng được ngay, GCN thì phải chạy lại toàn bộ.
 
+> **Tóm gọn 1 câu:** GCN cần cả ma trận kề nên thêm node là phải học lại; GraphSAGE/GAT học "công thức gộp bạn bè" nên node mới chỉ cần chạy công thức là có vector.
+
 ---
 
 ## Q4. Nhét KG thật vào GNN thì sao — graph của tôi có người, dự án, ngân sách lẫn lộn? [→ §5 & §7 Heterogeneous GNN]
@@ -95,13 +103,15 @@ KG thật luôn **không đồng nhất** (heterogeneous): nhiều loại node, 
 1. Không gộp phẳng — chuyển sang R-GCN: mỗi loại quan hệ một bộ trọng số riêng `W_r`, như "mỗi loại quan hệ là một lăng kính khác nhau".
 2. Truyền thêm cột `edge_type` cho mỗi cạnh, ví dụ `[0, 1, 0, 1]` với 0 là `MANAGES`, 1 là `WORKS_ON`.
 3. Nếu cần tầng ý nghĩa cao hơn: HAN tổng hợp theo từng "con đường loại" (ví dụ `Person–WORKS_ON–Project–HAS_BUDGET–Budget`) rồi dùng chú ý để gộp; HGT là biến thể Transformer mạnh nhất.
-4. Sau khi học, dùng scoring function (TransE, DistMult, ComplEx, RotatE) để chấm điểm bộ ba thiếu.
+4. Sau khi học, dùng scoring function (TransE, DistMult, ComplEx, RotatE) để chấm điểm bộ ba thiếu — scoring function = công thức cho điểm một bộ ba (đầu, quan hệ, cuối): điểm cao nghĩa là quan hệ đó có khả năng thật.
 
 > 📄 **Code ví dụ:** [`examples/01-q4-nhet-kg-that-vao-gnn-thi-sao.py`](examples/01-q4-nhet-kg-that-vao-gnn-thi-sao.py)
 
 **Kiểm tra**
 
 Kiểm tra ngẫu nhiên 100 quan hệ đã biết với mô hình phẳng và mô hình R-GCN: độ đúng phải tăng khi dùng bộ trọng số riêng cho từng loại quan hệ.
+
+> **Tóm gọn 1 câu:** KG thật có nhiều loại node/cạnh — đừng gộp phẳng; dùng R-GCN (mỗi loại quan hệ một bộ trọng số riêng) để mô hình còn phân biệt "quản lý" khác "được tài trợ".
 
 ---
 
@@ -117,8 +127,8 @@ Dự đoán cạnh học theo kiểu "cặp có thật" và "cặp không có th
 
 **Làm gì**
 
-1. Tách **cạnh** trước khi tạo tập dữ liệu, dùng tiện ích tách cạnh sẵn có thay vì tự ngẫu nhiên node.
-2. Lấy mẫu cặp âm bằng hàm lấy mẫu âm, ví dụ 4 cặp âm cho một bộ cạnh nhỏ.
+1. Tách **cạnh** trước khi tạo tập dữ liệu, dùng tiện ích tách cạnh sẵn có thay vì tự ngẫu nhiên node (tách theo cạnh = các cạnh bị giấu cùng node của chúng không lọt vào tập huấn luyện).
+2. Lấy mẫu cặp âm bằng hàm lấy mẫu âm, ví dụ 4 cặp âm cho một bộ cạnh nhỏ (cặp âm = cặp node KHÔNG có quan hệ thật, dùng làm ví dụ "sai" để mô hình học phân biệt).
 3. Dùng hàm mất mát nhị phân: cặp thật về gần 1, cặp âm về gần 0, tổng hai phần lại.
 4. Dùng tích của hai vector để chấm điểm cặp (điểm cao = khả năng có quan hệ).
 
@@ -127,6 +137,8 @@ Dự đoán cạnh học theo kiểu "cặp có thật" và "cặp không có th
 **Kiểm tra**
 
 Báo cáo AUC trên tập cạnh đã giấu thật sự. Thử hai tỉ lệ lấy mẫu 1:1 và 1:5 — nếu điểm nhảy quá nhiều giữa hai lần thì tỉ lệ đang chi phối kết quả, cần cân bằng lại.
+
+> **Tóm gọn 1 câu:** Tách dữ liệu theo cạnh (không theo node) để tránh "rò" đáp án qua đường vòng, và báo cáo rõ tỉ lệ cặp âm vì nó chi phối điểm số.
 
 ---
 

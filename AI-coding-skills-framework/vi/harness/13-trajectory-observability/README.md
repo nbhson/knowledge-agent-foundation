@@ -68,15 +68,17 @@
 
 Hãy tưởng tượng sáng thứ Hai bạn nhận ticket: *"Agent xoá mất `src/auth/middleware.ts`, user phát hiện sau 40 phút. Vì sao vậy?"*
 
-Nếu không có trajectory, coi như bạn đang mò mẫm trong bóng tối. Trong tay chỉ có đoạn chat của model (toàn lời nó *nói*, chứ không phải việc nó *làm*), thêm vài dòng log CI rời rạc, cộng với cảm giác mơ hồ kiểu "hình như nó đang refactor auth". Bạn chịu chết, không chỉ ra được lệnh xoá nằm ở lượt nào, ngay trước đó tool trả về cái gì, lúc ấy file có thật sự nằm trên nhánh hiện tại không, hay trong đầu agent đang nghĩ gì. Cuối cùng đành viết post-mortem mà thực ra là... đoán mò.
+Nếu không có trajectory, coi như bạn đang mò mẫm trong bóng tối. Trong tay chỉ có đoạn chat của model (toàn lời nó *nói*, chứ không phải việc nó *làm*), thêm vài dòng log CI rời rạc, cộng với cảm giác mơ hồ kiểu "hình như nó đang refactor auth". Bạn chịu chết, không chỉ ra được lệnh xoá nằm ở lượt nào, ngay trước đó tool trả về cái gì, lúc ấy file có thật sự nằm trên nhánh hiện tại không, hay trong đầu agent đang nghĩ gì. Cuối cùng đành viết post-mortem mà thực ra là... đoán mò. (Post-mortem = báo cáo phân tích sau sự cố, để không tái diễn.)
 
 Có trajectory, cùng câu hỏi đó mất mười một giây và một query:
 
 > 📄 **Code ví dụ:** [`examples/01-opening-story.sql`](examples/01-opening-story.sql)
 
-**Và cái hay là các câu hỏi tiếp theo tự trả lời lẫn nhau.** Tại sao nó lại xoá? Nhìn `seq 29: prompt` là thấy ngay — mô hình thấy mấy export không ai dùng nên chọn cách xoá thay vì để lại code chết. Có cứu được không? `seq 33` có ghi `git worktree`, nên cứu được, bản patch cuối nằm ở `seq 51`. Chuyện này có đáng phải qua cổng duyệt không? Blast radius chỉ là một file — dưới ngưỡng `write` — nhưng khổ nỗi file đó được **3 file khác import mà agent chưa từng mở ra đọc**. Thế là từ một câu hỏi kỹ thuật, ta có luôn câu trả lời cho chính sách.
+**Và cái hay là các câu hỏi tiếp theo tự trả lời lẫn nhau.** Tại sao nó lại xoá? Nhìn `seq 29: prompt` là thấy ngay — mô hình thấy mấy export không ai dùng nên chọn cách xoá thay vì để lại code chết. Có cứu được không? `seq 33` có ghi `git worktree`, nên cứu được, bản patch cuối nằm ở `seq 51`. Chuyện này có đáng phải qua cổng duyệt không? Blast radius chỉ là một file — dưới ngưỡng `write` — nhưng khổ nỗi file đó được **3 file khác import mà agent chưa từng mở ra đọc**. (Blast radius = "bán kính sát thương": một hành động đụng tới phạm vi bao nhiêu; ngưỡng `write` = mức duyệt tự động chỉ áp cho việc ghi file thông thường, mục 15.) Thế là từ một câu hỏi kỹ thuật, ta có luôn câu trả lời cho chính sách.
 
 **Nói ngắn gọn: trajectory giúp bạn thoát khỏi cảnh "nó hỏng rồi", để nói được "chính xác chuyện gì đã xảy ra, vì sao, và giờ mình nên sửa chỗ nào".**
+
+> **Tóm gọn 1 câu:** Trajectory = nhật ký từng bước agent đã làm (mở file nào, chạy lệnh nào, trả kết quả gì); nhờ nó, một incident kiểu "agent xoá nhầm file" được giải trong vài giây bằng một query thay vì một buổi đoán mò.
 
 ### Vì Sao Trajectory Là Bắt Buộc?
 
@@ -84,6 +86,8 @@ Có trajectory, cùng câu hỏi đó mất mười một giây và một query:
 > được, mọi khoản chi phí đều không quy được nguồn, và mọi hồi quy đều vô hình."*
 
 #### Bốn năng lực sụp đổ khi thiếu nó
+
+*Đọc bảng này thế nào:* mỗi dòng là một việc bạn phải làm khi vận hành agent. Cột giữa nói chuyện gì xảy ra nếu không lưu trajectory; cột phải nói chuyện gì làm được nếu có. Ví dụ, dòng "Debug": thay vì đọc lại toàn bộ lời thoại của model rồi đoán, bạn chạy một câu `SELECT` (lệnh tra cứu dữ liệu) để xem đúng giây phút sự cố.
 
 | Năng lực | Không có trajectory | Có trajectory |
 |-----------|---------------------|---------------|
@@ -94,12 +98,16 @@ Có trajectory, cùng câu hỏi đó mất mười một giây và một query:
 
 Chuyện tiền nong rất đáng để kể kỹ một chút. Nếu mỗi step không ghi lại tokens và model tier đã dùng, bạn sẽ bó tay trước câu hỏi *"vì sao tháng trước hoá đơn tăng gấp ba?"* — chỉ biết là nó tăng, thế thôi. Còn khi đã có trajectory, bạn chỉ cần chạy `SELECT SUM(tokens) WHERE model='frontier' GROUP BY session`, và đáp án thường rất đời thường: "do vòng retry ở 3% số run" hoặc "do compaction ngừng chạy" — cả hai đều sửa gọn trong một buổi chiều.
 
+*Đọc bảng này:* `Eval` = đo chất lượng agent bằng bộ bài tập; `Audit` = kiểm tra lại "ai đã làm gì, ai đã duyệt" sau sự cố; `frontier` = model mạnh nhất, đắt nhất; `compaction` = việc rút gọn ngữ cảnh khi gần đầy.
+
 #### Triết lý cốt lõi
 
 ```
 Trajectory    = bằng chứng bền vững duy nhất về việc agent đã thực sự làm gì
 Observability = kỷ luật truy vấn bằng chứng đó trước khi hình thành ý kiến
 ```
+
+> **Tóm gọn 1 câu:** Không có trajectory thì debug, đo chất lượng, quy chi phí và audit đều thành đoán mò; có nó, mỗi việc đều là một query.
 
 ## Overview
 
@@ -109,7 +117,9 @@ Observability = kỷ luật truy vấn bằng chứng đó trước khi hình th
 > - **So sánh:** Như hộp đen máy bay. Chuyến hạ cánh bình thường không ai nhìn; một sự cố thì điều tra toàn bộ từ hộp đen, và chính dữ liệu đó phát lại đúng lộ trình.
 > - **Vì sao quan trọng:** Không có nó, bạn không trả lời được "sao nó sửa nhầm file?", "chunk retrieval nào đầu độc câu trả lời?", hay "run này tốn bao nhiêu?". Có nó, debug là một query, eval là SQL, và incident tái hiện được.
 
-**Trajectory & Observability** biến một run agent đang mờ mịt như "nồi lẩu thập cẩm" thành thứ bạn có thể truy vấn, phát lại và audit đàng hoàng. Nói dân dã: đó là khác biệt giữa một agent bạn *thật sự vận hành* và một agent bạn chỉ biết *cầu may*.
+**Trajectory & Observability** biến một run agent đang mờ mịt như "nồi lẩu thập cẩm" thành thứ bạn có thể truy vấn, phát lại và audit đàng hoàng. Nói dân dã: đó là khác biệt giữa một agent bạn *thật sự vận hành* và một agent bạn chỉ biết *cầu may*. Mục này giải thích hai khái niệm đó là gì và vì sao chúng là xương sống của cả hệ harness (harness = bộ khung điều phối agent: lấy ngữ cảnh, gọi model, chạy tool, chấm điểm).
+
+*Bản đồ dưới đây vẽ dòng chảy dữ liệu:* các module ở trên (01 retrieve = tìm tài liệu, 06 tools = chạy lệnh, 11 eval = chấm điểm...) đều **ghi event vào cùng một nơi** — `TrajectoryStore` (kho lưu, file `ses_44a.jsonl`, mỗi dòng một event). Từ kho đó, bạn lần lượt có hai thứ: phát lại / rẽ nhánh run (mục 3), và tra cứu bằng SQL / dashboard (mục 6).
 
 ```
 ┌────────────────────── HARNESS EMITTERS ──────────────────────┐
@@ -141,7 +151,11 @@ Observability = kỷ luật truy vấn bằng chứng đó trước khi hình th
 
 **Hai nguyên tắc vàng làm nên tất cả:** (1) *chỉ-append* — event đã ghi thì không bao giờ sửa, nên lịch sử luôn đáng tin như sổ cái; (2) *mọi event đều mang `sessionId` + `parentTaskId`* — nhờ đó không event nào bị mồ côi, câu hỏi nào cũng có đường để lần theo.
 
+> **Tóm gọn 1 câu:** Trajectory là hộp đen chỉ-append của mọi module trong harness; Observability là kỹ năng query hộp đen đó để trả lời "chuyện gì đã xảy ra, tốn bao nhiêu, vì sao hỏng".
+
 ## Mục Lục Chi Tiết
+
+*Cách đọc bảng này:* cột # là số thứ tự mục; cột Chủ đề là link bấm tới được; cột Mô tả nói ngắn gọn mục đó chứa gì. Ví dụ, dòng 3 "Fork / Replay / Resume" là các cách phát lại hoặc rẽ nhánh một run cũ — chi tiết ở mục 3.
 
 | # | Chủ đề | Mô tả |
 |---|-------|-------|
@@ -162,17 +176,21 @@ Observability = kỷ luật truy vấn bằng chứng đó trước khi hình th
 | 15 | [Production checklist](#15-production-checklist) | Cổng ship |
 | 16 | [Xu hướng tương lai](#16-xu-hướng-tương-lai) | 2026-2028 |
 
+> **Tóm gọn 1 câu:** Mục lục này: định dạng event (mục 1), lưu và đọc (2), phát lại/rẽ nhánh (3), nối dữ liệu giữa các module (4), quyền riêng tư (5), metrics (6), debug (7), code mẫu (8-11), nguyên tắc và checklist (12-15), xu hướng (16).
+
 ---
 
 ## 1. Contract TrajectoryEvent
 
 ### 1.1 Schema Cốt Lõi
 
-Một shape duy nhất, mọi module cùng emit, mọi công cụ cùng đọc. Đây là món "hợp đồng" quan trọng nhất trong cả tầng observability — cả nhà dùng chung một khuôn thì mới nói chuyện được với nhau.
+Một shape duy nhất, mọi module cùng emit, mọi công cụ cùng đọc. Đây là món "hợp đồng" quan trọng nhất trong cả tầng observability — cả nhà dùng chung một khuôn thì mới nói chuyện được với nhau. *Phần này giải thích:* event có những trường nào (schema = bản mô tả cấu trúc dữ liệu), và vì sao từng trường đều cần thiết.
 
 > 📄 **Code ví dụ:** [`examples/02-1-1-schema-cot-loi.ts`](examples/02-1-1-schema-cot-loi.ts)
 
 **Mỗi trường đều có việc để làm:**
+
+*Đọc bảng này:* cột trái là tên trường trong event; cột phải là việc chỉ trường đó làm được. Ví dụ, `seq` là số thứ tự 1, 2, 3... của event trong file — thấy thiếu một số nghĩa là mất một bản ghi.
 
 | Trường | Mở khoá điều gì mà không có trường khác làm được |
 |--------|--------------------------------------------------|
@@ -184,7 +202,13 @@ Một shape duy nhất, mọi module cùng emit, mọi công cụ cùng đọc. 
 | `fingerprint` | Phát hiện một prompt đã lệch dưới tay bạn; làm compaction truy vết được |
 | `error.retryable` | Cho phép replay và eval suy luận về *lớp* lỗi, không chỉ về text |
 
+*Vài thuật ngữ trong bảng:* `ULID` = loại id dài, sinh lúc nào cũng sắp xếp theo thời gian được; `dedupe` = loại bỏ bản ghi trùng; `fingerprint` = vân tay (mã hash) của prompt, dùng để biết hai prompt có giống nhau không; `retryable` = lỗi này có đáng thử lại không.
+
+> **Tóm gọn 1 câu:** Một event = một bản ghi có id, số thứ tự, ai làm (actor), làm việc gì, tốn bao nhiêu; mỗi trường tồn tại để trả lời đúng một loại câu hỏi sau này.
+
 ### 1.2 Danh Mục Event Kind
+
+*Phần này liệt kê* các loại event (kind = loại) mà hệ thống ghi. *Đọc bảng:* cột "Do ai emit" = module nào tạo event (số 02, 05... là số thứ tự module trong harness); cột "Payload chính" = dữ liệu đựng trong event; cột "Ai tiêu thụ" = ai sẽ query nó.
 
 | Kind | Do ai emit | Payload chính | Ai tiêu thụ |
 |------|-----------|---------------|-------------|
@@ -203,17 +227,23 @@ Một shape duy nhất, mọi module cùng emit, mọi công cụ cùng đọc. 
 
 **Nguyên tắc nằm lòng:** nếu một module tạo ra sự thật nào mà nay mai có người muốn lần theo, nó phải emit một event. Một sự thật chỉ nằm trong memory mà không lên log thì lúc cần debug, bạn chịu thua.
 
+> **Tóm gọn 1 câu:** Có 12 loại event chuẩn — từ `prompt` đến `eval` — mỗi loại do một module emit; quy tắc là "sự thật nào đáng lần theo thì phải lên log".
+
 ### 1.3 Validate & Phiên Bản Hoá
 
 > 📄 **Code ví dụ:** [`examples/03-1-3-validate-phien-ban-hoa.ts`](examples/03-1-3-validate-phien-ban-hoa.ts)
 
-**Hãy version cả schema, đừng version từng trường riêng lẻ.** Thêm `v: 2` và giữ reader đọc được cả bản cũ lẫn mới. Một trajectory viết từ sáu tháng trước vẫn phải đọc được — giữ được lịch sử đọc được chính là lý do ta lưu nó. Đổi tên trường trong im lặng chẳng khác nào xé mất trang duy nhất ghi lại sự thật.
+**Hãy version cả schema, đừng version từng trường riêng lẻ.** Thêm `v: 2` và giữ reader đọc được cả bản cũ lẫn mới. Một trajectory viết từ sáu tháng trước vẫn phải đọc được — giữ được lịch sử đọc được chính là lý do ta lưu nó. Đổi tên trường trong im lặng chẳng khác nào xé mất trang duy nhất ghi lại sự thật. (Version ở đây = đánh số phiên bản, như "bản 1, bản 2"; đổi version = thêm trường `v` vào event.)
+
+> **Tóm gọn 1 câu:** Đánh version cho cả schema event (v1, v2...) và luôn giữ code đọc được cả bản cũ — lịch sử sáu tháng trước vẫn phải query được.
 
 ---
 
 ## 2. Vòng Đời Session Event Stream
 
 ### 2.1 Hình Dạng Một Run
+
+*Phần này giải thích* một run (một phiên agent chạy từ đầu đến cuối) trông như thế nào khi nhìn từ trong file trajectory — chuỗi event nào xuất hiện, theo thứ tự ra sao.
 
 ```
 session_start
@@ -233,9 +263,15 @@ Mấy chỗ xen kẽ này rất đáng để ý, kiểu như "cặp đôi" lúc 
 - **`plan_revision` nằm xen giữa các tool call đã sinh ra nó.** Muốn kể lại câu chuyện cho ra đầu đuôi thì nguyên nhân và hệ quả phải nằm cạnh nhau.
 - **`compaction` nằm giữa prompt nó rút gọn và prompt kế tiếp.** Nếu không, bạn sẽ không bao giờ giải thích nổi vì sao mô hình tự dưng "quên" mất thứ gì.
 
+*Thuật ngữ trong sơ đồ:* `fingerprint a3f9` = mã vân tay của prompt; `t1..t5` = 5 task con, trong đó t2, t3 chạy song song; `judge score 0.82` = điểm model chấm tự động; `3 fact được lưu` = 3 kiến thức được ghi vào memory.
+
+> **Tóm gọn 1 câu:** Một run là chuỗi event theo thứ tự: bắt đầu → lấy ngữ cảnh → lên kế hoạch → gọi tool → rút gọn → chấm điểm → lưu memory → kết thúc; event nào cũng phải đi đúng cặp với event liên quan.
+
 ### 2.2 Đường Ghi — Các Tầng Bền Vững
 
-Không phải event nào cũng đáng để `fsync` ngay. Hãy xếp hạng theo kiểu "mất nó thì đau tới đâu":
+Không phải event nào cũng đáng để `fsync` ngay. Hãy xếp hạng theo kiểu "mất nó thì đau tới đâu". (`fsync` = ra lệnh hệ điều hành ghi hẳn xuống đĩa vật lý ngay, kể cả khi mất điện; `flush ≤100 ms` = đẩy ra đĩa trong 100 mili-giây, chấp nhận mất 100ms cuối nếu crash; `buffered` = giữ trong bộ nhớ, ghi sau.)
+
+*Đọc bảng:* cột "Bền vững" là mức ghi cứng; càng đau khi mất thì càng ghi cứng sớm.
 
 | Event | Bền vững | Lý do |
 |-------|----------|-------|
@@ -248,9 +284,13 @@ Không phải event nào cũng đáng để `fsync` ngay. Hãy xếp hạng theo
 
 > 📄 **Code ví dụ:** [`examples/04-2-2-uong-ghi-cac-tang-ben-vung.sh`](examples/04-2-2-uong-ghi-cac-tang-ben-vung.sh)
 
-**Sao lại là JSONL mà không phải bảng SQL?** Vì ghi kiểu nối đuôi thì khỏi cần khoá trong trường hợp thường, `grep` phát ăn ngay, mang đi đâu cũng tiện, replay cũng dễ. Còn index là chuyện *tính sau*; cần phân tích thì nạp vào DuckDB/SQLite. Nếu ngay từ đầu đã lưu dạng bảng, mỗi event thành một giao dịch nằm ngay trên đường chạy nóng — bạn phải trả "thuế độ trễ" cho vòng lặp agent, chỉ để đổi lấy một câu query mỗi tuần mới chạy một lần.
+**Sao lại là JSONL mà không phải bảng SQL?** Vì ghi kiểu nối đuôi thì khỏi cần khoá trong trường hợp thường, `grep` phát ăn ngay, mang đi đâu cũng tiện, replay cũng dễ. (JSONL = file văn bản, mỗi dòng một object JSON; nối đuôi = chỉ thêm dòng mới vào cuối file.) Còn index là chuyện *tính sau*; cần phân tích thì nạp vào DuckDB/SQLite (hai loại database nhẹ, đọc file trực tiếp để query SQL). Nếu ngay từ đầu đã lưu dạng bảng, mỗi event thành một giao dịch nằm ngay trên đường chạy nóng — bạn phải trả "thuế độ trễ" cho vòng lặp agent, chỉ để đổi lấy một câu query mỗi tuần mới chạy một lần.
+
+> **Tóm gọn 1 câu:** Sự cố nghiêm trọng (approval, memory, eval) thì ghi cứng xuống đĩa ngay; dữ liệu debug thường thì ghi nhanh; còn lưu dạng JSONL nối đuôi để khỏi làm chậm vòng lặp agent.
 
 ### 2.3 Đường Đọc & Tail Trực Tiếp
+
+*Phần này giải thích* cách đọc event: vừa ghi vừa xem theo thời gian thực (tail = đọc đuôi file lúc nó đang dài ra, như `tail -f` trên Linux), hoặc nạp vào database để query nặng.
 
 > 📄 **Code ví dụ:** [`examples/05-2-3-uong-oc-tail-truc-tiep.sh`](examples/05-2-3-uong-oc-tail-truc-tiep.sh)
 
@@ -258,11 +298,15 @@ Nạp vào DuckDB cho mọi thứ nặng hơn:
 
 > 📄 **Code ví dụ:** [`examples/06-2-3-uong-oc-tail-truc-tiep.sql`](examples/06-2-3-uong-oc-tail-truc-tiep.sql)
 
+> **Tóm gọn 1 câu:** Ghi là file JSONL nối đuôi; đọc là hai kiểu — "tail" xem trực tiếp lúc đang chạy, hoặc nạp vào DuckDB để chạy SQL phân tích.
+
 ---
 
 ## 3. Fork, Replay, Resume
 
 ### 3.1 Ngữ Nghĩa Từng Thao Tác
+
+*Phần này phân biệt ba thao tác dễ nhầm:* replay (phát lại y hệt), fork (rẽ nhánh thử kịch bản khác), resume (chạy tiếp từ chỗ đứt). *Đọc bảng:* cột "Yêu cầu trung thực" = lời hứa bắt buộc khi làm thao tác đó.
 
 | Thao tác | Làm gì | Khi nào cần | Yêu cầu trung thực |
 |----------|--------|-------------|---------------------|
@@ -270,7 +314,9 @@ Nạp vào DuckDB cho mọi thứ nặng hơn:
 | **Fork** | Clone session tại event `K`, đi tiếp với prompt/model/policy khác | "Nếu chỗ này dùng model lớn thì sao?" | Tiền tố giống nhau; hậu tố có thể phân kỳ tuỳ ý |
 | **Resume** | Nạp checkpoint cuối + phần event ghi sau crash | Workflow bền vững (→ 07 §13) | Không được chạy lại side effect đã commit |
 
-Đây là ba món khác nhau với ba lời hứa khác nhau. Nhầm lẫn chúng là cách nhanh nhất để biến một buổi "replay" vô hại thành cú gửi lại email production cho khách hàng.
+Đây là ba món khác nhau với ba lời hứa khác nhau. Nhầm lẫn chúng là cách nhanh nhất để biến một buổi "replay" vô hại thành cú gửi lại email production cho khách hàng. (Checkpoint = điểm lưu trạng thái để chạy tiếp; side effect = hành động đụng ra thế giới bên ngoài, kiểu gửi email hay ghi vào repo.)
+
+> **Tóm gọn 1 câu:** Replay = phát lại đúng để tái hiện bug; Fork = clone từ một điểm để thử phương án khác; Resume = chạy tiếp sau crash — mỗi món một lời hứa, đừng lẫn lộn.
 
 ### 3.2 Implementation
 
@@ -281,9 +327,13 @@ Nạp vào DuckDB cho mọi thứ nặng hơn:
 
 </details>
 
+> **Tóm gọn 1 câu:** Code mẫu dưới đây hiện thực cả ba thao tác fork/replay/resume trên cùng một store JSONL.
+
 ### 3.3 Độ Trung Thực Replay & Idempotency
 
-**Không phải step nào cũng tất định.** Phân loại từng kind trước khi hứa replay:
+**Không phải step nào cũng tất định.** Phân loại từng kind trước khi hứa replay: (tất định = chạy lại ra kết quả y hệt; `idempotency` = chạy lại nhiều lần cũng chỉ có tác dụng một lần, như nút thang máy bấm hoài vẫn chỉ gọi một thang).
+
+*Đọc bảng:* ✅ = chạy lại ra y hệt; ⚠️ = gần giống; ❌ = không thể y hệt, phải so theo cách khác.
 
 | Kind | Tất định? | Hợp đồng trung thực |
 |------|----------|---------------------|
@@ -297,13 +347,17 @@ Nạp vào DuckDB cho mọi thứ nặng hơn:
 
 `fingerprint` đáng được chú ý: nó hash `(template, id chunk đã lấy, id memory, hash
 policy)`. Nếu một lần replay cho fingerprint khác, *input* đã đổi — và dù có so sánh
-output bao nhiêu cũng không cho bạn biết vì sao. Hãy kiểm tra fingerprint trước.
+output bao nhiêu cũng không cho bạn biết vì sao. Hãy kiểm tra fingerprint trước. (Hash = mã tóm tắt một chiều; cùng input ra cùng hash, đổi một ký tự là hash đổi).
+
+> **Tóm gọn 1 câu:** Chỉ step đọc dữ liệu là replay ra y hệt; step gọi model/API thì không — nên luôn dùng idempotency key để replay không bao giờ lặp lại side effect đã làm rồi.
 
 ---
 
 ## 4. Join Key Xuyên Module
 
 ### 4.1 Bảng Join
+
+*Join key = chìa khoá nối dữ liệu:* nhờ mỗi event mang theo id của task, session, tenant... bạn nối được dữ liệu từ module này sang module khác, như JOIN trong SQL. *Đọc bảng:* cột trái là câu hỏi bạn sẽ hỏi; cột phải là đường nối (trường nào ở event nào nối tới trường nào ở đâu).
 
 | Câu hỏi | Đường join |
 |----------|-----------|
@@ -316,28 +370,36 @@ output bao nhiêu cũng không cho bạn biết vì sao. Hãy kiểm tra fingerp
 
 Mỗi dòng trên là một câu hỏi mà kiểu gì người dùng cũng sẽ hỏi bạn trong tuần đầu sau khi ship. Mỗi dòng là một query SQL. Và mỗi dòng đều bất khả thi nếu hôm đó bạn quên gắn key.
 
+> **Tóm gọn 1 câu:** Mỗi câu hỏi vận hành ("ai duyệt deploy?", "chunk nào nuôi câu trả lời này?") ứng với một đường nối giữa các event — và đường đó chỉ có nếu bạn ghi key đủ ngay từ đầu.
+
 ### 4.2 Năm Câu Hỏi Một Query Trả Lời
 
 > 📄 **Code ví dụ:** [`examples/08-4-2-nam-cau-hoi-mot-query-tra.sql`](examples/08-4-2-nam-cau-hoi-mot-query-tra.sql)
 
 Join key biến "mô hình trả lời sai" thành "nó lấy 12 chunk, dùng 4, và 3 chunk điểm
-cao nhất đã cũ" — một kết luận có chủ sở hữu và có cách sửa.
+cao nhất đã cũ" — một kết luận có chủ sở hữu và có cách sửa. (Chunk = đoạn văn bản nhỏ được cắt từ tài liệu để tìm kiếm.)
+
+> **Tóm gọn 1 câu:** Với join key đủ đầy, câu than "model dở" biến thành một chẩn đoán cụ thể, có chỗ sửa; phần này là SQL mẫu cho năm câu hỏi hay gặp nhất.
 
 ### 4.3 Phát Hiện Event Mồ Côi
 
-Một event không có `parentTaskId` (hoặc task không tồn tại) là lỗi đấu nối. Chạy
+Một event không có `parentTaskId` (hoặc task không tồn tại) là lỗi đấu nối. ("Event mồ côi" = event không nối được vào task nào, như đứt dây — nó vẫn chiếm chỗ, chiếm chi phí trong báo cáo, nhưng không truy ra nguồn được.) Chạy
 liên tục:
 
 > 📄 **Code ví dụ:** [`examples/09-4-3-phat-hien-event-mo-coi.sql`](examples/09-4-3-phat-hien-event-mo-coi.sql)
 
 Khác 0 là phải page. Event mồ côi là cách một harness kết thúc với một dashboard
-âm thầm thiếu 12% chi phí trong tám tháng.
+âm thầm thiếu 12% chi phí trong tám tháng. (Page = gọi báo động on-call, bắt người trực xử lý ngay.)
+
+> **Tóm gọn 1 câu:** Đếm event mồ côi liên tục; số khác 0 nghĩa là có event không nối được về task — chi phí và sự thật đang rơi ra khỏi báo cáo.
 
 ---
 
 ## 5. Retention, Redaction & GDPR
 
 ### 5.1 Các Tầng Hot / Warm / Cold
+
+*Ý tưởng của phần này:* giữ dữ liệu event theo ba tầng tuổi, càng cũ càng nén mạnh để đỡ tốn tiền lưu trữ. *Đọc bảng:* "Tuổi" = giữ bao lâu; "Nội dung" = còn giữ gì ở tầng đó; `ref` = con trỏ trỏ tới file lớn nằm chỗ khác; TTL = thời hạn sống, hết hạn thì xoá.
 
 | Tầng | Tuổi | Nội dung | Lưu trữ | Mẫu truy vấn |
 |------|------|----------|---------|--------------|
@@ -348,11 +410,13 @@ Khác 0 là phải page. Event mồ côi là cách một harness kết thúc v�
 
 **Quy tắc 4KB:** ở tầng warm, payload vượt 4KB bị thay bằng một con trỏ. Tool output
 lớn chiếm phần lớn dung lượng byte và ít giá trị nhất sáu tuần sau; một `ref` cộng
-`stdoutHash` giữ được khả năng audit mà không tốn hoá đơn lưu trữ.
+`stdoutHash` giữ được khả năng audit mà không tốn hoá đơn lưu trữ. (Payload = phần nội dung của event; `stdoutHash` = mã hash của output gốc, để kiểm chứng sau này.)
+
+> **Tóm gọn 1 câu:** 7 ngày đầu giữ đầy đủ (hot), đến 90 ngày thay phần lớn bằng con trỏ (warm), sau đó chỉ giữ số liệu tổng hợp (cold), hết hạn thì xoá theo yêu cầu của từng tenant.
 
 ### 5.2 Redaction Lúc Emit
 
-Redaction phải làm **ngay lúc ghi**, đừng để tới lúc đọc. Redact lúc đọc là thua chắc, vì kiểu gì cũng có query ad-hoc chọc thẳng vào bảng thô — mà bảng thô thì lúc nào cũng bị người ta lôi ra soi.
+Redaction phải làm **ngay lúc ghi**, đừng để tới lúc đọc. Redact lúc đọc là thua chắc, vì kiểu gì cũng có query ad-hoc chọc thẳng vào bảng thô — mà bảng thô thì lúc nào cũng bị người ta lôi ra soi. (Redaction = che/xoá dữ liệu nhạy cảm như API key, mật khẩu, số thẻ trước khi ghi; ad-hoc = query vung tay không qua kiểm tra.)
 
 > 📄 **Code ví dụ:** [`examples/10-5-2-redaction-luc-emit.ts`](examples/10-5-2-redaction-luc-emit.ts)
 
@@ -360,7 +424,11 @@ Lưu `redactions` thành một trường của event. Rồi:
 
 > 📄 **Code ví dụ:** [`examples/11-5-2-redaction-luc-emit.sql`](examples/11-5-2-redaction-luc-emit.sql)
 
+> **Tóm gọn 1 câu:** Che dữ liệu nhạy cảm ngay khoảnh khắc ghi event, và lưu lại "đã che gì" thành trường `redactions` để audit được.
+
 ### 5.3 Cô Lập Tenant & Receipt Xoá
+
+*(Tenant = một khách hàng/tổ chức dùng chung hệ thống; dữ liệu của tenant này phải không bao giờ lọt sang tenant kia.)*
 
 - **`tenantId` trên mọi event, ép lúc ghi.** Thiếu `tenantId` là từ chối ghi, không phải cảnh báo.
 - **Row-level security hoặc bucket riêng cho từng tenant.** Rò rỉ chéo tenant trong trajectory store là một sự cố dữ liệu theo nghĩa đen.
@@ -369,7 +437,9 @@ Lưu `redactions` thành một trường của event. Rồi:
 > 📄 **Code ví dụ:** [`examples/12-5-3-co-lap-tenant-receipt-xoa.json`](examples/12-5-3-co-lap-tenant-receipt-xoa.json)
 
 Bản receipt cũng được lưu bất biến. "Chúng tôi đã xoá nó" phải kiểm chứng được mà
-không cần tin vào chính hệ thống đã xoá.
+không cần tin vào chính hệ thống đã xoá. (Receipt = biên lai xoá: bản ghi chứng minh đã xoá cái gì, lúc nào, ở đâu.)
+
+> **Tóm gọn 1 câu:** Mỗi event phải gắn tenant, dữ liệu các tenant phải cách ly vật lý hoặc bằng quyền truy cập (RLS = row-level security, chặn từng dòng dữ liệu), và khi xoá theo GDPR thì phải phát biên lai xoá lưu vĩnh viễn.
 
 ---
 
@@ -377,23 +447,31 @@ không cần tin vào chính hệ thống đã xoá.
 
 ### 6.1 Catalog Query
 
-Mọi metric đều là một query trên cùng một bảng. Đây chính là phần thưởng xứng đáng cho công sức thiết kế schema tử tế từ đầu.
+Mọi metric đều là một query trên cùng một bảng. Đây chính là phần thưởng xứng đáng cho công sức thiết kế schema tử tế từ đầu. (Metric = số liệu đo lường; catalog query = bộ câu query mẫu có sẵn.)
 
 > 📄 **Code ví dụ:** [`examples/13-6-1-catalog-query.sql`](examples/13-6-1-catalog-query.sql)
+
+> **Tóm gọn 1 câu:** Vì mọi module ghi về cùng một schema, các metric hay dùng (tỉ lệ thành công, độ trễ, chi phí) chỉ là những câu SQL có sẵn, không cần hệ thống đo riêng.
 
 ### 6.2 Quy Kết Chi Phí
 
 > 📄 **Code ví dụ:** [`examples/14-6-2-quy-ket-chi-phi.sql`](examples/14-6-2-quy-ket-chi-phi.sql)
 
+*Phần này trả lời câu hỏi* "tiền đi đâu rồi?" — quy kết = truy ngược chi phí về đúng nguồn (task nào, module nào, model nào xài tiền).
+
 Phát hiện phổ biến nhất: **chi phí không nằm ở prompt, mà ở vòng retry và các step
-dùng frontier tier mà không cần thiết.** Một dashboard cost dựa trên query này
+dùng frontier tier mà không cần thiết.** (Retry = chạy lại khi lỗi; frontier tier = model mạnh nhất, đắt nhất.) Một dashboard cost dựa trên query này
 thường tìm ra 15–30% tiết kiệm trong tuần đầu mà không đổi chất lượng.
+
+> **Tóm gọn 1 câu:** Ghi tokens + model cho từng step thì quy được từng đồng chi phí về đúng task; và thực tế chi phí lớn nhất là retry và dùng model đắt quá cần.
 
 ---
 
 ## 7. Quy Trình Debug
 
 ### 7.1 Năm Câu Hỏi Debug
+
+*Phần này là quy trình debug:* khi agent làm sai, lần theo 5 câu hỏi theo thứ tự. *Đọc bảng:* mỗi câu hỏi ứng với một query tra cứu loại event tương ứng.
 
 | # | Câu hỏi | Query |
 |---|----------|-------|
@@ -403,18 +481,24 @@ thường tìm ra 15–30% tiết kiệm trong tuần đầu mà không đổi c
 | 4 | Nó **hỏng** ở đâu? | `tool_result.exit_code != 0` + `error` |
 | 5 | **Judge** nói gì? | `eval.payload` |
 
-Trả lời câu 2 và 3 trước câu 4 — đó là kỷ luật. Rất nhiều ticket kiểu "mô hình làm cái gì ngớ ngẩn quá" thực ra lại hỏng ở câu 2: mô hình bị thiếu thông tin đầu vào, và câu 3 chỉ đang phản ánh trung thực cái thiếu đó mà thôi.
+Trả lời câu 2 và 3 trước câu 4 — đó là kỷ luật. Rất nhiều ticket kiểu "mô hình làm cái gì ngớ ngẩn quá" thực ra lại hỏng ở câu 2: mô hình bị thiếu thông tin đầu vào, và câu 3 chỉ đang phản ánh trung thực cái thiếu đó mà thôi. (Câu 2 = nó *nhìn thấy* gì trong ngữ cảnh; câu 3 = nó *nghĩ* thế nào — kế hoạch và lý do sửa kế hoạch.)
+
+> **Tóm gọn 1 câu:** Debug theo thứ tự: nó làm gì → thấy gì → tin gì → hỏng ở đâu → judge chấm gì; kiểm tra "thấy gì" và "tin gì" trước khi kết tội "làm gì".
 
 ### 7.2 So Sánh Hai Run
 
 > 📄 **Code ví dụ:** [`examples/15-7-2-so-sanh-hai-run.ts`](examples/15-7-2-so-sanh-hai-run.ts)
 
-Dùng cho A/B test prompt, nâng cấp model, và các report kiểu "hôm qua còn chạy". Dòng
+Dùng cho A/B test prompt, nâng cấp model, và các report kiểu "hôm qua còn chạy". (A/B test = chạy hai bản song song để so sánh; dòng `~` = bước mà hai run bắt đầu lệch nhau.) Dòng
 `~` đầu tiên gần như luôn là dòng thú vị.
+
+> **Tóm gọn 1 câu:** So sánh hai run event-theo-event: dòng `~` đầu tiên là chỗ chúng bắt đầu khác nhau — và thường đó chính là nguyên nhân.
 
 ### 7.3 Chiến Lược Sampling
 
-Full fidelity cho tất cả là không t afford được và cũng không cần thiết.
+Full fidelity cho tất cả là không ai trả nổi chi phí lưu trữ và cũng không cần thiết. (Sampling = chỉ ghi một phần nhỏ sự kiện, ví dụ 5%; fidelity = độ chi tiết; full fidelity = ghi đủ 100%.)
+
+*Đọc bảng:* "Sampling" là tỉ lệ sự kiện được lưu payload đầy đủ; phần còn lại chỉ đếm số.
 
 | Lớp tín hiệu | Sampling | Lý do |
 |---------------|-----------|-------|
@@ -424,9 +508,11 @@ Full fidelity cho tất cả là không t afford được và cũng không cần
 | Ghi thành công | 20% | Giá trị trung bình, cần độ phủ |
 | Prompt happy-path ở frontier | 1% | Kiểm soát chi phí |
 
-Luôn giữ **counter ở 100%** kể cả khi bỏ payload. Log đã sample nhưng aggregate đầy
+Luôn giữ **counter ở 100%** kể cả khi bỏ payload. (Counter = bộ đếm: luôn đếm đủ mọi sự kiện, dù chỉ lưu chi tiết một phần.) Log đã sample nhưng aggregate đầy
 đủ trả lời được câu hỏi SLO; log đã sample mà không có aggregate thì không trả lời
-được gì.
+được gì. (SLO = cam kết chất lượng dịch vụ, ví dụ "95% run thành công".)
+
+> **Tóm gọn 1 câu:** Ghi đủ 100% cho lỗi, approval và điểm kém; chỉ lấy mẫu 1–20% cho trường hợp bình thường — nhưng bộ đếm tổng thì phải luôn đủ 100%.
 
 ---
 
@@ -441,35 +527,51 @@ Luôn giữ **counter ở 100%** kể cả khi bỏ payload. Log đã sample nh�
 
 </details>
 
+> **Tóm gọn 1 câu:** `TrajectoryStore` là lớp ghi event: chỉ-append, không bao giờ throw lỗi vào vòng lặp agent, và chia tầng bền vững đúng như bảng ở mục 2.2.
+
 ### 8.2 Projector Tiến Độ Trực Tiếp
+
+*(Projector = bộ biến đổi event thành trạng thái hiển thị, ví dụ thanh tiến độ trên UI — UI chỉ là "gấp gọn" từ event log.)*
 
 > 📄 **Code ví dụ:** [`examples/17-8-2-projector-tien-o-truc-tiep.ts`](examples/17-8-2-projector-tien-o-truc-tiep.ts)
 
+> **Tóm gọn 1 câu:** Projector đọc event liên tục và vẽ tiến độ trực tiếp; màn hình luôn suy ra từ event log, không phải nguồn sự thật riêng.
+
 ### 8.3 Debug Logger Adapter
 
+*(Adapter = lớp chuyển đổi, nối trajectory store với công cụ logger bạn đang dùng.)*
+
 > 📄 **Code ví dụ:** [`examples/18-8-3-debug-logger-adapter.ts`](examples/18-8-3-debug-logger-adapter.ts)
+
+> **Tóm gọn 1 câu:** Adapter cho phép log debug thường của bạn cũng ghi vào trajectory, nên một nơi tra cứu cho mọi thứ.
 
 ---
 
 ## 9. Kiểm Thử Trajectory
 
+*Phần này nói về* cách test chính hệ trajectory: event có đúng khuôn không (contract test), và phát lại run cũ có ra kết quả cũ không (replay test).
+
 ### 9.1 Contract Test
 
 Chạy trong CI. Đây là bắt lớp bug khi một module mới emit một event phá vỡ mọi query
-phía dưới.
+phía dưới. (Contract test = test "hợp đồng": assert mọi event đúng schema chung đã hứa; CI = kiểm thử tự động mỗi lần merge code.)
 
 > 📄 **Code ví dụ:** [`examples/19-9-1-contract-test.ts`](examples/19-9-1-contract-test.ts)
 
 Cũng assert: mọi `tool_call` có `tool_result` tương ứng; mọi `tool_result.parentTaskId`
 tồn tại trong plan; không payload nào chứa pattern secret.
 
+> **Tóm gọn 1 câu:** Contract test chạy trong CI để bắt ngay khi một module emit event sai khuôn, trước khi nó phá hết các query phía dưới.
+
 ### 9.2 Bộ Test Replay
 
 > 📄 **Code ví dụ:** [`examples/20-9-2-bo-test-replay.ts`](examples/20-9-2-bo-test-replay.ts)
 
-**Lịch:** mỗi đêm replay 20 trajectory production hàng đầu với một model đã ghim. Drift
+**Lịch:** mỗi đêm replay 20 trajectory production hàng đầu với một model đã ghim. (Ghim = khoá cứng một phiên bản model, không cho tự nâng cấp.) Drift
 ở step tất định là fail cứng. Drift ở step LLM vượt ±0.1 score là tín hiệu cần điều
-tra — đó là cách bạn phát hiện nhà cung cấp đổi hành vi trước khi người dùng của bạn.
+tra — đó là cách bạn phát hiện nhà cung cấp đổi hành vi trước khi người dùng của bạn. (Drift = kết quả bắt đầu lệch dần so với trước.)
+
+> **Tóm gọn 1 câu:** Mỗi đêm, phát lại 20 run thật bằng model đã ghim để phát hiện sớm sự cố — step tất định lệch là fail, step LLM lệch trên ±0.1 điểm thì điều tra.
 
 ---
 
@@ -477,12 +579,16 @@ tra — đó là cách bạn phát hiện nhà cung cấp đổi hành vi trư�
 
 ### 10.1 Harness SWE-bench — Trajectory Có Cấu Trúc
 
+*(SWE-bench = benchmark nổi tiếng: cho model các issue GitHub thật để sửa code và chấm bằng test tự động.)*
+
 Đánh giá SWE-bench ghi lại, cho mỗi instance: trajectory của mô hình (patch, kết quả
 test), trạng thái resolve, và chi phí token. Vì trajectory có cấu trúc giống nhau cho
 mọi bài nộp, nó đóng vai trò kép: (a) đầu vào đánh giá (→ 11), (b) bề mặt
 contamination (→ 11 §15.2), và (c) artifact debug khi một bài từng pass bắt đầu fail.
 
 Bài học thiết kế rút ra: **hãy biến trajectory thành món chính của buổi đánh giá, đừng chỉ nộp output cuối.** Eval chỉ nhìn output cuối thì chỉ biết *nó fail*. Eval nhìn cả trajectory mới biết nó fail vì không tìm ra bug (lỗi retrieval), vì viết patch sai (lỗi suy luận), hay vì patch đúng mà hạ tầng test chập chờn. Ba kiểu hỏng này cần ba toa thuốc hoàn toàn khác nhau.
+
+> **Tóm gọn 1 câu:** SWE-bench lưu trajectory có cấu trúc cho mọi bài nộp, nhờ đó biết được *vì sao* fail (tìm sai, suy luận sai, hay hạ tầng hỏng) chứ không chỉ biết *là* fail.
 
 ### 10.2 LangSmith / Langfuse — Trace Là Sản Phẩm
 
@@ -493,9 +599,11 @@ Mỗi run thất bại là một case eval đã curate sẵn, đúng hình dạn
 thật đã sinh ra nó.
 
 Cách thất bại cần tránh: xây một trace UI mà không ai truy vấn. Phần thưởng nằm ở
-SQL, không nằm ở waterfall. Các đội đầu tư vào *query* trên một store JSONL ngu ngốc
+SQL, không nằm ở waterfall. (Waterfall trace = biểu đồ từng bước theo thời gian, đẹp nhưng chỉ nhìn được; query = đặt câu hỏi tùy ý.) Các đội đầu tư vào *query* trên một store JSONL ngu ngốc
 kiểu thu được nhiều giá trị hơn các đội có dashboard đẹp nhưng không cách nào đặt
 câu hỏi cho nó.
+
+> **Tóm gọn 1 câu:** LangSmith/Langfuse bán trace như một sản phẩm; bài học là giá trị nằm ở khả năng query trace, không nằm ở dashboard đẹp.
 
 ### 10.3 OpenTelemetry GenAI Conventions
 
@@ -506,10 +614,12 @@ call, retrieval, và từng bước của chain.
 
 Vì sao quan trọng: nếu bạn emit thuộc tính `gen_ai.*`, trace của bạn sáng lên trong
 đúng backend observability mà công ty đã trả tiền, và dashboard cost/latency đến kèm
-miễn phí. Cái giá của việc không chấp nhận conventions là phải tự xây dashboard mãi
+miễn phí. (Backend observability = hệ thống theo dõi như Grafana/Datadog mà công ty đã có sẵn.) Cái giá của việc không chấp nhận conventions là phải tự xây dashboard mãi
 mãi.
 
 > 📄 **Code ví dụ:** [`examples/21-10-3-opentelemetry-genai-conventions.ts`](examples/21-10-3-opentelemetry-genai-conventions.ts)
+
+> **Tóm gọn 1 câu:** Dùng đúng bộ tên chuẩn `gen_ai.*` của OpenTelemetry (chuẩn hoá tên span/thuộc tính cho lời gọi LLM) thì trace của bạn tự hiện trong hệ thống giám sát công ty đã có.
 
 ### 10.4 OpenHands — Runtime Event Stream
 
@@ -521,6 +631,8 @@ sau đó. Hệ quả thiết kế:
 2. **Observation là event bậc nhất**, không phải giá trị trả về ngầm. Khác biệt này quan trọng: một tool result bị cắt là event có `truncated: true`, không phải một chuỗi bị cắt âm thầm.
 3. **Replay gần như miễn phí** vì event stream chính là mô hình thực thi.
 
+> **Tóm gọn 1 câu:** OpenHands coi event stream là chính vòng lặp thực thi — log không phải "việc thêm" mà là cách hệ thống chạy, nên replay và audit tự nhiên có sẵn.
+
 ### 10.5 Claude Code — Session Replay Cho Support
 
 Các coding agent dùng ở quy mô lớn dựa vào session replay cho bộ phận hỗ trợ: khi user
@@ -531,19 +643,29 @@ thực hành đáng học:
    một cơ chế tạo niềm tin — user tự thấy chuyện gì xảy ra mà không phải hỏi.
 2. **Redact giá trị nhạy cảm diễn ra lúc emit.** Các file như `.env`, file khoá, và
    pattern credential được redact trong transcript user thấy, không chỉ trong log bạn
-   lưu.
+   lưu. (Credential = thông tin đăng nhập như API key, mật khẩu.)
+
+> **Tóm gọn 1 câu:** Claude Code cho support (và chính user) xem lại toàn bộ session như một cuốn phim — vừa tạo niềm tin, vừa che dữ liệu nhạy cảm ngay khi ghi.
 
 ---
 
 ## 11. TypeScript Interfaces Cho Observability
 
+*Phần này gom* toàn bộ interface TypeScript (kiểu dữ liệu) của module: `TrajectoryEvent`, store, sink... dùng làm hợp đồng cho code thật.
+
 > 📄 **Code ví dụ:** [`examples/22-11-typescript-interfaces-cho-observability.ts`](examples/22-11-typescript-interfaces-cho-observability.ts)
+
+> **Tóm gọn 1 câu:** Toàn bộ các kiểu dữ liệu của hệ trajectory nằm gọn trong một file tham chiếu — đây là hợp đồng chính thức mọi module implement theo.
 
 ---
 
 ## 12. Nguyên Tắc Thiết Kế Cho Observability
 
 ### 12.1 SOLID cho hệ trace
+
+*(SOLID = 5 nguyên tắc thiết kế code sạch, viết tắt từ chữ cái đầu: Single responsibility, Open/closed, Liskov, Interface segregation, Dependency inversion.)*
+
+*Đọc bảng:* cột trái là nguyên tắc gốc; cột phải là nó có nghĩa gì cụ thể cho hệ lưu trace.
 
 | Nguyên tắc | Áp dụng |
 |------------|---------|
@@ -553,6 +675,8 @@ thực hành đáng học:
 | **I**nterface segregation | UI sống cần `tail()`; debugger cần `load()`. Đừng bắt debugger phụ thuộc streaming. |
 | **D**ependency inversion | Module phụ thuộc interface `EventSink`, nên test harness có thể capture trong bộ nhớ. |
 
+> **Tóm gọn 1 câu:** Áp 5 nguyên tắc SOLID vào hệ trace: store chỉ ghi, thêm event mới không phải sửa store, và mọi backend lưu trữ thay nhau được.
+
 ### 12.2 Sáu nguyên tắc thiết kế
 
 1. **Chỉ-append.** Event là sự thật; sự thật không bị sửa. Cách đính chính là event mới (`plan_revision`), không phải mutation.
@@ -561,6 +685,8 @@ thực hành đáng học:
 4. **Telemetry không bao giờ làm hỏng task.** Lỗi append được đếm, không throw vào vòng lặp agent. Một agent ngừng hoạt động vì log hỏng còn tệ hơn một agent bị giám sát mù.
 5. **Tất định trước, sample sau.** Full fidelity cho lỗi, approval và score thấp; chỉ sample happy path.
 6. **Idempotency key là một phần của schema.** Không có chúng, replay là gánh nặng chứ không phải tính năng.
+
+> **Tóm gọn 1 câu:** Sáu nguyên tắc: chỉ-append, mọi event quy được nguồn, redact sớm, log không bao giờ làm hỏng agent, sample sau khi ghi đủ, và idempotency key là bắt buộc.
 
 ---
 
@@ -576,6 +702,8 @@ thực hành đáng học:
 - Replay 20 trajectory production hàng đầu mỗi đêm với model đã ghim.
 - Emit thuộc tính `gen_ai.*` của OpenTelemetry để trace nằm trong backend sẵn có.
 
+> **Tóm gọn 1 câu:** NÊN: emit từ mọi module, fsync các sự kiện quan trọng, quy chi phí theo step, và phát lại run thật mỗi đêm để phát hiện lệch sớm.
+
 ### 13.2 KHÔNG NÊN ❌
 
 - ❌ Không log tool output đầy đủ kèm secret. Cap, redact, giữ một `ref`.
@@ -586,9 +714,15 @@ thực hành đáng học:
 - ❌ Không hứa replay giống byte cho step LLM. Hãy phân loại tất định theo từng event kind.
 - ❌ Không lưu trajectory mà không có `tenantId` rồi coi việc lọc tenant là việc của query.
 
+> **Tóm gọn 1 câu:** KHÔNG NÊN: log secret, coi chat transcript là trajectory, sửa event cũ, hay để lỗi log làm sập vòng lặp agent.
+
 ---
 
 ## 14. Anti-Patterns & Cách Khắc Phục
+
+*(Anti-pattern = lỗi sai lặp đi lặp lại mà nhiều team mắc phải.)*
+
+*Đọc bảng:* cột "Anti-pattern" là lỗi; cột "Triệu chứng" là dấu hiệu bạn gặp nó; cột "Cách sửa" là toa thuốc. Ví dụ, dòng "Event mồ côi": nếu dashboard báo thiếu 10% chi phí, kiểm tra các event thiếu `parentTaskId` và ép nó bắt buộc trong CI.
 
 | Anti-pattern | Triệu chứng | Cách sửa |
 |--------------|------------|---------|
@@ -601,6 +735,8 @@ thực hành đáng học:
 | **Sample mà không có counter** | Metric mất ý nghĩa thống kê | Aggregate 100%, payload đã sample |
 | **Không phát hiện lỗ hổng** | Mất một lần ghi, phát hiện lúc incident | `seq` liền mạch + assert trong CI + cảnh báo |
 | **UI là nguồn sự thật** | Trạng thái tiến độ lệch với event log | UI là phép gấp trên event (`project()`) |
+
+> **Tóm gọn 1 câu:** Chín lỗi hay gặp nhất — từ coi chat log là trajectory đến để UI tự nói dối — đều có triệu chứng nhận ra được và toa thuốc cụ thể trong bảng.
 
 ---
 
@@ -621,6 +757,8 @@ thực hành đáng học:
 - [ ] **Replay CI** — replay 20 trajectory hàng đầu mỗi đêm với model đã ghim
 - [ ] **Chuẩn** — phát thuộc tính `gen_ai.*` của OTel
 
+> **Tóm gọn 1 câu:** Checklist 14 mục này là "cổng ship": đủ hết thì hệ trajectory của bạn sẵn sàng cho production.
+
 ---
 
 ## 16. Xu Hướng Tương Lai
@@ -631,10 +769,14 @@ thực hành đáng học:
 - **Phát hiện drift tự động.** Một bộ nhúng trajectory đánh dấu những run có cấu trúc khác dân số "tốt đã biết" trước khi con người kịp nhìn.
 - **Quy kết nhân quả.** Với một kết quả xấu, xác định quyết định sớm nhất đã gây ra nó. Đây là vùng tiền tuyến: không phải "đã xảy ra gì" mà là "lượt nào tôi cần đổi".
 
+> **Tóm gọn 1 câu:** Ba xu hướng: eval chấm cả đường đi, máy tự phát hiện run bất thường, và truy ra đúng lượt quyết định gây ra kết quả xấu.
+
 ### 16.2 Telemetry Bảo Mật Quyền Riêng Tư
 
 - **Redaction tại thiết bị kèm aggregate differential privacy** cho metric bạn giữ toàn cục, trong khi payload vẫn nằm ở tenant.
-- **Sink trace chạy trong confidential compute** để cả nhà cung cấp observability cũng không đọc được trajectory — cùng mẫu SEV-SNP/TDX như `12-sandbox-execution` §16.3.
+- **Sink trace chạy trong confidential compute** để cả nhà cung cấp observability cũng không đọc được trajectory — cùng mẫu SEV-SNP/TDX như `12-sandbox-execution` §16.3. (Confidential compute = chạy trên CPU có bộ nhớ mã hoá, chính nhà cung cấp cloud cũng không đọc được; SEV-SNP/TDX = tên các công nghệ mã hoá đó.)
+
+> **Tóm gọn 1 câu:** Xu hướng bảo mật: che dữ liệu ngay trên thiết bị, giữ aggregate để vẽ số liệu chung, và lưu trace trong môi trường mã hoá tới cả nhà cung cấp cũng không đọc được.
 
 ### 16.3 Trajectory Tự Mô Tả
 
@@ -643,15 +785,21 @@ chạy `pytest` vì lần trước fail ở `test_auth_refresh`" — làm post-m
 khả thi. Hãy kỳ vọng lý do `plan_revision` của chính mô hình trở thành một trường
 bậc nhất thay vì nằm chôn trong văn xuôi.
 
+> **Tóm gọn 1 câu:** Event tương lai sẽ tự nói ra *lý do* ("chạy pytest vì lần trước fail test X") ở dạng máy đọc được, nên post-mortem tự động khả thi.
+
 ### 16.4 Observability Như Một Primitive Bảo Mật
 
 Trajectory là đầu vào của phát hiện bất thường cho prompt injection: một cụm
 `path-escape` bất ngờ, egress tới host lạ, hoặc đợt redact tăng vọt ở một tenant đều
 là mẫu phát hiện được. Hộp đen là cách bạn tìm ra chuyến bay đã bị điều khiển.
 
+> **Tóm gọn 1 câu:** Trajectory không chỉ để debug — mẫu event bất thường (thoát thư mục, kết nối lạ, redact tăng vọt) là báo động sớm cho tấn công như prompt injection (kẻ chèn lệnh độc vào nội dung model đọc).
+
 ---
 
 ## Tài Liệu Tham Khảo
+
+*Phần này liệt kê* nguồn đọc thêm: bài nghiên cứu, công cụ, hệ thống chạy thật, và các module khác trong cùng bộ tài liệu.
 
 ### Papers & Research
 
@@ -660,6 +808,8 @@ là mẫu phát hiện được. Hộp đen là cách bạn tìm ra chuyến bay
 - **DORA: Accelerate State of DevOps** — nghiên cứu về tần suất triển khai và tỉ lệ thất bại
 - **SWE-bench: Can Language Models Resolve Real-World GitHub Issues?** — Jimenez et al., 2024 · https://arxiv.org/abs/2310.06770
 - **A Survey on LLM-based Software Engineering Agents** · https://arxiv.org/abs/2402.06530
+
+*(Papers & Research = bài nghiên cứu học thuật; Event Sourcing = pattern lưu mọi thay đổi thành event không sửa được — chính là triết lý của trajectory.)*
 
 ### Frameworks & Tools
 
@@ -672,12 +822,16 @@ là mẫu phát hiện được. Hộp đen là cách bạn tìm ra chuyến bay
 7. **ULID / KSUID** — https://github.com/ulid/spec — event id sắp xếp được
 8. **Claude Code** — https://docs.anthropic.com/en/docs/claude-code
 
+*(DuckDB = database phân tích nhẹ, query trực tiếp file JSONL; Zod = thư viện kiểm tra schema trong TypeScript; ULID/KSUID = các loại id sắp xếp theo thời gian được.)*
+
 ### Production Systems
 
 - **SWE-bench harness** — https://github.com/SWE-bench/SWE-bench — trajectory có cấu trúc cho eval
 - **OpenHands** — https://github.com/All-Hands-AI/OpenHands — runtime event-stream
 - **Langfuse** — https://langfuse.com — trace store tự host
 - **Phoenix** — https://github.com/Arize-ai/phoenix — vòng lặp trace + eval
+
+*(Production Systems = các hệ thống đang chạy thật, mở code công khai, đáng đọc để tham khảo cách làm.)*
 
 ### Module Liên Quan
 
@@ -689,6 +843,10 @@ là mẫu phát hiện được. Hộp đen là cách bạn tìm ra chuyến bay
 - `12-sandbox-execution/README.md` §9 — bên sinh event `sandbox`
 - `14-compaction-context/README.md` — bên sinh event `compaction`
 - `15-approval-gates/README.md` §6 — bên tiêu thụ audit (`approval_verdict`)
+
+*(Đọc danh sách này thế nào:* mỗi dòng là module nào sinh event loại nào, hoặc module nào tiêu thụ — ví dụ module 15 "approval gates" (cổng duyệt) sinh `approval_verdict`, module này lưu và phục vụ việc audit.)*
+
+> **Tóm gọn 1 câu:** Tham khảo gồm 4 nhóm — nghiên cứu, công cụ, hệ thống thật, và module liên quan — mỗi mục đều có link và một dòng giải thích nó dùng để làm gì.
 
 ---
 
@@ -711,6 +869,8 @@ là mẫu phát hiện được. Hộp đen là cách bạn tìm ra chuyến bay
 Hai bất biến giữ nguyên như bản TypeScript: **chỉ-append** (sổ cái không xóa) và
 **mỗi event mang `session_id`** (không event mồ côi — §4.3).
 
+> **Tóm gọn 1 câu:** Phần bổ sung này thêm bản Python của TrajectoryStore — cùng hai bất biến: chỉ-append và mọi event mang `session_id`.
+
 ### 2. Cost-per-Run: Phát Hiện Run Đắt Bất Thường
 
 > 📄 **Code ví dụ:** [`examples/24-2-cost-per-run-phat-hien-run-at.py`](examples/24-2-cost-per-run-phat-hien-run-at.py)
@@ -726,6 +886,8 @@ vẫn là con số kinh nghiệm, chưa được chuẩn hoá thành SLO đo đ�
 ghi nhận ở [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) (§8);
 cho tới khi có SLO, hãy lưu phân phối cost per task type để có dữ liệu hiệu chuẩn.
 
+> **Tóm gọn 1 câu:** Đo chi phí trung bình mỗi run theo loại task — đây là chỉ số rẻ nhất giúp thấy sớm run nào đang "đốt tiền" bất thường, dù ngưỡng cảnh báo chưa chuẩn hoá thành SLO.
+
 ### 3. Trace Quyết Định — Không Trace Nội Dung Hội Thoại
 
 Ranh giới privacy giữ nguyên trong bản Python: emit **pattern quyết định** (kind,
@@ -734,10 +896,14 @@ của conversation. Lý do là bài học production của Anthropic Research: l
 nguyên văn biến trajectory store thành một bản copy dữ liệu nhạy cảm thứ hai —
 mỗi query ad-hoc, mỗi dashboard, mỗi lần export đều là một đường rò rỉ tiềm năng
 (→ §5.2: redact lúc emit, không redact lúc đọc). Payload cần truy vết → lưu `{ref}`
-trỏ tới blob có ACL riêng, không inline vào event.
+trỏ tới blob có ACL riêng, không inline vào event. (Blob = file nhị phân lưu riêng; ACL = danh sách quyền truy cập.)
+
+> **Tóm gọn 1 câu:** Trace đúng những *quyết định* agent ra (chạy tool gì, tốn bao nhiêu), không trace nội dung hội thoại — để kho log không biến thành bản copy thứ hai của dữ liệu nhạy cảm.
 
 ### 4. Liên Kết Kiến Trúc
 
 Trajectory là **Layer 8 (Observability & Feedback)** — mọi layer khác emit vào đó,
 mọi buổi debug đọc từ đó. Xem
 [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) (Layer 8).
+
+> **Tóm gọn 1 câu:** Trong bản đồ kiến trúc tổng, trajectory là Layer 8 (Observability & Feedback): mọi layer ghi event vào đây, mọi buổi debug đọc từ đây.

@@ -49,13 +49,19 @@ Hãy hình dung bạn đi khám ở một phòng mạch quen. Tuần này bạn 
 
 **LLM mà thiếu Memory & Retrieval thì cũng y chang vị bác sĩ đãng trí đó.**
 
-Mỗi cuộc trò chuyện mà không "nhớ" được ngữ cảnh trước đó thì coi như bắt đầu lại từ số 0. Hậu quả rất quen thuộc: hỏi đi hỏi lại một câu, lạc mất mạch chuyện, và tệ nhất là — **bịa chuyện (hallucinate)** vì không có dữ liệu thực tế trong tay.
+Mỗi cuộc trò chuyện mà không "nhớ" được ngữ cảnh trước đó thì coi như bắt đầu lại từ số 0. Hậu quả rất quen thuộc: hỏi đi hỏi lại một câu, lạc mất mạch chuyện, và tệ nhất là — **bịa chuyện (hallucinate)** vì không có dữ liệu thực tế trong tay. *Hallucinate = "ảo giác" — model tự bịa ra câu trả lời nghe có vẻ hợp lý nhưng thực ra không có nguồn thật, ví dụ trích một điều khoản luật không hề tồn tại.*
+
+> **Tóm gọn 1 câu:** AI không có bộ nhớ ngoài (memory & retrieval) thì cứ mỗi lần nói chuyện là "quên sạch", và khi không biết sẽ bịa đáp án thay vì nói "tôi không biết".
 
 ### Tại Sao Retrieve Memory & Knowledge Quan Trọng?
 
 > *"Vấn đề không phải là não to hơn — mà là biết cần tìm ở đâu."*
 
+Phần này nêu 3 nghiên cứu thực tế, để thấy retrieval (chức năng "đi tìm thông tin") không phải lý thuyết suông mà đã được đo đếm bằng số liệu.
+
 #### 3 Bằng Chứng Khoa Học
+
+*Cách đọc bảng này: mỗi dòng là một nghiên cứu — cột giữa là tên nhóm nghiên cứu, cột phải là phát hiện chính. Ví dụ dòng 1: agent có gắn công cụ tra cứu (retrieval-augmented = "được bổ sung bằng truy xuất") giải được 56% đề thi SWE-bench — bộ benchmark các issue GitHub thật — gấp 4 lần agent thường.*
 
 | # | Nghiên Cứu | Phát Hiện Quan Trọng |
 |---|-----------|----------------------|
@@ -63,7 +69,13 @@ Mỗi cuộc trò chuyện mà không "nhớ" được ngữ cảnh trước đ�
 | 2 | **Anthropic (2025)** | Memory retrieval đúng lúc giảm **68% duplicate questions** trong multi-session |
 | 3 | **Microsoft (2024)** | Structured retrieval giảm **40% token usage** — vì chỉ lấy thông tin cần thiết |
 
+*(Giải thích nhanh: baseline = mức nền để so sánh; duplicate questions = người dùng hỏi lại câu đã hỏi; multi-session = nhiều phiên chat khác nhau; token usage = lượng "chữ" đưa vào model, càng nhiều càng tốn tiền.)*
+
+> **Tóm gọn 1 câu:** Số liệu từ Princeton, Anthropic và Microsoft cùng chỉ về một điểm: gắn "bộ nhớ + tra cứu" cho AI giúp trả lời đúng hơn, bớt hỏi lại, và tốn ít token hơn.
+
 ## Tổng Quan
+
+Phần này vẽ bức tranh tổng thể: câu hỏi của bạn đi qua mấy trạm nào trước khi AI trả lời. Đọc xong sẽ hiểu vì sao chương này có các mục nhỏ như semantic search, RAG, re-ranking... — mỗi mục là một trạm trên dây chuyền.
 
 Nói ngắn gọn thế này: **truy xuất bộ nhớ và kiến thức** là cách mình đi "mượn" thông tin từ bên ngoài — tài liệu, cơ sở dữ liệu, đồ thị tri thức — rồi đưa cho LLM đọc trước khi trả lời. Nhờ có "phao cứu trợ" này mà câu trả lời bám sát thực tế hơn hẳn, bớt bịa đặt hẳn đi.
 
@@ -106,6 +118,10 @@ flowchart TD
     LLM --> RESP["Response chính xác"] --> OUT["Trả lời user"]
 ```
 
+*(Cách đọc sơ đồ: đi từ trên xuống. Câu hỏi của user (① RETRIEVE) được tìm bằng nhiều cách song song — tìm theo ý nghĩa (semantic), tìm theo từ khóa (BM25), tra đồ thị tri thức, tra web/database — rồi gộp lại (RRF Fusion). Sang ② RE-RANKING, một model chấm điểm lại từng cặp (câu hỏi, tài liệu) để loại kết quả lỏng, chỉ giữ 5 tài liệu tốt nhất. Cuối cùng ③ BUILD CONTEXT ghép các tài liệu đó vào prompt — lá thư lệnh gửi cho model — để model trả lời dựa trên bằng chứng thật.)*
+
+> **Tóm gọn 1 câu:** Retrieval là dây chuyền 3 trạm — tìm nhiều nguồn → chấm điểm lọc lại → ghép vào context — để model trả lời dựa trên thông tin thật thay vì trí nhớ vốn có.
+
 ---
 
 ## Tại Sao Retrieve Memory & Knowledge Quan Trọng?
@@ -115,19 +131,29 @@ flowchart TD
 
 ### Bối Cảnh
 
+Phần này nói về nguyên nhân gốc: vì sao AI cần được "nạp" thông tin từ ngoài vào lúc trả lời.
+
 Bạn chat với ChatGPT hay Claude bao giờ gặp cảnh này chưa: hỏi chuyện mới xảy ra gần đây thì AI trả lời trật lất? Công ty bạn vừa đổi chính sách tuần trước mà AI vẫn nói theo luật cũ? Thậm chí có lúc nó còn tự tin đưa ra mấy con số… không hề tồn tại?
 
 Thủ phạm chính là **bộ nhớ**. Không có memory retrieval, AI giống như một bộ óc rất thông minh nhưng bị nhốt trong phòng kín — giỏi suy luận mà lại **mù tịt về thế giới bên ngoài**.
 
+> **Tóm gọn 1 câu:** Model chỉ biết thứ có trong dữ liệu huấn luyện — mọi thứ sinh ra sau đó, hoặc thuộc về riêng bạn, đều phải lấy từ ngoài vào lúc trả lời.
+
 ### Triết Lý Cốt Lõi
+
+Phần này rút gọn toàn bộ tư duy retrieval thành 3 nguyên tắc. Nhớ 3 câu này là nắm được "tâm lý" của cả chương.
 
 Cách làm Memory Retrieval gói gọn trong 3 câu "thần chú":
 
-1. **Knowledge at Inference Time**: Kiến thức phải được nạp vào đúng lúc AI đang suy luận, chứ đừng mong nhồi hết vào model từ lúc train
+1. **Knowledge at Inference Time**: Kiến thức phải được nạp vào đúng lúc AI đang suy luận, chứ đừng mong nhồi hết vào model từ lúc train *(inference = lúc model "làm việc" trả lời câu hỏi, ngược lại với training = lúc "đi học")*
 2. **Fresh over Familiar**: Tin mới ra lò lúc nào cũng đáng giá hơn tin cũ quen thuộc
 3. **Relevance over Quantity**: Một ít thông tin đúng còn hơn cả đống thông tin lạc đề
 
+> **Tóm gọn 1 câu:** Nạp kiến thức lúc trả lời, ưu tiên tin mới, ưu tiên tin đúng — ba nguyên tắc này chi phối mọi thiết kế retrieval.
+
 ### Tại Sao Không Thể Bỏ Qua?
+
+Sơ đồ dưới đây xếp cặp: các điểm yếu của LLM thuần (không gắn công cụ) ở trên, và các giải pháp tương ứng ở dưới — mỗi ❌ được bù bằng một ✅.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -152,6 +178,10 @@ Cách làm Memory Retrieval gói gọn trong 3 câu "thần chú":
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+*(Giải thích thuật ngữ trong khung: knowledge cutoff = "mốc kiến thức" — ngày model ngừng học dữ liệu mới; personalization = ghi nhớ sở thích từng người dùng; real-time = dữ liệu cập nhật từng phút như giá cổ phiếu.)*
+
+> **Tóm gọn 1 câu:** Bốn điểm yếu của LLM thuần (kiến thức cũ, bịa chuyện, không cá nhân hóa, không biết tin tức thời) đều được giải quyết bằng một loại truy xuất tương ứng.
+
 ### Bằng Chứng Nghiên Cứu
 
 Nghe lý thuyết hay là một chuyện, còn đây là những con số từ các nhóm nghiên cứu lớn — đọc để thấy người ta đã đo đếm hẳn hoi, không phải nói suông:
@@ -161,12 +191,14 @@ Nghe lý thuyết hay là một chuyện, còn đây là những con số từ c
 - Retrieval precision@10 > 85% là ngưỡng để RAG hiệu quả
 
 **2. Stanford (2024) — "Retrieval is All You Need"**
-- Hệ thống retrieval tốt hơn có thể **thay thế việc upgrade model** (GPT-3.5 + RAG > GPT-4 alone trên nhiều benchmarks)
+- Hệ thống retrieval tốt hơn có thể **thay thế việc upgrade model** (GPT-3.5 + RAG > GPT-4 alone trên nhiều benchmarks) *(benchmark = bộ bài thi chuẩn để so điểm các model)*
 - Cost: GPT-3.5 + RAG = $0.002/query vs GPT-4 = $0.03/query → **giảm 93% chi phí**
 
 **3. LangChain State of AI Agents (2025)**
-- 78% production AI agents sử dụng RAG
+- 78% production AI agents sử dụng RAG *(production = hệ thống đang chạy thật phục vụ người dùng)*
 - Organizations deploy RAG báo cáo **giảm 65% factual errors**
+
+> **Tóm gọn 1 câu:** Ba nghiên cứu độc lập đều cho cùng kết quả: retrieval tốt giúp trả lời đúng hơn (bớt bịa từ 27% xuống 3%) và rẻ hơn (tiết kiệm tới 93% chi phí) so với chỉ dùng model mạnh.
 
 ### Cost-Benefit Analysis
 
@@ -194,9 +226,17 @@ Nói chuyện tiền nong cho dễ hình dung — thử đặt lên bàn cân xe
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+*(Cách đọc khung: phần trên là chi phí nếu dùng model xịn hơn thay vì làm retrieval; phần dưới là chi phí nếu làm retrieval. Verifiable = có thể kiểm chứng lại nguồn. ROI = tỷ lệ "được" trên "bỏ ra".)*
+
+> **Tóm gọn 1 câu:** Với 10.000 câu hỏi mỗi ngày, gắn retrieval cho model rẻ còn tiết kiệm hơn 90% so với nâng cấp model xịn — và trả lời đúng hơn nhiều lần.
+
 ### Analogies — Hiểu Dễ Hơn
 
+Phần này dùng ba hình ảnh đời thường để bạn "nhìn thấy" quan hệ giữa LLM và retrieval: model là bộ não, retrieval là công cụ mang thông tin tới cho não.
+
 **Kể vài câu chuyện đời thường để hình dung cho dễ:**
+
+*Cách đọc bảng này: cột trái là phép so sánh (vế trước = LLM, vế sau = retrieval), cột phải là ý nghĩa của phép so sánh đó.*
 
 | Analogies | Giải thích |
 |-----------|------------|
@@ -204,7 +244,11 @@ Nói chuyện tiền nong cho dễ hình dung — thử đặt lên bàn cân xe
 | **Bác sĩ + Hồ sơ bệnh án** | Bác sĩ có giỏi mấy (LLM) thì trước khi kê đơn vẫn phải lật hồ sơ bệnh án (retrieval) ra đọc. Cứ kê bừa không đọc hồ sơ là toa thuốc trật ngay |
 | **Điều hướng viên + Bản đồ** | LLM giống bác tài lái cứng, còn Retrieval là tấm bản đồ giao thông cập nhật liên tục. Không có bản đồ thì tay lái lụa mấy cũng dễ rẽ nhầm đường |
 
+> **Tóm gọn 1 câu:** Ba phép so sánh đều chỉ về một điểm: LLM giỏi đến đâu cũng vô dụng nếu không có retrieval mang thông tin đúng tới đúng lúc.
+
 ### Nếu Bạn Bỏ Qua?
+
+Phần này liệt kê hệ quả thật nếu team không làm retrieval — đọc để có lý lẽ thuyết phục khi cần xin ngân sách làm retrieval.
 
 Thử tưởng tượng team bạn quyết định "khỏi làm retrieval cho đỡ mệt" — kịch bản thường sẽ diễn ra như thế này:
 
@@ -228,7 +272,13 @@ Thử tưởng tượng team bạn quyết định "khỏi làm retrieval cho đ
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+*(Giải thích vài mục trong khung: compliance failure = vi phạm quy định pháp lý; UX = trải nghiệm người dùng; fact-checking = kiểm chứng thông tin thủ công; model upgrade treadmill = "vòng xoáy nâng cấp model" — cứ sai là lại mua model to hơn, tiền đội lên không dứt.)*
+
+> **Tóm gọn 1 câu:** Bỏ retrieval thì bạn trả giá bằng thông tin sai, khách rời đi, rủi ro pháp lý, và tiền duy trì model ngày càng to — tổng tốn hơn nhiều so với làm retrieval ngay từ đầu.
+
 ### Evolutionary Context
+
+Phần này kể lại lịch sử 6 năm của retrieval — hiểu tiến hóa này sẽ giúp bạn tránh lặp lại các cách làm lỗi thời.
 
 Nhìn lại chặng đường vài năm qua mới thấy cách làm retrieval "lớn" nhanh thế nào — từ kiểu cầu may ban đầu tới kiểu truy xuất thông minh bây giờ:
 
@@ -270,11 +320,17 @@ Nhìn lại chặng đường vài năm qua mới thấy cách làm retrieval "l
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+*(Cách đọc khung: mỗi khung nhỏ là một giai đoạn, mũi tên ▼ chỉ giai đoạn sau. Few-shot learning = nhét vài ví dụ vào prompt rồi hy vọng model biết; BM25 = thuật toán tìm theo tần suất từ khóa; multi-modal = tìm được cả ảnh, âm thanh, không chỉ chữ; self-correcting = hệ tự phát hiện tìm sai và tìm lại.)*
+
+> **Tóm gọn 1 câu:** Retrieval đi từ "hy vọng model biết" (2020) → "nhét tài liệu vào prompt" (2023) → "tìm lai vector + từ khóa, chấm điểm lại" (2024-25) → "hệ tự sửa lỗi, tự suy luận theo đồ thị" (2026+).
+
 ---
 
 ## Nội Dung
 
 Dưới đây là bản đồ toàn bộ chương này — mình sẽ đi từ tìm kiếm ngữ nghĩa cơ bản, qua RAG, tới đồ thị tri thức và hệ thống bộ nhớ. Cứ đi theo thứ tự là vừa đẹp:
+
+*Cách đọc bảng này: mỗi dòng là một mục trong chương, cột giữa là tên mục (bấm vào để nhảy tới), cột phải là mô tả một câu. Ví dụ dòng 1: Semantic Search = tìm theo ý nghĩa, hoạt động nhờ biến chữ thành vector.*
 
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
@@ -285,13 +341,17 @@ Dưới đây là bản đồ toàn bộ chương này — mình sẽ đi từ t
 | 5 | [Re-ranking](#5-re-ranking) | Sắp xếp lại kết quả retrieve |
 | 6 | [Memory Systems](#6-memory-systems) | Các hệ thống bộ nhớ cho AI |
 
+> **Tóm gọn 1 câu:** Chương đi theo 6 bước từ cơ bản tới nâng cao: tìm theo ý nghĩa → tìm + trả lời (RAG) → tra theo quan hệ (graph) → tìm lai nhiều cách → xếp lại hạng kết quả → cuối cùng là lưu trí nhớ dài hạn.
+
 ---
 
 ## 1. Semantic Search / Vector Search
 
+Mục này giải thích kỹ thuật tìm kiếm theo ý nghĩa — nền móng cho hầu hết các hệ thống retrieval sau này. Hiểu được mục này thì các mục 2, 4, 5 đọc sẽ nhẹ nhàng hơn hẳn.
+
 ### 1.1 Khái Niệm Cơ Bản
 
-**Semantic Search** là kiểu tìm kiếm theo **ý nghĩa** của câu chữ, chứ không khư khư đếm xem trùng được mấy từ khóa. Cách làm rất đời: mỗi đoạn văn bản được "dịch" thành một **vector embedding** — nôm na là một dãy số dài ngoằng — rồi đem so khoảng cách giữa các dãy số đó. Gần nhau nghĩa là hợp ý nhau.
+**Semantic Search** là kiểu tìm kiếm theo **ý nghĩa** của câu chữ, chứ không khư khư đếm xem trùng được mấy từ khóa. Cách làm rất đời: mỗi đoạn văn bản được "dịch" thành một **vector embedding** — nôm na là một dãy số dài ngoằng — rồi đem so khoảng cách giữa các dãy số đó. Gần nhau nghĩa là hợp ý nhau. *(Vector = dãy số có thứ tự, ví dụ [0.25, -0.42, 0.65, ...]; "embedding" = quá trình "cắm" một câu chữ vào không gian số đó.)*
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -317,9 +377,13 @@ Dưới đây là bản đồ toàn bộ chương này — mình sẽ đi từ t
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+*(Cách đọc khung: hai hộp nhỏ so sánh cùng một câu hỏi. Keyword Search = tìm theo từ khóa trích xuất; BM25 là thuật toán tìm từ khóa phổ biến nhất. Semantic Search tìm theo nghĩa nên bắt được cả câu không chứa từ khóa gốc.)*
+
+> **Tóm gọn 1 câu:** Tìm theo từ khóa chỉ bắt được chữ trùng; tìm theo ngữ nghĩa biến câu thành vector số rồi so khoảng cách, nên bắt được cả câu nói khác chữ nhưng cùng ý.
+
 #### Pipeline Xử Lý Documents
 
-Quy trình chuẩn nó chạy như dây chuyền thế này — tài liệu thô đi vào một đầu, vector gọn gàng đi ra đầu kia:
+Phần này mô tả dây chuyền "nạp tài liệu vào kho" — chạy một lần lúc chuẩn bị (offline = không cần người dùng đợi), gồm 4 trạm: làm sạch, cắt nhỏ, đổi thành vector, lưu vào database.
 
 ```
 📄 Documents (PDF, HTML, Markdown...)
@@ -339,11 +403,17 @@ Quy trình chuẩn nó chạy như dây chuyền thế này — tài liệu thô
 
 **Giải thích từng bước cho dễ nhớ:**
 
+*Cách đọc bảng này: cột Input là thứ đưa vào, cột Output là thứ thu được, cột Ví dụ cho thấy một tình huống cụ thể. Metadata = "dữ liệu mô tả dữ liệu", ví dụ tên file, ngày tạo, số trang.*
+
 | # | Bước | Input | Output | Ví dụ |
 |---|------|-------|--------|-------|
 | 1 | Chunking | Document lớn (10 trang) | Nhiều chunks nhỏ | 1 PDF → 50 chunks |
 | 2 | Embedding | Chunk text | Vector (dãy số) | "BHYT là gì?" → [0.25, -0.42, 0.65, ...] |
 | 3 | Save to DB | Vector + Text + Metadata | Entry trong Vector DB | Lưu vào ChromaDB/Qdrant |
+
+*(Chunk = một mẩu văn bản nhỏ cắt từ tài liệu gốc. BHYT = bảo hiểm y tế.)*
+
+> **Tóm gọn 1 câu:** Nạp tài liệu = làm sạch → cắt thành từng mẩu nhỏ → mỗi mẩu đổi thành dãy số → lưu cả số, chữ gốc và thông tin mô tả vào vector database.
 
 <br>
 
@@ -364,9 +434,13 @@ Còn lúc người dùng gõ câu hỏi thì mình chạy quy trình ngược l�
 ③ RETURN Results — Trả về text chunks liên quan nhất
 ```
 
+> **Tóm gọn 1 câu:** Lúc người dùng hỏi, câu hỏi cũng được đổi thành vector rồi đi so khoảng cách với các vector đã lưu — vector nào gần nhất thì mẩu văn bản đó được trả về.
+
 <br>
 
 ### 1.2 Vector Embedding — Cách Thức Hoạt Động
+
+Phần này "mổ xẻ" khái niệm vector embedding — yếu tố cốt lõi khiến semantic search hoạt động, bằng một ví dụ đo khoảng cách trực quan.
 
 Hình dung mỗi từ, mỗi câu được "nén" thành một dãy số trong không gian nhiều chiều. Hai câu càng giống ý nhau thì hai dãy số càng đứng sát nhau — như hai người bạn thân lúc nào cũng kè kè một chỗ:
 
@@ -392,7 +466,15 @@ Không gian 2D minh họa:
     Khoảng cách xa = Khác ý nghĩa
 ```
 
+*(Cách đọc khung: mỗi dòng trên là một cụm từ cùng vector của nó — 768 dimensions nghĩa là dãy 768 số. Không gian 2D bên dưới chỉ là vẽ minh họa: "BHYT" và "Bảo hiểm y tế" và "Health Insurance" đứng gần nhau vì cùng một ý, còn "Sở thích âm nhạc" đứng xa hẳn.)*
+
+> **Tóm gọn 1 câu:** Embedding biến mỗi câu thành một điểm trong không gian số — ý nghĩa giống nhau thì điểm gần nhau, nên "tìm nghĩa" thành bài toán "tìm điểm gần".
+
 ### 1.3 Embedding Models So Sánh
+
+Phần này so sánh các model embedding đang phổ biến, giúp bạn chọn model nào cho nhu cầu của mình: chạy trong máy (local) hay gọi qua API, ưu tiên gọn nhẹ hay ưu tiên chất lượng.
+
+*(Giải thích cột: Dims = số lượng số trong mỗi vector — càng nhiều càng chi tiết nhưng càng tốn bộ nhớ; Size = dung lượng file model; MTEB = bộ benchmark chuẩn dùng để chấm điểm model embedding; API = chạy trên máy chủ của nhà cung cấp, trả tiền theo lần dùng.)*
 
 ```
 ┌─────────────────────────┬──────────┬───────────┬──────────┬──────────────────┐
@@ -410,11 +492,17 @@ Không gian 2D minh họa:
 Bạn đang dùng: nomic-embed-text (768 dims, 274MB) — gọn nhẹ, chạy local khỏe re
 ```
 
+> **Tóm gọn 1 câu:** Model embedding càng to càng chính xác nhưng càng chậm và tốn bộ nhớ — model nhỏ chạy local (như nomic-embed-text) đủ dùng cho đa số dự án, model lớn qua API chỉ cần khi chất lượng là ưu tiên tuyệt đối.
+
 ### 1.4 Chunking Strategies — Chi Tiết
 
 Chunking nôm na là **cắt nhỏ tài liệu** ra từng miếng vừa miệng trước khi đem đi embedding. Cắt khéo hay cắt ẩu quyết định hẳn chất lượng tìm kiếm — cắt ngang câu thì AI đọc cũng như mình đọc sách bị xé đôi trang vậy.
 
+Phần dưới đây so sánh 4 cách cắt phổ biến, từ đơn giản tới tinh vi.
+
 #### Strategy 1: Fixed-Size Chunking
+
+Cách cắt đơn giản nhất: cứ sau mỗi N ký tự thì cắt một nhát, bất kể đang giữa câu hay giữa đoạn. *(Fixed-size = cố định kích thước.)*
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -430,7 +518,13 @@ Chunking nôm na là **cắt nhỏ tài liệu** ra từng miếng vừa miệng
 ✅ Predictable size          ❌ Không tôn trọng cấu trúc
 ```
 
+*(Khung trên: ưu điểm bên trái, nhược điểm bên phải. Predictable size = mỗi chunk có độ dài đều như nhau, dễ tính toán.)*
+
+> **Tóm gọn 1 câu:** Fixed-size cắt theo mét chữ đều tăm tắp — nhanh, dễ làm, nhưng hay cắt đứt câu và làm mất ngữ cảnh giữa các mảnh.
+
 #### Strategy 2: Recursive Character Splitting
+
+Cách cắt "thông minh hơn một nhát": thử cắt theo dấu xuống dòng trước, hết chỗ thì xuống dấu chấm câu, rồi tới dấu cách — tách dần từ "ranh giới tự nhiên" lớn nhất xuống nhỏ nhất. *(Recursive = đệ quy — lặp lại cùng một quy tắc ở mức nhỏ dần.)*
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -446,7 +540,13 @@ Chunking nôm na là **cắt nhỏ tài liệu** ra từng miếng vừa miệng
 ✅ Ít mất context hơn      ❌ Cần chọn separators phù hợp
 ```
 
+*(Separators = các ký tự dùng làm "lằn ranh" để cắt: xuống dòng, dấu chấm, dấu phẩy, dấu cách.)*
+
+> **Tóm gọn 1 câu:** Recursive splitting cắt theo ranh giới tự nhiên của văn bản (đoạn → câu → từ) nên giữ được ngữ cảnh tốt hơn fixed-size, tuy từng mảnh có thể dài ngắn không đều.
+
 #### Strategy 3: Semantic Chunking
+
+Cách cắt "đo theo ý": dùng chính model embedding để đo câu nào ý nào liền mạch, và cắt đúng chỗ ý chuyển hướng. *(Breakpoint = điểm cắt; threshold = ngưỡng — giá trị mà khi vượt qua thì quyết định cắt.)*
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -462,7 +562,13 @@ Chunking nôm na là **cắt nhỏ tài liệu** ra từng miếng vừa miệng
 ✅ Tự động tìm breakpoint  ❌ Threshold cần tune
 ```
 
+*(Tune = vặn chỉnh tham số đến khi chạy tốt.)*
+
+> **Tóm gọn 1 câu:** Semantic chunking cắt đúng chỗ ý nghĩa thay đổi nên mỗi mảnh "thuần" một chủ đề — chất lượng tìm kiếm tốt nhất nhưng chậm và tốn công tính toán hơn hẳn.
+
 #### Strategy 4: Document-Aware Chunking
+
+Cách cắt "hiểu cấu trúc": dựa vào đặc thù từng loại tài liệu — code cắt theo hàm, PDF cắt theo mục lục, Markdown cắt theo tiêu đề. *(Document-aware = "có ý thức" về loại tài liệu đang xử lý.)*
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -472,6 +578,10 @@ Chunking nôm na là **cắt nhỏ tài liệu** ra từng miếng vừa miệng
 </details>
 
 #### So Sánh Chi Tiết
+
+Bảng dưới đây tổng hợp 4 cách cắt vừa nói (cộng thêm 1 cách thứ 5 — parent-child) theo 5 tiêu chí. *(Parent-child = cắt thành mảnh lớn "cha" và mảnh nhỏ "con": tìm bằng mảnh nhỏ cho khớp, nhưng đưa cho model đọc mảnh cha cho đủ ngữ cảnh; prot. = prototype — bản thử nghiệm.)*
+
+Cách đọc: mỗi dòng là một chiến lược; cột Quality/Speed/Token Efficiency/Complexity chấm sao 1-5 (nhiều sao = tốt hơn, riêng Complexity nhiều sao = phức tạp hơn); cột Best For chỉ tình huống hợp nhất.
 
 ```
 ┌──────────────────┬─────────┬──────────┬───────────┬────────────┬──────────────┐
@@ -486,7 +596,11 @@ Chunking nôm na là **cắt nhỏ tài liệu** ra từng miếng vừa miệng
 └──────────────────┴─────────┴──────────┴───────────┴────────────┴──────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Không có cách cắt nào thắng tuyệt đối — dự án thử nghiệm thì fixed-size, văn bản chung thì recursive, tài liệu phức tạp hay hệ RAG nghiêm túc thì semantic/parent-child đáng bỏ công hơn.
+
 ### 1.5 Similarity Metrics — Chi Tiết
+
+Phần này trả lời câu hỏi "đo khoảng cách giữa 2 vector bằng cách nào?" — mỗi cách có thế mạnh riêng, chọn sai cách là kết quả tìm kiếm lệch dù embedding tốt. *(Metric = thước đo.)*
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -508,7 +622,15 @@ So sánh:
 └──────────────────┴───────────────────┴───────────────────────┘
 ```
 
+*(Cách đọc bảng: cột Metric = tên thước đo; cột giữa = tình huống hợp nhất; cột phải = đặc điểm cần nhớ. Dense vectors = vector dày đặc (hầu hết các số đều có giá trị); normalized = đã chuẩn hóa độ dài về 1; clustered = dữ liệu tụ thành từng cụm; sparse = thưa (nhiều số bằng 0); outliers = giá trị dị biệt xa đám đông; ANN = approximate nearest neighbor — tìm "gần đúng" với tốc độ nhanh (xem mục 1.6); Recommendation = hệ gợi ý sản phẩm.)*
+
+> **Tóm gọn 1 câu:** Đa số trường hợp dùng cosine similarity (so góc giữa 2 vector, không quan tâm độ dài) là an toàn nhất — các thước đo còn lại chỉ thắng trong tình huống đặc thù.
+
 ### 1.6 Vector Databases — Chi Tiết
+
+Phần này so sánh các loại "kho lưu trữ vector" — chọn database nào quyết định chi phí vận hành và khả năng mở rộng của hệ retrieval.
+
+*(Cách đọc khung: mỗi hộp là một sản phẩm; Type = kiểu triển khai (thư viện gắn vào code, database nhúng, server tự dựng, hay dịch vụ cloud trả tiền); Index types = thuật toán đánh chỉ mục (mục lục) giúp tìm nhanh; Scale = quy mô tối đa.)*
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -574,7 +696,11 @@ So sánh:
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
+*(Giải thích vài cụm: embedded database = database chạy "trong" ứng dụng, không cần dựng server riêng; persistent = dữ liệu giữ được sau khi tắt máy; Raft consensus = cơ chế nhiều máy bỏ phiếu để không mất dữ liệu khi một máy hỏng; managed cloud = nhà cung cấp lo toàn bộ vận hành, bạn chỉ trả tiền dùng; LSM-tree = cách ghi dữ liệu ra đĩa tối ưu cho ghi nhiều đọc ít.)*
+
 #### ANN (Approximate Nearest Neighbor) Algorithms
+
+Phần này giải thích bí quyết giúp vector DB tìm kiếm giữa hàng tỷ vector mà vẫn nhanh: thay vì so từng vector một, nó dùng các thuật toán "đoán gần đúng" — hy sinh chút ít độ chính xác để đổi lấy tốc độ. *(Approximate Nearest Neighbor = "láng giềng gần nhất gần đúng" — tìm kết quả xấp xỉ chính xác nhất.)*
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -610,9 +736,15 @@ So sánh:
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+*(Giải thích thuật ngữ: Brute Force = "quét thô" — so với tất cả; O(n), O(n/k), O(log n) = ký hiệu cho biết tốc độ giảm thế nào khi dữ liệu phình ra — log n là nhanh nhất; Voronoi cells = chia không gian thành các "miền" quanh một tâm; BFS = duyệt theo chiều rộng — đi từng lớp gần→xa; lossy compression = nén kiểu có mất mát — gọn nhưng mất một ít chi tiết.)*
+
+> **Tóm gọn 1 câu:** ANN là đánh đổi "chính xác 100%" lấy "nhanh gấp nghìn lần" — dataset nhỏ thì quét thô, production thì HNSW là lựa chọn phổ biến nhất, còn PQ chỉ dùng khi bộ nhớ quá căng.
+
 ---
 
 ## 2. RAG (Retrieval-Augmented Generation)
+
+Mục này giải thích kỹ thuật quan trọng nhất của chương: RAG — cách ghép "đi tìm tài liệu" và "viết câu trả lời" thành một quy trình duy nhất. Mọi chatbot trả lời dựa trên tài liệu nội bộ đều dùng RAG ở đâu đó.
 
 ### 2.1 Khái Niệm
 
@@ -623,7 +755,11 @@ So sánh:
 > 2. **② RE-RANKING** — Cross-Encoder chấm điểm từng (query, doc) → giữ top-5 docs chính xác nhất
 > 3. **③ BUILD CONTEXT** — Ghép top-K chunks vào prompt + system instructions
 
+> **Tóm gọn 1 câu:** RAG = học sinh thi mở sách: trước khi viết câu trả lời, model được chạy đi tra tài liệu bên ngoài rồi "trích dẫn" vào đáp án — đúng hơn và ít bịa hơn nhiều so với trả lời từ trí nhớ.
+
 ### 2.2 RAG Pipeline Chi Tiết — 6 Bước
+
+Phần này chia RAG thành 6 bước riêng biệt — 3 bước chuẩn bị chạy lúc rảnh (offline), 3 bước chạy mỗi lần có người hỏi (online). Mỗi bước có code ví dụ kèm theo, bấm để mở.
 
 #### Bước 1: Document Processing (Offline)
 
@@ -679,10 +815,17 @@ So sánh:
 
 </details>
 
+*(Ý nghĩa 6 bước theo thứ tự: Bước 1 — dọn và cắt tài liệu; Bước 2 — đổi mảnh văn bản thành vector; Bước 3 — lưu vào database; Bước 4 — nhận câu hỏi của người dùng và đổi thành vector; Bước 5 — tìm trong database các mảnh liên quan nhất; Bước 6 — đưa các mảnh đó kèm câu hỏi cho LLM để viết câu trả lời.)*
+
+> **Tóm gọn 1 câu:** RAG pipeline = 3 bước chuẩn bị (dọn → vector hóa → lưu kho) chạy trước, và 3 bước trả lời (nhận câu hỏi → tìm kho → nhờ LLM viết đáp án) chạy mỗi lần có người hỏi.
+
 ### 2.3 Các Loại RAG
+
+Phần này xếp các cách làm RAG theo độ tinh vi, từ kiểu "dựng trong 2 tiếng" tới kiểu "có agent tự suy nghĩ". Đọc xong bạn biết mình đang ở level nào và nên nhích lên level nào.
 
 #### Naive RAG
 
+Kiểu đơn giản nhất: "tìm 5 tài liệu → nhét vào prompt → hỏi model", không xử lý gì thêm. Dùng để làm demo, nguyên lý (proof of concept).
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                     NAIVE RAG                                 │
@@ -707,6 +850,8 @@ So sánh:
 ```
 
 #### Advanced RAG
+
+Phiên bản "đủ sức lên production": xử lý câu hỏi **trước khi** tìm (viết lại cho rõ nghĩa), tìm bằng **nhiều cách**, và dọn kết quả **sau khi** tìm — 3 công đoạn nối tiếp. *(HyDE = Hypothetical Document Embeddings — nhờ model bịa ra "câu trả lời giả định" rồi dùng chính câu giả định đó để tìm tài liệu; MMR = Maximal Marginal Relevance — chọn kết quả vừa khớp vừa khác nhau để tránh 5 tài liệu lặp ý; deduplication = loại bản trùng.)*
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -748,6 +893,8 @@ So sánh:
 
 #### Self-RAG
 
+Kiểu "model tự kiểm soát mình": thay vì luôn luôn tìm tài liệu, model tự đánh giá xem có cần tìm không, tìm rồi thì tài liệu đáng tin không, câu trả lời có bám vào tài liệu không. *(Self-reflection tokens = các "nhãn" model tự gắn để diễn đạt quyết định của nó; fine-tune = huấn luyện thêm model trên dữ liệu riêng.)*
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                      SELF-RAG                                 │
@@ -773,6 +920,8 @@ So sánh:
 ```
 
 #### Graph RAG
+
+Kiểu dùng đồ thị tri thức (mục 3) làm nguồn tài liệu: trích rút thực thể (entity — người, sự vật, khái niệm) và mối quan hệ, rồi đi theo các "sợi dây" đó để gom thông tin. *(NER = Named Entity Recognition — nhận diện tên riêng trong văn bản; 2 hops = cách tối đa 2 sợi dây từ điểm xuất phát.)*
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -807,6 +956,8 @@ So sánh:
 
 #### Agentic RAG
 
+Kiểu "phó hội trường": một AI agent — model được gắn công cụ và tự quyết định — tự chọn nguồn tra (database, API, web, vector), tự đánh giá kết quả, và tự quyết định tìm thêm hay dừng lại trả lời. *(Orchestration = chỉ đạo phối hợp nhiều công đoạn.)*
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                      AGENTIC RAG                             │
@@ -836,7 +987,13 @@ So sánh:
 └──────────────────────────────────────────────────────────────┘
 ```
 
+*(Latency = thời gian người dùng phải chờ trước khi nhận được câu trả lời.)*
+
+> **Tóm gọn 1 câu:** Naive RAG dùng cho demo, Advanced RAG đủ dùng cho production, còn Self-RAG/Graph RAG/Agentic RAG là các bản "cao cấp" — càng thông minh càng linh hoạt nhưng càng chậm, càng tốn, càng phức tạp.
+
 ### 2.4 RAG Evaluation Metrics
+
+Phần này trả lời câu hỏi "làm sao biết RAG của mình tốt?" — chia điểm theo 3 tầng: tầng tìm tài liệu, tầng viết câu trả lời, và tầng tổng thể. *(Evaluation metrics = các chỉ số đánh giá chất lượng.)*
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -864,9 +1021,15 @@ So sánh:
 └──────────────────────────────────────────────────────────────┘
 ```
 
+*(Giải thích chỉ số: Precision@K = trong K kết quả trả về, bao nhiêu phần trăm là đúng đề bài; Recall@K = trong toàn bộ tài liệu đúng, bắt được bao nhiêu; MRR = trung bình nghịch đảo thứ hạng của kết quả đúng đầu tiên (đứng đầu = 1, đứng thứ 2 = 0.5...); Faithfulness = câu trả lời có trung thành với tài liệu đưa vào không; ground truth = đáp án chuẩn để đối chiếu; RAGAS/DeepEval/TruLens = thư viện Python miễn phí đo các chỉ số này.)*
+
+> **Tóm gọn 1 câu:** Đo RAG bằng 3 tầng — tài liệu tìm được có đúng không, câu trả lời có bám tài liệu không, và tổng thể ra đáp án đúng không — với các công cụ như RAGAS đo giúp bạn tự động.
+
 ---
 
 ## 3. Knowledge Graph Retrieval
+
+Mục này giới thiệu cách lưu tri thức thứ hai (sau vector database): đồ thị tri thức. Nếu vector search giỏi "tìm cái giống", thì knowledge graph giỏi "đi theo quan hệ" — hai kỹ thuật bổ trợ nhau, không thay thế nhau.
 
 ### 3.1 Khái Niệm
 
@@ -905,7 +1068,13 @@ Mỗi "mẩu kiến thức" như vậy gọi là một **triplet** — cứ khi 
 | Chi phí xây dựng | Thấp (chunk + embed) | Cao (phải gọi LLM trích triplet) |
 | Khi nào dùng | Hầu hết mọi case | Câu hỏi về **mối quan hệ**, **thống kê**, cần **suy luận nhiều bước** |
 
+*(Cách đọc bảng: cột giữa là vector search, cột phải là knowledge graph. Multi-hop reasoning = suy luận nhiều nhịp, kiểu "A làm với B, B làm với C, vậy A với C thì sao?" — cần nối 2 mẩu thông tin mới ra đáp án.)*
+
+> **Tóm gọn 1 câu:** Vector search rẻ, dễ làm, dùng được cho hầu hết câu hỏi; knowledge graph đắt hơn nhưng độc chiêu với câu hỏi về quan hệ giữa nhiều đối tượng mà vector search không ráp nối được.
+
 ### 3.2 Entity-Relationship Triplets
+
+Phần này giải thích "viên gạch" nhỏ nhất của knowledge graph: triplet — một cú phát biểu gồm 3 thành phần (chủ thể, quan hệ, đối tượng). Hiểu triplet là hiểu cách cả đồ thị được dựng nên. *(Entity = thực thể — một đối tượng cụ thể như người, model, công ty; relationship = quan hệ giữa hai thực thể.)*
 
 ```
 Knowledge Graph được biểu diễn dưới dạng triplets:
@@ -961,7 +1130,9 @@ Ví dụ:
 | `(gemma3:12b, runs_on, Ollama)` | "gemma3:12b **chạy trên** Ollama" |
 | `(Ollama, supports, gemma3:12b)` | "Ollama **hỗ trợ** gemma3:12b" |
 
-Cùng graph trên, vẽ bằng Mermaid:
+*Cách đọc bảng: cột trái viết triplet dưới dạng `(subject, predicate, object)` — chủ thể, quan hệ, đối tượng; cột phải dịch ra câu tự nhiên.*
+
+Cùng graph trên, vẽ bằng Mermaid: *(Mermaid = ngôn ngữ vẽ sơ đồ bằng chữ, các công cụ như GitHub tự render thành hình.)*
 
 ```mermaid
 graph TD
@@ -981,7 +1152,11 @@ graph TD
 
 > **📌 Ghi nhớ:** cùng một entity xuất hiện trong nhiều triplet → **tự động nối** các mảnh kiến thức lại. `gemma3:12b` nối với `LLM`, `Ollama`, `Google`, `12B`... — đây chính là lý do gọi là *đồ thị*.
 
+> **Tóm gọn 1 câu:** Triplet là một câu phát biểu dạng (ai, làm gì với, cái gì) — hàng nghìn triplet ghép lại thành đồ thị, và mỗi thực thể xuất hiện nhiều lần chính là "cầu nối" giúp hệ nối các mảnh tri thức rời rạc.
+
 ### 3.3 Knowledge Graph Operations
+
+Phần này giới thiệu bộ hàm (function) thao tác với đồ thị: từ thêm dữ liệu, truy vấn, tới gom nhóm và tóm tắt. Đây là "bộ đồ nghề" bạn sẽ dùng khi xây graph retrieval.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1000,6 +1175,8 @@ graph TD
 | `find_path()` | Tìm đường đi ngắn nhất giữa 2 entity | `find_path("RAG", "Ollama")` |
 | `community_detection()` | Gom các entity liên quan thành nhóm (connected components) | Nhóm `{gemma3, Ollama, Google, qwen2.5...}` |
 | `summarize_community()` | Gom hết sự kiện trong 1 nhóm → LLM tóm tắt thành 1 đoạn | Đưa "1 ý lớn" vào context thay vì nhiều triplet rời rạc |
+
+*(Cách đọc bảng: cột Hàm = tên hàm trong code; cột Làm gì = tác dụng; cột Ví dụ = gọi hàm thế nào. Connected components = các nhóm đỉnh nối với nhau thành cụm, cụm này cách cụm kia không một sợi dây.)*
 
 **`query_entity(entity, max_hops=2)` chạy thế nào?** — Đi dọc các "sợi dây" (graph traversal / BFS):
 
@@ -1026,7 +1203,11 @@ flowchart LR
 
 `max_hops=2` nghĩa là lấy những kiến thức cách entity gốc **tối đa 2 sợi dây**. Đây chính là lý do graph trả lời được câu hỏi **multi-hop** ("A liên quan B, B liên quan C, vậy A có liên quan C không?") mà vector search không làm được.
 
+> **Tóm gọn 1 câu:** Bộ hàm này biến đồ thị thành công cụ truy vấn: thêm dữ liệu, đi theo các sợi dây lấy kiến thức trong bán kính N nhịp, tìm đường nối 2 thực thể, gom nhóm và nhờ LLM tóm tắt cả nhóm thành một đoạn.
+
 ### 3.4 Graph RAG Implementation
+
+Phần này ráp tất cả lại thành quy trình Graph RAG hoàn chỉnh — từ câu hỏi của người dùng tới câu trả lời của model, gồm 4 bước nối tiếp.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1053,11 +1234,17 @@ flowchart TD
 
 > **📌 Tóm tắt mục 3:** Graph RAG = **trích entity từ query** → **đi dọc các sợi dây lấy subgraph** → **xếp hạng bằng similarity + depth** → **gom thành context** → đưa cho LLM. Khác với vector search (tìm "gần nhất"), graph retrieval **duyệt theo mối quan hệ** — mạnh với câu hỏi multi-hop, thống kê, và quan hệ giữa các entities.
 
+> **Tóm gọn 1 câu:** Graph RAG trích thực thể từ câu hỏi, đi theo các sợi dây quan hệ lấy kiến thức lân cận, xếp hạng bằng độ khớp + độ gần, rồi gom thành ngữ cảnh cho model trả lời.
+
 ---
 
 ## 4. Hybrid Search
 
+Mục này giải thích vì sao hệ thống production thường kết hợp **hai** cách tìm kiếm cùng lúc: tìm theo nghĩa (semantic) và tìm theo từ khóa (keyword). Mỗi cách có điểm mù riêng, cách này lấp chỗ mù của cách kia.
+
 ### 4.1 Tại Sao Cần Hybrid Search?
+
+Sơ đồ dưới đây đối chiếu thế mạnh và điểm yếu của từng loại tìm kiếm, rồi chỉ ra cách gộp lại. *(Hybrid = lai — kết hợp nhiều phương pháp; synonyms = từ đồng nghĩa; paraphrase = diễn đạt lại bằng cách khác.)*
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1082,7 +1269,13 @@ flowchart TD
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+*(Cách đọc khung: khung trên liệt kê điểm ✅/❌ của semantic search, khung giữa là của keyword search. TF-IDF là một thuật toán tìm từ khóa cổ điển khác BM25. "HYBRAND" trong khung là lỗi đánh máy của HYBRID.)*
+
+> **Tóm gọn 1 câu:** Tìm theo nghĩa giỏi bắt câu hỏi viết tự nhiên nhưng hỏng với mã và tên riêng; tìm theo từ khóa ngược lại — nên hệ production luôn chạy song song cả hai rồi gộp kết quả.
+
 ### 4.2 BM25 Algorithm
+
+Phần này giải thích BM25 — thuật toán "tìm theo từ khóa" được dùng phổ biến nhất, gần 30 năm tuổi mà vẫn trụ vững trong mọi search engine. *(BM25 = Best Matching 25 — thuật toán chấm điểm tài liệu dựa trên tần suất từ khóa, có trừ điểm cho từ xuất hiện quá nhiều; TF-IDF = term frequency–inverse document frequency — tiền nhiệm của BM25.)*
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1091,7 +1284,11 @@ flowchart TD
 
 </details>
 
+> **Tóm gọn 1 câu:** BM25 chấm điểm tài liệu theo công thức đếm từ khóa có cân bằng — từ hiếm gặp đúng chỗ được điểm cao, từ xuất hiện nhồi nhét bị triệt tiêu — nên nó vẫn là chân ái cho tìm chính xác.
+
 ### 4.3 Reciprocal Rank Fusion (RRF)
+
+Phần này giải thích "cách gộp hai bảng xếp hạng thành một": khi semantic search và BM25 mỗi bên trả về một danh sách kết quả, RRF là công thức gộp công bằng mà không cần so điểm của hai bên. *(RRF = Reciprocal Rank Fusion — "hợp nhất thứ hạng nghịch đảo": mỗi tài liệu nhận điểm bằng tổng 1/(vị trí của nó) từ mỗi danh sách; tài liệu đứng cao ở cả hai danh sách sẽ thắng.)*
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1100,7 +1297,11 @@ flowchart TD
 
 </details>
 
+> **Tóm gọn 1 câu:** RRF gộp hai danh sách kết quả bằng cách cộng điểm nghịch đảo thứ hạng — tài liệu được cả hai cách tìm "đề cử" sẽ nổi lên đầu danh sách gộp, đơn giản mà hiệu quả.
+
 ### 4.4 Hybrid Search Implementation
+
+Phần này ráp BM25 + vector search + RRF thành một hàm hybrid search hoàn chỉnh — chính là "trạm ① RETRIEVE" trong sơ đồ tổng ở đầu tài liệu.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1109,11 +1310,17 @@ flowchart TD
 
 </details>
 
+> **Tóm gọn 1 câu:** Hybrid search hoàn chỉnh = BM25 tìm theo từ khóa + vector tìm theo nghĩa + RRF gộp hai danh sách — chạy song song nên độ trễ chỉ tăng nhẹ nhưng độ bao phủ câu hỏi tăng rõ rệt.
+
 ---
 
 ## 5. Re-ranking
 
+Mục này giải thích bước "chấm điểm lại": sau khi hybrid search trả về ~50 tài liệu thô, một model thứ hai chuyên chú chấm lại từng cặp (câu hỏi, tài liệu) để chọn ra 5 tài liệu thật sự đáng tin. Đắt nhưng xứng, vì chỉ áp dụng cho 50 tài liệu chứ không phải cả kho.
+
 ### 5.1 Tại Sao Cần Re-ranking?
+
+Phần này giải thích cơ chế: vì sao bước tìm ban đầu nhanh nhưng kém chính xác, và bước chấm lại thì ngược lại — biết cơ chế mới hiểu vì sao phải dùng cả hai.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1136,7 +1343,13 @@ flowchart TD
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+*(Giải thích cơ chế: Bi-encoder = model đổi câu hỏi và tài liệu thành vector **riêng rẽ** rồi so khoảng cách — nhanh vì vector tài liệu tính sẵn từ trước; Cross-encoder = model đọc câu hỏi và tài liệu **cùng lúc** trong một lượt — chính xác vì "thấy" được từng từ khớp nhau, nhưng chậm vì phải chạy lại cho từng cặp. Cross-attention = cơ chế trong model cho phép từng từ của câu hỏi "nhìn" từng từ của tài liệu.)*
+
+> **Tóm gọn 1 câu:** Bi-encoder nhanh nhờ tính sẵn nhưng đoán qua "vòng vo vector"; cross-encoder chính xác nhờ đọc hai văn bản cùng lúc nhưng chậm — nên dùng bi-encoder lọc thô rồi cross-encoder chấm lại top đầu.
+
 ### 5.2 Cross-Encoder Implementation
+
+Phần này cho code dùng cross-encoder thật để chấm lại kết quả tìm kiếm — bạn có thể chạy thử ngay để thấy điểm số thay đổi thế nào.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1145,7 +1358,13 @@ flowchart TD
 
 </details>
 
+> **Tóm gọn 1 câu:** Dùng cross-encoder rất đơn giản: đưa từng cặp (câu hỏi, tài liệu) vào hàm predict, nhận về điểm 0→1, rồi sắp lại theo điểm — vài dòng code đổi được chất lượng RAG tăng rõ rệt.
+
 ### 5.3 Re-ranking Models Comparison
+
+Bảng dưới đây so sánh các model re-ranking phổ biến để bạn chọn. *(MTEB = điểm trên benchmark chuẩn (càng cao càng chính xác); ms/doc = số mili giây để chấm một tài liệu (càng nhỏ càng nhanh); API = dùng qua dịch vụ trả tiền; fine-tuned = model đã được huấn luyện thêm trên dữ liệu riêng của bạn.)*
+
+*Cách đọc bảng: mỗi dòng là một model; muốn nhanh chọn dòng có ms/doc thấp, muốn chính xác chọn dòng có MTEB cao, muốn hỗ trợ tiếng Việt chọn dòng ghi Multilingual.*
 
 ```
 ┌────────────────────────────────┬──────────┬──────────┬──────────┬──────────────┐
@@ -1176,13 +1395,17 @@ flowchart TD
 Lưu ý: Quality scores chỉ là con số tham khảo, tùy benchmark đo mà xê dịch ít nhiều
 ```
 
+> **Tóm gọn 1 câu:** Chọn re-ranker theo bài toán của bạn: tiếng Việt thì BAAI/bge-reranker hoặc API đa ngôn ngữ, cần nhanh thì MiniLM nhỏ, cần tối đa chất lượng và có tiền thì dùng API như Cohere Rerank.
+
 ---
 
 ## 6. Memory Systems
 
-Tới đây mình chuyển từ chuyện "đi tìm kiến thức bên ngoài" sang chuyện "giữ trí nhớ cho AI" — cũng giống như con người có trí nhớ ngắn hạn, dài hạn, AI cũng cần nhiều loại bộ nhớ phối hợp với nhau:
+Mục này chuyển từ chuyện "đi tìm kiến thức bên ngoài" sang chuyện "giữ trí nhớ cho AI" — cũng giống như con người có trí nhớ ngắn hạn, dài hạn, AI cũng cần nhiều loại bộ nhớ phối hợp với nhau.
 
 ### 6.1 Memory Types Chi Tiết
+
+Phần này phân loại bộ nhớ của AI theo analogy với bộ nhớ người: giác quan → trí nhớ làm việc → ngắn hạn → dài hạn, kèm "phiên bản AI" tương ứng của mỗi loại.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1223,11 +1446,19 @@ Tới đây mình chuyển từ chuyện "đi tìm kiến thức bên ngoài" sa
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+*(Cách đọc khung: mỗi hộp là một loại bộ nhớ với 4 thuộc tính — Duration = tồn tại bao lâu; Capacity = chứa được bao nhiêu; AI Equivalent = tương đương cái gì trong hệ AI; Management = quản lý thế nào. Context window = "khung ngữ cảnh" — số token tối đa model đọc được trong một lượt; scratchpad = "tờ giấy nháp" model ghi tạm trong khi suy nghĩ; Episodic = ghi sự kiện đã trải qua; Semantic = ghi kiến thức facts; Procedural = ghi cách làm việc; consolidation = củng cố — chuyển từ trí nhớ tạm sang trí nhớ bền.)*
+
+> **Tóm gọn 1 câu:** AI có 4 tầng bộ nhớ như người: input hiện tại, khung ngữ cảnh trong một lượt xử lý, lịch sử một phiên chat, và kho lưu trữ vĩnh viễn ngoài model — thiết kế hệ memory là thiết kế cách 4 tầng này phối hợp.
+
 ### 6.2 Memory Patterns Chi Tiết
 
 Biết có mấy loại bộ nhớ rồi, giờ tới cách dùng chúng trong thực tế — mỗi pattern là một "chiêu" giữ context, chiêu nào cũng có cái được cái mất:
 
+*(Giới thiệu nhanh 5 chiêu trước khi xem code: Buffer = giữ nguyên toàn bộ hội thoại; Window = chỉ giữ N lượt gần nhất; Summary = nhờ model tóm tắt hội thoại cũ; Entity = ghi nhớ từng thực thể (người, sản phẩm...) và thông tin về nó; Semantic = lưu vào vector DB và tìm lại theo ý nghĩa.)*
+
 #### Buffer Memory
+
+Chiêu "giữ nguyên vẹn": cả cuộc trò chuyện được nhét vào context, không cắt không bỏ. Đơn giản nhất, nhưng mau phình context window.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1236,7 +1467,11 @@ Biết có mấy loại bộ nhớ rồi, giờ tới cách dùng chúng trong t
 
 </details>
 
+> **Tóm gọn 1 câu:** Buffer memory giữ trọn hội thoại — trung thực nhất nhưng tốn token nhất, chỉ phù hợp cuộc trò chuyện ngắn.
+
 #### Window Memory
+
+Chiêu "trượt cửa sổ": chỉ giữ N lượt nói chuyện gần nhất, lượt cũ hơn rơi ra ngoài. Giữ chi phí ổn định nhưng đánh mất bối cảnh xa.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1245,7 +1480,11 @@ Biết có mấy loại bộ nhớ rồi, giờ tới cách dùng chúng trong t
 
 </details>
 
+> **Tóm gọn 1 câu:** Window memory chỉ giữ N lượt gần nhất — rẻ và ổn định, nhưng model quên hẳn những gì đã nói trước đó.
+
 #### Summary Memory
+
+Chiêu "viết biên bản": nhờ model tóm tắt phần hội thoại cũ thành vài câu, rồi chỉ mang bản tóm tắt đi cùng. Giữ được ý chính với ít token.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1254,7 +1493,11 @@ Biết có mấy loại bộ nhớ rồi, giờ tới cách dùng chúng trong t
 
 </details>
 
+> **Tóm gọn 1 câu:** Summary memory nén hội thoại cũ thành bản tóm tắt — tiết kiệm token mà vẫn giữ ý chính, đổi lại tốn một lượt gọi model và có thể mất chi tiết nhỏ.
+
 #### Entity Memory
+
+Chiêu "sổ tay liên lạc": ghi nhớ thông tin theo từng thực thể (tên người, sản phẩm, dự án...) thay vì theo thứ tự hội thoại. Hỏi về ai thì tra mục người đó.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1263,7 +1506,11 @@ Biết có mấy loại bộ nhớ rồi, giờ tới cách dùng chúng trong t
 
 </details>
 
+> **Tóm gọn 1 câu:** Entity memory lưu kiến thức theo "hồ sơ từng đối tượng" — hỏi về ai/cái gì là tra đúng hồ sơ đó, rất hợp cho trợ lý khách hàng.
+
 #### Semantic Memory (Vector-based)
+
+Chiêu "thư viện tra theo nghĩa": mọi sự kiện được embedding và lưu vào vector DB; cần nhắc lại thì tìm theo ý nghĩa của câu hỏi. Đây là pattern mạnh nhất cho bộ nhớ dài hạn. *(Vector-based = dựa trên vector; xem lại mục 1 nếu cần.)*
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1272,7 +1519,11 @@ Biết có mấy loại bộ nhớ rồi, giờ tới cách dùng chúng trong t
 
 </details>
 
+> **Tóm gọn 1 câu:** Semantic memory là "RAG áp cho trí nhớ": ghi từng sự kiện vào vector DB rồi tìm lại theo nghĩa — bộ nhớ dài hạn thực thụ, không giới hạn dung lượng.
+
 ### 6.3 MemGPT-Style Memory Architecture
+
+Phần này giới thiệu MemGPT — kiến trúc bộ nhớ mượn ý tưởng từ hệ điều hành máy tính: chia bộ nhớ thành "RAM" nhỏ luôn trong context và "đĩa cứng" lớn bên ngoài, có cơ chế "swap" (đọc/ghi giữa hai vùng) khi cần. *(MemGPT = kiến trúc agent ra mắt năm 2023, lấy cảm hứng từ cơ chế bộ nhớ ảo của hệ điều hành; persona = "hồ sơ nhân cách" — mô tả tính cách/quy tắc của bot.)*
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -1316,7 +1567,13 @@ Biết có mấy loại bộ nhớ rồi, giờ tới cách dùng chúng trong t
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+*(Cách đọc khung: CORE MEMORY = vùng "RAM" — nhỏ (~1000 token) nhưng luôn nằm trong context, chứa hồ sơ người dùng/bot và công việc đang dở; RECALL MEMORY = lịch sử hội thoại đầy đủ, tra theo từ khóa hoặc thời gian; ARCHIVAL MEMORY = kho kiến thức dài hạn, tra bằng vector search. Six hàm operations ở dưới chính là các "thao tác đọc/ghi" giữa các vùng — append = thêm, replace = thay, insert = lưu mới.)*
+
+> **Tóm gọn 1 câu:** MemGPT chia bộ nhớ thành 3 vùng (nhỏ-luôn-hiển thị, lịch sử-tra-được, lưu trữ-tìm-theo-nghĩa) và cho agent các hàm tự di chuyển thông tin giữa các vùng — y hệt hệ điều hành quản lý RAM và đĩa.
+
 ### 6.4 Complete Memory Manager
+
+Phần này gom tất cả pattern ở trên thành một class quản lý bộ nhớ hoàn chỉnh — bộ khung bạn có thể mang về dùng trực tiếp trong dự án. *(Class = "khuôn" chứa code trong lập trình hướng đối tượng.)*
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -1324,6 +1581,8 @@ Biết có mấy loại bộ nhớ rồi, giờ tới cách dùng chúng trong t
 > 📄 **Code ví dụ:** [`examples/23-6-4-complete-memory-manager.py`](examples/23-6-4-complete-memory-manager.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Complete Memory Manager là bản tổng hợp của cả mục 6 — một class duy nhất lo nhiều tầng bộ nhớ cùng lúc, thay vì bạn phải ghép các pattern riêng lẻ.
 
 ---
 
@@ -1340,6 +1599,10 @@ Tới phần vui nhất — xắn tay áo lên chạy thử. Ba lab đi từ d�
 
 </details>
 
+*(Lab 1 = lab dễ nhất: cài Ollama, tải model nomic-embed-text chạy ngay trên máy, embed vài câu rồi tìm theo ý nghĩa để thấy kết quả "hiểu nghĩa" ra sao. Ollama = công cụ chạy model AI ngay trên máy cá nhân.)*
+
+> **Tóm gọn 1 câu:** Lab 1 cho bạn trải nghiệm semantic search đầu tiên trong vài phút — không cần server, không cần API key, chạy hoàn toàn trên máy mình.
+
 ### Lab 2: BM25 + Vector Hybrid Search
 
 <details>
@@ -1348,6 +1611,10 @@ Tới phần vui nhất — xắn tay áo lên chạy thử. Ba lab đi từ d�
 > 📄 **Code ví dụ:** [`examples/25-lab-2-bm25-vector-hybrid-search.py`](examples/25-lab-2-bm25-vector-hybrid-search.py)
 
 </details>
+
+*(Lab 2 = lab trung bình: cài thư viện rank-bm25, chạy BM25 song song với vector search rồi gộp bằng RRF — chính là hybrid search ở mục 4.)*
+
+> **Tóm gọn 1 câu:** Lab 2 cho bạn thấy hybrid search "ăn tiền" ở đâu: các câu hỏi mà một mình BM25 hoặc một mình vector bỏ sót đều được gộp cả hai bắt lại.
 
 ### Lab 3: Full RAG Pipeline
 
@@ -1358,11 +1625,21 @@ Tới phần vui nhất — xắn tay áo lên chạy thử. Ba lab đi từ d�
 
 </details>
 
+*(Lab 3 = lab khó nhất: ráp cả dây chuyền — nạp tài liệu, chunk, embed, lưu DB, hybrid search, re-rank, rồi gửi context cho gemma3:12b trả lời — đầy đủ 6 bước ở mục 2.2.)*
+
+> **Tóm gọn 1 câu:** Lab 3 là "chứng chỉ tốt nghiệp" của chương: chạy xong là bạn có sẵn một hệ RAG mini hoàn chỉnh để mang về dự án thật.
+
 ## 8. Bổ Sung Production: Vận Hành Index, Bảo Mật, Sự Cố & Khả Năng Quan Sát
 
 > Từ §1 tới §7 mình lo chuyện "chạy được". Sang mục này, mình lo chuyện "chạy bền ở production" — những thứ demo thường bỏ qua nhưng lên thật thì thiếu không được.
 
+*(Giải thích các khái niệm mở đầu: index = "mục lục" dữ liệu đã vector hóa mà hệ tìm kiếm dùng; quan sát (observability) = đo đạc và log đầy đủ để biết hệ đang khỏe hay ốm mà không phải đoán mò.)*
+
 ### 8.1 Định nghĩa
+
+Phần này nêu 5 thuật ngữ vận hành sẽ dùng xuyên suốt mục 8 — đọc kỹ bảng này trước, các mục sau sẽ dễ hiểu.
+
+*Cách đọc bảng này: cột Thuật ngữ = tên khái niệm (kèm tên tiếng Anh trong ngoặc); cột Định nghĩa = nghĩa của nó; cột Vì sao quan trọng = hậu quả nếu bỏ qua. Ví dụ dòng 1: re-index tăng dần nghĩa là chỉ vector hóa lại tài liệu thay đổi thay vì cả kho — không làm thì mỗi lần cập nhật tốn hàng giờ.*
 
 | Thuật ngữ | Định nghĩa | Vì sao quan trọng |
 |------|------------|----------------|
@@ -1372,20 +1649,34 @@ Tới phần vui nhất — xắn tay áo lên chạy thử. Ba lab đi từ d�
 | Khử trùng lặp lúc ghi (write-time dedup) | Kiểm tra Sim-hash / cosine ≥0.97 lúc ingest; loại bỏ hoặc liên kết bản trùng | Ngăn index phình to và RRF bị chia phiếu bầu |
 | Cô lập tenant (tenant isolation) | Phân vùng vật lý (collection riêng) hoặc logic (bộ lọc `tenant_id` + kiểm tra ACL) | Ngăn rò rỉ dữ liệu liên tenant, đáp ứng phạm vi GDPR |
 
+*(Giải thích các từ trong bảng: content hash = "vân tay" băm từ nội dung file — nội dung đổi thì vân tay đổi; TTL = time to live — hạn sống của dữ liệu, hết hạn là bị coi là cũ; tombstone = "bia mộ" — đánh dấu bản ghi đã xóa thay vì xóa ngay; Sim-hash = kỹ thuật băm cho ra vân tay GIỐNG nhau khi văn bản gần giống nhau; ACL = access control list — danh sách ai được đọc/ghi cái gì; GDPR = quy định bảo mật dữ liệu cá nhân của EU; tenant = khách hàng/đơn vị dùng chung một hệ.)*
+
+> **Tóm gọn 1 câu:** Năm thuật ngữ này là "vệ sinh hệ retrieval": cập nhật dần thay vì làm lại cả kho, đánh version để không trộn vector, loại dữ liệu cũ/trùng kịp thời, và cách ly dữ liệu từng khách hàng.
+
 ### 8.2 Vận Hành Index Trong Production
+
+Phần này là "sổ tay vận hành": 4 quy trình cụ thể để index luôn tươi, không trộn version, không phục vụ dữ liệu cũ và không bị phình do trùng lặp. *(Upsert = update + insert — có sẵn thì cập nhật, chưa có thì thêm mới; dual-write = ghi song song vào index cũ và mới trong khi chuyển giao; backfill = làm đầy dữ liệu còn thiếu; hit-rate@5 = tỷ lệ trong 5 kết quả đầu có tài liệu đúng.)*
 
 1. **Re-index tăng dần:** lưu `doc_id, content_sha256, embed_version, chunk_ids`. Khi ghi: nếu `sha` không đổi → bỏ qua; nếu đổi → xóa `chunk_ids` cũ, embed + upsert mới. Job quét đêm chỉ re-embed các dòng có `embed_version != CURRENT`.
 2. **Version/drift của embedding:** ghim `EMBED_MODEL="nomic-embed-text:v2"`. Không bao giờ trộn nhiều version trong một namespace. Khi nâng cấp: ghi kép (dual-write) sang `idx_v2`, so sánh ngầm hit-rate@5 trong 7 ngày, rồi mới chuyển đổi + backfill. Cảnh báo nếu điểm top-1 trung bình giảm >0.08.
 3. **Vô hiệu hóa dữ liệu cũ:** mỗi chunk có `valid_until + supersedes` trỏ tới bản thay thế. Bản cập nhật ghi tombstone `{deleted_chunk_ids, reason}`. Retrieval lọc `valid_until > now AND NOT tombstoned`.
 4. **Khử trùng lặp lúc ghi:** chuẩn hóa → hash khớp chính xác → kiểm tra gần trùng bằng vector (cosine top-1 ≥0.97 → gộp metadata, bỏ qua insert).
 
+> **Tóm gọn 1 câu:** Vận hành index = cập nhật dần theo vân tay nội dung, ghim version model embedding, đánh dấu dữ liệu thay thế bằng tombstone, và chặn bản trùng ngay tại cổng nhập.
+
 ### 8.3 Bảo Mật
+
+Phần này nêu 3 rào chắn an toàn: không để dữ liệu cá nhân rò vào vector, không để khách hàng này đọc được dữ liệu khách hàng kia, và có quyền xóa sạch khi được yêu cầu. *(PII = personally identifiable information — dữ liệu nhận diện cá nhân như email, số điện thoại; NER = nhận diện tên riêng bằng model; redact = che/mất quyền đọc thông tin nhạy cảm, thay bằng nhãn như `[REDACTED:email]`; SLO = service level objective — cam kết thời gian thực hiện.)*
 
 - **Tẩy PII trước khi embed:** regex + NER (email, điện thoại, SSN, API key) → `[REDACTED:<type>]` *trước* khi embedding và trước khi log. Không bao giờ embed secret thô; chỉ lưu văn bản đã redact.
 - **Cô lập tenant:** `tenant_id` bắt buộc trên mọi upsert/query. Thực thi ở tầng query: `filter={tenant_id: X}` VÀ kiểm tra sau `hit.tenant_id == X`. Ưu tiên namespace riêng cho mỗi tenant để xóa cứng.
 - **Xóa theo GDPR:** `delete_by_tenant + doc_id` phải xóa vector, doc BM25 và log trong SLO (ví dụ 24h). Giữ lại biên nhận xóa.
 
+> **Tóm gọn 1 câu:** Bảo mật retrieval = tẩy dữ liệu cá nhân trước khi embed, kiểm tra quyền ở cả tầng truy vấn lẫn tầng kết quả, và xóa sạch (kèm chứng từ) khi người dùng yêu cầu.
+
 ### 8.4 Sự Cố & Khả Năng Quan Sát
+
+Phần này định nghĩa "hệ ốm thì làm gì": khi tìm không ra hoặc tìm chậm, hệ phải có phương án dự phòng thay vì âm thầm trả lời sai. *(Abstain = "xin từ chối" trả lời thay vì bịa; circuit-breaker = "cầu chì" — tự ngắt sang phương án rẻ/khác khi nguồn chính chậm quá; p99 = giá trị mà 99% yêu cầu nhanh hơn nó — cách đo trường hợp xấu nhất; fallback = phương án dự phòng.)*
 
 - **Fallback khi rỗng / điểm thấp:** nếu `hits==0` hoặc `top_score < 0.25` → (1) thử lại với mở rộng query / chỉ BM25, (2) nếu vẫn rỗng trả về "no grounding found" tường minh + từ chối trả lời (abstain), không bao giờ hallucinate. Log `fallback_triggered`.
 - **Ngân sách latency / chi phí:** `p99_retrieve < 400ms`, trần `embed_tokens/day`. Circuit-breaker: nếu vector DB p99 > 800ms trong 2 phút → hạ cấp sang chỉ BM25.
@@ -1398,7 +1689,15 @@ Tới phần vui nhất — xắn tay áo lên chạy thử. Ba lab đi từ d�
 
 </details>
 
+*(Giải thích chi tiết trong 3 gạch đầu dòng: mở rộng query = viết lại câu hỏi bằng từ khác rồi thử tìm lại; zero-hit = không trả về kết quả nào; log = ghi chép sự kiện để xem lại; dashboard = bảng điều khiển hiển thị số liệu trực quan; tenant_hash = mã hóa tên tenant trước khi ghi log để không lộ danh tính.)*
+
+> **Tóm gọn 1 câu:** Khi tìm không ra, hệ phải thử lại bằng cách khác và thẳng thắn nói "không có bằng chứng" thay vì bịa; đồng thời log điểm số, độ trễ, version của từng truy vấn để phát hiện suy giảm sớm.
+
 ### 8.5 Checklist Thực Hành Tốt
+
+Phần này gộp mục 8 thành checklist 8 mục — dùng như danh sách soát hỏng trước khi lên production. *(Checklist = danh sách kiểm tra.)*
+
+*Cách đọc bảng này: cột Quy tắc = điều phải làm; cột Triệu chứng = chuyện gì xảy ra nếu bỏ qua. Ví dụ dòng 1: nếu không đánh dấu version embedding trên từng vector, hai version trộn lẫn làm xếp hạng sai mà không báo lỗi gì — "hỏng âm thầm" là loại khó sửa nhất.*
 
 | # | Quy tắc | Triệu chứng hỏng nếu bỏ qua |
 |---|------|-------------------------|
@@ -1411,10 +1710,18 @@ Tới phần vui nhất — xắn tay áo lên chạy thử. Ba lab đi từ d�
 | 7 | Log điểm/latency/version/fallback mỗi query | Suy giảm chất lượng không chẩn đoán được |
 | 8 | Ngân sách p99 + chi phí với công tắc hạ cấp BM25 | Sập dây chuyền do latency |
 
+> **Tóm gọn 1 câu:** Checklist 8 dòng này là "tấm lưới an toàn" của hệ retrieval — mỗi dòng chặn đúng một kiểu hỏng cụ thể, từ trộn version, rò dữ liệu, tới sập vì chậm.
+
 ### 8.6 Ví Dụ Thực Tế
+
+Phần này mô tả 2 tình huống thật áp dụng các quy trình ở trên, để thấy chúng phối hợp thế nào trong hệ chạy thật. *(Audit = kiểm tra định kỳ độc lập.)*
 
 1. **RAG doanh nghiệp (cô lập tenant + vô hiệu hóa):** namespace theo từng org; khi đổi quyền repo, các chunk ID ảnh hưởng bị tombstone trong vài phút. Query luôn mang bộ lọc `org_id`; job audit chạy probe query liên tenant mỗi đêm.
 2. **Hỏi đáp Notion / Confluence (tăng dần + chặn drift):** sửa doc → chỉ re-embed block đổi qua hash diff; nâng cấp embedding chạy index ngầm với so sánh A/B hit-rate@5 trước khi chuyển đổi, rollback nếu giảm >5%.
+
+*(Giải thích: Notion/Confluence = các công cụ ghi chú/wiki phổ biến trong công ty; A/B = chạy song song 2 phiên bản để so sánh; rollback = quay về phiên bản cũ khi bản mới kém.)*
+
+> **Tóm gọn 1 câu:** Hai ví dụ cho thấy các quy trình mục 8 dùng cùng lúc: cách ly dữ liệu + tombstone cho RAG nội bộ, và re-index tăng dần + thử A/B trước khi đổi model embedding cho wiki công ty.
 
 ---
 
@@ -1426,13 +1733,21 @@ Tới phần vui nhất — xắn tay áo lên chạy thử. Ba lab đi từ d�
 
 ## Cập nhật 10/2026 — Retrieval cho Agentic Systems
 
+Phần bổ sung này nối kiến thức trong chương với xu hướng mới nhất: retrieval cho hệ agentic — agent tự quyết định "tra cái gì, tra lúc nào" thay vì dữ liệu được nạp sẵn.
+
 ### 1. Pipeline hybrid search hoàn chỉnh (Python ~45 dòng, chạy được)
 
-BM25 (rank-bm25) + vector (Ollama nomic-embed-text) → RRF fusion → cross-encoder rerank → top-k.
+Phần này là code gọn nhất ghép mọi kỹ thuật của chương: BM25 (thư viện rank-bm25) + vector search (Ollama nomic-embed-text) → gộp bằng RRF → chấm lại bằng cross-encoder → trả về top-k. *(top-k = k kết quả đầu bảng.)*
 
 > 📄 **Code ví dụ:** [`examples/28-1-pipeline-hybrid-search-hoan-chinh-python-45.py`](examples/28-1-pipeline-hybrid-search-hoan-chinh-python-45.py)
 
+> **Tóm gọn 1 câu:** Chỉ ~45 dòng Python là đủ dựng dây chuyền hoàn chỉnh "tìm lai → gộp RRF → chấm lại" — lấy file ví dụ này về chạy là có hệ retrieval dùng được ngay.
+
 ### 2. Just-in-time vs pre-computed retrieval (Anthropic 09/2025)
+
+Phần này so sánh hai triết lý nạp thông tin cho agent: chuẩn bị sẵn trước (static), hay để agent tự đi tra lúc cần (agentic). *(Just-in-time = "đúng lúc cần mới lấy"; progressive disclosure = "mở từng lớp" — chỉ đọc thêm chi tiết khi thật sự cần.)*
+
+*Cách đọc bảng này: cột giữa là cách "nạp sẵn", cột phải là cách "tự tra lúc cần" — so sánh theo 5 khía cạnh từ định nghĩa tới ví dụ.*
 
 | Khía cạnh | Pre-computed (Static) | Just-in-time (Agentic) |
 |-----------|----------------------|------------------------|
@@ -1442,12 +1757,20 @@ BM25 (rank-bm25) + vector (Ollama nomic-embed-text) → RRF fusion → cross-enc
 | **Khi nào dùng** | Project conventions, architecture docs, coding standards | Feature exploration, debugging, novel scenarios |
 | **Ví dụ** | CLAUDE.md, SPEC.md, system prompt | glob/grep dynamic queries, web search, documentation exploration |
 
+*(Giải thích các thuật ngữ trong bảng: CLAUDE.md/SPEC.md = file hướng dẫn dự án mà agent đọc khi bắt đầu; deterministic = luôn cho cùng kết quả, không ngẫu nhiên; context-aware = hiểu đúng bối cảnh hiện tại; noisy = lộn xộn, lẫn thông tin thừa; conventions = quy ước chung của dự án; novel scenarios = tình huống chưa từng gặp.)*
+
 **Khuyến nghị hybrid:** Kết hợp cả hai — pre-computed cho static facts + agentic search cho dynamic exploration.
 
 - **Agentic search pattern:** Agent tự generate queries → explore file tree → progressive disclosure (lấy từng lớp thông tin khi cần).
 - **Nguồn:** Anthropic, "Agentic Retrieval Patterns," 09/2025.
 
+> **Tóm gọn 1 câu:** Nạp sẵn nhanh và rẻ nhưng dễ cũ; tự tra linh hoạt nhưng chậm và tốn token — hệ tốt nhất dùng cả hai: kiến thức ổn định nạp sẵn, phần còn lại để agent tự đi tìm.
+
 ### 3. GraphRAG comparison (Microsoft 2024)
+
+Phần này trích kết quả thử nghiệm của Microsoft so sánh GraphRAG (RAG dùng đồ thị, đã trình ở mục 3) với Vector RAG thường, giúp bạn quyết định có đáng bỏ công xây đồ thị hay không.
+
+*Cách đọc bảng này: cột giữa là Vector RAG (đường cơ sở — baseline), cột phải là GraphRAG; số dương nghĩa là GraphRAG tốt hơn baseline bao nhiêu phần trăm.*
 
 | Chỉ số | Vector RAG | GraphRAG |
 |--------|-----------|----------|
@@ -1459,6 +1782,8 @@ BM25 (rank-bm25) + vector (Ollama nomic-embed-text) → RRF fusion → cross-enc
 | **Citation path clarity** | Có thể hallucinate | Giảm 25-30% hallucination |
 | **Implementation complexity** | Thấp | Cao |
 | **Storage overhead** | Baseline | +50-100% |
+
+*(Giải thích chỉ số: Comprehensiveness = độ bao quát đầy đủ của câu trả lời; diversity = độ đa dạng góc nhìn; global sensemaking = khả năng "chấm phá toàn cảnh" — tóm tắt/trích ra xu hướng từ cả một kho tài liệu lớn; citation path clarity = mức rõ ràng của "dấu vết" dẫn tới nguồn trích dẫn; storage overhead = lượng bộ nhớ/tiêu tốn thêm.)*
 
 **Khi nào cần GraphRAG:**
 
@@ -1472,7 +1797,17 @@ BM25 (rank-bm25) + vector (Ollama nomic-embed-text) → RRF fusion → cross-enc
 - Local entity questions
 - Low-latency requirements
 
+*(Dependencies = các thành phần mà service A phụ thuộc vào; low-latency = yêu cầu phản hồi nhanh.)*
+
+> **Tóm gọn 1 câu:** GraphRAG trả lời đầy đủ và đa dạng hơn 30-40% nhưng tốn gấp đôi chỗ lưu và khó dựng hơn — chỉ đáng làm khi câu hỏi của bạn lặp lại kiểu quan hệ nhiều nhịp hoặc cần tóm lược toàn cảnh.
+
 ### 4. Cross-link
+
+Phần này dẫn tới 2 tài liệu liên quan trong repo nếu bạn muốn đào sâu thêm. *(Cross-link = liên kết chéo giữa các tài liệu.)*
 
 - `[AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md)` — Layer 1 (Data Sources) và Layer 3 (Retrieval & Context)
 - `[GraphRAG](../../graph/05-graph-rag/README.md)` — chi tiết GraphRAG implementation
+
+*(Giải thích 2 link: file đầu mô tả kiến trúc tổng thể của hệ agent — retrieval nằm ở Layer 1 (nguồn dữ liệu) và Layer 3 (lấy & dựng context); file thứ hai đi sâu vào GraphRAG, mở rộng mục 3 của chương này.)*
+
+> **Tóm gọn 1 câu:** Muốn đào sâu hơn, đọc tiếp AGENT_SYSTEM_ARCHITECTURE.md (bức tranh toàn cảnh các tầng) và tài liệu GraphRAG (chi tiết kỹ thuật của đồ thị tri thức).

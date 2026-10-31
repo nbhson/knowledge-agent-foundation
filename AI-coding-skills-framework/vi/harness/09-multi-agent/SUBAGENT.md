@@ -25,13 +25,21 @@
 
 ### Câu Chuyện Mở Đầu
 
+> Phần này dùng một câu chuyện để hình dung sub-agent là gì — đọc xong câu chuyện là hiểu được định nghĩa.
+
 Hãy tưởng tượng một **chiến dịch đặc nhiệm**. Chỉ huy (parent) không tự xông vào mọi tòa nhà. Bà cử **tổ trinh sát** (researcher) vẽ địa hình, **tổ đột nhập** (implementer) mở một cánh cửa, và **thanh tra** (verifier) xác nhận đã an toàn. Mỗi tổ chỉ nhận một mẩu bản đồ — không phải toàn bộ kế hoạch tác chiến — một khung giờ, và một quy tắc: báo cáo về, không tự ý hành động.
 
 **Sub-agent chính là tổ đặc nhiệm đó.** Không có nhiệm vụ hẹp + bản đồ cắt gọn + budget riêng + deadline (lease), đó không phải đặc nhiệm — chỉ là tiếng ồn trong cùng một phòng.
 
+> **Tóm gọn 1 câu:** Sub-agent là "tổ đặc nhiệm" được cha giao một việc hẹp, một mẩu context, một ngân sách, và một khung giờ — không thỏa 4 điều đó thì không nên gọi là sub-agent.
+
 ### Vì Sao Spec Này Quan Trọng?
 
+> Phần này nêu hậu quả nếu dùng sub-agent thiếu kỷ luật, kèm số liệu minh chứng.
+
 > *"Parent mà thiếu kỷ luật sub-agent giống người quản lý forward cả inbox cho mọi thực tập sinh — ai cũng ngợp, không ai chịu trách nhiệm."*
+
+Cách đọc bảng này: cột **#** là số thứ tự; cột **Nghiên cứu** là nguồn (ai nghiên cứu, năm nào); cột **Phát hiện chính** là con số minh chứng của nguồn đó. Ví dụ: dòng 1 nghĩa là Anthropic đo được cách ly sub-agent làm giảm ~70% rủi ro agent làm vượt quyền.
 
 | # | Nghiên cứu | Phát hiện chính |
 |---|-----------|-----------------|
@@ -39,11 +47,17 @@ Hãy tưởng tượng một **chiến dịch đặc nhiệm**. Chỉ huy (paren
 | 2 | **Google DeepMind (2025)** | Tách maker/checker giảm phê duyệt bừa (rubber-stamp) ~45% |
 | 3 | **LangGraph (2025)** | Lease + heartbeat + requeue idempotent phục hồi ~90% subtask crash |
 
+Giải nghĩa ba từ trong dòng 3: **lease** = "hợp đồng thuê" giữ quyền có thời hạn; **heartbeat** = tín hiệu "tôi còn sống" gửi định kỳ; **requeue idempotent** = xếp lại việc vào hàng đợi sao cho chạy lại nhiều lần vẫn cho cùng kết quả, không hỏng dữ liệu.
+
 ```
 Sub-Agent = Vai trò hẹp + Context cắt gọn + Tool thu hẹp + Budget riêng + Lease + Kiểm tra độc lập
 ```
 
+> **Tóm gọn 1 câu:** Sub-agent có giá trị khi và chỉ khi nó bị "siết" đúng 6 thứ — vai trò hẹp, context gọn, tool ít, budget riêng, lease, và được bên khác kiểm tra.
+
 ## Tổng Quan
+
+> Phần này tóm tắt định nghĩa và sơ đồ tương tác giữa agent cha và sub-agent.
 
 > **📌 Khái Niệm Cơ Bản**
 >
@@ -61,7 +75,13 @@ Sub-Agent = Vai trò hẹp + Context cắt gọn + Tool thu hẹp + Budget riên
 
 Đọc sơ đồ thế nào? Bên trái là parent với full context. Mũi tên là `spawn(SubAgentSpec)` chỉ mang files + summary + tool allow-list + budget + lease. Bên phải là sub-agent trong worktree của nó. Mũi tên về là artifact + transcript gọn đưa vào bộ gộp (checker/quorum). Không có gì khác chảy ngược về.
 
+(Giải nghĩa: **spec** = bản đặc tả — hồ sơ mô tả sub-agent sẽ làm gì; **allow-list** = danh sách trắng, chỉ những thứ được liệt kê mới được dùng; **worktree** = thư mục làm việc riêng của git; **artifact** = sản phẩm đầu ra (file/patch/báo cáo); **transcript** = bản ghi hội thoại; **quorum** = số phiếu tối thiểu để ra quyết định.)
+
+> **Tóm gọn 1 câu:** Parent đưa đi đúng mẩu context và quyền tối thiểu; sub-agent làm xong trả về artifact + bản ghi gọn — không gì khác chảy hai chiều.
+
 ## Nội Dung
+
+> Cách đọc bảng này: đây là mục lục chi tiết — cột **#** và **Chủ đề** là các mục bên dưới; cột **Ý chính** tóm ý của mục đó. Ví dụ: mục 3 "Vòng đời" nói về các trạng thái spawn → chạy → xong hoặc treo.
 
 | # | Chủ đề | Ý chính |
 |---|-------|----------|
@@ -82,6 +102,8 @@ Sub-Agent = Vai trò hẹp + Context cắt gọn + Tool thu hẹp + Budget riên
 
 ## 1. Định nghĩa
 
+> Phần này vẽ ranh giới: cái nào là Agent, cái nào là Sub-agent, cái nào KHÔNG phải sub-agent.
+
 > **📌 Khái Niệm Cơ Bản**
 >
 > - **Khái niệm:** Ranh giới cứng — **Agent** sở hữu task + full loop; **Sub-agent** sở hữu đúng một task hẹp dưới lease; **Loop** là lịch cron; function call không có lease/budget/tool.
@@ -89,6 +111,8 @@ Sub-Agent = Vai trò hẹp + Context cắt gọn + Tool thu hẹp + Budget riên
 > - **Vì sao quan trọng:** Gọi mọi thứ là "sub-agent" sẽ mất fencing và verify — việc bị ghi đè, secret rò rỉ.
 
 ### 1.1 Bảng so sánh
+
+Cách đọc bảng này: mỗi dòng là một "thực thể" (loại thành phần); các cột cho biết thực thể đó sở hữu gì và bị giới hạn gì. Ví dụ: dòng **Sub-agent** chỉ sở hữu một task hẹp, context bị cắt gọn, và phải có verifier độc lập — khác hẳn dòng **Agent** đầy đủ quyền.
 
 | Thực thể | Sở hữu | Context | Tool | Budget | Lease | Verifier |
 |---|---|---|---|---|---|---|
@@ -103,6 +127,8 @@ Sub-Agent = Vai trò hẹp + Context cắt gọn + Tool thu hẹp + Budget riên
 
 Quy tắc phân biệt: nếu không có lease + deadline + budget riêng + tool allow-list riêng, đó không phải sub-agent mà chỉ là một function call.
 
+> **Tóm gọn 1 câu:** Sub-agent được định nghĩa bằng những giới hạn của nó — thiếu lease, deadline, budget riêng hay allow-list thì đó chỉ là một function call khoác tên khác.
+
 ### 1.2 Guard kiểm tra contract
 
 <details>
@@ -116,6 +142,8 @@ Quy tắc phân biệt: nếu không có lease + deadline + budget riêng + tool
 
 ## 2. Taxonomy vai trò
 
+> Phần này chia sub-agent thành 4 vai trò, mỗi vai một bộ tool tối thiểu — đây chính là "biên đặc quyền".
+
 > **📌 Khái Niệm Cơ Bản**
 >
 > - **Khái niệm:** Bốn vai trò hẹp — maker viết, checker test, reviewer chấm diff, researcher báo fact. Mỗi role chỉ nhận tool tối thiểu.
@@ -124,6 +152,8 @@ Quy tắc phân biệt: nếu không có lease + deadline + budget riêng + tool
 
 ### 2.1 Ma trận vai trò
 
+Cách đọc bảng này: mỗi dòng là một vai trò; cột **Việc** là nhiệm vụ chính; cột **Không được làm** là điều cấm; cột **Tool** là bộ công cụ tối thiểu được cấp. Ví dụ: `implementer` được viết code trong worktree nhưng không được tự merge hay tự verify.
+
 | Vai trò | Việc | Không được làm | Tool (từ 12-sandbox §6) |
 |---|---|---|---|
 | `implementer` / `maker` | Viết code trong worktree được giao | Tự merge, tự verify cuối | shell sandbox (không net), FS ghi có phạm vi |
@@ -131,7 +161,9 @@ Quy tắc phân biệt: nếu không có lease + deadline + budget riêng + tool
 | `reviewer` | Review diff, severity Blocker/Major/Minor | Chạy shell, ghi file ngoài comment | FS chỉ đọc, không shell |
 | `researcher` / `triage` | Đọc code/docs, trả facts + citations `file:line` | Đổi behavior, ghi memory dài hạn | FS chỉ đọc + search, không exec |
 
-Anti-pattern cấm (`loop/06-anti-patterns`): cùng một agent vừa implement vừa verify → test yếu bị rubber-stamp.
+Anti-pattern cấm (`loop/06-anti-patterns`): cùng một agent vừa implement vừa verify → test yếu bị rubber-stamp (duyệt bừa, gật đầu cho qua mà không soi).
+
+> **Tóm gọn 1 câu:** Bốn vai — người viết, người kiểm, người duyệt, người điều tra — mỗi vai một bộ tool tối thiểu, và tuyệt đối không để một agent vừa viết vừa tự kiểm.
 
 ### 2.2 Định nghĩa chi tiết từng role
 
@@ -146,6 +178,8 @@ Anti-pattern cấm (`loop/06-anti-patterns`): cùng một agent vừa implement 
 
 ## 3. Vòng đời
 
+> Phần này giải thích sub-agent sống và chết ra sao: tín hiệu "còn sống", giới hạn giờ, và cách xử lý khi treo.
+
 > **📌 Khái Niệm Cơ Bản**
 >
 > - **Khái niệm:** Mỗi sub-agent sống dưới một lease: heartbeat chứng minh còn sống, deadline giới hạn chi phí, detector treo bắt stall im lặng, fencing khiến kết quả cũ trễ thành vô hại.
@@ -155,6 +189,8 @@ Anti-pattern cấm (`loop/06-anti-patterns`): cùng một agent vừa implement 
 ### 3.1 Máy trạng thái vòng đời
 
 Sơ đồ là một luồng một chiều với một vòng retry duy nhất: spawn mang spec §4, heartbeat tick mỗi 5s kèm progress stream, done trả artifact + transcript gọn. Nhánh lỗi: DEAD (mất heartbeat >15s), TIMED_OUT (quá deadline), SUSPECT (còn sống nhưng không tiến triển >60s). Requeue tăng fencing token + attempt và đính transcript cũ; quá 3 attempts thì escalate human / fail closed.
+
+(Giải nghĩa: **fencing token** = số lượt chạy, tăng mỗi lần giao lại — kết quả mang số cũ thì bỏ; **escalate** = báo người thật xử lý; **fail closed** = nghi ngờ thì chặn, không cho qua.)
 
 ```text
 spawn (kèm spec §4) → heartbeat 5s → progress stream
@@ -180,6 +216,8 @@ spawn (kèm spec §4) → heartbeat 5s → progress stream
 * Supervisor phi trạng thái, backed by queue (Redis/BullMQ); worker phải idempotent để requeue retry an toàn. Quorum judges/voters: 2f+1 chịu f lỗi, cần majority (vd 2/3).
 * Chi tiết implementation: `README.md §16.1–16.2` (code mẫu heartbeat + reassignment).
 
+> **Tóm gọn 1 câu:** Mỗi sub-agent sống dưới lease: heartbeat 5 giây chứng minh còn sống, 3 trạng thái hỏng (DEAD / TIMED_OUT / SUSPECT) đều đổ về requeue có fencing, quá 3 lần thì báo người.
+
 ### 3.2 Supervisor heartbeat
 
 <details>
@@ -192,6 +230,8 @@ spawn (kèm spec §4) → heartbeat 5s → progress stream
 ---
 
 ## 4. Spawn API (contract tối thiểu)
+
+> Phần này giải thích "hợp đồng" tối thiểu khi tạo sub-agent: đưa cho nó cái gì, và không được đưa cái gì.
 
 > **📌 Khái Niệm Cơ Bản**
 >
@@ -216,6 +256,8 @@ spawn (kèm spec §4) → heartbeat 5s → progress stream
 
 Quy tắc spawn (`loop/04-operating`): triage rẻ trước, chỉ spawn khi state báo actionable; watchlist rỗng → exit <5k tokens, không spawn. **Tối đa 3 sub-agents/run** mặc định.
 
+Cách đọc bảng này: cột **Quy tắc** là tình huống; cột **Ngưỡng** là điều kiện kích hoạt; cột **Hành động** là việc hệ thống phải làm. Ví dụ: run đang rảnh (watchlist rỗng) thì thoát sớm dưới 5k token và không tạo agent nào.
+
 | Quy tắc | Ngưỡng | Hành động |
 |---|---|---|
 | Run idle | watchlist rỗng | exit <5k tokens, không spawn |
@@ -223,15 +265,21 @@ Quy tắc spawn (`loop/04-operating`): triage rẻ trước, chỉ spawn khi sta
 | Trần budget | child >8k tokens | tách goal thành 2+ task hẹp hơn |
 | Triage trước | scope chưa rõ | researcher trước implementer |
 
+> **Tóm gọn 1 câu:** Spawn là hành động tốn tiền nên phải có cổng: việc rảnh thì thoát sớm, tối đa 3 con mỗi lần chạy, con nào cần hơn 8k token thì tách nhỏ, và điều tra trước khi sửa.
+
 ---
 
 ## 5. Context và memory
+
+> Phần này giải thích sub-agent ghi chú của mình ở đâu và chia sẻ kết quả thế nào để không ghi đè nhau.
 
 > **📌 Khái Niệm Cơ Bản**
 >
 > - **Khái niệm:** Scratchpad giữ riêng; chỉ diff/fact publish lên blackboard có version qua CAS. Single-writer mỗi file/section chống race ghi đè.
 > - **Ẩn dụ:** Như Google Docs suggestion — mỗi người soạn riêng, chỉ edit được duyệt mới land, edit concurrent thì merge thay vì đè bừa.
 > - **Vì sao quan trọng:** Ghi đè mù là bug mất dữ liệu #1 của multi-agent.
+
+(Giải nghĩa: **scratchpad** = giấy nháp riêng của từng agent; **blackboard** = bảng thông báo chung; **CAS** (compare-and-swap) = ghi chỉ khi dữ liệu chưa bị ai đổi — như "ghi đè có điều kiện"; **diff** = bản ghi thay đổi; **single-writer** = một thời điểm chỉ một người được ghi một file.)
 
 ### 5.1 Riêng tư mặc định + blackboard
 
@@ -248,13 +296,17 @@ Quy tắc spawn (`loop/04-operating`): triage rẻ trước, chỉ spawn khi sta
 
 </details>
 
-Handoff tốt vs xấu:
+Handoff tốt vs xấu (handoff = bàn giao việc từ cha sang con):
+
+Cách đọc bảng: cột trái là cách làm **xấu** (đưa quá nhiều — tốn token và rò rỉ); cột phải là cách **tốt** (đưa đúng phần cần). Ví dụ: thay vì dán cả log 40k token, chỉ đưa tóm tắt 5 dòng kèm tham chiếu tới file log.
 
 | ❌ Xấu (dump full) | ✅ Tốt (cắt gọn) |
 |---|---|
 | Dán 40k-token log cha | parentSummary 5 dòng + 2 files + 1 artifact ref |
 | Inline log test 2MB | Artifact ref `s3://.../logs` + hash + 20 dòng fail đầu |
 | Share secret thô | Lease scope ngắn + env injection, redact trong log |
+
+> **Tóm gọn 1 câu:** Mỗi sub-agent có giấy nháp riêng, chỉ chia sẻ kết quả qua bảng chung có kiểm tra phiên bản (CAS) — và khi bàn giao thì đưa tóm tắt + tham chiếu, không bao giờ dump cả log.
 
 ---
 
@@ -268,10 +320,12 @@ Handoff tốt vs xấu:
 
 ### 6.1 Ma trận tool tối thiểu
 
+Cách đọc bảng này: mỗi dòng là một vai trò; các cột cho biết vai đó được phép làm gì với file (FS), lệnh (Shell), mạng (Network), và điều kiện thêm. Ví dụ: `verifier` chỉ được đọc file và chạy test, không được sửa code.
+
 * Cơ chế tier/controls/runner thuộc `12-sandbox-execution` §2–§6; riêng multi/sub-agent bổ sung: **tool tối thiểu theo role** (reviewer chỉ FS đọc, không shell; coder shell sandbox không net), tra cứu cùng ma trận role để solo và swarm phân giải ra cùng policy
 
-> 🔑 **Highlight Policy / Permission:** grant tool cho sub-agent chỉ là **projection permission, không phải policy mới** — mỗi role kế thừa tool tối thiểu từ `12-sandbox-execution` §6, grant nào ngoài ma trận đều bị deny ở validation lúc spawn (§4). (lệch là bug leo thang đặc quyền).
-* Egress chặn mặc định, allow-list domain từng agent; mọi I/O tool audit kèm `agent_id + lease_id`.
+> 🔑 **Highlight Policy / Permission:** grant tool cho sub-agent chỉ là **projection permission, không phải policy mới** — mỗi role kế thừa tool tối thiểu từ `12-sandbox-execution` §6, grant nào ngoài ma trận đều bị deny ở validation lúc spawn (§4). (lệch là bug leo thang đặc quyền). (Hiểu đơn giản: cấp tool cho sub-agent không phải là "chế quyền mới" mà chỉ là "chiếu" phần được phép của ma trận ra; xin thừa thì bị chặn ngay lúc spawn.)
+* Egress chặn mặc định, allow-list domain từng agent; mọi I/O tool audit kèm `agent_id + lease_id`. (Egress = luồng dữ liệu đi ra ngoài; chặn mặc định nghĩa là không kết nối được tới đâu trừ khi được liệt kê.)
 * Code-editing sub-agents: `isolation: worktree` + lock/queue trong state (`"PR #1234 — worktree in progress"`) để tránh hai sub-agents sửa cùng files.
 
 | Role | FS | Shell | Network | Thêm |
@@ -280,6 +334,8 @@ Handoff tốt vs xấu:
 | verifier | đọc + output test | chỉ test runner | chặn mặc định | không được sửa code |
 | reviewer | chỉ đọc | không | chặn mặc định | chỉ API comment |
 | researcher | chỉ đọc + search | không | allow-list docs | không ghi memory |
+
+> **Tóm gọn 1 câu:** Quyền của sub-agent là "chiếu" từ ma trận role→tool có sẵn, không tự sinh — network chặn mặc định, secret là thẻ khóa khách sạn hết hạn theo lượt, và ai sửa code thì phải có worktree riêng.
 
 ### 6.2 Lease secret và audit
 
@@ -292,9 +348,13 @@ Handoff tốt vs xấu:
 
 </details>
 
+> **Tóm gọn 1 câu:** Secret là "thẻ khóa khách sạn": cấp ngắn hạn 5–15 phút, đúng phạm vi, nạp qua biến môi trường, và luôn bị che trong log.
+
 ---
 
 ## 7. Gộp kết quả
+
+> Phần này giải thích kết quả của sub-agent được kiểm tra và gộp vào kết quả cuối thế nào.
 
 > **📌 Khái Niệm Cơ Bản**
 >
@@ -316,7 +376,9 @@ Handoff tốt vs xấu:
 
 ### 7.2 Đảm bảo messaging
 
-* Payload: header 64KB + body 512KB; lớn hơn → artifact ref. Message có `msg_id` (dedupe), FIFO theo từng task (từ chối `seq` sai thứ tự), request/reply timeout 30s.
+* Payload: header 64KB + body 512KB; lớn hơn → artifact ref. Message có `msg_id` (dedupe), FIFO theo từng task (từ chối `seq` sai thứ tự), request/reply timeout 30s. (Giải nghĩa: **payload** = gói dữ liệu; **dedupe** = loại bỏ tin trùng; **FIFO** = vào trước ra trước — giữ đúng thứ tự.)
+
+Cách đọc bảng này: cột **Đảm bảo** là tính chất phải có của tin nhắn; cột **Cơ chế** là cách thực hiện; cột **Giới hạn** là điều kiện/chỗ yếu. Ví dụ: tin trùng bị loại nhờ so tập `msg_id`.
 
 | Đảm bảo | Cơ chế | Giới hạn |
 |---|---|---|
@@ -325,15 +387,21 @@ Handoff tốt vs xấu:
 | Kích thước | trần header/body | tràn → artifact ref |
 | Liveness | timeout req/reply 30s | timeout → SUSPECT → requeue |
 
+> **Tóm gọn 1 câu:** Kết quả chỉ được gộp khi qua checker độc lập hoặc đa số phiếu; còn tin nhắn giữa các agent thì nhỏ gọn, có mã chống trùng, đúng thứ tự, và quá hạn 30 giây coi như treo.
+
 ---
 
 ## 8. Budget & cost guards
+
+> Phần này giải thích các "van giới hạn" ngăn sub-agent đốt tiền.
 
 > **📌 Khái Niệm Cơ Bản**
 >
 > - **Khái niệm:** Mỗi spawn tiêu từ một phong bì có trần; run idle tiêu gần như không; việc quá budget thì tách thay vì phình.
 > - **Ẩn dụ:** Như đoàn phim — mỗi cảnh có budget; không có footage actionable → đóng máy sớm, cho crew về.
 > - **Vì sao quan trọng:** Fan-out không giới hạn là cách nhanh nhất đốt $50 cho một run cron no-op.
+
+Cách đọc bảng này: cột **Guard** là chốt kiểm soát; cột **Mặc định** là con số/giá trị khởi điểm; cột **Hành vi** là việc hệ thống làm khi chạm chốt. Ví dụ: một lần chạy tối đa 3 sub-agent, dư thì xếp hàng hoặc dời sang lần sau.
 
 | Guard | Mặc định | Hành vi |
 |---|---|---|
@@ -351,6 +419,8 @@ Handoff tốt vs xấu:
 
 </details>
 
+> **Tóm gọn 1 câu:** Mỗi spawn tiêu từ một "phong bì" có trần — 3 con mỗi lần chạy, 2–8k token mỗi con, 10–25 bước, 120–300 giây — và có kill switch hủy phần ưu tiên thấp trước khi vượt ngân sách.
+
 ---
 
 ## 9. Kiểm thử sub-agent
@@ -359,6 +429,8 @@ Handoff tốt vs xấu:
 >
 > - **Khái niệm:** Test contract, không chỉ test model — validation, fencing, CAS, redaction, phục hồi crash đều có test xác định.
 > - **Vì sao quan trọng:** Bug sub-agent là bug concurrency + bảo mật; chỉ lộ khi crash/reorder/input đối kháng.
+
+Cách đọc bảng này: cột **#** là số thứ tự; cột **Test** là tình huống cần thử; cột **Kỳ vọng** là kết quả đúng phải xảy ra. Ví dụ: test số 6 chèn khoá giả `ghp_fake123` vào log — kết quả đúng là chuỗi đó bị che.
 
 | # | Test | Kỳ vọng |
 |---|---|---|
@@ -380,6 +452,8 @@ Handoff tốt vs xấu:
 
 </details>
 
+> **Tóm gọn 1 câu:** Test sub-agent là test "hợp đồng", không phải test model: 10 tình huống đối kháng (treo, trễ, ghi đè, rò khoá...) đều phải cho kết quả đúng như bảng.
+
 ---
 
 ## 10. Anti-pattern & giải pháp
@@ -388,6 +462,8 @@ Handoff tốt vs xấu:
 >
 > - **Khái niệm:** Hầu hết lỗi sub-agent là vi phạm contract với tên ngây thơ: "share hết đi", "tự verify cũng được", "thêm một spawn nữa".
 > - **Vì sao quan trọng:** Gọi tên bẫy + fix biến kiến thức truyền miệng thành checklist gate được.
+
+Cách đọc bảng này: cột **Anti-Pattern** là tên cái bẫy; cột **Triệu chứng** là dấu hiệu nhận ra trong log/số liệu; cột **Fix** là cách sửa. Ví dụ: "God child" là sub-agent bị nhồi cả context của cha — nhận ra qua 40k token mỗi lần spawn.
 
 | # | Anti-Pattern | Triệu chứng | Fix |
 |---|---|---|---|
@@ -400,9 +476,13 @@ Handoff tốt vs xấu:
 | 7 | Tool creep (reviewer + shell) | `rm -rf` bất ngờ | cổng ma trận role→tool |
 | 8 | Treo im lặng | sống, 0 tiến triển, đốt budget | detector SUSPECT 60s + deadline |
 
+> **Tóm gọn 1 câu:** 8 cái bẫy đều là vi phạm contract với cái tên nghe vô hại — nhận ra qua triệu chứng trong log, và fix luôn có sẵn trong bảng.
+
 ---
 
 ## 11. Triển khai thực tế
+
+> Phần này cho 3 ví dụ thật: cách Claude Code làm, một vòng triage ban đêm, và một "đội debug" 3 agent.
 
 ### 11.1 Claude Code — Explore Subagents (Anthropic, 2025)
 
@@ -424,9 +504,13 @@ Chỉ spawn khi state báo actionable; ngược lại exit rẻ. Đây là cost 
 
 Một researcher khoanh vùng path fail kèm citations, một implementer patch trong worktree, một verifier tái hiện before/after. Shared memory chỉ giữ test fail + artifact ref — không bao giờ full log.
 
+> **Tóm gọn 1 câu:** Ba ví dụ thật cùng một công thức: tool hẹp + context cắt gọn + kiểm tra độc lập — child không bao giờ tự gộp kết quả, luôn là parent quyết.
+
 ---
 
 ## 12. Checklist & triển khai production
+
+> Phần này là danh sách kiểm tra trước khi cho sub-agent chạy thật. Mục `[ ]` = chưa đánh dấu; đánh dấu khi đã làm và đã kiểm chứng.
 
 ### 12.1 Cổng pre-spawn
 
@@ -438,6 +522,8 @@ Một researcher khoanh vùng path fail kèm citations, một implementer patch 
 
 ### 12.3 Checklist triển khai
 
+Cách đọc bảng này: cột **Lĩnh vực** là khía cạnh hệ thống cần kiểm; cột **Check** là điều kiện "đạt" của khía cạnh đó. Ví dụ: phần Supervisor đạt khi nó không giữ trạng thái trong bộ nhớ và chạy lại được an toàn.
+
 | Lĩnh vực | Check |
 |---|---|
 | Supervisor | phi trạng thái, queue-backed, worker idempotent |
@@ -446,9 +532,13 @@ Một researcher khoanh vùng path fail kèm citations, một implementer patch 
 | Rollback | fencing bật; kết quả cũ bị loại |
 | Chi phí | trần run + trần từng child + idle-exit đã verify |
 
+> **Tóm gọn 1 câu:** Trước khi chạy production, đi hết 3 cổng: spec đủ thứ, an toàn + chi phí có chốt, và 5 lĩnh vực vận hành đạt check.
+
 ---
 
 ## Best Practices
+
+> Phần này gom 10 nguyên tắc ngắn — bản "cheat sheet" của toàn bộ spec trên.
 
 1. **Triage trước spawn** — scope chưa rõ thì researcher trước.
 2. **Một ticket mỗi child** — tách goal rộng; từ chối child >8k-token.
@@ -460,6 +550,8 @@ Một researcher khoanh vùng path fail kèm citations, một implementer patch 
 8. **Lease secret** — scope 5–15p, env injection, redact log.
 9. **Trần message** — payload lớn dùng ref thay inline.
 10. **Idle thì exit rẻ** — <5k tokens, zero spawn.
+
+> **Tóm gọn 1 câu:** Nếu chỉ nhớ một dòng: siết mọi thứ sub-agent nhận (context, tool, budget, thời gian) và buộc bên thứ ba kiểm tra kết quả của nó.
 
 ## Tài Liệu Tham Khảo
 
@@ -484,3 +576,7 @@ Một researcher khoanh vùng path fail kèm citations, một implementer patch 
 ### Architecture Patterns
 
 * Maker/Checker, Judge quorum (2f+1), Blackboard (CAS), Lease + Fencing, Worktree isolation
+
+(Giải nghĩa nhanh các pattern: **Maker/Checker** = người viết / người kiểm tách riêng; **Judge quorum 2f+1** = đủ 2f+1 giám khảo để chịu được f cái hỏng; **Blackboard CAS** = bảng chung ghi có kiểm tra phiên bản; **Lease + Fencing** = quyền có hạn dùng + số lượt để loại kết quả cũ; **Worktree isolation** = mỗi agent một thư mục làm việc riêng.)
+
+> **Tóm gọn 1 câu:** Đây là các nguồn để đi sâu thêm; 5 pattern nêu ở cuối là những "hạt nhân ý tưởng" mà toàn bộ spec trên được ghép từ đó.

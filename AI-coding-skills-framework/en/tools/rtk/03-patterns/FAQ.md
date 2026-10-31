@@ -2,9 +2,13 @@
 
 If a question is unclear, read the section in `../README.md` (named in brackets).
 
+Each answer follows the same shape: **What you see** (the symptom), **Why** (the cause in plain words), **What to do** (concrete steps), and **Verify** (how to confirm the fix worked). The questions are grouped by RTK pattern: general choice, git, build/lint, file reading, and tests.
+
 ---
 
 ## 03-patterns/README.md
+
+> **One-line summary:** Three stories about choosing patterns, making them automatic, and excluding commands that must stay raw.
 
 ### Q13. There are four patterns and I only have one weekend — which one do I turn on first? [→ Pattern Picker]
 
@@ -20,9 +24,9 @@ RTK patterns are per-command-type filters, not one global switch. Each one rewri
 
 1. Look at what hurts *right now* and use the decision tree — the answer is one branch, not four.
 2. If you are just starting, enable **Git Speedup** first. It is safe, easy to verify (`git status` → `rtk git status`), and it applies to every git working session.
-3. If continuous integration (CI) is red right now, pick **Test Only Failures** — ~90% reduction, failures only.
+3. If continuous integration (CI — the automated build/test pipeline) is red right now, pick **Test Only Failures** — ~90% reduction, failures only.
 4. If the repo is large and unfamiliar, pick **File Smart Read** — ~60–90% on big files.
-5. If you build or lint many times a day, pick **Build & Lint Compact** — ~75–85%.
+5. If you build or lint many times a day, pick **Build & Lint Compact** — ~75–85%. ("Lint" = a tool that checks code style and simple mistakes.)
 6. If you want all four, install the hook with `rtk init -g` and stop choosing.
 
 | What hurts right now | Choose | Reduction |
@@ -32,9 +36,13 @@ RTK patterns are per-command-type filters, not one global switch. Each one rewri
 | Agent reads whole large files | File Smart Read | ~60–90% |
 | Build / lint verbose | Build & Lint Compact | ~75–85% |
 
+How to read this table: the left column names your pain in one phrase; the middle column names the pattern to enable; the right column estimates how much smaller the output gets. For example, if `git status` is the noise, Git Speedup typically cuts it by 70–93%.
+
 **Verify**
 
 Run the raw command, then the RTK command, and count lines. Then run `rtk gain` — the saved-token line should be non-zero and should name the commands you expected.
+
+> **One-line summary:** Match the pattern to the command that hurts today — one pain, one pattern; or install the hook once and get all four.
 
 ---
 
@@ -51,7 +59,7 @@ RTK has two usage modes. Manual mode is typing `rtk <command>` yourself. Hook mo
 **What to do**
 
 1. **Pick the pattern** using the table or the decision tree in Q1.
-2. **Enable the hook**: run `rtk init -g` for your tool (see the `02-setup` folder).
+2. **Enable the hook**: run `rtk init -g` for your tool (see the `02-setup` folder). `-g` = global, for all projects.
 3. **Restart the AI coding tool fully** — a running tool keeps its old shell setup.
 4. **Verify** by running the command and comparing raw output against RTK output.
 5. **Measure** with `rtk gain` (see `04-savings`).
@@ -67,6 +75,8 @@ git status        # RTK rewrites it, output is compact
 **Verify**
 
 `rtk git status` returns the compact grouped summary, and `rtk gain --history` lists commands you never prefixed. If history is empty, the hook is not attached — go to Q19.
+
+> **One-line summary:** Install the hook and restart the tool — then the agent writes plain commands and RTK compresses them automatically.
 
 ---
 
@@ -96,9 +106,13 @@ Run the excluded command — you get the original format back, full lines and al
 
 The rule to remember: RTK rewrites are transparent. The agent can always call the original command itself, so an exclusion is a preference you state, not a wall you build. If a whole category is excluded, the honest move is to reconsider whether that category belongs in the hook at all.
 
+> **One-line summary:** Don't switch RTK off — exclude the one command that must stay raw via `exclude_commands`.
+
 ---
 
 ## 03-patterns/git-speedup.md
+
+> **One-line summary:** Three git stories: trusting the one-line push, locating compressed vs editing raw, and getting file names back into the log.
 
 ### Q16. `git push` now prints one line, `ok main` — is the push real, or did something get skipped? [→ Real Example]
 
@@ -112,16 +126,16 @@ Delta compression using up to 8 threads
 ...
 ```
 
-The familiar progress chatter is gone. Your instinct is that a push that says nothing about objects, refs, or the remote cannot be trusted.
+The familiar progress chatter is gone. Your instinct is that a push that says nothing about objects, refs, or the remote cannot be trusted. ("Refs" = branch and tag pointers on the remote.)
 
 **Why**
 
-For push, RTK keeps only the facts that can change: it succeeded, and on which branch. Everything else — object enumeration, delta compression using up to 8 threads — is byte-identical on every single push, so it is pure context cost. RTK preserves the exit status, which is the part a script or a human actually acts on.
+For push, RTK keeps only the facts that can change: it succeeded, and on which branch. Everything else — object enumeration, delta compression using up to 8 threads — is byte-identical on every single push, so it is pure context cost. RTK preserves the exit status, which is the part a script or a human actually acts on. ("Exit status" = the numeric code a command returns; 0 = success.)
 
 **What to do**
 
 1. Read the **exit code**, not the prose. Zero means the push happened.
-2. Confirm the remote really moved: `git status -sb`, or compare `git log origin/main -1`.
+2. Confirm the remote really moved: `git status -sb`, or compare `git log origin/main -1` (both show whether your local branch matches the remote copy).
 3. If a hook or CI system depends on the original text, add `git push` to `exclude_commands`.
 4. Expect the same for the rest: `git add` → `ok` (~95%), `git commit` → `ok abc1234` (~95%), `git pull` → `ok 3 files +10 -2` (~90%).
 
@@ -132,9 +146,13 @@ For push, RTK keeps only the facts that can change: it succeeded, and on which b
 | `git diff` | reduced context, headers stripped | ~75% |
 | `git push` / `git pull` | `ok main` / `ok 3 files +10 -2` | ~93% / ~90% |
 
+How to read this table: the left column is the command; the middle column shows what RTK's version looks like; the right column estimates how much smaller it gets. For example, `git push` becomes one line, `ok main`, about 93% smaller.
+
 **Verify**
 
 After `rtk git push`, `git status -sb` shows your branch in sync with the remote, and `git log origin/main -1` shows the commit you just made.
+
+> **One-line summary:** `ok main` is the real result — the push happened; trust the exit code, and verify with `git status -sb` if unsure.
 
 ---
 
@@ -146,7 +164,7 @@ You ask the agent to fix a bug in `src/harness/context.ts`. It runs `git diff`, 
 
 **Why**
 
-`rtk git diff` is a *compression*, not a truncation: it keeps the changed lines and drops headers and context. Roughly 75% smaller, which means about 75% of the lines that explain *why* a change matters are gone. Line-level editing needs those lines; exploring does not.
+`rtk git diff` is a *compression*, not a truncation: it keeps the changed lines and drops headers and context. Roughly 75% smaller, which means about 75% of the lines that explain *why* a change matters are gone. Line-level editing needs those lines; exploring does not. ("Context lines" = the unchanged lines shown around a change, which tell you where in the file the change sits.)
 
 **What to do**
 
@@ -162,13 +180,15 @@ You ask the agent to fix a bug in `src/harness/context.ts`. It runs `git diff`, 
 
 The agent's edit lands on a function that exists at the line it names. `git diff --stat` afterwards shows only the intended file changed.
 
+> **One-line summary:** Use the compressed diff to locate changes, but read the raw `git diff -- <path>` before editing — locate compressed, edit raw.
+
 ---
 
 ### Q18. `rtk git log -n 10` gave me no file names — my review needs the changed files, where did they go? [→ Commands & Reduction Levels]
 
 **What you see**
 
-You run `rtk git log -n 10` before reviewing someone else's branch. You get hash, author, subject — ten tidy lines, ~70% smaller. The list of files each commit touched is gone, so you cannot tell which commit touched the payment module, and you end up running `git show` per commit anyway.
+You run `rtk git log -n 10` before reviewing someone else's branch. You get hash, author, subject — ten tidy lines, ~70% smaller. The list of files each commit touched is gone, so you cannot tell which commit touched the payment module, and you end up running `git show` per commit anyway. ("Hash" = the commit's unique ID, like `abc1234`.)
 
 **Why**
 
@@ -187,9 +207,13 @@ RTK keeps three fields for log: hash, author, subject. That is enough to answer 
 
 The review shows, per commit, the files it touched. If a pipeline that greps `git log` output comes back empty, the compact format is the cause — see Q7-style exclude handling in `05-troubleshooting`.
 
+> **One-line summary:** The compact log answers "what and who"; add `--stat` (or exclude `git log`) when you also need "which files".
+
 ---
 
 ## 03-patterns/build-lint-compact.md
+
+> **One-line summary:** Three build/lint stories: the exit code is the verdict, ripgrep is a required helper, and JSON output can break plugins.
 
 ### Q19. The compact build output never says "Build succeeded" — did my build pass or fail? [→ Commands & Reduction Levels]
 
@@ -203,7 +227,7 @@ src/harness/loop.ts(18,5):               src/harness/loop.ts
   error TS2554: Expected 2 args ...       L18  TS2554  Expected 2 args
 ```
 
-Three lines in, four lines out. The words "compiled successfully" or "Build succeeded" are not there, and the agent starts guessing whether the build is green.
+Three lines in, four lines out. The words "compiled successfully" or "Build succeeded" are not there, and the agent starts guessing whether the build is green. ("tsc" = the TypeScript compiler's check command; "green" = passing.)
 
 **Why**
 
@@ -211,7 +235,7 @@ RTK keeps what is *actionable*: errors, warnings, and the file they belong to, g
 
 **What to do**
 
-1. Read the exit code. Zero means every check passed; non-zero means it failed — that fact is never compressed away.
+1. Read the exit code. Zero means every check passed; non-zero means it failed — that fact is never compressed away. (`echo $?` prints the previous command's exit code.)
 2. Read the grouped blocks: file path, then line number, then rule or error code.
 3. Expect the same shape everywhere: `rtk tsc` (~85%), `rtk lint` (~80%), `rtk ruff check` (~80%), `rtk golangci-lint run` (~85%), `rtk next build` (~75%), `rtk cargo build` and `rtk cargo clippy` (~80% each), `rtk prettier --check .` (~75%), `rtk sbt compile` (~75%).
 4. If a stage name matters — for example which `next build` stage broke — check the failure log for that step; RTK keeps those logs.
@@ -220,6 +244,8 @@ RTK keeps what is *actionable*: errors, warnings, and the file they belong to, g
 **Verify**
 
 Run `rtk tsc; echo $?` — the number is the answer. Cross-check one grouped error against plain `tsc` and confirm the line and code match.
+
+> **One-line summary:** The exit code is the verdict — zero means the build passed; the compact output just drops the repetition.
 
 ---
 
@@ -231,13 +257,13 @@ You install RTK, enable the hook, and the first build or lint command fails with
 
 **Why**
 
-Some RTK filters shell out to `rg` (ripgrep) instead of filtering in its own process — it is simply faster at scanning a tree. `rg` is a separate program from RTK. If it is not installed, or not visible to the tool that spawned the shell, only the filters that depend on it break. This is a missing dependency, not a broken install.
+Some RTK filters shell out to `rg` (ripgrep) instead of filtering in its own process — it is simply faster at scanning a tree. "Shell out to" = RTK launches `rg` as a separate program, like you typing `rg` yourself. `rg` is a separate program from RTK. If it is not installed, or not visible to the tool that spawned the shell, only the filters that depend on it break. This is a missing dependency, not a broken install.
 
 **What to do**
 
 1. Confirm it is missing: `rg --version` in the same shell your agent uses.
 2. Install it: `brew install ripgrep` on macOS, `winget install BurntSushi.ripgrep.MSVC` on Windows.
-3. If `rg` exists but still errors, it is a PATH problem — the tool's shell was started before the install, so restart it.
+3. If `rg` exists but still errors, it is a PATH problem — the tool's shell was started before the install, so restart it. (PATH = the list of folders the shell searches for programs.)
 4. Verify with `rtk grep "pattern" .` (~75% reduction, grouped results) and `rtk find "*.rs" .` (~70%).
 5. Check `rtk gain --history`: the failing entries disappear once the dependency is present.
 
@@ -245,13 +271,15 @@ Some RTK filters shell out to `rg` (ripgrep) instead of filtering in its own pro
 
 `rg --version` prints a number in the agent's shell, `rtk grep` returns grouped hits, and `rtk gain --history` shows the previously failing command now counting savings instead of errors. Installing ripgrep is a one-line fix — there is nothing to configure in `config.toml` for it.
 
+> **One-line summary:** Ripgrep is a helper program some RTK filters need — install it once, restart the tool, done.
+
 ---
 
 ### Q21. RTK turned my linter output into JSON and my tooling choked — is that expected? [→ Notes]
 
 **What you see**
 
-`ruff check` used to print human-readable lines. Through RTK it prints JSON grouped by rule and file, and an editor plugin or a small script that expected text now fails to parse it. Same story for `golangci-lint run` and `rubocop`.
+`ruff check` used to print human-readable lines. Through RTK it prints JSON grouped by rule and file, and an editor plugin or a small script that expected text now fails to parse it. Same story for `golangci-lint run` and `rubocop`. (These are code-quality checkers — "linters" — for Python, Go, and Ruby.)
 
 **Why**
 
@@ -270,15 +298,19 @@ Those three linters already have a machine-readable format, and RTK parses that 
 
 `rtk ruff check` returns grouped entries (rule + file), and your editor plugin is pointed at plain `ruff check`, not at RTK output. Grouping by rule is the practical win here: 400 lines of the same rule across 90 files becomes one block, and the agent fixes the rule instead of the line.
 
+> **One-line summary:** RTK only regroups the linter's own JSON — point plugins at the raw linter, or exclude the command.
+
 ---
 
 ## 03-patterns/file-smart-read.md
+
+> **One-line summary:** Three file-reading stories: read the skeleton to locate, read the body to edit, and pick the level by the question.
 
 ### Q22. The agent used `rtk read`, then edited a function that is not in the file — why? [→ Notes]
 
 **What you see**
 
-You ask the agent to change `fn compress`. It runs `rtk read src/harness/context.rs`, gets back a list of signatures, and rewrites the file — replacing a body it never actually read. The result either fails to compile or, worse, silently deletes logic.
+You ask the agent to change `fn compress`. It runs `rtk read src/harness/context.rs`, gets back a list of signatures, and rewrites the file — replacing a body it never actually read. The result either fails to compile or, worse, silently deletes logic. ("Signature" = a function's first line: its name, inputs, and output type — without the body.)
 
 **Why**
 
@@ -298,6 +330,8 @@ You ask the agent to change `fn compress`. It runs `rtk read src/harness/context
 
 The agent's patch applies to lines that exist. `git diff` after the change shows only the intended function touched, no accidental deletions. If it does not, that is the signal to stop using `rtk read` for edits in that session and go back to full reads.
 
+> **One-line summary:** `rtk read` shows the skeleton, not the body — locate with it, then read the real lines before editing.
+
 ---
 
 ### Q23. How does a 1,240-line file fit into 20 lines — and can I trust what I am seeing? [→ Real Example]
@@ -312,7 +346,7 @@ File: src/harness/context.rs (1,240 lines)
     fn limit(&self) -> TokenBudget     // L390
 ```
 
-Twenty lines describe a 1,240-line file. Your worry: the agent now "knows" the file but is reasoning from a summary, so it will confidently answer questions about logic it never saw.
+Twenty lines describe a 1,240-line file. Your worry: the agent now "knows" the file but is reasoning from a summary, so it will confidently answer questions about logic it never saw. (`// L42` marks where that item sits in the real file — line 42.)
 
 **Why**
 
@@ -323,12 +357,14 @@ This is the same idea as the harness's "Tier 5 — Immediate Context": put only 
 1. Use the summary for orientation and for locating the code you will change.
 2. Use `-l aggressive` (signatures only, bodies stripped, ~90%+ smaller) when you only need the shape of the file.
 3. Use plain `rtk read file.rs` (~60–90% smaller, keeps some body) when you need behaviour, not just shape.
-4. Drop to `rtk smart file.rs` (~95% smaller) for a two-line heuristic summary when even signatures are too much.
+4. Drop to `rtk smart file.rs` (~95% smaller) for a two-line heuristic summary — a best guess at what the file does — when even signatures are too much.
 5. Treat the `// L42` comments as an index, not as content — they are there so the next read can jump straight to the line.
 
 **Verify**
 
-Every line number in the summary matches the real file — spot-check one with `sed -n '210p'`. If the agent makes a claim about logic, ask it to quote the body from the raw file first. If a line number is wrong, the summary is stale: the file changed since it was produced, so regenerate it.
+Every line number in the summary matches the real file — spot-check one with `sed -n '210p'` (prints line 210 of the file). If the agent makes a claim about logic, ask it to quote the body from the raw file first. If a line number is wrong, the summary is stale: the file changed since it was produced, so regenerate it.
+
+> **One-line summary:** The 20-line view is a trustworthy index of a 1,240-line file — trust it for "where", never for "how it works".
 
 ---
 
@@ -363,13 +399,19 @@ rtk read file.rs                  # signatures + structure, some body
 | What is its shape? | `rtk read file.rs -l aggressive` | ~90%+ |
 | What does it do? | `rtk smart file.rs` | ~95% |
 
+How to read this table: the left column is the question you are asking; the middle column is the cheapest command that answers it; the right column is how much smaller the output is than the raw file.
+
 **Verify**
 
 `rtk gain --daily` shows a spread of reduction levels across your reads, not every read landing on the same one. And no edit ever gets made from a `rtk smart` summary.
 
+> **One-line summary:** Pick the read level by the question: contents → `rtk read`, shape → `-l aggressive`, purpose → `rtk smart`, editing → raw read.
+
 ---
 
 ## 03-patterns/test-only-failures.md
+
+> **One-line summary:** Three test stories: passes become a count, flaky tests still need a human decision, and rspec needs a JSON formatter.
 
 ### Q25. My test suite went from 200 lines to 20 — where did the other 180 lines go? [→ Real Example]
 
@@ -390,7 +432,7 @@ Two failures, a count, and a path to a log file. The 13 passing tests are gone f
 
 **Why**
 
-Passing tests are collapsed into a single number because `... ok` repeated 13 times carries no decision value: if it printed, it passed. The reduction is ~90% across `cargo test`, `npm test`, `pytest`, `go test`, `jest`, and `vitest`. Nothing was deleted — on failure RTK writes the entire raw output to a log file under `~/.local/share/rtk/tee/`, so the detail is one read away and does not require re-running the suite.
+Passing tests are collapsed into a single number because `... ok` repeated 13 times carries no decision value: if it printed, it passed. The reduction is ~90% across `cargo test`, `npm test`, `pytest`, `go test`, `jest`, and `vitest` (the test runners for Rust, JavaScript, Python, and Go). Nothing was deleted — on failure RTK writes the entire raw output to a log file under `~/.local/share/rtk/tee/`, so the detail is one read away and does not require re-running the suite.
 
 **What to do**
 
@@ -404,6 +446,8 @@ Passing tests are collapsed into a single number because `... ok` repeated 13 ti
 **Verify**
 
 The log file exists, its line count matches roughly what the raw run produced, and the failing test names in the compact output appear verbatim inside it.
+
+> **One-line summary:** The 180 "lost" lines were 13 passes reduced to a count — nothing is deleted; the full log sits in `~/.local/share/rtk/tee/`.
 
 ---
 
@@ -420,7 +464,7 @@ The agent reads this as a clear, reproducible failure, changes working code, and
 
 **Why**
 
-RTK makes failures *visible* faster (~90% reduction) but does not make them *deterministic*. A flaky test — one that depends on timing, ordering, or shared state — looks identical to a real bug in compact output. The decision to fix still belongs to the agent and to you, not to the tool that printed the line.
+RTK makes failures *visible* faster (~90% reduction) but does not make them *deterministic*. A flaky test — one that depends on timing, ordering, or shared state — looks identical to a real bug in compact output. ("Deterministic" = same result every run.) The decision to fix still belongs to the agent and to you, not to the tool that printed the line.
 
 **What to do**
 
@@ -434,13 +478,15 @@ RTK makes failures *visible* faster (~90% reduction) but does not make them *det
 
 The same test fails and passes on alternating runs *before* any code change. Only after it fails on three consecutive runs does the agent touch the implementation. The pattern helps you *see* the failure faster; it never makes the decision for you.
 
+> **One-line summary:** RTK surfaces failures faster but cannot tell flaky from real — re-run in isolation before letting the agent "fix" anything.
+
 ---
 
 ### Q27. `rtk rspec` only saved ~60% while `rtk pytest` saved ~90% — why the difference? [→ Notes]
 
 **What you see**
 
-Your Python and JavaScript suites drop to a fraction of their size: a failing `cargo test` goes from 200+ lines to ~20 (~90%). The Ruby suite barely shrinks, and sometimes the grouped output comes back empty even though tests clearly failed.
+Your Python and JavaScript suites drop to a fraction of their size: a failing `cargo test` goes from 200+ lines to ~20 (~90%). The Ruby suite barely shrinks, and sometimes the grouped output comes back empty even though tests clearly failed. (`rspec` = the Ruby test runner.)
 
 **Why**
 
@@ -458,6 +504,8 @@ Your Python and JavaScript suites drop to a fraction of their size: a failing `c
 **Verify**
 
 `rtk rspec` lists the failing examples instead of dumping every pass; `rtk gain --daily` shows the Ruby line moving up toward the Python and JavaScript lines. Until the formatter is set, expect Ruby to be the one suite in your report that barely moves.
+
+> **One-line summary:** rspec saves less because its default output is human text, not JSON — configure a JSON formatter to unlock the ~90% savings.
 
 ---
 

@@ -2,6 +2,8 @@
 
 Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
+> **Tài liệu này nói về gì:** cổng duyệt (approval gate) là điểm dừng buộc một con người bấm duyệt trước khi agent được làm việc nguy hiểm. Ví dụ: trước khi xoá cột dữ liệu production hay `git push --force` (ghi đè lịch sử commit trên repo remote, mất luôn bản backup). Không có cổng thì agent có thể làm việc không hoàn tác được mà không ai biết.
+
 ---
 
 ## Q1. Agent lúc 3h47 sáng tự sinh lệnh xoá cột trên production — chặn ở đâu? [→ §2 Risk Tier, §3 Gate Payload]
@@ -16,7 +18,9 @@ Vì cơ hội sai luôn tồn tại, và agent sai mà không biết mình sai. 
 
 **Làm gì**
 
-1. Gắn mức rủi ro **lúc lập kế hoạch**, lấy từ bảng rủi ro toàn cục — không bao giờ để mô hình tự hạ mức cho mình.
+1. Gắn mức rủi ro **lúc lập kế hoạch**, lấy từ bảng rủi ro toàn cục (mức rủi ro = nhãn cho biết hậu quả của hành động nặng tới cỡ nào) — không bao giờ để mô hình tự hạ mức cho mình.
+
+Cách đọc bảng này: cột **Mức** là tên tầng rủi ro; cột **Ví dụ** là việc gì rơi vào tầng đó; cột **Cách xử lý** là con người phải duyệt cỡ nào. Ví dụ, sửa file trong `src/` chỉ cần xem diff (diff = danh sách dòng đã thêm/bỏ) rồi bấm một nút, còn xoá dữ liệu production phải có hai người duyệt.
 
 | Mức | Ví dụ | Cách xử lý |
 |---|---|---|
@@ -25,14 +29,16 @@ Vì cơ hội sai luôn tồn tại, và agent sai mà không biết mình sai. 
 | `elevated` | `db.migrate`, `deploy`, `push --force` | gõ lại xác nhận + chạy thử + lệnh hoàn tác, hết hạn 30 phút |
 | `prod-auth` | đổi quyền, xoay khoá, xoá dữ liệu production | hai người duyệt + báo kênh sự cố, 4 giờ |
 
-2. **Buộc payload có đủ bốn thứ**: diff, blast radius (danh sách tài nguyên bị chạm), kết quả chạy thử, lệnh hoàn tác đã test. Thiếu một trường thì gate không mở — đây là điều kiện kỹ thuật, không phải sự tử tế.
+2. **Buộc payload có đủ bốn thứ**: diff, blast radius (blast radius = "bán kính nổ" — danh sách tài nguyên sẽ bị chạm tới), kết quả chạy thử, lệnh hoàn tác đã test. Thiếu một trường thì gate không mở — đây là điều kiện kỹ thuật, không phải sự tử tế.
 3. Liệt kê blast radius **từ sổ đăng ký, không để mô hình viết**: `prod-db.host=postgres-5a2f`, `database=users size=2.1M rows`, `migration lock ~4s`, `0 down migrations`. Nói chung chung kiểu "đồ production" thì con người không đánh giá được.
 4. Hiển thị cả chi phí (tiền, thời gian) — nhưng chi phí là **một dòng** trong payload, không phải blast radius.
 5. Ghi nhớ ranh giới với module 12: sandbox khoanh *agent được làm gì*, gate quyết *một con người đáng tin phải thấy gì trước khi nó xảy ra*.
 
 **Kiểm tra**
 
-Chạy lại một payload thiếu phần chạy thử → phải ném lỗi ngay. Mã băm (sha256) của diff lúc duyệt phải bằng mã băm của diff lúc thực thi; lệch là sự cố cứng, tự báo động.
+Chạy lại một payload thiếu phần chạy thử → phải ném lỗi ngay (payload = gói thông tin gate đưa cho người duyệt). Mã băm (sha256) của diff lúc duyệt phải bằng mã băm của diff lúc thực thi; lệch là sự cố cứng, tự báo động.
+
+> **Tóm gọn 1 câu:** Gắn mức rủi ro theo hậu quả (đảo ngược được hay không), và gate nguy hiểm hơn chỉ mở khi payload có đủ diff, blast radius, kết quả chạy thử và lệnh hoàn tác.
 
 ---
 
@@ -44,11 +50,11 @@ Một gate mức `elevated` nằm chờ từ 22h. Sáng hôm sau người duyệ
 
 **Vì sao**
 
-Vì nếu hết hạn được hiểu là "cho qua", thì gate chỉ là một gợi ý có chân. Còn nếu đồng hồ hết hạn nằm trong phiên giao diện, đóng laptop là kéo dài đời sống gate — nên đồng hồ phải chạy trong **engine**, không phải trong ứng dụng web.
+Vì nếu hết hạn được hiểu là "cho qua", thì gate chỉ là một gợi ý có chân. Còn nếu đồng hồ hết hạn nằm trong phiên giao diện, đóng laptop là kéo dài đời sống gate — nên đồng hồ phải chạy trong **engine** (engine = phần lõi của hệ thống, chạy trên máy chủ, không phụ thuộc cửa sổ trình duyệt của ai), không phải trong ứng dụng web.
 
 **Làm gì**
 
-1. **Hết hạn luôn = từ chối** (fail closed). `write` 5 phút, `elevated` 30 phút, `prod-auth` 4 giờ rồi báo người trực.
+1. **Hết hạn luôn = từ chối** (fail closed = khi có gì đó hỏng thì chọn nhánh an toàn là từ chối, không phải cho qua). `write` 5 phút, `elevated` 30 phút, `prod-auth` 4 giờ rồi báo người trực.
 2. Đánh dấu task ở trạng thái riêng `blocked(approval-timeout)`, **khác hẳn** `denied`, vì hành động tiếp theo khác nhau: deny thì lập lại kế hoạch, timeout thì loại nhánh và ghi sự kiện cảnh báo.
 3. Không bao giờ diễn giải hết hạn thành approve. Ngoại lệ duy nhất được phép là cửa sổ triển khai ngoài giờ, và nó phải được viết thành policy có chữ ký, mặc định là "hết hạn = hoàn tác + báo người".
 4. Ghim trạng thái gate đang chờ vào tập pin của module 14, để việc nén ngữ cảnh không làm mất nó giữa chừng.
@@ -59,7 +65,9 @@ Vì nếu hết hạn được hiểu là "cho qua", thì gate chỉ là một g
 
 **Kiểm tra**
 
-Chạy test: mở gate → giết tiến trình → khởi động lại → đợi qua mốc hạn → verdict phải là `expired`. Test này bắt được loại lỗi đội thường bỏ: đồng hồ chết mỗi lần restart.
+Chạy test: mở gate → giết tiến trình → khởi động lại → đợi qua mốc hạn → verdict phải là `expired` (verdict = phán quyết cuối của gate: duyệt / từ chối / hết hạn). Test này bắt được loại lỗi đội thường bỏ: đồng hồ chết mỗi lần restart.
+
+> **Tóm gọn 1 câu:** Hết hạn luôn có nghĩa là từ chối, đồng hồ đếm ngược phải chạy trong engine chứ không trong giao diện, và hết hạn với từ chối là hai trạng thái khác nhau vì xử lý tiếp theo khác nhau.
 
 ---
 
@@ -79,11 +87,13 @@ Vì một lần từ chối không phản hồi lại thì không dạy được
 2. Deny phải kích hoạt **lập lại kế hoạch và loại nhánh** đó. Không bao giờ gửi lại nguyên xi một payload.
 3. Nếu cùng kế hoạch thỏa mãn được bằng cách khác, bộ lập kế hoạch phải sinh kế hoạch mới; chỉ khi action mới thực sự ở mức cao hơn thì mới sinh gate mới.
 4. Hỏi lại y hệt sau deny là lý do số một khiến người dùng bấm duyệt "chỉ để hết ồn" — tức là hệ thống tự tay phá hệ thống.
-5. Cấm đường ngoại lệ "sinh thêm loại verdict lúc chạy" (coi tin nhắn Slack hay lời nói là duyệt). Chỉ `settle()` mới được ghi verdict. Bất kỳ kiểu nào "sinh ra" verdict mới lúc chạy đều là lỗ hổng policy, không phải tính năng.
+5. Cấm đường ngoại lệ "sinh thêm loại verdict lúc chạy" (coi tin nhắn Slack hay lời nói là duyệt). Chỉ `settle()` mới được ghi verdict (`settle()` = hàm duy nhất được phép ghi phán quyết vào gate). Bất kỳ kiểu nào "sinh ra" verdict mới lúc chạy đều là lỗ hổng policy, không phải tính năng.
 
 **Kiểm tra**
 
 Sau deny, hệ thống phải gọi loại bỏ nhánh **đúng một lần**. Nếu trong 5 phút sau xuất hiện một yêu cầu trùng khớp hoàn toàn với payload vừa bị từ chối, ghi cờ vi phạm "deny rồi hỏi lại" và báo động.
+
+> **Tóm gọn 1 câu:** Lý do bạn gõ khi từ chối là dữ liệu quý nhất — nó phải đưa agent lập lại kế hoạch theo hướng khác, tuyệt đối không để agent nộp lại đúng yêu cầu cũ.
 
 ---
 
@@ -95,7 +105,7 @@ Run vẫn ở trạng thái chờ duyệt. Bạn khởi động lại dịch v�
 
 **Vì sao**
 
-Vì cách làm sai phổ biến là engine "chờ": nó giữ một biến trong bộ nhớ và chờ. Nhưng engine phải **ghi checkpoint rồi mới báo tạm dừng**, nếu không thì lúc resume không phân biệt được "chưa từng chạy" với "đã chạy dở rồi". Mọi step đã xong phải nằm trong bộ nhớ đệm chống chạy lại và trong nơi lưu sự kiện.
+Vì cách làm sai phổ biến là engine "chờ": nó giữ một biến trong bộ nhớ và chờ (gate trong RAM = trạng thái duyệt chỉ nằm trong bộ nhớ tạm, mất ngay khi máy restart). Nhưng engine phải **ghi checkpoint rồi mới báo tạm dừng** (checkpoint = bản chụp trạng thái ghi xuống đĩa, dùng để chạy tiếp sau restart), nếu không thì lúc resume không phân biệt được "chưa từng chạy" với "đã chạy dở rồi". Mọi step đã xong phải nằm trong bộ nhớ đệm chống chạy lại và trong nơi lưu sự kiện.
 
 **Làm gì**
 
@@ -112,6 +122,8 @@ Vì cách làm sai phổ biến là engine "chờ": nó giữ một biến trong
 
 Test bắt buộc: mở gate → giết tiến trình → khởi động lại → verdict phải vẫn còn hiệu lực và đồng hồ hết hạn vẫn chạy. Test thứ hai: resume sau khi duyệt phải **thực thi đúng một lần**, không phải hai.
 
+> **Tóm gọn 1 câu:** Gate và đồng hồ hết hạn phải sống trong nơi lưu sự kiện trên đĩa (checkpoint trước khi dừng), nên restart xong gate vẫn còn đó — và hành động được duyệt chỉ chạy đúng một lần.
+
 ---
 
 ## Q5. Team tôi duyệt 98% trong 10 giây — gate còn tác dụng gì nữa? [→ §7 UX, §9.3 Bộ hồi quy]
@@ -122,7 +134,7 @@ Báo cáo cuối quý cho thấy tỉ lệ duyệt 98% và thời gian chờ tru
 
 **Vì sao**
 
-Vì **mệt mỏi ra quyết định là kiểu hỏng thầm lặng số một**: đo thấy tỉ lệ duyệt tăng đồng thời với thời gian quyết định giảm. Nghiên cứu *automation bias* (Parasuraman & Manzey, 2010) gọi tên đúng thứ này: con người học được rằng cảnh báo thường báo động giả, nên ngừng kiểm tra thứ thật. Ba loại bằng chứng có độ tin cậy khác nhau — dry-run + diff đo được thắng một lời giải thích kiểu "tin tôi, tôi đã kiểm tra".
+Vì **mệt mỏi ra quyết định là kiểu hỏng thầm lặng số một**: đo thấy tỉ lệ duyệt tăng đồng thời với thời gian quyết định giảm. Nghiên cứu *automation bias* (Parasuraman & Manzey, 2010; automation bias = xu hướng con người tin máy tự động và ngừng tự kiểm tra) gọi tên đúng thứ này: con người học được rằng cảnh báo thường báo động giả, nên ngừng kiểm tra thứ thật. Ba loại bằng chứng có độ tin cậy khác nhau — dry-run (chạy thử trong môi trường ảo, không đụng dữ liệu thật) + diff đo được thắng một lời giải thích kiểu "tin tôi, tôi đã kiểm tra".
 
 **Làm gì**
 
@@ -136,6 +148,8 @@ Vì **mệt mỏi ra quyết định là kiểu hỏng thầm lặng số một*
 **Kiểm tra**
 
 Chạy hằng tuần câu hỏi so sánh tỉ lệ duyệt theo từng mức. Bất kỳ mức nào có tỉ lệ 98% và thời gian chờ dưới 10 giây phải bị đánh dấu là "đã chết" và kéo lại ngay.
+
+> **Tóm gọn 1 câu:** Cổng duyệt chết khi ai cũng bấm duyệt mà không đọc — phòng bằng cách đo tỉ lệ duyệt và thời gian chờ theo từng mức rủi ro, và thêm ma sát ở mức cao thay vì bỏ gate.
 
 ---
 

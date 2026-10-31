@@ -2,6 +2,8 @@
 
 Câu hỏi nào khó hiểu thì đọc `../README.md` phần trong ngoặc.
 
+**Cách đọc file này:** mỗi câu hỏi có 4 phần — **Bạn sẽ thấy** (tình huống thật), **Vì sao** (nguyên nhân), **Làm gì** (các bước), **Kiểm tra** (cách biết đúng). Thuật ngữ khó được giải thích ngay tại chỗ.
+
 ---
 
 ## Q1. 3 người đọc 1.000 tài liệu, ra 3 node "Alice" khác nhau — gộp bằng cách nào, ngưỡng bao nhiêu? [→ §4 Gộp Trùng Lặp]
@@ -23,11 +25,15 @@ Mỗi người trích từ một đoạn văn bản khác nhau, không ai thấy
 5. **Sửa cả quan hệ theo bảng ánh xạ** trước khi ghi. Sau khi gộp, một số quan hệ tự thành quan hệ với chính nó — loại bỏ.
 6. Luôn để đường lui: cho phép tách lại (split) nếu phát hiện gộp nhầm.
 
+(Giải thích các thuật ngữ: chuẩn hoá = đưa về một dạng thống nhất; Levenshtein = điểm số đo hai chuỗi chữ khác nhau mấy ký tự; TF-IDF = cách so chữ dựa trên từ hiếm/giá trị; embedding = biến chữ thành vector số để so nghĩa. Ngưỡng 0.85 = nếu độ giống ≥ 0.85 trên thang 0-1 thì coi là một.)
+
 > 📄 **Code ví dụ:** [`examples/01-q1-3-nguoi-oc-1-000-tai-lieu.py`](examples/01-q1-3-nguoi-oc-1-000-tai-lieu.py)
 
 **Kiểm tra**
 
 In ra dòng `Dedup: 'Alice Nguyen' -> 'Nguyễn Văn A' (sim=0.91)` cho mỗi lần gộp. Sau để ý: số node Person có tên gần giống nhau trong graph sau khi gộp phải bằng số người thật. Đo lại câu "CTO là ai?" — phải ra một người, không phải ba.
+
+> **Tóm gọn 1 câu:** Gộp trùng lặp là bắt buộc chứ không phải tùy chọn — chuẩn hoá → so mờ → so embedding, ngưỡng 0.85, luôn ghi bảng ánh xạ và cho phép tách lại.
 
 ---
 
@@ -47,13 +53,15 @@ Lần gọi một (single-pass) có độ bao phủ cao nhưng độ chính xác
 2. Chạy vòng lặp: vòng 1 trích tự do. Vòng 2 gửi lại văn bản **kèm danh sách đã trích**, và yêu cầu "còn entity nào bỏ sót không?".
 3. Chạy tối đa 2 vòng hợp lý. **Dừng sớm** nếu một vòng không ra entity mới nào (biến `added == 0`) — tránh đốt token vô ích.
 4. Chặn trùng ngay trong vòng lặp bằng khoá tên đã thấy (chuẩn hoá lowercase + bỏ khoảng trắng thừa).
-5. Chạy qua Ollama ở `http://localhost:11434`, yêu cầu trả về đúng định dạng JSON để không phải tự cắt chuỗi.
+5. Chạy qua Ollama ở `http://localhost:11434`, yêu cầu trả về đúng định dạng JSON để không phải tự cắt chuỗi. (Ollama = phần mềm chạy model AI trên chính máy bạn.)
 
 > 📄 **Code ví dụ:** [`examples/02-q2-goi-llm-trich-mot-lan-thi-bo.py`](examples/02-q2-goi-llm-trich-mot-lan-thi-bo.py)
 
 **Kiểm tra**
 
 Chạy Lab 2: trích cùng một văn bản với `gleaning=0` rồi `gleaning=2`, so sánh số thực thể tìm được và đối chiếu thủ công xem cái nào bị bỏ sót. Nếu vòng 3 không tăng thêm gì thì dừng ở 2 vòng, đừng tăng lên.
+
+> **Tóm gọn 1 câu:** LLM gọi một lần hay quên phần cuối văn bản dài — chia đoạn nhỏ có chồng lấn và chạy vòng gleaning (hỏi lại "còn sót gì không?"), tối đa 2 vòng.
 
 ---
 
@@ -75,6 +83,8 @@ Không có **ontology** (bản thiết kế: loại thực thể nào tồn tạ
 4. Lọc theo `confidence` với ngưỡng **0.7** và **in ra số lượng trước/sau** để bạn thấy mình đang vứt bao nhiêu.
 5. Quan hệ lạ không xoá hẳn — cho vào nhóm `pending` để người duyệt định kỳ, rồi mới quyết định có bổ sung vào ontology không.
 
+**Cách đọc bảng này:** cột "Kiểu trích" là 4 cách lấy quan hệ từ đơn giản tới thông minh; "Độ đúng" = ít sai bao nhiêu; "Độ đủ" = bắt được bao nhiêu; cột cuối là nên dùng khi nào. Ví dụ, luật cố định rất đúng nhưng chỉ áp dụng cho mã/ngày tháng.
+
 | Kiểu trích | Độ đúng | Độ đủ | Hợp khi nào |
 |---|---|---|---|
 | Luật cố định (mã hợp đồng) | Rất cao | Thấp | Mã HĐ, ngày tháng |
@@ -85,6 +95,8 @@ Không có **ontology** (bản thiết kế: loại thực thể nào tồn tạ
 **Kiểm tra**
 
 Chạy pipeline đầu-cuối: sau bước gộp trùng lặp mới chạy kiểm tra ontology, và in ra ba dòng thống kê: `Raw: N entities`, `After dedup`, `After validation`. Nếu số quan hệ giảm hơn 30% thì hãy đọc lại 10 cạnh bị loại xem đó là rác thật hay quan hệ đúng.
+
+> **Tóm gọn 1 câu:** Định schema trước (ontology.yaml), kiểm tra mọi quan hệ trước khi ghi, lọc theo confidence ≥ 0.7, và quan hệ lạ đưa vào "pending" thay vì xoá.
 
 ---
 
@@ -112,6 +124,8 @@ Knowledge graph production thay đổi hằng ngày. Cách duy nhất để khô
 
 Nạp lại **cùng một tài liệu hai lần** rồi đếm số node và số cạnh. Hai lần phải ra kết quả giống hệt nhau; nếu tăng lên thì đang dùng `CREATE` ở đâu đó. Sau đó thử xoá mềm một node rồi truy vấn lại — node vẫn còn nhưng đã bị đánh dấu, và lịch sử quan hệ cũ không bị cắt.
 
+> **Tóm gọn 1 câu:** Không cần xây lại toàn bộ — dùng `MERGE` thay `CREATE` (chạy lại không nhân bản), xoá mềm bằng cờ `deleted`, và ghi log mỗi tài liệu đã nạp.
+
 ---
 
 ## Q5. Nên chạy pipeline cố định hay để LLM-agent tự xây graph? [→ §7 Agentic Construction]
@@ -132,6 +146,8 @@ Hai cách khác nhau về bản chất. Pipeline cố định đi **một chiề
 4. Cân nhắc chi phí: agentic tốn **2–3 lần** số lần gọi LLM so với batch một vòng. Các hệ thống điển hình là KnoBuilder, KG-Agent, RAGA.
 5. Chọn theo quy mô: dữ liệu lớn, chạy theo lô → pipeline. Đồ thị nhỏ, cần chính xác cao, muốn tự điều chỉnh schema → agent.
 
+**Cách đọc bảng này:** so sánh 2 cách xây graph theo 3 tiêu chí. Ví dụ, hàng "Bằng chứng": pipeline không lưu nguồn, còn agent gắn `source_chunk` — tức ghi rõ mỗi quan hệ lấy từ đoạn văn bản nào.
+
 | Tiêu chí | Pipeline cố định | Agent |
 |---|---|---|
 | Luồng | Một chiều, gom một lượt | Đọc → ghi → kiểm tra → sửa |
@@ -141,6 +157,8 @@ Hai cách khác nhau về bản chất. Pipeline cố định đi **một chiề
 **Kiểm tra**
 
 Lấy 20 tài liệu thật, chạy cả hai cách, rồi đối chiếu 50 quan hệ ngẫu nhiên: bao nhiêu cái đúng, bao nhiêu cái bịa, và chi phí LLM mỗi cách. Quyết định dựa trên con số đó chứ không dựa vào cảm tính.
+
+> **Tóm gọn 1 câu:** Pipeline cho dữ liệu lớn giá rẻ; agent cho graph nhỏ cần chính xác và ghi nguồn từng quan hệ — chọn bằng cách đo trên 20 tài liệu thật của bạn.
 
 ---
 

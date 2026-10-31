@@ -16,9 +16,9 @@ Nếu chỉ đo điểm câu trả lời cuối, bạn phải chỉnh mù. Chỉ
 
 **Làm gì**
 
-1. **Phần tìm kiếm**: đo độ chính xác trong 5 kết quả đầu (P@5), độ đầy đủ (R@5), và thứ hạng trung bình của kết quả đúng (MRR).
-2. **Phần diễn giải**: đo trung thành (faithfulness) — có mệnh đề nào trong câu trả lời không có bằng chứng; tỉ lệ bịa = 1 trừ trung thành.
-3. Với câu hỏi nhiều bước, thêm **độ chính xác đường đi**: có bao nhiêu đường trả về đúng so với đường chuẩn.
+1. **Phần tìm kiếm**: đo độ chính xác trong 5 kết quả đầu (P@5), độ đầy đủ (R@5), và thứ hạng trung bình của kết quả đúng (MRR). (**P@5** = precision@5 — trong 5 kết quả đầu có bao nhiêu cái đúng, tính theo %; **R@5** = recall@5 — trong tổng số thứ đúng, bắt được bao nhiêu % trong 5 kết quả đầu; **MRR** = 1 chia cho thứ hạng của đáp án đúng, đúng ở hạng 1 được 1.0, hạng 5 được 0.2.)
+2. **Phần diễn giải**: đo trung thành (faithfulness) — có mệnh đề nào trong câu trả lời không có bằng chứng; tỉ lệ bịa = 1 trừ trung thành. (**Faithfulness** = mọi lời khẳng định trong câu trả lời phải tìm thấy trong ngữ cảnh lấy từ graph.)
+3. Với câu hỏi nhiều bước, thêm **độ chính xác đường đi**: có bao nhiêu đường trả về đúng so với đường chuẩn. (**Đường đi** = chuỗi các cạnh trên graph mà hệ thống đi qua để trả lời.)
 4. Chạy cả hai bộ chỉ số trên cùng một bộ câu hỏi đối chiếu chuẩn, tách theo từng câu chứ không gộp chung một điểm.
 
 > 📄 **Code ví dụ:** [`examples/01-q1-bot-tra-loi-sai-ma-khong-biet.py`](examples/01-q1-bot-tra-loi-sai-ma-khong-biet.py)
@@ -26,6 +26,8 @@ Nếu chỉ đo điểm câu trả lời cuối, bạn phải chỉnh mù. Chỉ
 **Kiểm tra**
 
 Khi một câu hỏi trả lời sai, bạn phải chỉ ra được ngay: chỉ số nào ở phần tìm đã đỏ. Nếu P@5 và MRR tốt mà câu trả lời vẫn sai thì lỗi nằm ở phần sinh câu trả lời, không phải graph.
+
+> **Tóm gọn 1 câu:** Đo tách bạch phần "tìm" (P@5, R@5, MRR) và phần "trả lời" (trung thành, tỉ lệ bịa) để biết lỗi nằm ở graph hay ở mô hình — không phải chỉnh mù.
 
 ---
 
@@ -41,16 +43,18 @@ Quy ước đã gọi cho trường hợp này là rác vào — rác ra. Đo ph
 
 **Làm gì**
 
-1. Đo chín thước sức khoẻ: độ phủ node và cạnh, tỉ lệ trùng lặp, độ liên thông, mật độ, số node trung bình, node cô lập, tỉ lệ cạnh vi phạm, độ tươi mới theo thời gian.
-2. So với ngưỡng tham khảo: phủ node > 80%, phủ cạnh > 70%, trùng lặp < 5%, liên thông > 90%, trung bình 3–10 quan hệ mỗi node, cạnh vi phạm = 0%, tươi mới > 95%.
+1. Đo chín thước sức khoẻ: độ phủ node và cạnh, tỉ lệ trùng lặp, độ liên thông, mật độ, số node trung bình, node cô lập, tỉ lệ cạnh vi phạm, độ tươi mới theo thời gian. (Giải thích ở phần "Làm gì" số 2; **độ liên thông** = các node có nối liền thành một khối hay gãy thành nhiều mảnh; **node cô lập** = node không nối với ai cả.)
+2. So với ngưỡng tham khảo: phủ node > 80%, phủ cạnh > 70%, trùng lặp < 5%, liên thông > 90%, trung bình 3–10 quan hệ mỗi node, cạnh vi phạm = 0%, tươi mới > 95%. (**Tươi mới** = cạnh còn hiệu lực, chưa hết hạn mà chưa được cập nhật.)
 3. Khi kiểm tra phủ, đừng so chuỗi ký tự: "Alice" và "Alice Nguyen" phải được coi là có thể cùng một người, nếu không bạn sẽ tưởng mình thiếu dữ liệu.
-4. Chạy phép so sánh độ liên thông trên đồ thị hướng bằng cách coi cạnh là không chiều.
+4. Chạy phép so sánh độ liên thông trên đồ thị hướng bằng cách coi cạnh là không chiều. (**Đồ thị hướng** = cạnh có chiều đi, ví dụ A quản lý B khác B quản lý A; bỏ chiều để đếm "có nối với nhau không".)
 
 > 📄 **Code ví dụ:** [`examples/02-q2-graph-co-5-000-node-roi-ma.py`](examples/02-q2-graph-co-5-000-node-roi-ma.py)
 
 **Kiểm tra**
 
 Dựng hai graph: một đồng bộ và đầy đủ, một nhiều node cô lập và trùng tên — chạy cùng bộ chỉ số thì phải ra hai bộ số khác rõ rệt. Sửa lỗi node cô lập thì tỉ lệ node cô lập phải giảm, tỉ lệ liên thông phải tăng.
+
+> **Tóm gọn 1 câu:** Đo sức khỏe graph trước (phủ đủ, ít trùng, liên thông, không vi phạm) — rác vào thì rác ra, code tốt cũng vô nghĩa nếu graph xấu.
 
 ---
 
@@ -66,8 +70,8 @@ Có hai nhóm lỗi riêng biệt: graph bị trích sai quan hệ, và phần t
 
 **Làm gì**
 
-1. Tách câu trả lời thành các **mệnh đề nhỏ** (claims).
-2. Cho một mô hình ngôn ngữ chấm từng mệnh đề có nằm trong ngữ cảnh lấy từ graph không, trả về JSON gồm danh sách claims, cờ `supported` và điểm trung thành.
+1. Tách câu trả lời thành các **mệnh đề nhỏ** (claims). (**Claim** = một lời khẳng định kiểm chứng được; ví dụ "Phoenix ngân sách 700 triệu" là một claim.)
+2. Cho một mô hình ngôn ngữ chấm từng mệnh đề có nằm trong ngữ cảnh lấy từ graph không, trả về JSON gồm danh sách claims, cờ `supported` và điểm trung thành. (**JSON** = định dạng dữ liệu có cấu trúc mà code đọc được; `supported` = cờ "có bằng chứng / không".)
 3. Tỉ lệ bịa = 1 − điểm trung thành. Yêu cầu mô hình trả về đúng định dạng JSON.
 4. Kiểm tra thêm phần trích dẫn: mỗi đường dẫn nêu trong câu trả lời có thật trong graph không.
 
@@ -76,6 +80,8 @@ Có hai nhóm lỗi riêng biệt: graph bị trích sai quan hệ, và phần t
 **Kiểm tra**
 
 Chạy một câu trả lời đúng (điểm trung thành 1.0, tỉ lệ bịa 0.0) và một câu trả lời sai, phải cho hai kết quả đối xứng. Mọi phần trích dẫn phải kiểm tra được bằng cách dò từng cặp node liền kề trong graph.
+
+> **Tóm gọn 1 câu:** Tách câu trả lời thành từng mệnh đề rồi dùng LLM chấm "có bằng chứng không" — tự động phát hiện bịa trên hàng nghìn câu mà không cần đọc tay.
 
 ---
 
@@ -87,7 +93,7 @@ Bảng điểm báo động đạt, sếp gật đầu, rồi ba tuần sau có 
 
 **Vì sao**
 
-Hai chỉ số khớp đáp án (EM/F1) chỉ đo **kết quả cuối**. Ba chỗ hở phổ biến năm 2025–2026: không đo được phần bằng chứng đưa vào có đúng và đủ không; hệ thống nhiều bước có thể trôi hướng giữa chừng; và báo cáo gộp một chỉ số cho cả hai nguồn bịa.
+Hai chỉ số khớp đáp án (EM/F1) chỉ đo **kết quả cuối**. Ba chỗ hở phổ biến năm 2025–2026: không đo được phần bằng chứng đưa vào có đúng và đủ không; hệ thống nhiều bước có thể trôi hướng giữa chừng; và báo cáo gộp một chỉ số cho cả hai nguồn bịa. (**EM** = exact match — khớp chữ chính xác 100%; **F1** = điểm hài hòa giữa bắt trúng và không bắt nhầm — cả hai chỉ nhìn câu trả lời cuối, không nhìn cách tìm.)
 
 **Làm gì**
 
@@ -99,7 +105,9 @@ Hai chỉ số khớp đáp án (EM/F1) chỉ đo **kết quả cuối**. Ba ch�
 
 **Kiểm tra**
 
-Trên 5 câu hỏi global sensemaking, điểm phải cao hơn hẳn RAG thuần. Trên các câu hỏi một bước, hãy chủ động báo cáo điểm thấp hơn thay vì giấu đi — đó là sự thật, không phải lỗi.
+Trên 5 câu hỏi global sensemaking, điểm phải cao hơn hẳn RAG thuần. Trên các câu hỏi một bước, hãy chủ động báo cáo điểm thấp hơn thay vì giấu đi — đó là sự thật, không phải lỗi. (**Global sensemaking** = câu hỏi tổng hợp cả tổ chức, ví dụ "chủ đề chính trong 10.000 tài liệu là gì?".)
+
+> **Tóm gọn 1 câu:** Thêm ba chỉ số bị thiếu (đủ bằng chứng, ngữ cảnh gọn, không trôi hướng) và báo cáo riêng từng nhóm câu hỏi — điểm khớp đáp án 85% không đảm bảo hệ thống đáng tin.
 
 ---
 
@@ -115,9 +123,9 @@ Bài toán này không phải phân loại hai lớp (đúng/sai) nên không d�
 
 **Làm gì**
 
-1. Báo cáo tỉ lệ đáp án đúng nằm trong top 1, top 3, top 10 (Hits@K).
-2. Báo cáo **thứ hạng nghịch đảo trung bình**: đúng ở hạng 1 được 1.0, hạng 5 được 0.2.
-3. Báo cáo thứ hạng trung bình (MR) để thấy đáp án bị bỏ lỡ xa bao nhiêu, và AUC cho bài toán dự đoán cạnh.
+1. Báo cáo tỉ lệ đáp án đúng nằm trong top 1, top 3, top 10 (Hits@K). (**Hits@K** = trong K gợi ý đầu, bao nhiêu % là đáp án đúng; Hits@10 = 0.45 nghĩa là 45% câu hỏi có đáp án đúng nằm trong 10 gợi ý đầu.)
+2. Báo cáo **thứ hạng nghịch đảo trung bình**: đúng ở hạng 1 được 1.0, hạng 5 được 0.2. (Chỉ số này chính là **MRR** — Mean Reciprocal Rank.)
+3. Báo cáo thứ hạng trung bình (MR) để thấy đáp án bị bỏ lỡ xa bao nhiêu, và AUC cho bài toán dự đoán cạnh. (**MR** càng thấp càng tốt — đáp án đúng càng gần đầu; **AUC** = điểm phân biệt đúng/sai, 1.0 hoàn hảo, 0.5 đoán mò.)
 4. Ngưỡng tham khảu: Hits@10 > 0.5, MRR > 0.3, MR < 100, AUC > 0.8.
 5. Mẫu số liệu từ một lần chạy: Hits@1 = 0.15, Hits@10 = 0.45, MRR = 0.28, MR = 85.3 — đối chiếu đúng với kỳ vọng.
 
@@ -126,6 +134,8 @@ Bài toán này không phải phân loại hai lớp (đúng/sai) nên không d�
 **Kiểm tra**
 
 Chạy lại với các ngưỡng 1, 3, 10 và in ra cả ba chỉ số cùng lúc. Nếu Hits@1 thấp nhưng Hits@10 cao, thì hệ thống dùng để gợi ý ("xem 10 gợi ý đầu") vẫn ổn, còn dùng để chốt tự động thì chưa an toàn.
+
+> **Tóm gọn 1 câu:** Với bài dự đoán quan hệ, đừng dùng "đúng 45%" — hãy báo Hits@K, MRR, MR vì người dùng thật chỉ đọc vài gợi ý đầu, thứ hạng mới là điều quan trọng.
 
 ---
 

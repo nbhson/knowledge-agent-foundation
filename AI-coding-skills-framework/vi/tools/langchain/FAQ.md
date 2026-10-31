@@ -2,17 +2,21 @@
 
 Nếu câu hỏi nào khó hiểu thì đọc `../README.md` phần trong ngoặc vuông.
 
+*(LangChain = thư viện nền kết nối model, tool, memory; LangGraph = lớp điều phối trên đó, vẽ harness thành đồ thị.)*
+
 ---
 
 ## Q1. Tôi cần cả LangChain lẫn LangGraph không, hay cài một cái là đủ? [→ Tổng Quan]
 
 **Bạn sẽ thấy**
 
-Bạn chỉ muốn làm một việc đơn giản: hỏi tài liệu của công ty và trả lời. Nhưng tài liệu hướng dẫn nhắm hai tên package và còn nói tới `StateGraph`, `add_conditional_edges`, `MemorySaver` — bạn không biết cái nào là bắt buộc, cái nào để sau.
+Bạn chỉ muốn làm một việc đơn giản: hỏi tài liệu của công ty và trả lời. Nhưng tài liệu hướng dẫn nhắm hai tên package (package = gói thư viện cài bằng pip/npm) và còn nói tới `StateGraph`, `add_conditional_edges`, `MemorySaver` — bạn không biết cái nào là bắt buộc, cái nào để sau.
 
 **Vì sao**
 
 Hai tên này là hai tầng khác nhau. LangChain là lớp nền: bọc model (`ChatOpenAI`, `ChatAnthropic`), định nghĩa tool (`@langchain/core/tools`), template prompt, retriever, và lịch sử hội thoại (`InMemoryChatMessageHistory`). LangGraph là lớp điều phối: nó cầu nối các thứ trên thành một **đồ thị có trạng thái** (`StateGraph`) — mỗi node là một phần của harness, có cạnh điều kiện và có vòng lặp. Cài LangGraph là đã có sẵn phần nền bạn cần, nên gần như không có tình huống phải chọn "chỉ LangChain".
+
+*(Chú giải: retriever = bộ tra cứu tài liệu; node = một điểm trong đồ thị, làm một việc; cạnh = mũi tên nối hai node; InMemoryChatMessageHistory = lịch sử hội thoại giữ trong RAM.)*
 
 **Làm gì**
 
@@ -28,9 +32,13 @@ Hai tên này là hai tầng khác nhau. LangChain là lớp nền: bọc model 
 
 Chạy hai bản cùng một task: bản một lượt gọi, bản có `StateGraph`. Xác nhận bản `StateGraph` thật sự quay lại node model sau khi node tool trả kết quả — nếu chỉ chạy node tool rồi kết thúc thì đồ thị của bạn chưa có vòng lặp.
 
+> **Tóm gọn 1 câu:** Cài LangGraph là đủ (nó chứa sẵn phần LangChain cần dùng); chỉ thêm `StateGraph` khi bạn cần vòng lặp, còn một lượt gọi thì dùng phần nền cho gọn.
+
 ---
 
 ## Q2. Vòng lặp trong `StateGraph` không dừng, cứ chạy mãi — debug ở đâu? [→ LangGraph (Orchestration)]
+
+*(debug = truy tìm lỗi.)*
 
 **Bạn sẽ thấy**
 
@@ -38,7 +46,7 @@ Agent gọi tool, nhận kết quả, lại gọi tool, lại nhận kết quả
 
 **Vì sao**
 
-Vì trong đồ thị có **hai loại cạnh khác nhau** và nếu lẫn lộn thì không có đường thoát. Cạnh thường (`add_edge`) là đi thẳng, không kiểm tra gì — đi sai là chạy vòng mãi. Cạnh điều kiện (`add_conditional_edges`) là chỗ duy nhất để quyết định dừng: hàm `should_continue` trả về `"tools"` thì sang node tool, trả về `END` thì hết. Nếu `should_continue` luôn trả `"tools"`, hoặc lời gọi tool vẫn trả về kết quả giống lần trước khiến agent nghĩ chưa xong, thì đồ thị không có đường về `END`.
+Vì trong đồ thị có **hai loại cạnh khác nhau** và nếu lẫn lộn thì không có đường thoát. Cạnh thường (`add_edge`) là đi thẳng, không kiểm tra gì — đi sai là chạy vòng mãi. Cạnh điều kiện (`add_conditional_edges`) là chỗ duy nhất để quyết định dừng: hàm `should_continue` trả về `"tools"` thì sang node tool, trả về `END` thì hết (END = nhãn "kết thúc đồ thị"). Nếu `should_continue` luôn trả `"tools"`, hoặc lời gọi tool vẫn trả về kết quả giống lần trước khiến agent nghĩ chưa xong, thì đồ thị không có đường về `END`.
 
 **Làm gì**
 
@@ -55,6 +63,8 @@ Vì trong đồ thị có **hai loại cạnh khác nhau** và nếu lẫn lộn
 
 Chạy một task đã biết đáp án, đặt trần thấp như 5 lượt, và ghi lại trạng thái sau mỗi vòng. Lần gần nhất phải có lý do dừng ghi lại được. Nếu không có lý do dừng mà bị cắt bởi trần, hệ thống của bạn chưa biết khi nào đã xong.
 
+> **Tóm gọn 1 câu:** Lỗi chạy mãi nằm ở cạnh điều kiện: kiểm tra `should_continue` có nhánh END dựa trên tiến trình thật, tách rõ hai loại cạnh, và luôn đặt trần số lượt.
+
 ---
 
 ## Q3. Harness RAG thì gắn `Retriever` và nén context vào node nào? [→ Case Studies 1, Quan Hệ Với Harness]
@@ -65,7 +75,7 @@ Bạn đã có cơ sở dữ liệu tài liệu nhưng agent trả lời sai. C�
 
 **Vì sao**
 
-Vì lấy tài liệu và làm gọn tài liệu là **hai việc khác nhau ở hai node khác nhau**. Node lấy kiến thức (harness/01) gọi retriever và trả về danh sách đoạn văn thô — càng nhiều càng tốt để không bỏ sót. Node dựng context (harness/02) mới là chỗ phải lọc và nén lại. Làm hai việc này chung một node là nguyên nhân điển hình làm RAG "quên" hoặc "chìm". `ContextualCompressionRetriever` sinh ra đúng để cắt phần thừa trước khi tốn token.
+Vì lấy tài liệu và làm gọn tài liệu là **hai việc khác nhau ở hai node khác nhau** (RAG = trả lời dựa trên tài liệu tra cứu; node = một bước trong đồ thị). Node lấy kiến thức (harness/01) gọi retriever và trả về danh sách đoạn văn thô — càng nhiều càng tốt để không bỏ sót. Node dựng context (harness/02) mới là chỗ phải lọc và nén lại. Làm hai việc này chung một node là nguyên nhân điển hình làm RAG "quên" hoặc "chìm". `ContextualCompressionRetriever` sinh ra đúng để cắt phần thừa trước khi tốn token.
 
 **Làm gì**
 
@@ -75,6 +85,8 @@ Vì lấy tài liệu và làm gọn tài liệu là **hai việc khác nhau ở
 4. Nếu câu hỏi ngoài phạm vi tài liệu, hãy để agent nói không biết thay vì đoán.
 
 **Làm gì — lắp vào node nào**
+
+*Bảng gắn module vào từng bước harness — đọc vế trái = bước, vế phải = module LangChain dùng.*
 
 ```
 harness/01-retrieve → Chroma retriever (xem tools/vector-db/)
@@ -87,6 +99,8 @@ harness/06-tool     → ToolNode gọi web_search, query_db
 
 Đặt câu hỏi có câu trả lời nằm ngoài tài liệu. Agent phải nói không có thông tin, không được bịa dựa trên các đoạn văn được lấy về. Đặt câu hỏi có đáp án và so số đoạn văn đi vào prompt trước và sau khi nén.
 
+> **Tóm gọn 1 câu:** Tách hai node: node retrieve lấy nhiều (không cắt), node build nén lại cho gọn — trộn hai việc vào một node là nguyên nhân RAG trả lời chìm hoặc bịa.
+
 ---
 
 ## Q4. "700+ integrations" — có phải tôi phải cài hết không? [→ Tại Sao LangChain Quan Trọng]
@@ -97,7 +111,9 @@ Câu quảng cáo của framework là có hơn 700 tích hợp sẵn. Bạn bắ
 
 **Vì sao**
 
-Vì con số 700 đếm **số tích hợp có sẵn trong hệ sinh thái**, không phải số thứ bạn phải cài. Điều bạn thật sự cần cho một harness chỉ khoảng bảy thứ, và mỗi thứ đã có một module cụ thể. Một agent viết code chỉ cần vài món, cài thêm chỉ làm chậm dự án và mở rộng bề mặt lỗi.
+Vì con số 700 đếm **số tích hợp có sẵn trong hệ sinh thái**, không phải số thứ bạn phải cài (tích hợp = phần kết nối với dịch vụ ngoài như Slack, Postgres...). Điều bạn thật sự cần cho một harness chỉ khoảng bảy thứ, và mỗi thứ đã có một module cụ thể. Một agent viết code chỉ cần vài món, cài thêm chỉ làm chậm dự án và mở rộng bề mặt lỗi.
+
+*Cách đọc bảng này: cột trái là bước harness, cột phải là module LangChain tối thiểu cho bước đó.*
 
 | Phần harness | Chỉ cần thứ này |
 |---|---|
@@ -105,6 +121,8 @@ Vì con số 700 đếm **số tích hợp có sẵn trong hệ sinh thái**, kh
 | 02 dựng context | `ContextualCompressionRetriever` |
 | 05 sinh prompt | `ChatPromptTemplate` |
 | 06 chọn & chạy tool | `ToolNode`, `DynamicStructuredTool` |
+
+*(Chú giải: MemorySaver = nơi lưu trạng thái giữa các bước; ToolNode = node chuyên gọi tool; DynamicStructuredTool = tool khai báo bằng schema có cấu trúc.)*
 
 **Làm gì**
 
@@ -116,6 +134,8 @@ Vì con số 700 đếm **số tích hợp có sẵn trong hệ sinh thái**, kh
 **Kiểm tra**
 
 Thử xoá (không cài) các gói tích hợp không dùng rồi chạy lại task thật của bạn. Nếu vẫn chạy, bạn đang cài thừa. Nếu hỏng, hãy xem hỏng vì tích hợp bị dùng ngầm — đó là dấu hiệu kiến trúc của bạn phụ thuộc vào thứ không kiểm soát.
+
+> **Tóm gọn 1 câu:** 700 là số tích hợp *có sẵn để chọn*, không phải *phải cài* — chỉ cài 4–7 module theo bảng và thêm gói mới khi thật sự cần.
 
 ---
 
@@ -139,6 +159,8 @@ Hai ví dụ khác nhau về nơi chúng được dùng. Phần định nghĩa t
 **Kiểm tra**
 
 Chạy đoạn ví dụ tối thiểu bằng ngôn ngữ bạn chọn: một lời gọi model cộng với một tool. Nếu tool trả về kết quả và mô hình đọc được kết quả đó, bạn đã có nền để viết `StateGraph` sau đó.
+
+> **Tóm gọn 1 câu:** Chọn theo dự án của bạn (web thì TypeScript, phân tích thì Python), không trộn hai ngôn ngữ cho một tầng — TypeScript gần code sản phẩm, Python gần script thử nghiệm.
 
 ---
 

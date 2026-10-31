@@ -27,9 +27,15 @@ Three hundred years later, that same abstraction describes:
 
 **A graph is not just a new data structure. It is a friendly way of seeing the world as a web of relationships.**
 
+> **One-line summary:** A graph is just "things" (nodes) and "links between them" (edges) — the same picture works for bridges, friendships, and contracts.
+
 ### Why Foundations Matter?
 
+Signpost: this section proves with numbers that skipping the basics costs real time and money.
+
 > *"If you don't understand graph types and representations, you'll pick the wrong DB, write wrong queries, and measure with the wrong metrics."*
+
+How to read this table: each row is one study, the source name, and its finding in one line. For instance, row 1 says a beginner mistake — using a matrix on a sparse graph — makes everything 100× slower.
 
 #### 3 Pieces of Evidence
 
@@ -39,9 +45,13 @@ Three hundred years later, that same abstraction describes:
 | 2 | **Neo4j Benchmark (2024)** | Property graphs are **3–5× faster** than RDF triple stores for 2–3 hop traversal queries |
 | 3 | **Microsoft GraphRAG** | Understanding community structure (modularity) helps pick the right Leiden resolution → 15% better answer quality |
 
+> **One-line summary:** Wrong representation = 100× slower, wrong DB model = 3–5× slower, wrong community settings = worse answers — the basics decide performance.
+
 ---
 
 ## Overview
+
+Signpost: this section previews the whole module in one diagram — read it top-down as the learning path.
 
 This module gives you the **friendly groundwork** that every later module builds on:
 
@@ -54,9 +64,15 @@ flowchart TD
     E --> F["Ready for 02-Knowledge Graph"]
 ```
 
+(Reading the diagram: each box is one section of this module, and the arrows are the learning order. V = vertices/nodes, E = edges. CSR = a compressed storage format explained in §3.)
+
+> **One-line summary:** This module walks you from "what a graph is" to "which storage model to pick", in that order.
+
 ---
 
 ## Contents
+
+How to read this table: each row is one section — its number, title, and what it covers. Links jump to the section.
 
 | # | Topic | Description |
 |---|--------|-------|
@@ -67,9 +83,13 @@ flowchart TD
 | 5 | [Property Graph vs RDF](#5-property-graph-vs-rdf-triple-store) | Comparing models, when to use which |
 | 6 | [Labs](#6-hands-on-labs) | Hands-on with NetworkX |
 
+> **One-line summary:** Six sections: definitions → graph types → storage formats → metrics → database models → labs.
+
 ---
 
 ## 1. What Is a Graph? Definitions & Terminology
+
+Signpost: this section defines the vocabulary. Every later section uses these words, so read them once here.
 
 ### 1.1 The Mathematical Definition
 
@@ -86,7 +106,9 @@ E = { (Alice, APPROVES, Contract C-2024),
       (Contract C-2024, BELONGS_TO, Project Phoenix) }
 ```
 
-**A triple (Subject, Predicate, Object)** is exactly a directed edge:
+In words: `G = (V, E)` just means "a graph = a bag of things (V) plus a bag of links (E)". The example says: Alice approves contract C-2024, Bob reports to Alice, and that contract belongs to Project Phoenix.
+
+**A triple (Subject, Predicate, Object)** is exactly a directed edge (a triple = one "S does P to O" sentence — the standard unit in RDF databases):
 
 ```
 (S) Alice  —[REPORTS_TO]→ (O) Bob
@@ -111,7 +133,11 @@ Subject   Predicate         Object
 | **Subgraph** | A part of a graph — take one node and everything around it | The 1-hop subgraph of Phoenix = Phoenix + all directly connected nodes |
 | **Community** | A group of nodes that are tightly interconnected, loosely connected to the outside | The AI team in an org chart — they work together and report to the same place |
 
+> **One-line summary:** Nodes are things, edges are relationships, labels classify them, properties describe them — everything else (path, degree, community) builds on that.
+
 ### 1.3 A Visual Example
+
+Signpost: the same data as above, drawn as boxes and arrows.
 
 ```
      ┌──────────┐
@@ -136,6 +162,8 @@ Subject   Predicate         Object
 
 ## 2. The Kinds of Graphs
 
+Signpost: this section explains the graph types. Picking the wrong type is the #1 silent bug, so this matters before you write any code.
+
 ### 2.1 A Detailed Classification
 
 > **📌 Quick knowing:** "Graph type" = the answer to the question *"What characteristics do your relationships have?"* Are they directed? Weighted? Are there many kinds of entities? Every time you pick the wrong type, you'll write code that's wrong or run the wrong queries.
@@ -157,6 +185,8 @@ Subject   Predicate         Object
 ```
 
 #### Each type explained — the simplest way to get it:
+
+How to read this table: each row is one graph type — what it means in everyday words, where you meet it, and a concrete example. For instance, "Directed" is a one-way street: `Alice REPORTS_TO Bob` does not imply Bob reports to Alice.
 
 | Type | "In plain language" | When do you run into it? | Concrete example |
 |------|----------------------|-------------------|--------------|
@@ -187,6 +217,8 @@ Subject   Predicate         Object
    Add valid_until → only relationships still in effect get answered
 ```
 
+> **One-line summary:** There are 9 graph types; the 3 that bite hardest in practice are Directed (one-way vs two-way), Weighted (store the strength number), and Temporal (store the validity period).
+
 ### 2.2 When to Use Which Type?
 
 > **📌 Bonus Concept: Homophily vs Heterophily**
@@ -198,6 +230,8 @@ Subject   Predicate         Object
 > **Why should you know this?** Because **standard GNNs (GCN/GraphSAGE) assume homophily by default** — being close in the graph means sharing a label. On heterophilic graphs, standard GNNs perform poorly and you need specialized variants (the `link prediction` module, 07). This is one of those decisions few people think about, yet it determines model quality.
 
 > 📄 **Example code:** [`examples/01-2-2-when-to-use-which-type.py`](examples/01-2-2-when-to-use-which-type.py)
+
+> **One-line summary:** Decide the type per relationship by reading the sentence itself — one-way verbs are directed, symmetric verbs are undirected, numbers go in weights, changeable facts get time windows.
 
 ---
 
@@ -228,6 +262,8 @@ Option 3 — Edge List:          like "a list of pairs"
 
 ### 3.1 Detailed Comparison
 
+How to read this table: each row is one storage format. "Memory" is how much RAM it eats (O(V+E) = grows with nodes+edges; O(V²) = grows with nodes×nodes — much faster), "Traversal" is how fast you can walk from a node to its neighbours, and "Best For" tells you when to pick it.
+
 | Representation | Memory | Traversal | Easy to think of as | Best For |
 |----------------|------------------|----------------------|-------------|----------|
 | **Adjacency List** | O(V + E) — compact | O(degree) — fast | A contact book of "who knows whom" | Sparse graphs (most KGs) |
@@ -237,6 +273,8 @@ Option 3 — Edge List:          like "a list of pairs"
 | **Property Table** | O(V + E) — like a DB | O(index) — very fast | A spreadsheet with property columns | Neo4j, Kuzu (DB native) |
 
 #### Each option explained — "when to pick what":
+
+How to read this table: the same five formats again, now with pros, cons, and the "use it when" rule. For instance, pick the Adjacency Matrix only when the graph is dense — a 100K-node matrix needs 10 billion cells.
 
 | Storage style | Pros | Cons | Use it when |
 |----------|---------|------------|-----------------|
@@ -255,6 +293,8 @@ Option 3 — Edge List:          like "a list of pairs"
 
 </details>
 
+> **One-line summary:** There are 4 ways to store the same graph; start with the adjacency list and switch only when measurements force you to.
+
 ### 3.3 Picking a Representation — A Step-by-Step Decision
 
 ```
@@ -269,6 +309,8 @@ How many nodes do you have?
 
 **Golden rule for beginners:** Start with an **Adjacency List** (NetworkX). Only switch to another representation when you've *measured* a problem (too slow, too much memory). Don't optimize early before you know the real problem.
 
+> **One-line summary:** Answer "how many nodes, and what for?" first — the answer picks the format; default to the adjacency list until a benchmark says otherwise.
+
 ---
 
 ## 4. Metrics & Graph Characteristics
@@ -278,6 +320,8 @@ How many nodes do you have?
 ### 4.1 The Important Metrics
 
 > **Start with the 3 basic metrics first:** `Degree` (who has many connections), `Path Length` (how far apart nodes are), `Clustering` (are friends friends with each other). Once you understand these three, learn `Centrality` and `Modularity` (harder).
+
+How to read this table: each row is one metric — what it measures in everyday words, plus a concrete example. "Centrality" appears 3 times because there are 3 different definitions of "important".
 
 | Metric | "Plain language" meaning | Example |
 |--------|------------------------|----------------|
@@ -301,9 +345,13 @@ How many nodes do you have?
 
 </details>
 
+> **One-line summary:** Metrics are the graph's vital signs — degree counts connections, centrality ranks importance, modularity finds the groups.
+
 ### 4.3 When to Use Which Metric?
 
 > **Rule of thumb:** Pick the metric based on **the question you want to answer**, not on "which metric is cool".
+
+How to read this table: match your real-world question (left) to the metric (middle) and an example of the question phrased concretely (right).
 
 | Purpose | Metric | Example question |
 |----------|--------|---------------|
@@ -314,9 +362,13 @@ How many nodes do you have?
 | Measure codebase complexity | Density + avg degree | "Which file has the most dependencies, most likely to break on change?" |
 | Set `max_hops` for traversal | Diameter + avg path length | "How many hops do I need to traverse so I don't miss information?" |
 
+> **One-line summary:** Choose the metric from the question — hub-hunting → degree, bottleneck-hunting → betweenness, grouping for GraphRAG → clustering + modularity.
+
 ---
 
 ## 5. Property Graph vs RDF Triple Store
+
+Signpost: this section answers "which graph database *model* should I use" — the choice that is painful to reverse later.
 
 ```
 ┌─────────────────────────┬──────────────────────────────────┬──────────────────────────────────┐
@@ -332,6 +384,8 @@ How many nodes do you have?
 └─────────────────────────┴──────────────────────────────────┴──────────────────────────────────┘
 ```
 
+How to read this table: the left column names one aspect, the middle shows how a Property Graph (Neo4j, Kuzu) handles it, the right shows how an RDF Triple Store handles it. For instance, "Properties on edges" = can you attach a number like `weight: 0.9` directly to a link — trivial in Property Graphs, clunky in RDF.
+
 **Recommendation for the AI Coding Skills Framework:** use **Property Graphs** (Neo4j/Kuzu/NetworkX). RDF only when working with linked open data or when OWL reasoning is required.
 
 Property Graph example (Cypher):
@@ -342,21 +396,31 @@ RDF example (SPARQL):
 
 > 📄 **Example code:** [`examples/05-5-property-graph-vs-rdf-triple-store.sparql`](examples/05-5-property-graph-vs-rdf-triple-store.sparql)
 
+> **One-line summary:** Property Graph = flexible and fast, the default for AI agents; RDF = strict and reasoning-capable, only for linked-open-data cases.
+
 ---
 
 ## 6. Hands-On Labs
+
+Signpost: three small exercises. Do them in order; each takes minutes and makes the theory stick.
 
 ### Lab 1: Build Your First Graph with NetworkX
 
 > 📄 **Example code:** [`examples/06-lab-1-build-your-first-graph-with-networkx.py`](examples/06-lab-1-build-your-first-graph-with-networkx.py)
 
+> **One-line summary:** Create a few nodes and edges in Python — your first graph in 10 lines.
+
 ### Lab 2: Compare Traversal Performance
 
 > 📄 **Example code:** [`examples/07-lab-2-compare-traversal-performance.py`](examples/07-lab-2-compare-traversal-performance.py)
 
+> **One-line summary:** Time the same query on a list vs a matrix and see the speed gap with your own eyes.
+
 ### Lab 3: Build a Mini Codebase Graph
 
 > 📄 **Example code:** [`examples/08-lab-3-build-a-mini-codebase-graph.py`](examples/08-lab-3-build-a-mini-codebase-graph.py)
+
+> **One-line summary:** Turn "file defines function, function calls function" into a graph — the same trick code-search agents use.
 
 ---
 
@@ -367,9 +431,13 @@ RDF example (SPARQL):
 - NetworkX Documentation — *Algorithms & Metrics* (https://networkx.org)
 - *Graph Theory* — Diestel (textbook, free online)
 
+> **One-line summary:** Four sources: one course (CS224W), one vendor course (GraphAcademy), one library doc (NetworkX), one textbook (Diestel).
+
 ---
 
 ## GraphRAG — 2026 Update
+
+Signpost: this closing section tracks the fast-moving GraphRAG ecosystem so the module does not go stale.
 
 Microsoft GraphRAG (2024-2025): uses knowledge graphs to enhance RAG. Complex (multi-hop) queries outperform vector-only RAG.
 
@@ -381,6 +449,8 @@ Microsoft GraphRAG (2024-2025): uses knowledge graphs to enhance RAG. Complex (m
 - **Knowledge Graph Market**: $1.48B (2025) → $2.04B (2026). GraphRAG shifting from "enterprise luxury" → production baseline.
 
 Ref: https://microsoft.github.io/graphrag/
+
+> **One-line summary:** 2025–2026 brought cheaper GraphRAG variants (LazyGraphRAG, LightRAG) and market growth — graph-enhanced RAG is becoming the default, not the luxury.
 
 ---
 

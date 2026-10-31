@@ -2,9 +2,13 @@
 
 If a question is unclear, read the section in `../README.md` (named in brackets).
 
+> How to read this file: Jev = a model that outputs *decisions with probabilities*, never sentences — it looks like an LLM call but behaves differently. Each question is a real confusion about that boundary.
+
 ---
 
 ## Q1. The endpoint looks exactly like an LLM (large language model) call — JSON over HTTPS, Bearer key, a model name. So is Jev just a small, fast LLM? [→ §1 What Is Jev?]
+
+This section explains why "looks like an LLM call" and "is an LLM" are two different things.
 
 **What you see**
 
@@ -12,11 +16,11 @@ You send `POST https://api.typesafe.ai/v1/systemone` with `"model": "jev-latest"
 
 **Why**
 
-Jev is a transformer, but it was never trained to emit text or tokens. You hold two facts at once: **it looks like an LLM call and it behaves like a calibrated decision function.** It looks like one because the plumbing (JSON over HTTPS, bearer key, model name) is the same. It behaves differently because it has no text output at all — it returns typed answers (`Choice`, `Score`, `Noul`) with a full probability distribution. It cannot write tool arguments, read files, or explain itself.
+Jev is a transformer (the same neural network architecture LLMs use), but it was never trained to emit text or tokens. You hold two facts at once: **it looks like an LLM call and it behaves like a calibrated decision function** (calibrated = when it says "80%", the answer really is right about 80% of the time). It looks like one because the plumbing (JSON over HTTPS, bearer key, model name) is the same. It behaves differently because it has no text output at all — it returns typed answers (`Choice`, `Score`, `Noul`) with a full probability distribution (a percentage for every possible answer, not just the winner). It cannot write tool arguments, read files, or explain itself.
 
 **What to do**
 
-1. Stop judging models by their transport. Judge them by the shape of your question.
+1. Stop judging models by their transport (the plumbing: HTTP, keys, JSON). Judge them by the shape of your question.
 2. Route on question shape: a finite answer set that repeats → Jev; sentences or open invention → the LLM; arithmetic, counting, dates → plain code.
 3. Say it out loud in your design review so nobody files the "just use the LLM" ticket: you are choosing an engine, not a brand.
 
@@ -26,9 +30,13 @@ Jev is a transformer, but it was never trained to emit text or tokens. You hold 
 
 Send a request whose question is "explain why this failed". You get a typed answer plus probabilities — never prose. Send a state asking it to count and read Q2 next.
 
+> **One-line summary:** Jev shares an LLM's plumbing but not its ability — it returns typed decisions with probabilities, so route by question shape, not by endpoint looks.
+
 ---
 
 ## Q2. Jev answered my math wrong — I asked "how many rows failed?" and "is March 1 before Feb 28?" and it said yes. Do I need a bigger model? [→ §1.2 What It Is NOT / §6.1 The Big Table]
+
+This section explains why Jev is bad at arithmetic by design, and what to route to plain code instead.
 
 **What you see**
 
@@ -36,11 +44,11 @@ You send a diff and ask which files changed. You ask whether two dates are in or
 
 **Why**
 
-Jev is explicitly **not reliable at arithmetic, counting, or date comparison.** It has no autoregressive text loop, which means it has no chain of thought to add numbers up with — nothing is written down and summed. Its training (RLCD, Reinforcement Learning for Calibrated Decisions) optimizes probabilities against *outcomes* of semantic judgment, not arithmetic steps. There is also a hard context ceiling: 64k total = 32k state + your longest question.
+Jev is explicitly **not reliable at arithmetic, counting, or date comparison.** It has no autoregressive text loop (LLMs generate one token at a time, which lets them "think out loud"), which means it has no chain of thought to add numbers up with — nothing is written down and summed. Its training (RLCD, Reinforcement Learning for Calibrated Decisions) optimizes probabilities against *outcomes* of semantic judgment, not arithmetic steps. There is also a hard context ceiling: 64k total = 32k state (the situation text you send) + your longest question.
 
 **What to do**
 
-1. Move every mechanical step into code — `git diff --name-only`, `len()`, `dateutil` — and let Jev handle only the judgment part.
+1. Move every mechanical step into code — `git diff --name-only` (list changed files), `len()` (count items), `dateutil` (a date-parsing library) — and let Jev handle only the judgment part.
 2. If you need both, split the request: code computes the count, Jev rates whether that count is alarming.
 3. Never widen the state hoping the model will notice a pattern the code already knows exactly.
 
@@ -50,17 +58,21 @@ Jev is explicitly **not reliable at arithmetic, counting, or date comparison.** 
 
 Run 20 known-answer arithmetic questions against the model. You should expect failures — that is the design, not a bug. Then re-run your *classification* questions; those should hold.
 
+> **One-line summary:** Jev cannot count or compare dates — give mechanical work to code and keep Jev only for judgment ("is this alarming?"), not calculation.
+
 ---
 
 ## Q3. At 2 a.m. the LLM returned `"urgency": "high!!"` and my enum only has four levels. Can Jev actually guarantee my schema holds? [→ §5 Why Give Up Text Generation?]
 
+This section explains why a schema on an LLM is a hope but a schema on Jev is a guarantee.
+
 **What you see**
 
-The production log shows a parse failure, then a retry, then a second failure: the model returned `"urgency": "high!!"` with two exclamation marks. Yesterday it invented a sixth severity level that is not in your enum at all. Someone added JSON mode, constrained decoding, and a retry wrapper, and it still breaks in production.
+The production log shows a parse failure, then a retry, then a second failure: the model returned `"urgency": "high!!"` with two exclamation marks. Yesterday it invented a sixth severity level that is not in your enum (your fixed list of allowed values) at all. Someone added JSON mode, constrained decoding (forcing the model's output to match a grammar), and a retry wrapper, and it still breaks in production.
 
 **Why**
 
-On a large language model, a schema is a *hope* — you prompt for it, constrain it, retry it. The costs of strings are real: every hedge and newline is billed, one token at a time takes 3–329s to reach a boolean, and parse errors, hallucinated values, and fake calibration all leak in. Jev surrenders text generation, and the answer space is closed **by construction** — `Choice` up to 255 options, `Score` 2–10 levels, `Noul` binary.
+On a large language model, a schema is a *hope* — you prompt for it, constrain it, retry it. The costs of strings are real: every hedge and newline is billed, one token at a time takes 3–329s to reach a boolean, and parse errors, hallucinated values (values the model invented), and fake calibration all leak in. Jev surrenders text generation, and the answer space is closed **by construction** — `Choice` up to 255 options, `Score` 2–10 levels, `Noul` binary. A value outside your list is impossible to produce, not merely discouraged.
 
 **What to do**
 
@@ -74,17 +86,21 @@ On a large language model, a schema is a *hope* — you prompt for it, constrain
 
 Ask for a 4-level score and confirm every answer lands in those four. Try adding a 301st option and confirm the request is rejected rather than silently truncated.
 
+> **One-line summary:** LLM schemas fail in production because strings are negotiable — Jev's answer space is closed by construction, so out-of-schema values are impossible, not just rare.
+
 ---
 
 ## Q4. I pasted our whole 40MB log file into `state` because "more context is better" — accuracy went down and latency hit 500ms. What did I do wrong? [→ §6.3 State Hygiene]
 
+This section explains why Jev gets worse with bigger state, and the "exhibit, not archive" rule.
+
 **What you see**
 
-You believed more context helps, so you dumped the entire incident log into the state field. Accuracy on the routing question dropped. Every call now sits near the top of the latency range. The bill went up too: input is priced at $0.042 per million tokens, and your state is mostly lines that have nothing to do with the decision.
+You believed more context helps, so you dumped the entire incident log into the state field (the situation text the model judges). Accuracy on the routing question dropped. Every call now sits near the top of the latency range. The bill went up too: input is priced at $0.042 per million tokens, and your state is mostly lines that have nothing to do with the decision.
 
 **Why**
 
-**Jev judges the state you send — and accuracy falls when the state carries unrelated detail.** Nothing summarizes the irrelevant parts for you; they compete with the signal. You also hit the 32k state cap, so the part that mattered may simply be gone. The principle is simple: *exhibit, not archive*.
+**Jev judges the state you send — and accuracy falls when the state carries unrelated detail.** Nothing summarizes the irrelevant parts for you; they compete with the signal. You also hit the 32k state cap, so the part that mattered may simply be gone. The principle is simple: *exhibit, not archive* — show the one paragraph that decides the case, not the whole case file.
 
 **What to do**
 
@@ -96,11 +112,15 @@ You believed more context helps, so you dumped the entire incident log into the 
 
 **Verify**
 
-Run the same 50 questions against a full log and against a trimmed state. Compare the distributions, not just the top choice. The smaller state should win or tie.
+Run the same 50 questions against a full log and against a trimmed state. Compare the distributions (the percentages for every answer, not just the top one), not just the top choice. The smaller state should win or tie.
+
+> **One-line summary:** Bigger state makes Jev dumber and slower — send the smallest state that still answers the question, and compare full distributions when you test.
 
 ---
 
 ## Q5. My pipeline is 100% LLM and it works fine. Should I replace the LLM with Jev everywhere? [→ §6 When to Use / When NOT / §7 Place in the Agent Ecosystem]
+
+This section explains the three-layer stack (code → Jev → LLM) and why Jev complements the LLM instead of replacing it.
 
 **What you see**
 
@@ -108,12 +128,12 @@ One frontier model handles everything: triage, verification, drafting the reply.
 
 **Why**
 
-There is a continuum: deterministic code → **Jev** (narrow semantic judgment) → LLM (open language). Confusing the layers costs twice — once in tokens, once in latency — and you still cannot tell whether your `0.8` means anything. Jev is not trying to replace the expensive model. The Jevons paradox applies: when intelligence gets cheaper, you ask more questions, not fewer. The 4 target workloads are decision steps in workflows, map-reduce over big datasets, real-time paths, and verifying LLM output.
+There is a continuum: deterministic code (same input, same output, no model) → **Jev** (narrow semantic judgment) → LLM (open language). Confusing the layers costs twice — once in tokens, once in latency — and you still cannot tell whether your `0.8` means anything. Jev is not trying to replace the expensive model. The Jevons paradox applies (when something gets cheaper, you use more of it, not less): when intelligence gets cheaper, you ask more questions, not fewer. The 4 target workloads are decision steps in workflows, map-reduce over big datasets, real-time paths, and verifying LLM output.
 
 **What to do**
 
 1. Hammer, screwdriver, power drill: pick per question, not per project.
-2. Best first swap — LLM writes, Jev verifies: the LLM drafts, a `Noul` gate checks it against a rubric.
+2. Best first swap — LLM writes, Jev verifies: the LLM drafts, a `Noul` gate (a yes/no check) confirms it against a rubric (a scoring checklist).
 3. Watch calibration as you go: roughly 80% of answers scoring `0.8` should be correct. If not, trust the routing, not the number.
 
 ```text
@@ -124,4 +144,10 @@ mechanical (math, dates, parsing)  -> plain code
 
 **Verify**
 
-Before/after on one workflow: p95 latency, dollars per 1,000 decisions, schema failures, and the calibration check above. If only latency improved and nothing else, you moved the wrong question.*FAQ file riêng — file nguồn không bị sửa. Nguồn: README.md.*
+Before/after on one workflow: p95 latency (the response time 95% of calls beat), dollars per 1,000 decisions, schema failures, and the calibration check above. If only latency improved and nothing else, you moved the wrong question.
+
+> **One-line summary:** Do not replace the LLM — split work by question shape across code, Jev, and LLM, and start with "LLM writes, Jev verifies".
+
+---
+
+*FAQ file riêng — file nguồn không bị sửa. Nguồn: README.md.*

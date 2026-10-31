@@ -6,13 +6,17 @@
 
 ## 1. Overview — 4 Workloads × 5 Patterns
 
+This section explains the big picture: which Jev pattern fits which job. Read it first — the rest of the file is five variations of one idea.
+
 > **📌 Core Concept**
 >
-> **Definition:** The **division of labor** is simple: **"Jev decides, code acts, LLM writes."** Jev is a semantic decision layer — state in, bounded typed result out; ordinary code performs the action the decision authorizes; the LLM is reserved for anything that requires generating language.
+> **Definition:** The **division of labor** is simple: **"Jev decides, code acts, LLM writes."** Jev is a semantic decision layer — state in, bounded typed result out; ordinary code performs the action the decision authorizes; the LLM (large language model, the AI that writes text) is reserved for anything that requires generating language.
 > **Analogy:** Like a **traffic intersection**: Jev is the signal (decides go/stop/which lane), the code is the cars (actually move), and the LLM is the radio announcer (explains, drafts, narrates). Asking the announcer to hold up traffic is how you get a 2-second green light.
 > **Why it matters:** Every pattern below is a rearrangement of the same three roles. Get the roles wrong — LLM makes the gate decision, or Jev tries to write the explanation — and you pay in latency, cost, or correctness.
 
 ### 1.1 Workload × Pattern Map
+
+How to read it: each row is one type of job, the patterns that fit it best, and why. For instance, workflow #1 (a decision step inside a larger process) fits routing/triage because it needs one sub-second, typed answer.
 
 | # | Workload | Best-fit patterns | Why |
 |---|----------|-------------------|-----|
@@ -20,6 +24,8 @@
 | 2 | **Map-reduce over datasets** | Classification at scale, Ranking & filtering | 70–500 ms per record, cheap ($0.042/1M input tokens, free output) |
 | 3 | **Real-time apps** | Routing/triage, Gating | 40–200× faster than an LLM call; added questions barely change latency |
 | 4 | **Verification of LLM output** | Verifying LLM output (Verified Cascade) | Noul/Choice check on a draft — fast, parallel |
+
+Gloss: map-reduce = run the same question on every record (map), then aggregate the answers in code (reduce); Verified Cascade = LLM drafts, Jev checks the draft before it ships.
 
 ```
 THE COMMON WORKFLOW (all five patterns share this spine):
@@ -44,11 +50,17 @@ THE COMMON WORKFLOW (all five patterns share this spine):
   CODE ACTS    ESCALATE (human / more context / LLM)
 ```
 
+Gloss: state = the material being judged; threshold = the cut-off line a probability must clear; escalate = hand the case to a human or another system.
+
 > Added questions barely change latency — so batch related decisions (e.g. `route_ticket` + `priority`) into **one call**.
+
+> **One-line summary:** One spine for everything — Jev decides, code acts, LLM writes — and the five patterns are just different places to plug it in.
 
 ---
 
 ## 2. Routing & Triage
+
+This section explains the best first pattern: sending each incoming item to the right place. It matters because it is low-risk and wins trust fast.
 
 > **📌 Core Concept**
 >
@@ -57,6 +69,8 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 > **Why it matters:** Triage is the highest-leverage first pattern: it is low-risk (wrong queue is recoverable), sub-second, and immediately visible in metrics — the ideal way to earn trust in Jev before gating anything destructive.
 
 ### Pattern Card — Routing & Triage
+
+How to read it: each row is one fact about the pattern — what you ask, where it fits, how fast it is, and what thresholds to start from.
 
 | | |
 |---|---|
@@ -74,6 +88,8 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 
 ### Thresholds & Notes
 
+How to read it: each row is one setting and the guidance for it. For instance, the first row says auto-route at 0.7 confidence — a starting point to retune on your own data, not a final answer.
+
 | Setting | Guidance |
 |---------|----------|
 | Queue confidence ≥ 0.7 | Auto-route (starting point — retune on your labels) |
@@ -81,9 +97,13 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 | State | Small & relevant only — unrelated detail lowers accuracy (see [07](../07-limits-and-evaluation/)) |
 | Latency note | Sub-second for both questions; safe for interactive intake |
 
+> **One-line summary:** Two questions in one call — where does it go, how urgent is it — and below-threshold items go to a human queue.
+
 ---
 
 ## 3. Classification & Tagging at Scale
+
+This section explains labeling whole datasets. It matters because bulk labeling is where Jev's speed and price beat an LLM by a wide margin.
 
 > **📌 Core Concept**
 >
@@ -92,6 +112,8 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 > **Why it matters:** This is the map-reduce workload's map phase. Labels land in your database; downstream filters, reports, and retrieval all consume them — no tokens spent generating tag explanations.
 
 ### Pattern Card — Classification at Scale
+
+How to read it: each row is one fact about the pattern. For instance, the last row says what happens to weak answers: they go to a second pass or a human, never silently into the database.
 
 | | |
 |---|---|
@@ -109,6 +131,8 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 
 ### Thresholds & Notes
 
+How to read it: each row is one setting and its guidance. For instance, `label_p` ≥ 0.75 (the probability of the chosen label) means store it directly; anything weaker needs review.
+
 | Setting | Guidance |
 |---------|----------|
 | `label_p` ≥ 0.75 | Store label directly |
@@ -116,17 +140,23 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 | Fan-out | Map-reduce: per-record decisions, aggregated; **latency scales per decision** |
 | Cost | Output is free — storing full distributions is cheap |
 
+> **One-line summary:** Stamp a label + probability on every record, and let only confident labels into your reports.
+
 ---
 
 ## 4. Gating Agent Actions
 
+This section explains putting a checkpoint in front of risky agent actions. It matters because an LLM agent will "just do it" unless something blocks it.
+
 > **📌 Core Concept**
 >
-> **Definition:** Before an agent executes a **side-effecting tool call**, ask Jev a **Noul** question ("does the user authorize this?") and **block below threshold**. The gate sits *between* intent and execution.
+> **Definition:** Before an agent executes a **side-effecting tool call** (one that changes something outside: delete, charge, send), ask Jev a **Noul** question ("does the user authorize this?") and **block below threshold**. The gate sits *between* intent and execution.
 > **Analogy:** Like a **dead man's switch on a machine**: the machine only runs while the switch is held — no switch signal, no motion. The gate doesn't operate the machine; it *permits* the operation.
-> **Why it matters:** LLM agents are fluent at deciding to "just do it". A typed, calibrated Noul in front of destructive tools (delete, charge, send) converts an open-ended judgment into a bounded, logged, threshold-controlled check. In LangChain this ships as **AutoModeMiddleware**.
+> **Why it matters:** LLM agents are fluent at deciding to "just do it". A typed, calibrated Noul in front of destructive tools (delete, charge, send) converts an open-ended judgment into a bounded, logged, threshold-controlled check. In LangChain this ships as **AutoModeMiddleware** (a ready-made middleware that gates risky tool calls).
 
 ### Pattern Card — Gating Agent Actions
+
+How to read it: each row is one fact about the pattern. For instance, the latency row says the check adds almost nothing, because 70–500 ms is invisible next to the tool's own work.
 
 | | |
 |---|---|
@@ -144,6 +174,8 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 
 ### Thresholds & Notes
 
+How to read it: each row is one setting or caveat. For instance, the caveat row is the key limit: Jev answers "authorized?", not "safe?" — the approval policy stays yours.
+
 | Setting | Guidance |
 |---------|----------|
 | Noul `P(yes)` ≥ threshold AND margin healthy | Allow tool |
@@ -151,17 +183,23 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 | **Caveat** | **Jev does not judge whether running the tool is *safe*** — it classifies (e.g. "does the user authorize this"). Approval policy is the **agent's/your** job |
 | Related | LangChain `AutoModeMiddleware` gates risky tool calls; Pydantic AI `typesafe_tool_call_threshold` (default **0.6** — a starting point, not validated) |
 
+> **One-line summary:** One yes/no question before every destructive tool call — high P(yes) allows, anything else blocks and escalates.
+
 ---
 
 ## 5. Verify LLM Output — The Verified Cascade
+
+This section explains checking an LLM's draft before it ships. It matters because the writing model cannot be trusted to check itself.
 
 > **📌 Core Concept**
 >
 > **Definition:** The LLM **drafts**; Jev **checks** the draft against a known standard (policy text, schema, ground truth) with a Noul or Choice question; pass → continue, fail → fallback (stronger LLM, human, or discard). **"Jev decides, LLM writes."**
 > **Analogy:** Like a **press proofreader** who doesn't rewrite the article but marks it APPROVE/REJECT against the style guide — fast, typed, and independent of the writer's mood.
-> **Why it matters:** Verification is where a *decision* model earns its keep inside LLM systems: the expensive model produces language once, the cheap calibrated model gates it in <500 ms — and the gate can run in harness loops and CI on every iteration.
+> **Why it matters:** Verification is where a *decision* model earns its keep inside LLM systems: the expensive model produces language once, the cheap calibrated model gates it in <500 ms — and the gate can run in harness loops and CI on every iteration (harness = the automated loop that drives and tests the LLM; CI = continuous integration, automatic checks on every code change).
 
 ### Pattern Card — Verify LLM Output
+
+How to read it: each row is one fact about the pattern. For instance, the threshold row says the bar to *pass* is high on purpose — a fail is cheap, a wrongly shipped draft is not.
 
 | | |
 |---|---|
@@ -179,6 +217,8 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 
 ### Thresholds & Notes
 
+How to read it: each row is one setting and its guidance. For instance, the last row is the standing warning: a confident "pass" is not proof of correct — keep a fallback for costly outputs.
+
 | Setting | Guidance |
 |---------|----------|
 | Noul `P(yes/pass)` ≥ 0.85 | Accept draft |
@@ -186,17 +226,23 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 | In loops/harnesses | Run as the **verifier step** each iteration — see [06 — Jev + LLM](../06-jev-and-llm/) |
 | Watch | High confidence ≠ correct ([04 — Calibration](../04-calibration/)) — keep a fallback even above threshold for costly outputs |
 
+> **One-line summary:** LLM drafts once, Jev gates it in under 500 ms — pass continues, fail routes to a fallback with a reason attached.
+
 ---
 
 ## 6. Ranking & Filtering
+
+This section explains ordering and trimming lists with Score and Noul. It matters because search pipelines retrieve too much and something fast must cut them down.
 
 > **📌 Core Concept**
 >
 > **Definition:** Score each candidate against **ordered levels**, then **sort by the probability-weighted score** (which may fall *between* levels) to produce a ranked shortlist; or filter with Noul/Choice thresholds.
 > **Analogy:** Like a **sommelier's tasting ladder** — each wine gets a grade on the house scale, and the list comes back ordered. The grade is comparable across wines precisely because the scale is fixed and typed.
-> **Why it matters:** RAG pipelines retrieve *too much*; a fast Score pass re-ranks the shortlist with a calibrated, typed judgment instead of asking an LLM to compare every pair (O(n²) prose).
+> **Why it matters:** RAG pipelines retrieve *too much*; a fast Score pass re-ranks the shortlist with a calibrated, typed judgment instead of asking an LLM to compare every pair (O(n²) prose = comparing all pairs, work that grows with the square of list size).
 
 ### Pattern Card — Ranking & Filtering
+
+How to read it: each row is one fact about the pattern. For instance, the questions row says candidates get one Score question each, plus an optional yes/no filter.
 
 | | |
 |---|---|
@@ -214,6 +260,8 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 
 ### Thresholds & Notes
 
+How to read it: each row is one setting and its guidance. For instance, the floor row warns that the floor is a *level* (a named step on the scale), not a plain decimal — compare like with like.
+
 | Setting | Guidance |
 |---------|----------|
 | Floor level | Drop at/below `FLOOR`; floor is a *level*, not a float |
@@ -221,9 +269,13 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 | Confidence | Low confidence on a top hit → widen context, not auto-trust |
 | Cost | Output free → keep full distributions for later re-tuning |
 
+> **One-line summary:** Filter by level, sort by weighted score — a fast typed ranking instead of asking an LLM to compare every pair.
+
 ---
 
 ## 7. Map-Reduce
+
+This section explains the shape behind all bulk work: one decision per record, then aggregate in code. It matters because it is how classification and bulk ranking scale.
 
 > **📌 Core Concept**
 >
@@ -232,6 +284,8 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 > **Why it matters:** This is the structural shape behind classification-at-scale and bulk ranking. Because questions run in parallel within one call — and added questions barely change latency — you can also *fuse* map tasks: several questions per record in a single POST.
 
 ### Pattern Card — Map-Reduce
+
+How to read it: each row is one fact about the pattern. For instance, the threshold row says only decisions you trust should enter your aggregates.
 
 | | |
 |---|---|
@@ -250,6 +304,10 @@ THE COMMON WORKFLOW (all five patterns share this spine):
   rec_N ──► Jev ──► label + p               └──────────────────┘
 ```
 
+Gloss: top-k = the k highest-ranked items; low-p = records whose label probability is too low to trust.
+
+How to read it: each row is one setting and its guidance. For instance, the concurrency row says cap parallel requests so a big run does not overload the API.
+
 | Setting | Guidance |
 |---------|----------|
 | Batching | Several questions per record in **one** POST (parallel pass) |
@@ -257,9 +315,13 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 | Reduce | Pure code over stored probabilities — no model needed |
 | Aggregates | Decide which bands to include (e.g. exclude escalated records from counts) |
 
+> **One-line summary:** One decision per record, aggregation in plain code — scale comes from parallel records, not bigger calls.
+
 ---
 
 > **Pattern picker:** start with **Routing & Triage** (low risk, visible wins) → **Classification at Scale** (economics) → **Verified Cascade** (protects LLM output) → **Gating** (highest stakes, needs the strongest eval) → **Ranking** (composes with RAG).
+
+> **One-line summary:** Pick patterns in order of risk: route first, classify in bulk, verify drafts, gate destructive actions, rank last.
 
 ---
 

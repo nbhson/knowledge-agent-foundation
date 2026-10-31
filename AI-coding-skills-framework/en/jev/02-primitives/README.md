@@ -6,6 +6,8 @@
 
 ## 1. Request Shape
 
+This section defines the only two payloads a Jev call has. Get this split right and everything else — calibration, parallelism, type safety — follows.
+
 > **📌 Core Concept**
 >
 > **Definition:** Every Jev call has exactly two payloads: **`state`** — the material being judged (a string, a JSON object, or an array of text) — and **`questions`** — a named map of typed questions, each of which must be one of three primitives: Choice, Score, or Noul.
@@ -13,6 +15,8 @@
 > **Why it matters:** The shape is the whole discipline. State is *only* the material being judged; the question lives on the output type (or in `questions`), never buried inside the state. Get this split right and calibration, parallelism, and type-safety all follow.
 
 ### 1.1 The Two Halves
+
+Read the snippet top to bottom: one POST request carrying the material (`state`) and the verdicts you want (`questions`).
 
 ```
 POST /v1/systemone
@@ -27,6 +31,8 @@ POST /v1/systemone
 }
 ```
 
+How to read the table: each row is one rule about a field; for instance, the `state` row warns you to keep the evidence small and relevant.
+
 | Field | Rule |
 |-------|------|
 | `state` | String, JSON object, or array of text. Keep it **small and relevant** — accuracy falls when state carries unrelated detail |
@@ -34,7 +40,11 @@ POST /v1/systemone
 | Evaluation | **All questions in parallel, one pass** — added questions barely change latency |
 | Model | `jev-latest` → `jev-1.13.0` |
 
+> **One-line summary:** Every Jev call = `state` (evidence) + `questions` (typed verdicts) — nothing else, and nothing hidden in the state.
+
 ### 1.2 Summary: The Three Primitives
+
+How to read it: each column is one primitive; each row answers one question about it. For instance, "Degrees of freedom" is how many answers you may define — Choice allows up to 255 options, Score 2–10 levels, Noul is binary.
 
 | | **Choice** | **Score** | **Noul** |
 |---|---|---|---|
@@ -45,9 +55,13 @@ POST /v1/systemone
 | **Classic uses** | classification, routing, ontology tagging | severity, sentiment, readiness | gates, verification, policy checks |
 | **Can it leave schema?** | Never | Never | Never (it *is* the schema) |
 
+> **One-line summary:** Three question shapes cover everything: pick-one (Choice), rate-it (Score), yes/no (Noul) — and no answer can ever escape its declared shape.
+
 ---
 
 ## 2. Choice — Pick One From a Closed Set
+
+This section explains Choice, the primitive for routing and classification. It matters because classification is the highest-volume decision in most systems.
 
 > **📌 Core Concept**
 >
@@ -57,6 +71,8 @@ POST /v1/systemone
 
 ### 2.1 Contract
 
+How to read it: each row is one rule Choice guarantees (or explicitly does not); for instance, the last row warns that a valid-shaped answer can still be wrong.
+
 | Aspect | Rule |
 |--------|------|
 | Options | **You** define the closed set; **≤ 255** |
@@ -65,9 +81,11 @@ POST /v1/systemone
 | Confidence | Concentration/shape — **peaked → high**. It is a **margin, NOT a probability the answer is right** |
 | Escape hatch | Jev can still pick a *wrong in-schema* answer, sometimes with high confidence — type safety ≠ factual correctness |
 
+> **One-line summary:** Choice = one pick from your list, plus the odds for every option — valid shape guaranteed, correctness not.
+
 ### 2.2 When to Add "Other"
 
-An "other" option is insurance against a state that doesn't fit your taxonomy — but overusing it makes the model lazy:
+This subsection is about the escape-valve option "other": when it protects you, and when it makes the model lazy.
 
 ```
 Add "other" when:
@@ -79,6 +97,8 @@ Avoid "other" when:
   ✗ you'd route "other" to a human anyway and could instead use LOW CONFIDENCE
 ```
 
+> **One-line summary:** Add "other" only when reality really has uncategorized cases — and watch P(other) as your early-warning light for a stale taxonomy.
+
 ### 2.3 Code Sample
 
 <details>
@@ -88,13 +108,19 @@ Avoid "other" when:
 
 </details>
 
+> **One-line summary:** One Choice question, one call, one typed answer with full odds.
+
 ### 2.4 Mapping to Pydantic Types
 
 Choice maps cleanly onto Python typing — which is exactly what `TypeSafeModel` does under the hood (see [03-api](../03-api/)):
 
 > 📄 **Example code:** [`examples/02-2-4-mapping-to-pydantic-types.py`](examples/02-2-4-mapping-to-pydantic-types.py)
 
+> **One-line summary:** A Python enum-style field with a description becomes a Choice question automatically.
+
 ### 2.5 Pros / Cons
+
+How to read it: left column is what you gain with Choice, right column is the price or limitation that comes with it.
 
 | Pros | Cons |
 |------|------|
@@ -103,17 +129,23 @@ Choice maps cleanly onto Python typing — which is exactly what `TypeSafeModel`
 | Confidence band gates auto-action cleanly | High confidence ≠ correct — still an in-schema wrong pick |
 | Free-form "other" can flag taxonomy drift (`P(other)` spikes) | Flat lists get expensive in attention if you force 200+ options everywhere |
 
+> **One-line summary:** Choice buys guaranteed shape and visible odds; the price is designing the full option list up front.
+
 ---
 
 ## 3. Score — An Ordered Scale You Describe
 
+This section explains Score, the primitive for ratings: severity, sentiment, readiness. It matters because LLMs answer these with adjectives no threshold can compare.
+
 > **📌 Core Concept**
 >
-> **Definition:** Score asks Jev to rate state on an **ordered scale of 2–10 levels you describe**. It returns a probability-weighted score — which **can fall between levels** (e.g. **1.4**, between level 1 and 2) — plus the level legend, per-level probabilities, and confidence.
+> **Definition:** Score asks Jev to rate state on an **ordered scale of 2–10 levels you describe** (ordered = the levels have a fixed sequence, like cold → warm → hot). It returns a probability-weighted score — which **can fall between levels** (e.g. **1.4**, between level 1 and 2) — plus the level legend, per-level probabilities, and confidence.
 > **Analogy:** A **thermometer, not a text box**. You don't ask "describe how hot it is"; you read a position on a scale — and 1.4°C is a real, useful reading even though no one labeled a level "1.4".
 > **Why it matters:** Ordinal judgments (severity, sentiment, readiness) are everywhere, and LLMs answer them with adjectives ("moderately urgent!") that no threshold can compare. A numeric score with a distribution lets your code do `if score >= 3.2:` — once, consistently, everywhere.
 
 ### 3.1 Contract
+
+How to read it: each row is one rule about what you define and what comes back; for instance, "Levels" says you supply 2–10 descriptions, in order.
 
 | Aspect | Rule |
 |--------|------|
@@ -122,7 +154,11 @@ Choice maps cleanly onto Python typing — which is exactly what `TypeSafeModel`
 | Returns | `score` + **legend** (your level descriptions) + **per-level probabilities** + `confidence` |
 | Confidence | Concentration/shape of the level distribution (same margin semantics as Choice) |
 
+> **One-line summary:** Score = your ordered scale, a weighted number that may sit between levels, plus full per-level odds.
+
 ### 3.2 Example Scale — Calm → Frustrated → Very Angry
+
+Read it top down: first the legend (what each level means), then one real state and its distribution.
 
 ```
 LEVEL LEGEND (3-level example)
@@ -137,7 +173,9 @@ STATE: "charged twice… threatening a chargeback"
   confidence:   0.70      ← moderately peaked → confirm before auto-priority
 ```
 
-**Why between-level scores matter:** a 2.70 says "mostly angry, with some pull toward frustrated" — richer than argmax(`3`) and far richer than the string `"angry"`. Thresholds on the continuous score let you tune triage **without re-asking the model**.
+**Why between-level scores matter:** a 2.70 says "mostly angry, with some pull toward frustrated" — richer than argmax(`3`) (just taking the highest level) and far richer than the string `"angry"`. Thresholds on the continuous score let you tune triage **without re-asking the model**.
+
+> **One-line summary:** A weighted 2.70 carries more nuance than a flat "level 3" and gives your code a threshold to act on.
 
 ### 3.3 Code Sample
 
@@ -148,7 +186,11 @@ STATE: "charged twice… threatening a chargeback"
 
 </details>
 
+> **One-line summary:** Define levels with clear descriptions; get back a number, per-level odds, and a confidence.
+
 ### 3.4 Pros / Cons
+
+How to read it: left column is what you gain with Score, right column is the price or limitation.
 
 | Pros | Cons |
 |------|------|
@@ -157,17 +199,23 @@ STATE: "charged twice… threatening a chargeback"
 | Per-level distribution exposes bimodal doubt ("1 or 3, nothing between") | Descriptions are load-bearing: vague level text → vague scores |
 | Same confidence-band ergonomics as Choice | Ordinal only — distances between levels aren't guaranteed equal |
 
+> **One-line summary:** Score turns adjectives into thresholdable numbers; the cost is that you must write clear, genuinely ordered level descriptions.
+
 ---
 
 ## 4. Noul — A Proposition With P(yes)
 
+This section explains Noul, the primitive for gates and yes/no checks. It matters because gates are the glue that keeps agent systems safe.
+
 > **📌 Core Concept**
 >
-> **Definition:** Noul takes a **proposition** (optionally with **criteria** for what counts as yes) and returns **P(yes) ∈ [0, 1]**. A value near **0.5 means genuinely balanced** — *not* "medium" — and certainty is **intrinsic**: `confidence = |p − 0.5| × 2`, so there is no separate confidence field.
+> **Definition:** Noul takes a **proposition** (a statement that is either true or false, e.g. "the user authorized this") — optionally with **criteria** spelling out what counts as yes — and returns **P(yes) ∈ [0, 1]** (the probability that the answer is yes, between 0 and 1). A value near **0.5 means genuinely balanced** — *not* "medium" — and certainty is **intrinsic**: `confidence = |p − 0.5| × 2`, so there is no separate confidence field.
 > **Analogy:** A **coin weighted by evidence** — not a coin flip. `P(yes)=0.01` is a coin someone loaded toward no; `0.50` is a coin nobody has managed to tilt; `0.99` is a foregone conclusion. You don't need a second opinion on how sure the coin is — the tilt *is* the opinion.
 > **Why it matters:** Gates and verification are the glue of agent systems ("did the LLM's answer pass the rubric?"). Noul gives you a **calibrated probability of the proposition itself**, so thresholds mean something: ~80% of answers at 0.8 are correct (RLCD).
 
 ### 4.1 Contract
+
+How to read it: each row is one rule about input, output, or confidence; for instance, the "Near 0.5" row corrects the classic misreading.
 
 | Aspect | Rule |
 |--------|------|
@@ -186,12 +234,20 @@ confidence = |p − 0.5| × 2
   p=0.01 → 0.98      p=0.45 → 0.10      p=0.50 → 0.00      p=0.93 → 0.86
 ```
 
+> **One-line summary:** Noul returns P(yes); the distance from 0.5 *is* the confidence — no second number to misread.
+
 ### 4.2 Used For: Gates & Verification
+
+Four everyday jobs for Noul — each is one threshold on one number:
 
 - **Policy gate** — "Does this tool call touch production data?" → block if `P(yes)` high
 - **LLM-output verification** — "Does this answer satisfy the rubric?" → ship if `P(yes) ≥ τ`
 - **Extraction check** — "Does the text explicitly request a refund?"
 - **Review filter** — auto-approve where `P(yes)` is confidently low-risk
+
+Gloss: rubric = the written checklist an answer is graded against; τ (tau) = your chosen threshold value.
+
+> **One-line summary:** Gates, verification, extraction checks, review filters — all are one Noul question plus one threshold.
 
 > ⚠️ Noul can still return a **wrong** answer — type safety ≠ factual correctness. Calibration tells you how much to trust the band, not that the model is oracular. Route low/mid bands to a human or an LLM (see [04-calibration](../04-calibration/)).
 
@@ -204,7 +260,11 @@ confidence = |p − 0.5| × 2
 
 </details>
 
+> **One-line summary:** One proposition (plus criteria if needed), one P(yes) back.
+
 ### 4.4 Pros / Cons
+
+How to read it: left column is what you gain with Noul, right column is the price or limitation.
 
 | Pros | Cons |
 |------|------|
@@ -213,9 +273,13 @@ confidence = |p − 0.5| × 2
 | Criteria field documents the decision rule in the request | Criteria drift: vague criteria → thresholds that don't mean what you think |
 | Perfect for map-reduce fan-out (one Noul per candidate) | Still can be confidently wrong — pair with human/LLM escalation |
 
+> **One-line summary:** Noul is the cleanest gate — one number, one threshold — as long as you respect the balanced 0.5 band.
+
 ---
 
 ## 5. Parallel Evaluation
+
+This section explains why one request can carry many questions: Jev grades them all at once.
 
 > **📌 Core Concept**
 >
@@ -224,6 +288,8 @@ confidence = |p − 0.5| × 2
 > **Why it matters:** It inverts the LLM habit of one-question-per-call. Ask your classification, rating, *and* verification in the **same** request: same 70–500ms envelope, more decisions per dollar.
 
 ### 5.1 One Pass, Many Questions
+
+Read the diagram as a before/after: serial LLM calls on the left, one parallel Jev call on the right.
 
 ```
 LLM-style (serial, wasteful):              Jev (one pass):
@@ -234,6 +300,8 @@ q3 ──► LLM ──► 2.9s  ┘                    └─ q3 (noul)   ─�
                                               all parallel
 ```
 
+How to read the table: each row is one property of the parallel pass and how it behaves.
+
 | Property | Behavior |
 |----------|----------|
 | Evaluation | **All questions, one pass**, parallel |
@@ -241,7 +309,11 @@ q3 ──► LLM ──► 2.9s  ┘                    └─ q3 (noul)   ─�
 | Output billing | **Free** — the distributions are cheap to emit; you're billed on input only |
 | Failure isolation | Each answer keyed by `name` — inspect per-question confidence independently |
 
+> **One-line summary:** Many questions, one pass, one bill — latency barely moves as you add questions.
+
 ### 5.2 List Fan-Out — One Noul Per Option
+
+This subsection shows the fan-out trick: turning "check every item on a list" into one request.
 
 Got a list of candidates and a yes/no test? Fan out **one Noul per item** — all evaluated in the same pass:
 
@@ -249,9 +321,13 @@ Got a list of candidates and a yes/no test? Fan out **one Noul per item** — al
 
 This is the mechanical heart of workload #2 (**map-reduce over large datasets**): the *map* is your row extraction, the *reduce* is a threshold over the fan-out distribution.
 
+> **One-line summary:** One yes/no question per list item, all in the same call — that's the fan-out.
+
 ### 5.3 Nested Models (`outer.inner`)
 
-Structured outputs nest — so do the questions. With Pydantic AI's `TypeSafeModel`, a nested model's fields become **namespaced questions** (`outer.inner`), each still evaluated in the same pass:
+This subsection shows that structured, nested outputs still cost only one pass.
+
+Structured outputs nest — so do the questions. With Pydantic AI's `TypeSafeModel`, a nested model's fields become **namespaced questions** (`outer.inner` = the outer field name joined to the inner field name, like `ticket.urgency`), each still evaluated in the same pass:
 
 ```
 output_type = TicketPlan
@@ -262,9 +338,13 @@ output_type = TicketPlan
 
 Nesting composes with parallelism: depth costs structure, not serial round-trips. See [03-api](../03-api/) §4 for the Pydantic AI wiring.
 
+> **One-line summary:** Nested output fields become namespaced questions in the same single pass — depth adds structure, not delay.
+
 ---
 
 ## 6. Choosing the Right Primitive
+
+This section is the decision guide: which primitive for which question, plus where the question itself belongs.
 
 > **📌 Core Concept**
 >
@@ -273,6 +353,8 @@ Nesting composes with parallelism: depth costs structure, not serial round-trips
 > **Why it matters:** Most bad Jev results are shape mistakes, not model mistakes — a rating asked as a Choice loses ordering; a gate asked as a 5-option Choice loses the elegance of P(yes); framing stuffed into the state pollutes the evidence (state hygiene).
 
 ### 6.1 Decision Table
+
+How to read it: "Your question is…" describes your task; "Primitive" names the right tool; "You get" says what comes back. For example, "which category?" → Choice → `selected` + distribution.
 
 | Your question is… | Shape | Primitive | You get |
 |--------------------|-------|-----------|---------|
@@ -289,7 +371,11 @@ boolean / gate / verify       ──►  Noul
 arithmetic / dates / counting ──►  plain code (never Jev)
 ```
 
+> **One-line summary:** Categories → Choice; ratings → Score; yes/no gates → Noul; math and dates → code.
+
 ### 6.2 TypeSafe's Best-Practice Split
+
+This subsection is the habit that separates good Jev results from garbage: where the question goes and where the framing goes.
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
@@ -312,7 +398,11 @@ The Pydantic AI twist — TypeSafe calls the description↔question pairing **"p
 
 **Keep questions out of the prompt (the state):** the state is *only the material being judged*. Smuggling "please classify as billing" into the state contaminates the evidence, breaks calibration, and violates state hygiene (accuracy falls when state carries unrelated detail — [01-concepts](../01-concepts/) §6.3).
 
+> **One-line summary:** Question lives on the field description, framing on instructions, and the state stays pure evidence — never mix them.
+
 ### 6.3 Quick Self-Check
+
+A six-item checklist to run in your head before every request:
 
 Before sending a request, ask:
 
@@ -322,6 +412,8 @@ Before sending a request, ask:
 4. Is it **math or dates**? → leave it in code
 5. Is the state **only the evidence**? → move framing to instructions/criteria
 6. Do I need **6 answers**? → send 6 questions in **one** call (parallel pass)
+
+> **One-line summary:** Six quick checks before sending — right shape, right placement, one call.
 
 ---
 

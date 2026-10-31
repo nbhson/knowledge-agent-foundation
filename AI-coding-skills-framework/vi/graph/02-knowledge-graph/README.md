@@ -29,10 +29,14 @@ Kết quả: 3 nodes "Alice" khác nhau trong graph, không nối được với
 
 **Knowledge Graph Construction** giải quyết bài toán này: **trích xuất nhất quán, chuẩn hóa, và nối kết** tri thức từ raw text thành graph có thể truy vấn.
 
+> **Tóm gọn 1 câu:** Ba người đọc cùng tài liệu viết cùng người khác ba kiểu → graph rời rạc; bài toán của module này là trích xuất thống nhất, gộp trùng, và nối kết.
+
 ### Tại Sao KG Construction Quan Trọng?
 
 > *"Garbage in, garbage out — graph tệ hơn vector nếu extraction sai. Extraction quyết định 80% chất lượng GraphRAG."*
 > — Microsoft GraphRAG Paper (2024)
+
+**Cách đọc bảng này:** cột "Nghiên Cứu" là nguồn phát hiện; cột "Phát Hiện" là kết luận kèm số liệu. Ví dụ, trích nhiều vòng (gleaning) tăng 25% số thực thể bắt được so với trích một lần.
 
 | # | Nghiên Cứu | Phát Hiện |
 |---|-----------|-----------|
@@ -45,6 +49,7 @@ Kết quả: 3 nodes "Alice" khác nhau trong graph, không nối được với
 ## Tổng Quan
 
 ```
+(Đọc sơ đồ: 5 bước nối tiếp — định nghĩa schema → trích thực thể → trích quan hệ → gộp trùng → cập nhật dần, cuối cùng ra Knowledge Graph sẵn sàng dùng.)
 Raw Documents
     │
     ▼
@@ -75,6 +80,8 @@ Raw Documents
 
 ## Nội Dung
 
+**Cách đọc bảng này:** cột "#" là số thứ tự phần; "Chủ đề" có link bấm tới được; "Mô tả" tóm tắt phần đó dạy gì. Ví dụ, phần 4 là cách gộp "một người bị viết thành nhiều node".
+
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
 | 1 | [Ontology & Schema](#1-ontology--schema-design) | Thiết kế schema, constraints, temporal properties |
@@ -85,9 +92,13 @@ Raw Documents
 | 6 | [Pipeline](#6-complete-pipeline) | End-to-end code |
 | 7 | [Agentic Construction](#7-agentic-kg-construction) | LLM-agent tự xây & tự sửa KG bằng CRUD |
 
+> **Tóm gọn 1 câu:** Pipeline gồm 6 bước tuần tự (schema → trích → gộp → cập nhật) cộng một hướng đi mới: agent tự xây tự sửa — mỗi phần một mục dưới đây.
+
 ---
 
 ## 1. Ontology & Schema Design
+
+> Phần này giải thích "bản thiết kế" của graph: khai báo trước loại thực thể và quan hệ nào hợp lệ — bước đầu tiên và quan trọng nhất.
 
 > **📌 Khái Niệm Cơ Bản:**
 > **Ontology = "bản thiết kế" của graph** — quy định TRƯỚC những loại thực thể nào tồn tại (`Person`, `Project`, `Document`) và quan hệ nào hợp lệ (`Person` mới được `MANAGES`).
@@ -104,6 +115,7 @@ Raw Documents
 ### 1.1 Schema-First vs Schema-Free
 
 ```
+(Cách đọc: so sánh 3 cách thiết kế — định trước schema, để tự do rồi quy hoạch sau, hoặc hybrid. Ví dụ: Schema-First ít rác nhưng cần chuyên gia định nghĩa trước.)
 ┌──────────────────┬──────────────────────────────────┬──────────────────────────────┐
 │ Cách tiếp cận    │ Ưu điểm                          │ Nhược điểm                   │
 ├──────────────────┼──────────────────────────────────┼──────────────────────────────┤
@@ -128,9 +140,13 @@ Raw Documents
 
 </details>
 
+> **Tóm gọn 1 câu:** Không có ontology thì graph thành mớ rối — dùng hybrid: schema cốt lõi định trước, edge lạ cho vào "pending" để duyệt định kỳ.
+
 ---
 
 ## 2. Entity Extraction
+
+> Phần này dạy 4 cách "gạch chân thực thể" trong văn bản, từ regex cứng tới LLM chạy nhiều vòng.
 
 > **📌 Khái Niệm Cơ Bản:**
 > **Entity Extraction = "đọc tài liệu và gạch chân những thực thể quan trọng"** — tìm ra ai là ai (`Nguyễn Văn A = Person`), cái gì là gì (`Phoenix = Project`).
@@ -144,6 +160,8 @@ Raw Documents
 > - **LLM + Gleaning (khuyến nghị cho GraphRAG)**: chạy **nhiều vòng** — vòng sau hỏi "còn entity nào bỏ sót không?" (đưa danh sách đã trích vào prompt) → coverage gần như đầy đủ.
 
 ### 2.1 So Sánh Phương Pháp
+
+**Cách đọc bảng này:** Precision = độ đúng (ít báo nhầm); Recall = độ đủ (ít bỏ sót); ⭐ càng nhiều càng tốt. Ví dụ, regex rất đúng nhưng sót nhiều (recall ⭐⭐).
 
 ```
 ┌──────────────────┬──────────┬──────────┬──────────────────────────────┐
@@ -185,9 +203,13 @@ Giống như RAG, documents lớn cần chia nhỏ trước khi extraction:
 
 > 📄 **Code ví dụ:** [`examples/05-2-4-claims-extraction-graphrag-pattern.py`](examples/05-2-4-claims-extraction-graphrag-pattern.py)
 
+> **Tóm gọn 1 câu:** Ngoài entity và relation, hãy trích cả claims (khẳng định có bằng chứng) — nhờ vậy câu trả lời click được về đoạn văn bản gốc.
+
 ---
 
 ## 3. Relation Extraction
+
+> Phần này dạy trích quan hệ giữa các thực thể theo đúng schema, kèm điểm tin cậy (confidence) để lọc sau.
 
 ### 3.1 Schema-Guided Relation Extraction
 
@@ -200,13 +222,17 @@ Giống như RAG, documents lớn cần chia nhỏ trước khi extraction:
 
 ### 3.2 Confidence Scoring
 
-Mỗi relation nên có `confidence` để downstream filtering:
+Mỗi relation nên có `confidence` để downstream filtering: (confidence = điểm tin cậy model tự chấm, từ 0 đến 1 — dùng để lọc bỏ quan hệ mơ hồ)
 
 > 📄 **Code ví dụ:** [`examples/07-3-2-confidence-scoring.py`](examples/07-3-2-confidence-scoring.py)
+
+> **Tóm gọn 1 câu:** Trích quan hệ theo schema (đúng loại node mới nối) và gắn điểm confidence cho mỗi quan hệ để lọc rác về sau.
 
 ---
 
 ## 4. Entity Resolution & Deduplication
+
+> Phần này dạy gộp "một người bị viết thành nhiều node" — bước quyết định graph liền mạch hay rời rạc.
 
 > **📌 Khái Niệm Cơ Bản:**
 > **Deduplication = tìm và gộp "1 người viết bằng 2 tên"** — LLM trích xuất từ từng chunk khác nhau nên **cùng 1 thực thể có thể thành nhiều nodes**: "Nguyễn Văn A" (doc 1), "NV A" (doc 2), "Nguyen Van A" (doc 3).
@@ -253,17 +279,25 @@ Raw extraction:
 
 > 📄 **Code ví dụ:** [`examples/09-4-3-entity-linking-coreference-resolution.py`](examples/09-4-3-entity-linking-coreference-resolution.py)
 
+> **Tóm gọn 1 câu:** Dedup gộp sau khi trích (3 tên = 1 node), entity linking nhận ra ngay lúc trích ("NV A" = "Nguyễn Văn A" đã có trong graph); luôn đặt ngưỡng và cho phép tách lại.
+
 ---
 
 ## 5. Incremental KG Updates
 
-KG production thay đổi hàng ngày — không thể rebuild toàn bộ mỗi lần.
+> Phần này dạy cập nhật graph khi có tài liệu mới mà không xây lại từ đầu.
+
+KG production thay đổi hàng ngày — không thể rebuild toàn bộ mỗi lần. (rebuild = xây lại toàn bộ từ đầu.)
 
 > 📄 **Code ví dụ:** [`examples/10-5-incremental-kg-updates.py`](examples/10-5-incremental-kg-updates.py)
+
+> **Tóm gọn 1 câu:** Thêm/sửa/xoá từng phần bằng `MERGE` và xoá mềm — chạy lại được, không nhân bản, không đụng phần còn lại của đồ thị.
 
 ---
 
 ## 6. Complete Pipeline
+
+> Phần này gom toàn bộ 5 bước trên thành một đoạn code chạy đầu-cuối.
 
 <details>
 <summary>Python Code — End-to-End KG Construction (Click để xem)</summary>
@@ -271,6 +305,8 @@ KG production thay đổi hàng ngày — không thể rebuild toàn bộ mỗi 
 > 📄 **Code ví dụ:** [`examples/11-6-complete-pipeline.py`](examples/11-6-complete-pipeline.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Pipeline hoàn chỉnh = schema → trích → gộp → ghi, chạy được lại từ đầu đến cuối mà không hỏng dữ liệu cũ.
 
 ---
 
@@ -280,6 +316,8 @@ KG production thay đổi hàng ngày — không thể rebuild toàn bộ mỗi 
 > **Agentic KG construction** = thay vì pipeline batch trích-trước-rồi-virtual nên **LLM-agent trực tiếp thao tác graph bằng CRUD** (Create/Read/Update/Delete qua Cypher). Agent đọc văn bản → viết query `CREATE`/`MERGE` → kiểm tra kết quả → **tự nhận lỗi và sửa** nếu query sai hoặc thông tin chưa đúng.
 >
 > **So với pipeline batch (các section trên):**
+>
+> (Cách đọc bảng: mỗi hàng là một tiêu chí so sánh. Ví dụ, hàng "Bằng chứng": pipeline không lưu nguồn, agent gắn `source_chunk` — ghi rõ mỗi quan hệ lấy từ đoạn văn bản nào.)
 >
 > | | Batch Pipeline | Agentic Agent |
 > |---|---|---|
@@ -291,13 +329,17 @@ KG production thay đổi hàng ngày — không thể rebuild toàn bộ mỗi 
 >
 > **Analogies:** Pipeline batch giống dây chuyền nhà máy; agent giống **thợ lành nghề** — vừa xây vừa nhìn, thấy lỗi thì tháo ra sửa ngay, và ghi chú "viên gạch này lấy từ nguồn X".
 >
-> Các hệ thống điển hình: **KnoBuilder, KG-Agent** (tự trích triplet theo vòng lặp), **RAGA** (đánh giá chất lượng KG rồi cho agent sửa). Nghiên cứu 2025-2026 cho thấy agentic approach **giảm đáng kể triplets sai** so với batch single-pass, với chi phí cao hơn 2-3×.
+> Các hệ thống điển hình: **KnoBuilder, KG-Agent** (tự trích triplet theo vòng lặp), **RAGA** (đánh giá chất lượng KG rồi cho agent sửa). Nghiên cứu 2025-2026 cho thấy agentic approach **giảm đáng kể triplets sai** so với batch single-pass, với chi phí cao hơn 2-3×. (triplet = bộ ba thực thể–quan hệ–thực thể; single-pass = chạy một lượt duy nhất.)
 
 > 📄 **Code ví dụ:** [`examples/12-7-agentic-kg-construction.py`](examples/12-7-agentic-kg-construction.py)
+
+> **Tóm gọn 1 câu:** Agent tự xây tự sửa graph cho chính xác và truy vết được nguồn, đổi lại tốn 2-3 lần chi phí — hợp với graph nhỏ cần chất lượng cao.
 
 ---
 
 ## 8. Labs Thực Hành
+
+> Phần này là 3 bài tập tay: trích KG từ 5 tài liệu, so trích 1 vòng với 2 vòng, và chỉnh ngưỡng gộp trùng.
 
 ### Lab 1: Extract KG từ 5 Documents
 
@@ -314,6 +356,8 @@ KG production thay đổi hàng ngày — không thể rebuild toàn bộ mỗi 
 
 - Thử thresholds 0.80, 0.85, 0.90 cho `deduplicate_entities`
 - Quan sát: threshold thấp → gộp quá tay (false positive), cao → sót trùng lặp
+
+> **Tóm gọn 1 câu:** Làm đủ 3 lab để tự tay thấy: gleaning tăng độ phủ, ngưỡng gộp quyết định đúng/sai — đếm số node trước và sau mỗi lab.
 
 ---
 
@@ -340,6 +384,8 @@ Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query p
 - **Knowledge Graph Market**: 1.48B USD (2025) → 2.04B USD (2026). GraphRAG chuyển từ "enterprise luxury" → production baseline.
 
 Ref: https://microsoft.github.io/graphrag/
+
+> **Tóm gọn 1 câu:** Tin mới 2025-2026: GraphRAG ngày càng rẻ (LazyGraphRAG, LightRAG) và đang thành chuẩn production; chi tiết trong bảng ở file GRAPH_ENGINEERING.md.
 
 ---
 

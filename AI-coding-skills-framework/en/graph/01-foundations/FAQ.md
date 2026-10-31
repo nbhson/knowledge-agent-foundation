@@ -8,14 +8,14 @@ If a question is unclear, read the section in `../README.md` (named in brackets)
 
 **What you see**
 
-You build the graph the way the textbook draws it: a square table of 0s and 1s, one row and one column per node. Everything works on a tutorial graph of 4 nodes. Then you load the real thing — 100,000 nodes — and the process either takes minutes or dies.
+You build the graph the way the textbook draws it: a square table of 0s and 1s (this is the **adjacency matrix** — one row and one column per node, cell = "connected or not"). Everything works on a tutorial graph of 4 nodes. Then you load the real thing — 100,000 nodes — and the process either takes minutes or dies.
 
 ```
 cells = 100,000 × 100,000 = 10 billion cells
 float64 → ~80 GB just to hold it
 ```
 
-Almost none of those cells are ever used. A knowledge graph is **sparse**: a person connects to a handful of documents, not to all 99,999 others. The matrix spends memory storing the word "no" 10 billion times.
+Almost none of those cells are ever used. A knowledge graph is **sparse** (sparse = very few of the possible connections actually exist): a person connects to a handful of documents, not to all 99,999 others. The matrix spends memory storing the word "no" 10 billion times.
 
 **Why**
 
@@ -23,7 +23,7 @@ The table above is only worth it when the graph is **dense** — when roughly 30
 
 **What to do**
 
-1. Start with an **adjacency list** — the default. In NetworkX, `nx.Graph()` *is* an adjacency list, so you get it for free. Memory is O(V + E), meaning "proportional to the number of nodes plus the number of edges".
+1. Start with an **adjacency list** (a list per node of "who I connect to") — the default. In NetworkX (the standard Python graph library), `nx.Graph()` *is* an adjacency list, so you get it for free. Memory is O(V + E), meaning "proportional to the number of nodes plus the number of edges".
 2. Measure before you switch. Only move when you have a real number in front of you, not because a blog post said so.
 3. If you must choose from scratch:
 
@@ -35,9 +35,13 @@ Dense, ≥30% of cells filled  → Adjacency Matrix + GPU
 ETL, export, streaming       → Edge List (parquet / csv)
 ```
 
+(How to read it: each line is "your situation → the representation to pick". CSR = a compressed, GPU-friendly array format; PyG/DGL = graph-neural-network libraries; ETL = moving/exporting data between systems.)
+
 **Verify**
 
-Benchmark both on the same data before you commit — the Lab 2 pattern in the README is enough: `nx.erdos_renyi_graph(10000, 0.001)`, then time `nx.shortest_path` and `nx.degree_centrality`. Check peak memory with `/usr/bin/time -l`. If the list finishes in milliseconds and the matrix needs gigabytes, you have your answer, and a number you can put in a design doc.
+Benchmark both on the same data before you commit — the Lab 2 pattern in the README is enough: `nx.erdos_renyi_graph(10000, 0.001)` (a random 10,000-node test graph), then time `nx.shortest_path` and `nx.degree_centrality`. Check peak memory with `/usr/bin/time -l` (the macOS/BSD command that reports max memory used by a program). If the list finishes in milliseconds and the matrix needs gigabytes, you have your answer, and a number you can put in a design doc.
+
+> **One-line summary:** Use an adjacency list by default; a matrix wastes memory on sparse graphs and only pays off when the graph is dense or you need matrix math.
 
 ---
 
@@ -49,7 +53,9 @@ The query runs, returns rows, no error. But the list is wrong in a way that is h
 
 **Why**
 
-You stored the edge as **undirected** when the real relationship is **directed**. An undirected edge means "A—B is the same as B—A". A directed edge means "A→B is not the same as B→A". `REPORTS_TO`, `MANAGES`, `BELONGS_TO`, `APPROVES` are all one-way: Alice manages Bob, and that fact says nothing about whether Bob manages Alice.
+You stored the edge as **undirected** (A—B means the same as B—A) when the real relationship is **directed** (A→B is not the same as B→A). `REPORTS_TO`, `MANAGES`, `BELONGS_TO`, `APPROVES` are all one-way: Alice manages Bob, and that fact says nothing about whether Bob manages Alice.
+
+How to read this table: each row is a common relationship, its correct type, and the symptom you see when you pick the wrong type.
 
 | Relationship | Type | If you get it wrong |
 |---|---|---|
@@ -61,13 +67,15 @@ You stored the edge as **undirected** when the real relationship is **directed**
 
 1. Pick the type from the sentence, not from convenience. "Alice manages Bob" is directed. "Alice collaborates with Bob" is undirected.
 2. If an edge has a number on it, store the number: `KNOWS {weight: 0.92}` from extraction is what lets you later say "knows well" versus "barely acquainted".
-3. If you have two kinds of entities and only cross-links — users and movies — that is a **bipartite** graph: users never link to users.
+3. If you have two kinds of entities and only cross-links — users and movies — that is a **bipartite** graph (two groups, links only run between the groups, never inside one): users never link to users.
 
 > 📄 **Example code:** [`examples/01-q2-i-asked-who-reports-to-whom-and.py`](examples/01-q2-i-asked-who-reports-to-whom-and.py)
 
 **Verify**
 
-`nx.is_directed(G)` returns `True`. Then test the reverse case on purpose: search for "Bob reports to Alice" and assert you get zero rows. Also count edges before and after the switch — if a reciprocal pair `A—B` and `B—A` collapses into one, your old data was silently losing information. On a codebase graph (`File —DEFINES→ Function —CALLS→ Function`), `G_code.predecessors("validateCard")` must return the caller and not the callee.
+`nx.is_directed(G)` returns `True`. Then test the reverse case on purpose: search for "Bob reports to Alice" and assert you get zero rows. Also count edges before and after the switch — if a reciprocal pair `A—B` and `B—A` collapses into one, your old data was silently losing information. On a codebase graph (`File —DEFINES→ Function —CALLS→ Function`), `G_code.predecessors("validateCard")` (predecessors = the nodes pointing *into* this one) must return the caller and not the callee.
+
+> **One-line summary:** One-way relationships (manages, reports to) need directed edges; picking undirected makes the answer confidently wrong without any error.
 
 ---
 
@@ -79,7 +87,7 @@ Someone asks who manages Team B. Your graph confidently answers Alice. She moved
 
 **Why**
 
-You stored the relationship as a plain fact instead of a **temporal** fact. A temporal edge carries a validity period, usually written as a half-open interval: `valid_from` inclusive, `valid_until` exclusive. In the README's own data shape, Alice has two `WORKS_AT` edges — `[2020, 2024)` and `[2024, now)`. Both are true records. Only one is true *today*.
+You stored the relationship as a plain fact instead of a **temporal** fact (temporal = carrying a validity period). A temporal edge carries its validity period as a half-open interval: `valid_from` inclusive, `valid_until` exclusive — so `[2020, 2024)` means "from the start of 2020 up to (but not including) 2024". In the README's own data shape, Alice has two `WORKS_AT` edges — `[2020, 2024)` and `[2024, now)`. Both are true records. Only one is true *today*.
 
 > 📄 **Example code:** [`examples/02-q3-the-answer-is-three-years-out-of.py`](examples/02-q3-the-answer-is-three-years-out-of.py)
 
@@ -95,17 +103,21 @@ You stored the relationship as a plain fact instead of a **temporal** fact. A te
 
 Run yesterday's question against data with a known expiry: the count of active `WORKS_AT` edges per person must equal 1, never 0 and never 2. Add a unit test that inserts an edge ending at `2024` and asserts the query returns nothing for today's date — this is the cheapest regression test in the whole module.
 
+> **One-line summary:** Give every changeable relationship a `valid_from`/`valid_until` window and filter for "active today" — otherwise expired facts keep answering.
+
 ---
 
 ## Q4. Neo4j or a triple store? And what exactly does RDF cost me? [→ §5 Property Graph vs RDF Triple Store]
 
 **What you see**
 
-You are choosing a database and the docs describe two incompatible worlds. One stores nodes and edges with properties; the other stores triples `(Subject, Predicate, Object)`. Both claim to be "the graph database". Teams pick one, migrate later, and lose a quarter.
+You are choosing a database and the docs describe two incompatible worlds. One stores nodes and edges with properties; the other stores triples `(Subject, Predicate, Object)` — a triple is one small sentence: "Alice (subject) reports_to (predicate) Bob (object)". Both claim to be "the graph database". Teams pick one, migrate later, and lose a quarter.
 
 **Why**
 
-They optimise for different goals. A **property graph** gives every node and edge a bag of key-value attributes — `weight: 0.9`, `since: "2024-01-01"`, `confidence: 0.95`. An **RDF triple store** is built around URIs and an **ontology** (a formal schema, e.g. OWL/RDFS) with built-in logical *reasoning*: it can infer that a fact follows from other facts without you writing code.
+They optimise for different goals. A **property graph** gives every node and edge a bag of key-value attributes — `weight: 0.9`, `since: "2024-01-01"`, `confidence: 0.95`. An **RDF triple store** (RDF = a W3C standard that stores everything as triples and identifies things with URIs, the web-style addresses) is built around URIs and an **ontology** (a formal schema, e.g. OWL/RDFS) with built-in logical *reasoning*: it can infer that a fact follows from other facts without you writing code.
+
+How to read this table: each row compares the two database styles on one aspect.
 
 | Aspect | Property graph | RDF triple store |
 |---|---|---|
@@ -114,7 +126,7 @@ They optimise for different goals. A **property graph** gives every node and edg
 | Properties on edges | native | reification (heavy) |
 | Reasoning | you write the code | built in (OWL) |
 
-The Neo4j benchmark in the README's evidence table: property graphs are **3–5× faster** for 2–3 hop traversal, which is the shape of almost every real question.
+The Neo4j benchmark in the README's evidence table: property graphs are **3–5× faster** for 2–3 hop traversal, which is the shape of almost every real question. (In the table, **reification** = adding extra triples just to describe a triple — heavy and slow.)
 
 **What to do**
 
@@ -127,6 +139,8 @@ The Neo4j benchmark in the README's evidence table: property graphs are **3–5�
 
 Time the identical 2–3 hop question in both engines on the same 100k-node dataset and record milliseconds side by side. Then try to filter on an edge attribute (`confidence > 0.9`) in each — in the property graph it is `WHERE e.confidence > 0.9`, in the triple store it is the thing that made you read about reification in the first place.
 
+> **One-line summary:** For this framework pick a property graph (Neo4j/Kuzu/NetworkX); RDF only pays off for linked open data or when you truly need automatic reasoning.
+
 ---
 
 ## Q5. Which metric do I actually report — and why does my GNN ignore fraud patterns? [→ §4 Metrics & Graph Characteristics]
@@ -137,19 +151,21 @@ Two failures, opposite shapes. First: you report "average degree" in a status up
 
 **Why**
 
-Metrics are measuring tools, not trophies — pick the one that answers your actual question. And there is a quiet assumption baked into standard GNNs (GCN, GraphSAGE): **homophily**, meaning nearby nodes tend to share a label. It holds for social graphs and breaks on fraud, virus spread, and cyber attack networks, where the whole signal *is* that a node connects across types.
+Metrics are measuring tools, not trophies — pick the one that answers your actual question. And there is a quiet assumption baked into standard GNNs (GCN, GraphSAGE — the two most common graph neural networks): **homophily**, meaning nearby nodes tend to share a label. It holds for social graphs and breaks on fraud, virus spread, and cyber attack networks, where the whole signal *is* that a node connects across types.
 
 **What to do**
 
 1. Match metric to question: degree centrality for "who is the hub", **betweenness** for the bridge whose removal blocks a team, PageRank for influence without volume, clustering + modularity for splitting 1,000 entities into summarizable topics.
 2. Use diameter and average path length to set your traversal budget — that is your `max_hops`.
-3. Check homophily before training. If neighbours rarely share labels, use a heterophilous model instead.
+3. Check homophily before training. If neighbours rarely share labels, use a heterophilous model instead (heterophilous = the graph where connected nodes tend to *differ*).
 
 > 📄 **Example code:** [`examples/05-q5-which-metric-do-i-actually-report-and.py`](examples/05-q5-which-metric-do-i-actually-report-and.py)
 
 **Verify**
 
-Sanity-check the arithmetic before you publish: average degree must equal `2E/V` (for the karate club, 78 edges / 34 nodes ≈ 4.6). Run Louvain and print modularity `Q` — a high value means the communities are genuinely separated; that same number is what tunes the Leiden resolution parameter, and Microsoft GraphRAG reports **15% better answer quality** from getting it right. For the GNN, compare neighbour label agreement against a random baseline; no gap means your dataset is heterophilous and the standard model will not help you.
+Sanity-check the arithmetic before you publish: average degree must equal `2E/V` (2× the number of edges divided by the number of nodes — for the karate club, 78 edges / 34 nodes ≈ 4.6). Run Louvain (a popular community-detection algorithm) and print modularity `Q` — a high value means the communities are genuinely separated; that same number is what tunes the Leiden resolution parameter (resolution = how finely communities get split), and Microsoft GraphRAG reports **15% better answer quality** from getting it right. For the GNN, compare neighbour label agreement against a random baseline; no gap means your dataset is heterophilous and the standard model will not help you.
+
+> **One-line summary:** Pick the metric that answers your question, and before trusting a GNN check homophily — connected nodes must actually share labels for standard models to work.
 
 ---
 

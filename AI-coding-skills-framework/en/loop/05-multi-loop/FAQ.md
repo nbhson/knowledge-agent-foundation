@@ -1,10 +1,13 @@
 # ❓ FAQ — Multi-Loop Coordination (Real Stories, Plain Language)
 
 If a question is unclear, read the section in `../README.md` (named in brackets).
+(Glossary used throughout: a **loop** = an agent task that runs on a schedule. **Branch** = an independent line of work in git. **Worktree** = a separate git copy of the repo so the agent never touches your main checkout. **State file** = one loop's memory between runs. **Advisory lock** = a shared flag letting only one loop proceed — polite, but enforced by convention.)
 
 ---
 
 ## Q1. I turned on a second loop and now both of them fight over the same branch — how do I stop that? [→ §1 Principles, §5 Collision Detection]
+
+This answer explains why two loops can silently overwrite each other, and how locks plus a shared record prevent it.
 
 **What you see**
 
@@ -16,21 +19,25 @@ Many loops in one repository is not bad by itself. It becomes dangerous only whe
 
 **What to do**
 
-1. Every action loop writes `acting_on: <branch-or-pr-id>` into its own state file before it starts.
-2. Before spawning a fix, read **all other** pattern state files. If another loop's `acting_on` matches, skip and log the skip to `loop-run-log.md`.
+1. Every action loop writes `acting_on: <branch-or-pr-id>` into its own state file before it starts. (In plain terms: `acting_on` = "I am working on this branch/PR" — a name tag so others can check.)
+2. Before spawning a fix, read **all other** pattern state files. If another loop's `acting_on` matches, skip and log the skip to `loop-run-log.md`. (spawn = create the helper agent; log the skip = write "I skipped because loop X owns it".)
 3. Better than self-discipline, use real advisory locks in the control script:
 
 > 📄 **Example code:** [`examples/01-q1-i-turned-on-a-second-loop-and.sh`](examples/01-q1-i-turned-on-a-second-loop-and.sh)
 
-4. Know the gap: `loop-worktree create` does **not** check locks itself — the lock/unlock pairing is a convention you enforce in the control script. For one-shot sandboxed runs, `loop-sandbox --lock-paths` follows the same convention.
+4. Know the gap: `loop-worktree create` does **not** check locks itself — the lock/unlock pairing is a convention you enforce in the control script. For one-shot sandboxed runs, `loop-sandbox --lock-paths` follows the same convention. (one-shot = runs once on demand; opt-in = you must switch the option on yourself.)
 
 **Verify**
 
-Start two loops that deliberately target the same branch. Exactly one should acquire the lock; the other should log a skip, not a duplicate worktree. Then confirm the lock is released — a stale lock is a loop that silently stops working forever.
+Start two loops that deliberately target the same branch. Exactly one should acquire the lock; the other should log a skip, not a duplicate worktree. Then confirm the lock is released — a stale lock is a loop that silently stops working forever. (stale lock = a lock that was never unlocked, blocking everyone forever.)
+
+> **One-line summary:** Loops claim work with `acting_on`, check each other's state, and take real locks — so two loops can never push to the same branch.
 
 ---
 
 ## Q2. Should every loop share one `STATE.md`, or does each one get its own file? [→ §2 Recommended State Layout]
+
+This answer explains why a shared state file is a data-loss trap, and what the safe layout is.
 
 **What you see**
 
@@ -42,7 +49,7 @@ Separate state files are one of the five core principles. A shared file is a sha
 
 **What to do**
 
-1. Give each pattern its own state file, and keep one shared append-only log:
+1. Give each pattern its own state file, and keep one shared append-only log (append-only = new lines are added, old lines are never edited or deleted):
 
 ```
 STATE.md                     # Daily Triage (priorities, human inbox)
@@ -52,18 +59,23 @@ dependency-sweeper-state.md  # In-flight package updates
 post-merge-state.md          # Cleanup backlog
 loop-run-log.md              # Append-only observability
 ```
+(How to read it: each line = one file and its owner. For instance, `ci-sweeper-state.md` belongs to the CI Sweeper and tracks which failures it is retrying.)
 
 2. Linear or GitHub Projects work just as well — but the loop must **read and write the same store every run**. A store it only writes is a log; a store it only reads is a stale snapshot.
-3. Copy the same path denylist into **every** `LOOP.md`, so no loop can be talked into touching a protected path.
+3. Copy the same path denylist into **every** `LOOP.md`, so no loop can be talked into touching a protected path. (denylist = the blacklist of paths no loop may touch, e.g. `auth/**`.)
 4. Aggregate the token budget across loops, not per loop — three loops at 700k each is still 2.1M.
 
 **Verify**
 
 Delete one state file and run only its loop. If the loop still works, it was reading something else and you have not found your real state. Then check that `loop-run-log.md` still shows every pattern's entries after a week of parallel runs.
 
+> **One-line summary:** One state file per loop, one shared append-only log — a single shared `STATE.md` lets loops erase each other's data.
+
 ---
 
 ## Q3. CI on `main` is red and three loops all want to act — who goes first? [→ §3 Priority When Loops Conflict]
+
+This answer explains the fixed priority ladder that decides which loop acts when several want the same thing at once.
 
 **What you see**
 
@@ -75,7 +87,7 @@ Red CI on `main` blocks everything, because nobody can merge while it is failing
 
 **What to do**
 
-1. Use this ranking as written:
+1. Use this ranking as written. How to read it: "Priority" = rank, 1 is highest; on conflict the higher-ranked loop wins and the lower-ranked loop skips. For instance, priority 1: red CI on `main` blocks every merge, so the CI Sweeper always goes first.
 
 | Priority | Loop | Reason |
 |---|---|---|
@@ -92,13 +104,17 @@ Red CI on `main` blocks everything, because nobody can merge while it is failing
 
 Force a conflict on one branch with CI red. The CI Sweeper proceeds and the other two log a skip to `loop-run-log.md`. If the Dependency Sweeper still lands a bump, its skip condition is not actually in the prompt.
 
+> **One-line summary:** A fixed priority ladder — red CI first, cleanup last — with skip rules written into the schedule so yields are mechanical.
+
 ---
 
 ## Q4. Two loops flagged PR #42 and now neither of them will touch it — who decides? [→ §6 Human Inbox]
 
+This answer explains the "correctly yielding into a deadlock" case, and the inbox that breaks the stalemate.
+
 **What you see**
 
-PR #42 is flagged by both the CI Sweeper and the PR Babysitter. Both loops see a matching `acting_on` from the other, both correctly yield, and the PR sits there untouched. Nobody was notified, so the stall is invisible until a human stumbles onto it days later.
+PR #42 is flagged by both the CI Sweeper and the PR Babysitter. Both loops see a matching `acting_on` from the other, both correctly yield, and the PR sits there untouched. Nobody was notified, so the stall is invisible until a human stumbles onto it days later. (yield = step aside because another loop owns the item.)
 
 **Why**
 
@@ -121,9 +137,13 @@ This is the *ambiguous / cross-loop* case: ownership is genuinely unclear, and b
 
 Create a genuine double-flag, then check that an inbox line appears within one run interval and names both loops and the PR id. After a human assigns the owner, confirm exactly one loop acts and the other logs a skip.
 
+> **One-line summary:** When two loops both correctly step back, the loop writes the item to a human inbox and exits — a person picks the owner.
+
 ---
 
 ## Q5. Can I run four loops from day one, and in what order should I add them? [→ §7 Example: Safe Three-Loop Setup]
+
+This answer explains why loops should be added one proven loop at a time, and gives the safe starter set.
 
 **What you see**
 
@@ -135,7 +155,7 @@ Each loop needs its own guardrails proven before another one is added. A new act
 
 **What to do**
 
-1. Start with three, at these levels and cadences:
+1. Start with three, at these levels and cadences. How to read it: "Loop" = which loop; "Level" = autonomy level (L1 report-only, L2 assisted fixes); "Cadence" = how often it runs. For instance, the PR Babysitter row: it may draft small fixes (L2), checked every 10 minutes.
 
 | Loop | Level | Cadence |
 |---|---|---|
@@ -150,6 +170,8 @@ Each loop needs its own guardrails proven before another one is added. A new act
 **Verify**
 
 Before adding loop four, confirm two weeks of PR Babysitter history shows a bounded attempt count and no runaway retries. Then check `loop-run-log.md` shows clean lock acquire/release pairs for every action loop in the first week of parallel operation.
+
+> **One-line summary:** Start with three loops, add the fourth only after two weeks of proven guardrails, and stagger their schedules so they don't wake together.
 
 ---
 

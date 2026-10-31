@@ -1,6 +1,8 @@
 # ❓ FAQ — AI Coding Skills Framework (Real Stories, Plain and Friendly Language)
 
-If a question feels unclear, open the section named in brackets — it points you to the right file.
+This file collects the questions real beginners asked, with answers in plain words. If a question feels unclear, open the section named in brackets — it points you to the right file.
+
+> **How to read it:** each answer has four parts. **What you see** = what you notice first. **Why** = the reason behind it. **What to do** = the concrete steps. **Verify** = how to check you succeeded.
 
 ---
 
@@ -10,24 +12,26 @@ If a question feels unclear, open the section named in brackets — it points yo
 
 **What you see**
 
-Bạn clone repo, mở `AI_AGENT_FRAMEWORK.md` (1195 dòng), thấy ba thư mục con: `harness/` (15 module), `graph/` (9 module), `loop/` (7 phần). Dòng đầu tiên của tài liệu nói rõ: đây là hướng dẫn **xây** agent, không phải cách **dùng** AI thông thường. Bảng "Which parts need a model?" cũng gây bất ngờ: `BM25 Search` ❌, `Prompt Building` ❌, `Workflow` ❌, `CI/CD Automation` ❌ — chỉ `Vector Search` cần embedding model (model đổi text thành vector) và `Generate Answer` cần LLM (mô hình ngôn ngữ lớn).
+You clone the repo (clone = download a full copy so you can run it locally) and open `AI_AGENT_FRAMEWORK.md` (1,195 lines, one line = one row of text). It names three subfolders: `harness/` (15 modules), `graph/` (9 modules), `loop/` (7 parts). A module = one self-contained folder that teaches one skill. The doc's first line says it clearly: this teaches you to **build** an agent, not to use a normal chat AI. The table "Which parts need a model?" is the surprise: `BM25 Search` ❌, `Prompt Building` ❌, `Workflow` ❌, `CI/CD Automation` ❌. Only `Vector Search` needs an embedding model (a model that turns text into number lists so similar texts sit close together), and only `Generate Answer` needs an LLM (Large Language Model, e.g. GPT-4o — the AI that writes text).
 
 **Why**
 
-Tài liệu coi framework là "bộ não điều phối", còn mô hình AI chỉ là "bộ não suy luận" — một mảnh trong puzzle. Chính tài liệu ước tính **~60% framework là code thuần không cần model**, ~40% cần model. Cảm giác "nhiều quá" thường đến từ việc đếm cả phần không liên quan tới AI.
+The doc calls the framework the "coordination brain" and the AI model just the "reasoning brain" — one piece of the puzzle. By the doc's own estimate, **~60% of the framework is plain code that needs no model**, ~40% needs one. The "too much" feeling usually comes from counting the AI-free parts as AI work.
 
 **What to do**
 
-1. Mở mục `⚡ Quick Reference`, chọn **một** hàng theo việc bạn định làm — không đọc tuần tự 13 phần.
-2. Cài môi trường một lần, dùng lại cho mọi module.
-3. Bắt đầu bằng `harness/01-retrieve-memory-knowledge` và `harness/02-build-context`: ma trận Module → Project ghi chúng phục vụ lần lượt 15/20 và 12/20 dự án trong tài liệu.
-4. Chưa cần mua API: Ollama chạy local miễn phí, đủ để học hết Phase 1-6.
+1. Open `⚡ Quick Reference` and pick **one** row that matches what you plan to build — do not read all 13 sections in order.
+2. Set up your environment once; reuse it for every module.
+3. Start with `harness/01-retrieve-memory-knowledge` and `harness/02-build-context`: the Module → Project matrix shows these serve 15/20 and 12/20 of the doc's projects (matrix = a table mapping each module to which projects use it).
+4. You do not need to buy an API yet: Ollama (a free tool that runs AI models on your own machine) covers all of Phases 1–6.
 
 > 📄 **Example code:** [`examples/01-q1-framework-nay-thuc-chat-la-cai-gi.sh`](examples/01-q1-framework-nay-thuc-chat-la-cai-gi.sh)
 
 **Verify**
 
-`curl -s http://localhost:11434/api/tags` trả về cả hai tên model. Nạp 10 file markdown vào module 01, hỏi một câu tiếng Anh, và câu trả lời phải trích đúng đoạn đã nạp. Nếu không trích được, bạn đang ở tầng model — chưa chạm tới tầng framework.
+Run `curl -s http://localhost:11434/api/tags` (curl = send a web request from the command line; this one asks Ollama which models are installed) — it must list both model names. Load 10 markdown files into module 01, ask one English question, and the answer must quote the exact passage you loaded. If it cannot quote, the problem is at the model layer — you have not touched the framework layer yet.
+
+> **One-line summary:** This framework is mostly glue code (~60%) around a small AI core — start with one Quick Reference row and two modules, and a free local model is enough to learn.
 
 ---
 
@@ -35,24 +39,26 @@ Tài liệu coi framework là "bộ não điều phối", còn mô hình AI ch�
 
 **What you see**
 
-Bạn đứng trước 15 module của `harness/`, rồi `loop/`, rồi `graph/`. Lộ trình 6 phase trong tài liệu trông rất lộn xộn: Phase 1 là `01 Retrieve Memory → 02 Build Context`, nhưng Phase 2 nhảy sang `05 Prompt Builder ← 06 Decide Tools`, rồi Phase 3 quay lại `03 Update Memory → 04 Plan`.
+You face 15 modules in `harness/`, then `loop/`, then `graph/` — too many doors. The 6-phase roadmap in the doc looks chaotic too: Phase 1 is `01 Retrieve Memory → 02 Build Context`, but Phase 2 jumps to `05 Prompt Builder ← 06 Decide Tools`, then Phase 3 goes back to `03 Update Memory → 04 Plan`. (Roadmap = a suggested learning order.)
 
 **Why**
 
-Hai module đầu là đường ống lấy dữ liệu về — không có gì để đưa vào ngữ cảnh thì phần còn lại vô nghĩa. Lộ trình cố tình xen kẽ để bạn thấy một vòng chạy trọn vẹn (lấy dữ liệu → dựng ngữ cảnh → sinh câu trả lời) trước khi mở rộng sang ghi nhớ và kế hoạch. Tài liệu cũng có sẵn lộ trình 26 tuần nếu bạn muốn đi hết — nhưng mục Tips vẫn dạy "START SMALL".
+The first two modules are the data intake pipe — if nothing goes into the context, nothing else matters. The roadmap deliberately interleaves so you see one full loop (fetch data → build context → generate an answer) before adding memory and planning. The doc also ships a 26-week plan if you want to go all the way — but its own Tips section still says "START SMALL".
 
 **What to do**
 
-1. Làm dự án #1 Personal Knowledge Base trước — 2-3 ngày, chỉ dùng module 01, 03, 06. Dự án này chỉ cần ChromaDB + `nomic-embed-text` + một CLI bằng Python.
-2. Rồi tới dự án #2 Document Q&A Chatbot — 3-5 ngày, thêm module 02 và 05. Kết quả mong đợi: chatbot trả lời đúng từ tài liệu nội bộ thay vì bịa.
-3. Ghép sau: #1 + #2 = #6 Enterprise RAG Platform.
-4. Đo kết quả từng bước (số câu trả lời đúng) trước khi thêm module mới. Ở cấp trung bình, dự án #6 mới được ghi là 2-3 tuần cho bản MVP.
+1. Do project #1 Personal Knowledge Base first — 2–3 days, only modules 01, 03, 06. It just needs ChromaDB (a small local database for vector search), `nomic-embed-text` (a small embedding model), and a simple Python command-line tool.
+2. Then project #2 Document Q&A Chatbot — 3–5 days, adding modules 02 and 05. Expected result: a chatbot that answers from your internal documents instead of making things up.
+3. Combine later: #1 + #2 = #6 Enterprise RAG Platform (RAG = Retrieval-Augmented Generation, i.e. answer questions by first searching your documents).
+4. Measure each step (count of correct answers) before adding a new module. At intermediate level, project #6 is listed as 2–3 weeks for an MVP (Minimum Viable Product = the smallest version that works).
 
 > 📄 **Example code:** [`examples/02-q2-moi-vao-toi-nen-bat-au-tu.sh`](examples/02-q2-moi-vao-toi-nen-bat-au-tu.sh)
 
 **Verify**
 
-Lệnh `curl` trả về 768 số thực. Lệnh `pkb search "cách deploy Docker"` tìm đúng ghi chú giữa khoảng 1000 ghi chú. Nếu chưa tìm được, hãy sửa cách **tìm kiếm** (BM25 + vector) chứ đừng đụng tới prompt builder.
+The `curl` command returns 768 floating-point numbers (one vector = one list of 768 numbers describing your text). The command `pkb search "cách deploy Docker"` must find the right note among ~1,000 notes. If it does not, fix the **search** step (BM25 + vector) — do not touch the prompt builder.
+
+> **One-line summary:** Start with the two intake modules and one tiny project (Personal Knowledge Base), measure it, and only then grow — the messy phase order is intentional.
 
 ---
 
@@ -60,31 +66,35 @@ Lệnh `curl` trả về 768 số thực. Lệnh `pkb search "cách deploy Docke
 
 **What you see**
 
-Trong `AI_AGENT_FRAMEWORK.md`, "Part XII" là Loop Engineering và "Part XIII" là Graph Engineering. Nhưng trong thư mục `harness/`, module `12` là Sandbox Execution, `13` là Trajectory & Observability, `14` là Compaction & Context, `15` là Approval Gates. Người mới thấy "số 12" là tìm nhầm sang `loop/`.
+In `AI_AGENT_FRAMEWORK.md`, "Part XII" is Loop Engineering and "Part XIII" is Graph Engineering. But in the `harness/` folder, module `12` is Sandbox Execution, `13` is Trajectory & Observability, `14` is Compaction & Context, `15` is Approval Gates. A beginner who searches "12" lands in `loop/` by mistake.
 
 **Why**
 
-Hai hệ số cùng tồn tại: số `01`–`15` đánh số **module trong thư mục**, còn nhãn `Part I`–`Part XIII` đánh số **phần của tài liệu**. Tài liệu đã tự cảnh báo chuyện này ngay dưới bảng Quick Reference.
+Two numbering systems coexist: the numbers `01`–`15` count **modules in the folder**, while the labels `Part I`–`Part XIII` count **sections of the document**. The doc itself warns about this right under the Quick Reference table.
 
 **What to do**
 
-1. Đếm bằng **đường dẫn**, không đếm bằng nhãn: `harness/12-sandbox-execution` luôn là sandbox, không bao giờ là loop.
-2. Dùng ba file ở gốc thư mục làm bản đồ: `AI_AGENT_FRAMEWORK.md` (trang chủ), `HARNESS_ENGINEERING.md`, `GRAPH_ENGINEERING.md`.
-3. Module 12–15 không nằm trên learning path vì chúng **không phải giai đoạn** của đường ống mà là nền mà mọi giai đoạn 01–11 đều dựa vào.
-4. Muốn cải thiện liên tục theo thời gian thì vào `loop/`, không phải `harness/12`.
+1. Count by **path**, not by label: `harness/12-sandbox-execution` is always the sandbox (sandbox = an isolated area where the agent can run commands without touching the rest of your machine), never the loop.
+2. Use the three files at the repo root as your map: `AI_AGENT_FRAMEWORK.md` (the front page), `HARNESS_ENGINEERING.md`, `GRAPH_ENGINEERING.md`.
+3. Modules 12–15 are not on the learning path because they are not **stages** of the pipeline — they are the foundation every stage 01–11 stands on.
+4. Want the agent to improve over time? That is `loop/`, not `harness/12`.
 
-| Bạn đang tìm | Đường dẫn đúng |
+How to read the table below: the left column is what you are looking for in plain words; the right column is the exact folder that contains it.
+
+| You are looking for | Correct path |
 |---|---|
-| Cách ly code agent chạy lệnh | `harness/12-sandbox-execution/` |
-| Xem lại một lần chạy đã xảy ra | `harness/13-trajectory-observability/` |
-| Giữ context không phình vô hạn | `harness/14-compaction-context/` |
-| Xin người duyệt việc không đảo ngược | `harness/15-approval-gates/` |
+| Isolate the code where the agent runs commands | `harness/12-sandbox-execution/` |
+| Replay a run that already happened | `harness/13-trajectory-observability/` |
+| Keep context from growing without limit | `harness/14-compaction-context/` |
+| Ask a human to approve irreversible actions | `harness/15-approval-gates/` |
 
 > 📄 **Example code:** [`examples/03-q3-module-12-la-sandbox-nhung-part-xii.sh`](examples/03-q3-module-12-la-sandbox-nhung-part-xii.sh)
 
 **Verify**
 
-Đếm thư mục: `harness/` có 15 module, `graph/` có 9 module, `loop/` có 7 phần. Mở `harness/12-sandbox-execution/README.md`, phần đầu phải nói về cách ly và ranh giới thực thi, không nói về vòng lặp cải thiện.
+Count the folders: `harness/` has 15 modules, `graph/` has 9, `loop/` has 7 parts. Open `harness/12-sandbox-execution/README.md`; the opening must talk about isolation and execution boundaries (rules for where the agent may run things), not about improvement loops.
+
+> **One-line summary:** "Module 12" and "Part XII" are two different numbering systems — trust folder paths over document labels, and remember modules 12–15 are the foundation, not a stage.
 
 ---
 
@@ -92,28 +102,32 @@ Hai hệ số cùng tồn tại: số `01`–`15` đánh số **module trong th�
 
 **What you see**
 
-Tài liệu liệt kê `gemma3:12b` và `nomic-embed-text` chạy qua Ollama, rồi bảng lương ghi 30-80 triệu/tháng cho AI Engineer. Người mới hỏi: có phải cần mua `GPT-4o` hay `Claude` không, và 12 tỉ tham số có chạy nổi trên laptop không.
+The doc lists `gemma3:12b` and `nomic-embed-text` running through Ollama, then a salary table showing 30–80 million VND/month for AI Engineers. Beginners ask: do I need to buy `GPT-4o` or `Claude`, and can a 12-billion-parameter model (parameters = the learned weights inside a model; more usually means smarter but heavier) even run on a laptop?
 
 **Why**
 
-Framework chỉ cần đúng **hai loại model**: một embedding model để tìm kiếm, một LLM để sinh câu trả lời. Trong ví dụ RAG đầu tiên của tài liệu, chỉ có 2 dòng gọi HTTP là cần model; phần cắt đoạn, lưu trữ vector, tính điểm cosine — Python thuần.
+The framework needs exactly **two kinds of model**: one embedding model for search, one LLM to generate answers. In the doc's first RAG example, only 2 lines of code call the model; the chunk splitting, vector storage, and cosine scoring (cosine = a similarity score between two vectors) are plain Python.
 
 **What to do**
 
-1. Dùng Ollama local miễn phí để học: `nomic-embed-text` chỉ 768 chiều, nhẹ hơn nhiều so với việc thuê API.
-2. Chuyển sang API trả phí chỉ khi cần chất lượng cao hơn — đổi đúng **một** dòng, phần còn lại giữ nguyên.
-3. Đo chi phí trước khi scale: harness tiết kiệm 40-60% tiền token nhờ nén ngữ cảnh và kiểm tra đầu ra.
+1. Use free local Ollama to learn: `nomic-embed-text` is only 768 dimensions (768 numbers per text — a small, cheap vector), far cheaper than paying for an API.
+2. Switch to a paid API only when you need higher quality — change exactly **one** line of code, keep the rest.
+3. Measure cost before scaling: the harness saves 40–60% of token spend by compressing context and checking outputs.
 
-| Loại model | Việc của nó | Chạy local | Chạy trả phí |
+How to read the table below: each row is one kind of model; "local" means free on your machine, "paid" means a cloud API.
+
+| Model type | Its job | Runs locally | Runs as paid API |
 |---|---|---|---|
-| Embedding model | đổi text thành vector để tìm kiếm | `nomic-embed-text` | `text-embedding-3-small` |
-| LLM | sinh câu trả lời | `gemma3:12b` | `GPT-4o`, `Claude` |
+| Embedding model (turns text into searchable vectors) | converts text to vectors for search | `nomic-embed-text` | `text-embedding-3-small` |
+| LLM (writes the final answer) | generates answers | `gemma3:12b` | `GPT-4o`, `Claude` |
 
 > 📄 **Example code:** [`examples/04-q4-toi-co-phai-mua-model-at-tien.py`](examples/04-q4-toi-co-phai-mua-model-at-tien.py)
 
 **Verify**
 
-`ollama list` hiện `gemma3:12b`. Chạy cùng một câu hỏi ở local và ở API: nếu local đúng mà API sai, vấn đề nằm ở ngữ cảnh bạn gửi chứ không phải ở model.
+`ollama list` must show `gemma3:12b`. Ask the same question on local and on the API: if local is right and the API is wrong, the problem is the context you sent, not the model.
+
+> **One-line summary:** You need only two models — one small embedder and one LLM — and a free local Ollama setup is enough to learn; upgrade to a paid API later by changing a single line.
 
 ---
 
@@ -123,30 +137,36 @@ Framework chỉ cần đúng **hai loại model**: một embedding model để t
 
 **What you see**
 
-| Tầng | Bạn đang dùng gì | Câu hỏi nó trả lời tốt | Mức kiểm soát |
-|---|---|---|---|
-| 2020-2022 | BM25, inverted index | đúng từ khóa (mã hợp đồng) | ⭐ thấp |
-| 2023-2025 | embeddings + vector DB | câu diễn đạt khác nhau | ⭐⭐⭐ trung bình |
-| 2026+ | knowledge graph + GraphRAG | quan hệ nhiều bước | ⭐⭐⭐⭐⭐ cao |
+You just finished vector search, and now you hear you must "go graph" — but which tier do your users' real questions live in? This section explains the three retrieval tiers and helps you pick.
 
-Ký hiệu ⭐ chỉ mức độ kiểm soát do tài liệu ghi, không phải điểm số hiệu năng. Bạn vừa dựng xong vector search, giờ nghe nói phải lên graph — nhưng câu hỏi thật của người dùng nằm ở tầng nào?
+How to read the table below: each row is a retrieval tier (a generation of search technology). The last column, control level, is what the doc claims, shown with stars — more stars = more control. It is not a performance score.
+
+| Tier | What you use | Questions it answers well | Control level |
+|---|---|---|---|
+| 2020-2022 | BM25, inverted index | exact keywords (contract codes) | ⭐ low |
+| 2023-2025 | embeddings + vector DB | reworded questions | ⭐⭐⭐ medium |
+| 2026+ | knowledge graph + GraphRAG | multi-step relations | ⭐⭐⭐⭐⭐ high |
+
+Gloss: BM25 = classic keyword matching with an inverted index (a word → documents lookup, like a book index). Vector DB = stores text as number vectors so differently-worded questions still match. Knowledge graph + GraphRAG = entities and their relations, so multi-hop questions work (multi-hop = an answer that needs 2+ linked facts, e.g. "who funded the startup founded by X's PhD advisor?").
 
 **Why**
 
-Ba tầng **cộng dồn**, không thay thế. Tài liệu nói thẳng: vẫn cần BM25 cho mã hợp đồng, vẫn cần vector cho câu diễn đạt khác, và chỉ cần thêm graph cho multi-hop và global sensemaking.
+The three tiers **stack**, they do not replace each other. The doc says it plainly: you still need BM25 for contract codes, you still need vectors for reworded questions, and you add a graph only for multi-hop and global sensemaking (global sensemaking = questions that need the whole corpus, e.g. "what are the main themes across all reports?").
 
 **What to do**
 
-1. Lấy 20 câu hỏi thật của người dùng, gắn nhãn local / global / multi-hop theo bảng trong tài liệu.
-2. Chỉ mở `graph/` nếu lỗi tập trung ở nhóm global hoặc multi-hop.
-3. Nếu lỗi nằm ở nhóm local ("điều 5 hợp đồng X nói gì"), hãy sửa chunking thay vì mua database mới.
-4. Ghi lại câu hỏi nào graph **không** giải quyết được — phần đó vẫn thuộc về BM25 và vector.
+1. Take 20 real user questions, and label each one local / global / multi-hop using the doc's table (local = one specific fact; global = a theme across many documents).
+2. Open `graph/` only if the errors cluster in the global or multi-hop group.
+3. If the errors are local ("what does clause 5 of contract X say"), fix your chunking (chunking = how you cut documents into pieces) instead of buying a new database.
+4. Record which questions the graph still **cannot** answer — those belong to BM25 and vectors.
 
 > 📄 **Example code:** [`examples/05-q1-toi-ang-o-tang-truy-xuat-nao.py`](examples/05-q1-toi-ang-o-tang-truy-xuat-nao.py)
 
 **Verify**
 
-Chạy lại 20 câu đó sau khi nối graph. Nếu số câu trả lời đúng không tăng, hãy xem lại chất lượng trích xuất quan hệ — chứ đừng vội đổi kho.
+Re-run those 20 questions after wiring in the graph. If the count of correct answers does not rise, review your relation-extraction quality (how well you pull relations out of text) — do not rush to change databases.
+
+> **One-line summary:** The three retrieval tiers stack rather than replace each other — label your real questions local/global/multi-hop first, and only add a graph if your failures are multi-hop or global.
 
 ---
 
@@ -154,25 +174,27 @@ Chạy lại 20 câu đó sau khi nối graph. Nếu số câu trả lời đún
 
 **What you see**
 
-Bạn có 500 file hợp đồng và email nội bộ. Người trong nghề nói phải có "ontology" (bộ quy tắc về loại thực thể và quan hệ hợp lệ) — nghe giống phải biết trước mọi thứ trước khi bắt đầu. Nếu không, tài liệu cảnh báo đồ thị biến thành một "hairball" (búi tóc) không truy vấn được.
+You have 500 contract files and internal emails. An expert says you need an "ontology" (a rulebook of which entity types and relation types are allowed — e.g. Person, Project, Company as nodes; WORKS_ON as an edge/relationship). It sounds like you must know everything up front. Otherwise, the doc warns, the graph becomes a "hairball" (a tangled mess you cannot query).
 
 **Why**
 
-Tài liệu đặt luật số 1 là **Schema First, Data Second**: định nghĩa ontology trước khi nạp dữ liệu. Luật số 2 là **Every Edge Has Provenance** — mỗi quan hệ phải mang `source`, `confidence`, `timestamp`, vì đó chính là thứ biến một câu trả lời thành câu trả lời kiểm chứng được.
+The doc's rule #1 is **Schema First, Data Second**: define the ontology before loading data. Rule #2 is **Every Edge Has Provenance** (provenance = where a fact came from): every relation must carry `source`, `confidence`, `timestamp`. That trio is exactly what turns an answer into a checkable answer — you can trace it back.
 
 **What to do**
 
-1. Chỉ cần 3 loại node và 5 loại edge để bắt đầu — con số này xuất hiện trong lời khuyên của tài liệu.
-2. Đặt ontology vào file `data/ontology.yaml`, tách khỏi code.
-3. Nạp dữ liệu theo lô kèm checkpoint, không nạp cả kho một lần.
-4. Chặn quan hệ sai kiểu trước khi ghi: không cho `Person -[EATS]-> Project`.
-5. Ghi rõ nguồn của mỗi quan hệ ngay khi trích xuất, đừng đợi tới lúc trả lời.
+1. Start with just 3 node types and 5 edge types — these numbers come straight from the doc's advice.
+2. Put the ontology in a `data/ontology.yaml` file, separate from code.
+3. Load data in batches with checkpoints (a saved point you can roll back to), never the whole corpus at once.
+4. Block wrong-type relations before writing: never allow `Person -[EATS]-> Project` (a person "eats" a project — nonsense the validator should reject).
+5. Record each relation's source at extraction time, not when answering.
 
 > 📄 **Example code:** [`examples/06-q2-toi-khong-biet-truoc-can-nhung-quan.yaml`](examples/06-q2-toi-khong-biet-truoc-can-nhung-quan.yaml)
 
 **Verify**
 
-Sau lô đầu tiên: mọi edge đều có đủ ba trường `source`, `confidence`, `timestamp`; và một câu hỏi nối 2 tài liệu trả lời được kèm đường dẫn. Nếu thiếu trường nào, hãy vá tập trung vào script trích xuất, đừng sửa từng câu trả lời.
+After the first batch: every edge has all three fields `source`, `confidence`, `timestamp`, and a question that spans 2 documents gets answered with its evidence path. If a field is missing, patch the extraction script (the code that pulls relations from text) — do not fix answers one by one.
+
+> **One-line summary:** Define a small ontology first (3 node types, 5 edge types), stamp every relation with source + confidence + timestamp, and load in batches — that prevents the unqueryable hairball.
 
 ---
 
@@ -180,25 +202,27 @@ Sau lô đầu tiên: mọi edge đều có đủ ba trường `source`, `confid
 
 **What you see**
 
-Bạn muốn xem graph có thực sự giải quyết được vấn đề của mình không, nhưng ngân sách là 0 đồng và thời gian là 7 ngày. Bảng công cụ trong tài liệu có 6 dòng database; chọn sai thì mất cả tuần.
+You want to see whether a graph really solves your problem, with a budget of $0 and 7 days. The doc's tool table has 6 database rows; picking the wrong one wastes the whole week.
 
 **Why**
 
-Nút thắt không phải nơi lưu, mà là **xây graph**: mỗi vòng trích xuất quan hệ đều tốn token gọi LLM, và chất lượng trích xuất quyết định toàn bộ chất lượng phía sau. Vì vậy khối lượng khởi đầu phải nhỏ.
+The bottleneck is not storage — it is **building the graph**: every relation-extraction round costs LLM tokens, and extraction quality decides everything downstream. So the starting volume must be small.
 
 **What to do**
 
-1. Bám lời khuyên cuối tài liệu: bắt đầu với **100 tài liệu, 3 loại node, 5 loại edge**. Đừng cố xây đồ thị kiểu Wikipedia ngay ngày đầu.
-2. Chọn kho theo quy mô thật: `Kuzu` (nhúng trong Python) hoặc `NetworkX` (thư viện bộ nhớ) cho thử nghiệm; `Neo4j` khi lên production.
-3. Dựng bằng mẫu sẵn có: `docker-compose.yml` mở Neo4j, `scripts/extract_graph.py` để trích, `scripts/query_graph.py` để truy vấn, `scripts/evaluate.py` để đo.
-4. Chặn `max_hops` ở mức 2-3, nếu không truy vấn sẽ nổ.
-5. Bỏ qua `graph/07-gnn` lúc đầu — tài liệu coi đây là phần **học** trên đồ thị, không phải điều kiện để có câu trả lời đầu tiên.
+1. Follow the doc's closing advice: start with **100 documents, 3 node types, 5 edge types**. Do not try to build a Wikipedia-scale graph on day one.
+2. Pick a store by real scale: `Kuzu` (embedded in Python, no server) or `NetworkX` (an in-memory Python library) for experiments; `Neo4j` (a full graph database server) for production.
+3. Build from ready-made templates: `docker-compose.yml` starts Neo4j, `scripts/extract_graph.py` extracts, `scripts/query_graph.py` queries, `scripts/evaluate.py` measures.
+4. Cap `max_hops` at 2–3 (max_hops = how many relationship steps one query may follow), or queries will explode in cost.
+5. Skip `graph/07-gnn` at first — the doc treats it as **learning on graphs** (GNN = Graph Neural Network, a model that learns patterns from graph structure), not a requirement for your first answer.
 
 > 📄 **Example code:** [`examples/07-q3-muon-thu-trong-mot-tuan-ma-chua.sh`](examples/07-q3-muon-thu-trong-mot-tuan-ma-chua.sh)
 
 **Verify**
 
-Sau 100 tài liệu, câu hỏi local phải trả lời đúng không cần graph, và câu hỏi multi-hop phải in ra được đường dẫn. Nếu độ chính xác chưa vượt vector search thuần, hãy thêm dữ liệu thay vì đổi kiến trúc.
+After 100 documents, a local question must be answered correctly even without the graph, and a multi-hop question must print its evidence path (the chain of nodes and edges that justifies the answer). If accuracy does not beat plain vector search, add data instead of changing architecture.
+
+> **One-line summary:** Pilot cheap and small — 100 docs, 3 node types, 5 edge types, an embedded database, max_hops 2–3 — because extraction, not storage, is where the money and quality go.
 
 ---
 
@@ -206,28 +230,32 @@ Sau 100 tài liệu, câu hỏi local phải trả lời đúng không cần gra
 
 **What you see**
 
-Ba thư mục cùng cấp, mỗi thư mục có con trẻ: `harness/` 15 module, `graph/` 9 module, `loop/` 7 phần. Không có file nào nói rõ ai cấp cho ai, nên bạn không biết nên làm Graph trước hay sau Harness.
+Three sibling folders, each with children: `harness/` (15 modules), `graph/` (9 modules), `loop/` (7 parts). No file states who serves whom, so you do not know whether to learn Graph before Harness.
 
 **Why**
 
-Tài liệu vẽ đúng quan hệ ba chiều: **Harness** (`harness/01-11`) cấp công cụ, bộ nhớ, ngữ cảnh, rào cản cho **một lần chạy** của agent. **Graph** (`graph/01-09`) cấp **lớp tri thức**, thay cho vector database đơn thuần. **Loop** (`loop/01-07`) điều phối **nhiều** lần chạy Harness theo thời gian.
+The doc draws the three-way relationship exactly: **Harness** (`harness/01-11`) gives tools, memory, context, and guardrails for **one run** of the agent. **Graph** (`graph/01-09`) supplies the **knowledge layer**, replacing a plain vector database. **Loop** (`loop/01-07`) coordinates **many** Harness runs over time (guardrails = automatic limits that stop unsafe behavior).
 
 **What to do**
 
-1. Đi theo dòng chảy có sẵn trong tài liệu: tài liệu → `graph/02` (xây KG) → `graph/03` (lưu trữ) → `graph/05` (GraphRAG) → `harness/02` (ghép ngữ cảnh) → model.
-2. Ánh xạ 7 thành phần sang 9 module trước khi mở code: node/edge → `01`, ontology → `02`, lưu trữ → `03`, embedding → `04`, GraphRAG → `05`, suy luận → `06`, GNN → `07`, pipeline → `08`, đo đạc → `09`.
-3. Cập nhật tăng dần bằng `graph/08`, đừng xây lại toàn bộ mỗi khi có tài liệu mới.
-4. Nếu hỏi sâu hơn về phần này, đọc FAQ của từng thư mục: `graph/FAQ.md`, `harness/FAQ.md`, `loop/FAQ.md`.
+1. Follow the flow already in the doc: doc → `graph/02` (build the KG) → `graph/03` (storage) → `graph/05` (GraphRAG) → `harness/02` (merge into context) → model. (KG = knowledge graph, a database of entities and relations.)
+2. Map the 7 components onto the 9 modules before opening code: node/edge → `01`, ontology → `02`, storage → `03`, embeddings → `04`, GraphRAG → `05`, reasoning → `06`, GNN → `07`, pipeline → `08`, evaluation → `09`.
+3. Update incrementally with `graph/08` — do not rebuild the whole graph when one new document arrives.
+4. Want to go deeper? Read each folder's own FAQ: `graph/FAQ.md`, `harness/FAQ.md`, `loop/FAQ.md`.
 
-| Bạn muốn | Mở thư mục |
+How to read the table below: the left column is your need in one sentence; the right column is the folder to open.
+
+| You want | Open folder |
 |---|---|
-| Agent chạy 1 lần và cần công cụ, quyền, log | `harness/` |
-| Câu trả lời cần quan hệ và đường dẫn chứng minh | `graph/` |
-| Agent tự cải thiện qua nhiều vòng chạy | `loop/` |
+| One agent run that needs tools, permissions, logs | `harness/` |
+| Answers that need relations and proof paths | `graph/` |
+| An agent that improves across many runs | `loop/` |
 
 **Verify**
 
-Chạy `MATCH (n) RETURN count(n)` trên kho đồ thị — con số phải khác 0. Thêm một tài liệu mới rồi chạy lại `scripts/query_graph.py`: số node tăng lên, và kết quả của câu hỏi cũ **không đổi**, đó là dấu hiệu cập nhật tăng dần hoạt động đúng.
+Run `MATCH (n) RETURN count(n)` on your graph store (a Cypher query — Cypher is the query language for Neo4j-style graphs — and this one counts all nodes). The number must not be 0. Add one new document, re-run `scripts/query_graph.py`: the node count goes up, and the old question's answer stays **unchanged** — that is incremental update working correctly.
+
+> **One-line summary:** Harness powers one run, Graph supplies the knowledge layer, Loop coordinates runs over time — learn them in that order: Harness → Graph → Loop.
 
 ---
 
@@ -237,23 +265,25 @@ Chạy `MATCH (n) RETURN count(n)` trên kho đồ thị — con số phải kh�
 
 **What you see**
 
-Bạn đang xây một agent sửa lỗi. Tự viết thêm lớp kiểm tra, lớp giới hạn quyền, lớp log nghĩa là thêm 2-3 tuần trước khi có tính năng. Sếp muốn thấy kết quả tuần này. Bạn tự hỏi có đáng bỏ công không.
+You are building an agent that fixes bugs. Writing your own check layer, permission layer, and logging layer means 2–3 extra weeks before any visible feature. Your boss wants results this week. You wonder if it is worth it. (Harness = the scaffolding around the model: tool interfaces, limits, logging, checks.)
 
 **Why**
 
-Tài liệu dẫn kết quả đo được thay vì niềm tin: nghiên cứu SWE-agent của Princeton NLP cho thấy chỉ bằng cách thiết kế lại giao diện giữa agent và máy tính, tỉ lệ thành công tăng từ **12,5% lên 20,5%** — tăng 64% mà **không đổi model**. Mô hình không yếu; môi trường chưa được thiết kế.
+The doc cites measured results, not beliefs: the Princeton NLP SWE-agent study shows that just by redesigning the interface between the agent and the computer, success rate went from **12.5% to 20.5%** — a 64% gain with **no change to the model**. The model was not weak; the environment was not designed. (SWE-agent = an agent that resolves real GitHub software issues.)
 
 **What to do**
 
-1. Bắt đầu bằng bản tối giản: giới hạn output của công cụ, gắn linter vào lúc ghi file, nén lịch sử hội thoại. Ba thay đổi này rẻ hơn nhiều so với viết lại hệ thống.
-2. Chặn ngay một điều khoản không đổi được: **không cho lưu file nếu linter báo lỗi**.
-3. Ghi lại 3 số từ ngày đầu: tỉ lệ thành công, thời gian xử lý một issue, số token mỗi lần chạy.
+1. Start with the minimal version: cap tool output length, run a linter on every file write (a linter = a tool that flags code style/syntax problems), compress conversation history. These three changes cost far less than rewriting the system.
+2. Enforce one non-negotiable rule: **no saving a file if the linter reports an error**.
+3. Log 3 numbers from day one: success rate, time to resolve one issue, tokens per run.
 
 > 📄 **Example code:** [`examples/08-q1-them-harness-ton-cong-hon-khong-co.ts`](examples/08-q1-them-harness-ton-cong-hon-khong-co.ts)
 
 **Verify**
 
-Chạy cùng 20 issue GitHub trên cấu hình cũ và mới. Nếu tỉ lệ pass tăng mà bạn không đụng tới model, đó là bằng chứng giá trị của lớp môi trường. Con số tiết kiệm trong ví dụ của tài liệu: $30.000 → $12.000 trong 3 tháng (giảm 60%), nhưng bạn phải đo trên hệ thống của mình, không sao chép con số này.
+Run the same 20 GitHub issues on the old and new setups. If the pass rate rises without touching the model, that is proof of the environment layer's value. The doc's example saves $30,000 → $12,000 in 3 months (−60%), but you must measure on your own system — do not copy the number.
+
+> **One-line summary:** Yes, it pays: a better environment lifted SWE-agent success 64% with no model change — start with output caps, linter gates, and history compression, and measure from day one.
 
 ---
 
@@ -261,23 +291,25 @@ Chạy cùng 20 issue GitHub trên cấu hình cũ và mới. Nếu tỉ lệ pa
 
 **What you see**
 
-Một bài viết bảo prompt engineering đã lỗi thời; framework này lại dành riêng `harness/05-prompt-builder` và `harness/11-evaluation`. Bạn không biết nên bỏ hẳn prompt hay vẫn viết, và viết thì tới đâu.
+One article says prompt engineering is dead; this framework still has `harness/05-prompt-builder` and `harness/11-evaluation`. You do not know whether to stop writing prompts, or keep writing them up to what point.
 
 **Why**
 
-Tài liệu trả lời thẳng ở mục Key Insight: *"Prompt Engineering không chết, nhưng không còn đủ."* Ba giai đoạn cộng dồn mức kiểm soát — prompt (thấp) → context (trung bình) → harness (cao). Bảng "Phần nào cần model?" cũng ghi Prompt Building ❌: dựng prompt chỉ là sắp xếp chữ, không tốn một đồng API nào. Ví dụ trong tài liệu: lời dặn *"Hãy viết code Python. Đảm bảo code không có lỗi cú pháp"* bị thay bằng một đoạn code 9 dòng kiểm tra cú pháp trước khi trả về.
+The doc answers directly in its Key Insight: *"Prompt Engineering is not dead, but it is no longer enough."* Three phases stack control — prompt (low) → context (medium) → harness (high). The "Which parts need a model?" table also marks Prompt Building ❌: assembling a prompt is just arranging text, it costs zero API money. The doc's example: the instruction *"Write Python code. Make sure it has no syntax errors"* gets replaced by a 9-line script that checks syntax before returning anything.
 
 **What to do**
 
-1. Vẫn viết prompt, nhưng đừng kỳ vọng nó giữ hệ thống. Một prompt 5 trang không cứu được một bước tool call sai.
-2. Chuyển phần quan trọng từ lời dặn sang hạ tầng: prompt nói "hãy cẩn thận", code thì **không cho phép** trả về code lỗi.
-3. Mỗi lần sửa prompt, chạy lại cùng bộ câu hỏi để biết sửa có ích không.
+1. Keep writing prompts, but do not expect them to hold the system together. A 5-page prompt cannot save one bad tool call (tool call = the model asking your code to run a function).
+2. Move the important parts from words to infrastructure: the prompt says "be careful"; the code **refuses** to return broken code.
+3. Every time you edit a prompt, re-run the same question set so you know whether the edit helped.
 
 > 📄 **Example code:** [`examples/09-q2-nghe-noi-prompt-engineering-a-chet-vay.js`](examples/09-q2-nghe-noi-prompt-engineering-a-chet-vay.js)
 
 **Verify**
 
-Đếm số lần phải sửa prompt trong một tuần. Nếu số đó không giảm, bạn đang chữa bệnh bằng cách viết thêm chữ — hãy thêm một ràng buộc ở tầng công cụ hoặc tầng kiểm tra đầu ra.
+Count how many times you had to fix the prompt in one week. If that number does not fall, you are curing symptoms with more words — add one constraint at the tool layer or the output-check layer instead.
+
+> **One-line summary:** Prompts still matter but cannot carry the system alone — push critical guarantees into code (checks, guards) and use fixed test sets to measure every prompt change.
 
 ---
 
@@ -285,24 +317,26 @@ Tài liệu trả lời thẳng ở mục Key Insight: *"Prompt Engineering khô
 
 **What you see**
 
-Bạn xây xong module 01-11, agent đã tự sửa được lỗi đơn giản. Giờ bạn đọc `harness/12` đến `harness/15` và thấy chúng được mô tả là "mặt phẳng kiểm soát xuyên module", không nằm trên lộ trình học. Bạn định bỏ qua để kịp deadline.
+You built modules 01–11; the agent already fixes simple bugs on its own. Now you read `harness/12` to `harness/15` and find them described as "a cross-module control plane", not on the learning path. You are tempted to skip them to hit a deadline.
 
 **Why**
 
-Module 01–11 là các giai đoạn của đường ống: làm tuần tự và thấy kết quả ngay. Module 12–15 **không phải** giai đoạn — chúng là nền mà mọi giai đoạn 01–11 đều phụ thuộc, giống xương sống đỡ cả cơ thể. Bỏ qua thì agent vẫn chạy, chỉ là mỗi lần sai là không biết dừng ở đâu, không replay được, và không xin được ai bấm nút đồng ý.
+Modules 01–11 are pipeline stages: do them in order and see results immediately. Modules 12–15 are **not** stages — they are the foundation every stage 01–11 depends on, like a spine holding up a body. Skip them and the agent still runs; but when it goes wrong, it cannot stop in the right place, cannot be replayed (replay = re-run the same steps to see what happened), and cannot ask anyone to press "approve".
 
 **What to do**
 
-1. Ưu tiên theo tỉ lệ phủ mà tài liệu ghi sẵn: `01-retrieve-memory` 85%, `07-workflow` 80%, `06-decide-tools` 75%, còn `08-task` chỉ 45%.
-2. Ghép `12-sandbox-execution` vào **sớm** — ngay khi agent bắt đầu chạy lệnh thật trên máy bạn, không đợi cuối dự án.
-3. Bật `13-trajectory-observability` trước khi scale lên nhiều agent: không có log là không debug được.
-4. Đặt `15-approval-gates` cho đúng những việc không đảo ngược được (deploy, xoá dữ liệu, gửi email hàng loạt).
+1. Prioritize by the coverage numbers the doc lists: `01-retrieve-memory` 85%, `07-workflow` 80%, `06-decide-tools` 75%, but `08-task` only 45% (coverage = how many of the doc's 20 projects use that module).
+2. Wire in `12-sandbox-execution` **early** — as soon as the agent runs real commands on your machine, not at project end.
+3. Turn on `13-trajectory-observability` before scaling to many agents: without logs there is no debugging.
+4. Put `15-approval-gates` on exactly the irreversible actions (deploy, delete data, mass email). Approval gate = a checkpoint where a human must say yes before the action runs.
 
 > 📄 **Example code:** [`examples/10-q3-module-12-15-la-giai-oan-hay.sh`](examples/10-q3-module-12-15-la-giai-oan-hay.sh)
 
 **Verify**
 
-Chạy đầu-cuối: tài liệu của bạn được nạp, một câu hỏi trả lời đúng mà không cần sửa prompt. Nếu bạn không ghi lại thời gian, số token và tỉ lệ lỗi, bạn chưa có harness — bạn chỉ có một đoạn prompt dài.
+Run end-to-end: your documents get loaded, one question is answered correctly with no prompt editing. If you are not logging time, tokens, and error rate, you have no harness — you only have a long prompt.
+
+> **One-line summary:** Modules 12–15 are the foundation, not a stage — skip them and the agent runs, but you lose replay, control, and human approval; add sandbox and logging early.
 
 ---
 
@@ -310,62 +344,72 @@ Chạy đầu-cuối: tài liệu của bạn được nạp, một câu hỏi t
 
 **What you see**
 
-Bạn đã viết và test hàm tìm context, chạy tay thì ra đúng 2 đoạn liên quan. Nhưng khi mở giao diện chat và gõ câu hỏi, câu trả lời vẫn chung chung — vì ứng dụng đang gọi thẳng `localhost:11434`, không qua bất kỳ đoạn nào của bạn.
+You already wrote and tested a context-retrieval function; run by hand, it returns exactly 2 relevant passages. But when you type in the chat UI, the answer is still generic — because the app calls `localhost:11434` (Ollama's default address) directly, bypassing your code entirely.
 
 **Why**
 
-Không có ai tự gọi code của bạn. Bạn phải đứng giữa: chặn (intercept) câu hỏi, tìm context, ghép vào câu hỏi, rồi mới gửi đi. Tài liệu vẽ đúng 4 bước này và cho 4 cách cài đặt.
+Nobody calls your code automatically. You must stand in the middle: intercept the question (intercept = catch the request before it reaches the model), fetch context, inject it into the prompt, then send. The doc shows these 4 steps and gives 4 ways to install them.
 
 **What to do**
 
-1. Chọn một trong bốn cách: **proxy server** (mọi ứng dụng chat), **wrapper hàm** (code Python của bạn), **Open WebUI** (không cần code), **LangChain/LlamaIndex** (production).
-2. Cách nhanh nhất là dựng proxy và đổi địa chỉ trong app chat: từ `localhost:11434` sang `localhost:5000/api/chat`.
-3. Luôn in ra số đoạn context đã ghép — đó là bằng chứng bạn không quên bước trung gian.
+1. Pick one of the four ways: **proxy server** (any chat app — a middleman program your requests pass through), **function wrapper** (your own Python code), **Open WebUI** (no code needed), **LangChain/LlamaIndex** (production frameworks).
+2. Fastest path: stand up a proxy and change the app's address from `localhost:11434` to `localhost:5000/api/chat`.
+3. Always print how many context passages were injected — that is proof you did not skip the middle step.
+
+How to read the table below: each row is one integration method; "Độ khó" (difficulty) uses stars — more stars = harder.
 
 | Cách | Dùng khi | Độ khó |
 |---|---|---|
-| Proxy server | bất kỳ app chat nào (web, mobile, desktop) | ⭐⭐ |
-| Wrapper hàm | app Python do bạn tự viết | ⭐ |
-| Open WebUI | đã dùng Open WebUI | ⭐ không cần code |
+| Proxy server | any chat app (web, mobile, desktop) | ⭐⭐ |
+| Function wrapper | a Python app you wrote yourself | ⭐ |
+| Open WebUI | you already use Open WebUI | ⭐ no code needed |
 
 > 📄 **Example code:** [`examples/11-q4-toi-a-co-code-tim-kiem-roi.py`](examples/11-q4-toi-a-co-code-tim-kiem-roi.py)
 
 **Verify**
 
-Mở log ở proxy, gõ một câu hỏi trên giao diện: log phải hiện các đoạn context được ghép vào **trước** khi có request tới Ollama. Không thấy dòng log đó nghĩa là ứng dụng vẫn đang gọi thẳng model.
+Open the proxy log, type one question in the UI: the log must show context passages assembled **before** the request to Ollama. No such log line means the app still calls the model directly.
+
+> **One-line summary:** Your search code only helps if the request passes through it — stand in the middle with a proxy or wrapper, and prove it by logging the injected context.
 
 ---
 
 ### Q5. MCP và A2A khác nhau thế nào — và GraphRAG 2026 có gì mới? [→ AGENT_SYSTEM_ARCHITECTURE.md §3.4-3.5 + graph/05-graph-rag]
 
-**Bạn sẽ thấy**
+**What you see**
 
-Bạn đọc tài liệu thấy hai chữ MCP và A2A, rồi đọc thêm graph thấy thêm GraphRAG, LazyGraphRAG, LightRAG — phân vân không biết chúng liên quan nhau thế nào.
+The docs mention two acronyms, MCP and A2A; then the graph docs add GraphRAG, LazyGraphRAG, LightRAG — and you cannot tell how they relate. This section sorts them out.
 
-**Vì sao**
+**Why**
 
-Ba khái niệm giải quyết ba bài toán khác nhau:
+The three concepts solve three different problems:
 
-| Giao thức / Công nghệ | Ai nói chuyện với ai | Chuẩn hoá cái gì |
+How to read the table below: each row is one protocol or technology; the middle column says who talks to whom; the last column says what it standardizes.
+
+| Protocol / Technology | Who talks to whom | What it standardizes |
 |----------------------|---------------------|-----------------|
-| **MCP** (Model Context Protocol) | Agent → Tools / Data / APIs | "Agent cần làm gì" — tools, resources, prompts |
-| **A2A** (Agent-to-Agent, Linux Foundation 2025) | Agent → Agent (khác framework/vendor) | "Agent cần trao đổi với ai" — handoffs, collaboration, kết quả |
-| **GraphRAG** | Agent → Knowledge Graph | "Agent hỏi gì" — truy vấn multi-hop, global, có citation |
+| **MCP** (Model Context Protocol) | Agent → Tools / Data / APIs | "What the agent does" — tools, resources, prompts |
+| **A2A** (Agent-to-Agent, Linux Foundation 2025) | Agent → Agent (different framework/vendor) | "Who the agent talks to" — handoffs, collaboration, results |
+| **GraphRAG** | Agent → Knowledge Graph | "What the agent asks" — multi-hop and global queries, with citations |
 
-**MCP + A2A = bổ sung nhau:** Agent chạy cả hai: gọi MCP để dùng tool, gọi A2A để delegate cho agent khác.
+Gloss: MCP = a shared plug standard so an agent can use any tool or data source. A2A = a shared protocol so agents from different vendors can talk to each other (handoff = passing a task from one agent to another). GraphRAG = answering questions by walking a knowledge graph, with citations.
 
-**Tin GraphRAG mới 2025-2026:**
-- **LazyGraphRAG** (Microsoft, 2024-2025): giảm cost indexing xuống bằng vector RAG, quality ngang full GraphRAG, query rẻ hơn ~700×. Tích hợp Microsoft Discovery.
+**MCP + A2A = complementary:** An agent uses both — MCP to call tools, A2A to delegate to another agent.
+
+**GraphRAG news, 2025–2026:**
+- **LazyGraphRAG** (Microsoft, 2024-2025): indexing cost drops to plain vector-RAG level, quality on par with full GraphRAG, queries ~700× cheaper. Integrated into Microsoft Discovery.
 - **LightRAG** (EMNLP 2025): dual-layer graph + vector, incremental update.
-- **Gartner 2026**: GraphRAG trong "Top Trends in D&A" cho complex AI use cases.
+- **Gartner 2026**: GraphRAG listed in "Top Trends in D&A" for complex AI use cases.
 - **Knowledge Graph Market**: $1.48B (2025) → $2.04B (2026).
 
-**Làm gì**
+**What to do**
 
-1. MCP là bắt buộc — bất kỳ agent nào cũng cần gọi tools (xem `06-decide-tools-mcp/`).
-2. A2A khi cần ghép agent từ **nhiều framework** (Claude + LangGraph + ADK) — xem `09-multi-agent/`.
-3. GraphRAG khi cần trả lời câu hỏi **multi-hop** hoặc **global aggregation** — xem `05-graph-rag/`.
+1. MCP is mandatory — every agent needs to call tools (see `06-decide-tools-mcp/`).
+2. A2A when you must combine agents from **multiple frameworks** (Claude + LangGraph + ADK) — see `09-multi-agent/`.
+3. GraphRAG when answers must be **multi-hop** or **global aggregation** (global aggregation = one answer summarizing many documents) — see `05-graph-rag/`.
+
+> **One-line summary:** MCP standardizes how agents call tools, A2A how agents talk to each other, GraphRAG how agents query knowledge graphs — start with MCP, add the others only when the need appears.
 
 ---
 
-*FAQ file riêng — file nguồn không bị sửa. Nguồn: AI_AGENT_FRAMEWORK.md, GRAPH_ENGINEERING.md, HARNESS_ENGINEERING.md.*
+*A standalone FAQ file — the source docs were not modified. Sources: AI_AGENT_FRAMEWORK.md, GRAPH_ENGINEERING.md, HARNESS_ENGINEERING.md.*

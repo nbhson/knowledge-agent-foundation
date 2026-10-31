@@ -2,13 +2,15 @@
 
 Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
+> **Tài liệu này nói về gì:** nén ngữ cảnh (compaction) là việc rút gọn "bộ nhớ tạm" của agent khi gần đầy, để run (một phiên agent làm việc từ đầu đến cuối) không chết vì tràn token (token = đơn vị chia nhỏ chữ, 1 token ≈ ¾ một từ). Nếu không nén, run dài luôn chết ở giữa đường.
+
 ---
 
 ## Q1. Agent chạy tầm 40 lượt là dừng, báo lỗi "context length exceeded" — phải làm gì? [→ §2 Policy Trigger]
 
 **Bạn sẽ thấy**
 
-Run chết ở lượt 47 với lỗi độ dài ngữ cảnh, sau khi đã viết lại 4 file và chạy 2 bộ test. Khi mở log ra xem, ngữ cảnh đã ở 96% *trước khi* chết, và kết quả lệnh kế tiếp dài 4.000 token, không vừa. Người dùng ngồi đợi 20 phút rồi mới biết "có gì đó sai".
+Run chết ở lượt 47 với lỗi độ dài ngữ cảnh (ngữ cảnh = bộ nhớ tạm mô hình đọc được trong một lượt, có trần cố định), sau khi đã viết lại 4 file và chạy 2 bộ test. Khi mở log ra xem, ngữ cảnh đã ở 96% *trước khi* chết, và kết quả lệnh kế tiếp dài 4.000 token, không vừa. Người dùng ngồi đợi 20 phút rồi mới biết "có gì đó sai".
 
 **Vì sao**
 
@@ -16,7 +18,7 @@ Vì không có gì tự nén lại. Cửa sổ ngữ cảnh là con số cứng 
 
 **Làm gì**
 
-1. Bật nén tự động khi dùng trên **70%** ngân sách, hoặc quá **20 lượt** — cái nào tới trước.
+1. Bật nén tự động khi dùng trên **70%** ngân sách (ngân sách = trần token của cửa sổ ngữ cảnh), hoặc quá **20 lượt** — cái nào tới trước.
 2. Luôn chừa 30% trống, đủ chứa 2–3 kết quả lệnh kế tiếp.
 3. Dùng **một** bộ code cho cả hai đường: bấm tay và tự động. Claude Code làm vậy — người dùng gõ `/compact` nhận đúng chất lượng như đường tự động, không có trải nghiệm hạng hai.
 4. Đừng bật ở 50%: quá hăng hái, mỗi run nén 2 lần, tốn lời gọi mô hình lẫn chất lượng.
@@ -28,6 +30,8 @@ Vì không có gì tự nén lại. Cửa sổ ngữ cảnh là con số cứng 
 **Kiểm tra**
 
 Đo `ratio = token_trước ÷ token_sau` sau mỗi lần nén; dưới **1,5** khi ngữ cảnh lớn là bộ nén đang hỏng. Sau khi bật nén, nếu vẫn còn tỉ lệ run chết vì độ dài ngữ cảnh thì đó là lỗi cấu hình, không phải lỗi mô hình.
+
+> **Tóm gọn 1 câu:** Bật nén sớm ở mốc 70% ngân sách token (không đợi 90%), dùng một bộ code cho cả nén tay và nén tự động, và đo tỉ lệ nén để biết bộ nén có hỏng hay không.
 
 ---
 
@@ -43,7 +47,7 @@ Vì cách loại "cũ nhất đi trước" giả định giá trị suy giảm t
 
 **Làm gì**
 
-1. **Ghim (pin)** những thứ mất đi thì sai *nhiệm vụ*: system prompt, yêu cầu + tiêu chí xong, chỉ dẫn cuối của người dùng, diff đang sửa, ràng buộc từ kế hoạch, lỗi cuối của vòng lặp đang chạy, approval đang chờ, hình dạng kết quả cần trả về.
+1. **Ghim (pin)** những thứ mất đi thì sai *nhiệm vụ* (ghim = đánh dấu "không được cắt khi nén"): system prompt, yêu cầu + tiêu chí xong, chỉ dẫn cuối của người dùng, diff đang sửa (diff = danh sách dòng đã thêm/bỏ trong code), ràng buộc từ kế hoạch, lỗi cuối của vòng lặp đang chạy, approval đang chờ, hình dạng kết quả cần trả về.
 2. **Chấm điểm để loại**, không loại theo tuổi. Ba thành phần: mới/cũ (0,30), span này có đang nuôi một việc *đang chờ* trong đồ thị kế hoạch không (0,40), span này có chứa dòng lỗi mà vòng lặp đang săn không (0,30).
 3. **Ghim bằng suy ra, không ghim tay** — tính từ kế hoạch, vòng lặp đang chạy, danh sách gate đang chờ. Ghim tay thì tập pin phình đơn điệu và cuối cùng tự vượt ngân sách.
 4. Lỗi của vòng lặp chỉ được ghim **khi vòng lặp chưa xong**; xong rồi thì nó phải trở lại loại được.
@@ -53,7 +57,9 @@ Vì cách loại "cũ nhất đi trước" giả định giá trị suy giảm t
 
 **Kiểm tra**
 
-Chạy bộ bất biến cho **mọi** lần nén đã ghi, trong CI đêm: không span ghim nào bị loại; tổng token còn lại không vượt ngân sách; danh sách span bị loại khớp đúng danh sách audit. Nếu một run chỉ hỏng ngay sau lúc nén, đó là tập pin đang thiếu thứ gì đó.
+Chạy bộ bất biến cho **mọi** lần nén đã ghi, trong CI đêm (CI = hệ chạy test tự động mỗi lần đổi code): không span ghim nào bị loại (span = một đoạn nội dung trong lịch sử hội thoại); tổng token còn lại không vượt ngân sách; danh sách span bị loại khớp đúng danh sách audit (audit = sổ ghi lại mọi việc hệ thống đã làm). Nếu một run chỉ hỏng ngay sau lúc nén, đó là tập pin đang thiếu thứ gì đó.
+
+> **Tóm gọn 1 câu:** Đừng cắt nội dung theo tuổi — hãy ghim những thứ quyết định đúng/sai của nhiệm vụ, chấm điểm phần còn lại theo độ hữu ích, và gộp các lần thử lại y hệt thành một dòng.
 
 ---
 
@@ -65,12 +71,12 @@ Chạy bộ bất biến cho **mọi** lần nén đã ghi, trong CI đêm: khô
 
 **Vì sao**
 
-Vì nén xoá thứ khỏi ngữ cảnh, và nội dung bên trong nó chưa từng được lưu ở đâu cả. Đây là ranh giới giữa *ngữ cảnh tạm* và *bộ nhớ bền* — hỏng nhiều hơn mọi hợp đồng khác trong hệ production. Quyết định ở lượt 12 sẽ còn cần cho một lần chạy khác tuần sau, nên nó thuộc về bộ nhớ bền chứ không thuộc về ngữ cảnh. Ranh giới không phải "quan trọng với không quan trọng", mà là **"sau lần chạy này còn cần không?"**
+Vì nén xoá thứ khỏi ngữ cảnh, và nội dung bên trong nó chưa từng được lưu ở đâu cả. Đây là ranh giới giữa *ngữ cảnh tạm* (mất khi run kết thúc) và *bộ nhớ bền* (lưu xuống đĩa, dùng lại được cho run sau) — hỏng nhiều hơn mọi hợp đồng khác trong hệ production. Quyết định ở lượt 12 sẽ còn cần cho một lần chạy khác tuần sau, nên nó thuộc về bộ nhớ bền chứ không thuộc về ngữ cảnh. Ranh giới không phải "quan trọng với không quan trọng", mà là **"sau lần chạy này còn cần không?"**
 
 **Làm gì**
 
 1. **Ghi xuống trước, xoá sau** — đúng thứ tự 6 bước: chọn span để loại → trích nội dung bền (quyết định, việc còn mở, ràng buộc, sở thích người dùng) → **lưu vào bộ nhớ** → phát sự kiện audit → thay bằng resume block → chạy tiếp.
-2. Lưu với `fsync` (đẩy dữ liệu xuống đĩa trước khi trả về), gắn cả mã khách và mã nhiệm vụ.
+2. Lưu với `fsync` (`fsync` = lệnh buộc hệ điều hành ghi dữ liệu thật xuống đĩa ngay, không để trong bộ nhớ đệm), gắn cả mã khách và mã nhiệm vụ.
 3. Bước 3 lỗi thì **huỷ bước 5**. Không phải ghi cảnh báo rồi đi tiếp — phải dừng thật. Một lần nén làm mất quyết định tệ hơn một lần run dừng lại với lỗi rõ ràng.
 4. Phát sự kiện `compaction` ghi lại: đã giữ id nào, đã loại id nào, `ratio`, mã băm của resume block.
 5. Phần còn dùng được nhưng quá lớn (kết quả lệnh chết) thì **tóm tắt thay vì bỏ hẳn**.
@@ -80,7 +86,9 @@ Vì nén xoá thứ khỏi ngữ cảnh, và nội dung bên trong nó chưa t�
 
 **Kiểm tra**
 
-Bài test đáng giá nhất của cả module: **tắt nơi lưu trí nhớ**, chạy một lần nén, và yêu cầu run phải từ chối đi tiếp. Kiểm tra thêm: danh sách span bị loại có bằng số quyết định đã ghi xuống bộ nhớ không.
+Chạy bộ bất biến cho **mọi** lần nén đã ghi trong CI đêm. Bài test đáng giá nhất của cả module: **tắt nơi lưu trí nhớ**, chạy một lần nén, và yêu cầu run phải từ chối đi tiếp. Kiểm tra thêm: danh sách span bị loại có bằng số quyết định đã ghi xuống bộ nhớ không.
+
+> **Tóm gọn 1 câu:** Trước khi nén, phải ghi mọi thứ còn giá trị xuống bộ nhớ bền (ghi được thì mới được xoá); nếu nơi lưu hỏng thì nén phải dừng lại, không được âm thầm xoá mất quyết định.
 
 ---
 
@@ -88,7 +96,7 @@ Bài test đáng giá nhất của cả module: **tắt nơi lưu trí nhớ**, 
 
 **Bạn sẽ thấy**
 
-Một resume block ghi: "chúng ta đang refactor authentication và gặp vài vấn đề cần xử lý". Đọc lên có vẻ đầy đủ, nhưng agent sau đó không biết phải làm gì, đọc lại từ đầu, và hoá đơn token gấp ba. Đây là cách phổ biến nhất khiến nén âm thầm phá một run.
+Một resume block ghi: "chúng ta đang refactor authentication và gặp vài vấn đề cần xử lý" (resume block = bản tóm tắt chèn lại vào ngữ cảnh sau khi nén, để agent biết mình đang dở ở đâu). Đọc lên có vẻ đầy đủ, nhưng agent sau đó không biết phải làm gì, đọc lại từ đầu, và hoá đơn token gấp ba. Đây là cách phổ biến nhất khiến nén âm thầm phá một run.
 
 **Vì sao**
 
@@ -106,7 +114,9 @@ Vì tiêu chuẩn nghiệm thu không phải "đọc lên có đủ không" mà 
 
 **Kiểm tra**
 
-Chạy **agent lạnh**: chỉ truyền system prompt + resume block, rồi so hành động kế tiếp với một agent được đầy đủ ngữ cảnh gốc — phải bằng nhau. Chạy bộ hồi quy hằng đêm so điểm eval của run có nén với run không nén; điểm tụt ngay sau lúc nén là bằng chứng tập pin sai.
+Chạy **agent lạnh** (agent chỉ được system prompt + resume block, không có ngữ cảnh cũ): rồi so hành động kế tiếp với một agent được đầy đủ ngữ cảnh gốc — phải bằng nhau. Chạy bộ hồi quy hằng đêm so điểm eval của run có nén với run không nén; điểm tụt ngay sau lúc nén là bằng chứng tập pin sai.
+
+> **Tóm gọn 1 câu:** Chuẩn nghiệm của resume block không phải "đọc lên thấy đủ" mà là "một agent mới không biết gì có làm đúng bước kế tiếp được không" — chìa khoá là key cố định, trần token cứng, và ràng buộc chép nguyên văn ở cả đầu và cuối prompt.
 
 ---
 

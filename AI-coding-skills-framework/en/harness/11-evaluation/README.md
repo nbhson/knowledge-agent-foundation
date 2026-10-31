@@ -59,19 +59,25 @@
 
 ### Opening Story
 
+This opening explains, with one picture, why evaluation matters before we go into the "how".
+
 You build a new bridge. You can say *"It looks fine"*, but without **measuring the load, testing the materials, stress-testing with heavy trucks** — you won't know whether the bridge will hold for 10 years of use or collapse after 1 month.
 
-**AI code is the same.** Writing code without evaluating it = **shipping a bridge without inspecting it**.
+**AI code is the same.** Writing code without evaluating it = **shipping a bridge without inspecting it**. Here, "evaluating" means testing and measuring the code *before* you trust it — not just glancing at it.
 
-When you use AI to generate code, the most important question is not *"Does the code run?"* but: *"Is the code correct? Is it safe? Is it maintainable? Is it better than writing it by hand?"* — and you need a **proper evaluation system** to answer.
+When you use AI to generate code, the most important question is not *"Does the code run?"* but: *"Is the code correct? Is it safe? Is it maintainable? Is it better than writing it by hand?"* — and you need a **proper evaluation system** to answer. (Maintainable = easy for the next developer — or the next agent — to read, fix, and extend without breaking things.)
 
 **The solution**: a Multi-level Evaluation Framework — from functional correctness to business value, ensuring every line of AI-generated code **meets the standard before it reaches the user**.
+
+> **One-line summary:** Never ship AI-generated code on a "looks fine" feeling — measure correctness, safety, and value with a proper evaluation system first.
 
 ### Why Is Evaluation Important?
 
 > *"If you can't measure it, you can't improve it. And if you can't improve it, you're falling behind."*
 
 #### 3 Scientific Pieces of Evidence
+
+How to read it: each row is one research result; the **Key Finding** column is the one number worth remembering. For example, row 3 says Microsoft found that AI code written *without* evaluation added 28% more technical debt in 6 months (technical debt = messy shortcuts in code that make every future change slower and costlier).
 
 | # | Research | Key Finding |
 |---|-----------|----------------------|
@@ -85,20 +91,24 @@ When you use AI to generate code, the most important question is not *"Does the 
 Evaluation = What You Measure → What You Improve → What You Ship
 ```
 
-**5 Levels of Evaluation**:
-- **Level 1**: Code works (functional correctness)
-- **Level 2**: Code is correct (edge cases, error handling)
+**5 Levels of Evaluation** (read it as a ladder: each level assumes the one below it already passes):
+- **Level 1**: Code works (functional correctness — it does the job on the happy path)
+- **Level 2**: Code is correct (edge cases = unusual situations like empty lists, year 0, or filenames with spaces; plus error handling)
 - **Level 3**: Code is good (readability, maintainability)
 - **Level 4**: Code is safe (security, performance)
 - **Level 5**: Code adds value (business impact, user satisfaction)
 
 **Analogies**: Evaluation is like a quality-control system in a factory — not just checking whether the product is broken (Level 1), but also whether the finish is nice (Level 3), whether the materials are safe (Level 4), and whether the customer is happy (Level 5).
 
-**If you skip it**: you ship code without really knowing how good it is, you miss regressions when they appear, you can't tell which model is better, and tech debt quietly grows until fixing it costs about 10× more.
+**If you skip it**: you ship code without really knowing how good it is, you miss regressions when they appear, you can't tell which model is better, and tech debt quietly grows until fixing it costs about 10× more. (Regression = something that used to work but broke after a change.)
+
+> **One-line summary:** Evaluation is the quality-control line for AI code — without it you ship blind, miss breakages, and pay 10× to fix the mess later.
 
 ## Overview
 
-**Evaluation** in AI coding means **checking how well** an AI agent does coding work. That includes running benchmarks, collecting simple metrics, and using what you learn to keep making the agent better.
+This section defines what "evaluation" means in this document and shows the big picture in one diagram.
+
+**Evaluation** in AI coding means **checking how well** an AI agent does coding work. That includes running benchmarks, collecting simple metrics, and using what you learn to keep making the agent better. (Benchmark = a fixed, public set of test tasks used to score systems fairly. Metrics = the numbers you track, e.g. "% of tasks solved".)
 
 > **"You can't improve what you can't measure"** — Peter Drucker
 
@@ -124,7 +134,13 @@ Evaluation = What You Measure → What You Improve → What You Ship
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+How to read the diagram: follow the arrows — tasks go in, the agent runs, code comes out, metrics grade the code, results get analyzed, and improvements feed back into the next round. It is a loop, not a one-off check.
+
+> **One-line summary:** Evaluation is a closed loop — run the agent, grade the output, analyze, improve, repeat.
+
 ## Contents
+
+How to read it: the **#** column is the section number in this file; click the topic to jump there. For instance, row 4 covers the automated evaluation framework — prebuilt pipelines that run all the checks for you.
 
 | # | Topic | Description |
 |---|--------|-------|
@@ -137,6 +153,8 @@ Evaluation = What You Measure → What You Improve → What You Ship
 | 7 | [Case Studies](#7-case-studies) | Real-world case studies |
 | 8 | [Evaluation Tooling](#8-evaluation-tooling) | Tools and frameworks |
 | 9 | [Best Practices](#9-best-practices) | Evaluation principles |
+
+> **One-line summary:** This file walks from "what to measure" (sections 1–3) through "how to measure it" (4–8) to "how to do it well" (9+).
 
 ---
 
@@ -195,6 +213,10 @@ The table below brings together **9 evaluation dimensions** you should consider 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Example of the difference between dimensions: code that computes an average correctly (correctness) but takes 10 seconds instead of 10 milliseconds (efficiency) and writes passwords to a log file (safety). One piece of code, three different verdicts.
+
+> **One-line summary:** Grade an agent on 9 separate facets — correctness, quality, efficiency, safety, completeness, speed, usability, cost, reliability — because a single number hides too much.
+
 ### 1.2 Evaluation Rubric
 
 This code defines the **scoring rubric** — the set of criteria spelling out what a 5, a 3, or a 1 means for each evaluation dimension. Like grading criteria for an exam: with clear descriptions, grading is fair and consistent across runs. You can try it to see a result accumulated with weights into a total 0-100 score.
@@ -206,6 +228,8 @@ This code defines the **scoring rubric** — the set of criteria spelling out wh
 
 </details>
 
+> **One-line summary:** A rubric pins down exactly what a 5, 3, or 1 means per dimension, so scores are fair and comparable across runs.
+
 ### 1.3 Weight Configuration — Depending on Use Case
 
 The code here shows the same set of evaluation dimensions, but **the weights change with the goal** — like a university exam weighted toward the sciences, while a vocational school weighs hands-on skill more. Where safety matters, raise the `safety` weight; where fast delivery matters, raise `completeness`. Tune `WEIGHT_CONFIGS` to match your use case.
@@ -216,6 +240,10 @@ The code here shows the same set of evaluation dimensions, but **the weights cha
 > 📄 **Example code:** [`examples/02-1-3-weight-configuration-depending-on-use-case.py`](examples/02-1-3-weight-configuration-depending-on-use-case.py)
 
 </details>
+
+(For orientation: `safety` = weight given to security and error handling; `completeness` = weight given to whether the task is fully finished with nothing missing.)
+
+> **One-line summary:** Same dimensions, different weights per use case — raise `safety` for risky domains, raise `completeness` when fast full delivery matters.
 
 ---
 
@@ -238,6 +266,10 @@ The `CodeQualityAnalyzer` class automatically grades code quality — complexity
 
 </details>
 
+(Quick gloss of the terms: **cyclomatic complexity** = how many separate paths the code can take — more paths, harder to test; **maintainability index** = a 0–100 estimate of how easy the code is to change; **docstring** = the explanatory text written inside a function describing what it does.)
+
+> **One-line summary:** An auto-grader scores complexity, maintainability, naming, and docs, then rolls them into one 0–100 number.
+
 ### 2.2 AI Agent Quality Metrics
 
 This part measures **the entire generation process of the AI agent**, not just the result: first-attempt success rate, number of retries, tokens consumed, rate of not breaking existing functionality. A good agent usually gets it right early, retries little, and spends few tokens — like an employee who knows the job and doesn't ask the boss over and over.
@@ -248,6 +280,8 @@ This part measures **the entire generation process of the AI agent**, not just t
 > 📄 **Example code:** [`examples/04-2-2-ai-agent-quality-metrics.py`](examples/04-2-2-ai-agent-quality-metrics.py)
 
 </details>
+
+> **One-line summary:** Grade the agent's *process* too — first-try success, retries, tokens spent, and whether it broke existing features — not just the final code.
 
 ### 2.3 Metrics Dashboard
 
@@ -282,6 +316,10 @@ The sample dashboard below bundles all metrics into a single screen: one percent
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+How to read it: each line is one metric, the bar shows the score, and the indented `└─` lines are sub-metrics under their parent group. COMPOSITE SCORE = the weighted total of everything above.
+
+> **One-line summary:** A dashboard turns all metrics into one screen of bars — long bar = strong area, short bar = where to improve next.
+
 ---
 
 ## 3. Performance Benchmarks
@@ -303,6 +341,8 @@ The sample dashboard below bundles all metrics into a single screen: one percent
 
 </details>
 
+> **One-line summary:** `BenchmarkSuite` is the referee's pitch — add tasks, run the agent, tally success rate, tokens, and time, with no "I feel like I played well" stories.
+
 ### 3.2 Standard Benchmark Tasks
 
 This list is a **sample question set**, organized by difficulty from trivial to complex: write hello world, reverse a string, fix an off-by-one bug, refactor a class. Each task ships with a validator for automated grading. Use it like a practice exam set: start easy to check that the agent even works, then ramp up the difficulty to measure real capability.
@@ -313,6 +353,8 @@ This list is a **sample question set**, organized by difficulty from trivial to 
 > 📄 **Example code:** [`examples/06-3-2-standard-benchmark-tasks.py`](examples/06-3-2-standard-benchmark-tasks.py)
 
 </details>
+
+> **One-line summary:** A graded practice exam set — easy tasks first to confirm the agent works, then harder ones to measure real capability; a validator grades each task automatically.
 
 ### 3.3 Benchmark Comparison Table
 
@@ -342,6 +384,10 @@ A comparison of model scores on the most popular benchmarks in 2026. Read it by 
 └────────────────────────────────────────────────────────────────────┘
 ```
 
+Quick gloss of the terms: **Pass@1** = the model solves the task on its first try; **Pass@10** = at least one of 10 tries works; **Resolved** (SWE-bench) = the agent actually fixed the real bug and the project's tests pass; **Harness** = the tooling around a model (tools, prompts, loop) that lets it act.
+
+> **One-line summary:** No model wins everywhere — 92% on HumanEval but 53% on SWE-bench is normal, because writing a fresh function and fixing a bug in a real repo are different skills.
+
 ---
 
 ## 4. Evaluation Framework
@@ -362,6 +408,10 @@ A comparison of model scores on the most popular benchmarks in 2026. Read it by 
 > 📄 **Example code:** [`examples/07-4-1-auto-evaluation-pipeline.py`](examples/07-4-1-auto-evaluation-pipeline.py)
 
 </details>
+
+(A **pipeline** = a fixed chain of steps that runs automatically, one after another. Lint = a tool that flags style and bug-prone patterns in code, e.g. an unused variable.)
+
+> **One-line summary:** `EvaluationPipeline` runs all your checks — lint, tests, security — automatically and aggregates them into one weighted score.
 
 ### 4.2 LLM-as-Judge Evaluation
 
@@ -445,6 +495,10 @@ Output as JSON:
             return {"error": "Failed to parse judgment"}
 ```
 
+(The block above is the judge's prompt template: `{context}` is where the code under review gets inserted, and the judge must answer as JSON — score plus a one-sentence reason per dimension.)
+
+> **One-line summary:** Let a strong LLM grade fuzzy things like readability — but always pair it with automated tests, because the judge itself can be biased or wrong.
+
 ### 4.3 Regression Testing Framework
 
 Regression testing answers the question: **after changing the prompt or the harness, does the agent "forget" how to do things correctly?** The method: store a "model answer" (golden answer) for each task, re-run and compare against the baseline; if the score drops more than 10%, flag a REGRESSION. Like a teacher who keeps students' old exams and occasionally has them retake one, to make sure they haven't "learned the front and forgotten the back".
@@ -455,6 +509,8 @@ Regression testing answers the question: **after changing the prompt or the harn
 > 📄 **Example code:** [`examples/09-4-3-regression-testing-framework.py`](examples/09-4-3-regression-testing-framework.py)
 
 </details>
+
+> **One-line summary:** Keep a golden answer per task, re-run after every prompt or harness change, and flag a REGRESSION when the score drops more than 10%.
 
 ---
 
@@ -499,6 +555,8 @@ The diagram above is the **5-step improvement loop**: Measure → Analyze → Id
 
 </details>
 
+> **One-line summary:** Run the 5-step loop — measure, analyze, identify the top 3 issues, fix, verify — once per week or per sprint.
+
 ### 5.2 A/B Testing Framework
 
 `ABTestFramework` compares **two versions** — e.g. prompt A and prompt B — on the same benchmark suite to find out which one is better. Like brewing two coffee recipes and having customers taste them in groups, then counting which cup gets more praise; the decision is based on data, not on "feel".
@@ -509,6 +567,10 @@ The diagram above is the **5-step improvement loop**: Measure → Analyze → Id
 > 📄 **Example code:** [`examples/11-5-2-a-b-testing-framework.py`](examples/11-5-2-a-b-testing-framework.py)
 
 </details>
+
+(A/B test = showing two variants to comparable groups and picking the winner by measured results, not opinion.)
+
+> **One-line summary:** `ABTestFramework` races two versions on the same benchmark and picks the winner with data, not feel.
 
 ---
 
@@ -530,6 +592,8 @@ The diagram above is the **5-step improvement loop**: Measure → Analyze → Id
 > 📄 **Example code:** [`examples/12-6-1-evaluation-report-generator.py`](examples/12-6-1-evaluation-report-generator.py)
 
 </details>
+
+> **One-line summary:** `EvaluationReporter` feeds on evaluation results and prints ready-to-send reports — Markdown for PRs, JSON for machines, data for dashboards.
 
 ---
 
@@ -567,11 +631,15 @@ The diagram above is the **5-step improvement loop**: Measure → Analyze → Id
 └────────────────────────────────────────────────────────────────┘
 ```
 
+How to read it: each row is one agent product; **Verified / Lite / Full** are the three SWE-bench difficulty tiers, and **Cost/Task** is the average spend per solved task. For instance, Claude Code+Harness solves 53% of the Verified tier at about $2.50 per task.
+
 **Key Learnings:**
-1. Harness design impact > model choice
-2. Tool permissions affect safety significantly
-3. Context management affects token cost
-4. Multi-agent improves complex task handling
+1. Harness design impact > model choice (the tooling around a model can matter more than the model itself)
+2. Tool permissions affect safety significantly (which tools the agent may run, e.g. file writes or shell commands)
+3. Context management affects token cost (tokens = billed text units; wasted context = wasted money)
+4. Multi-agent improves complex task handling (several cooperating agents, each with a sub-job)
+
+> **One-line summary:** On SWE-bench, the harness you build matters more than the model you pick — the same model can swing results by 30%+.
 
 ### 7.2 HumanEval — Classic Code Generation
 
@@ -596,6 +664,10 @@ This table tracks model progress on HumanEval — OpenAI's classic benchmark of 
 └────────────────────────────────────────────────────────────────┘
 ```
 
+How to read it: **Pass@1 (2023)** is the first-try solve rate back then, **Pass@1 (2026)** is today's, and **Improvement** is the relative gain (e.g. GPT-3.5 went from 48% to 72%, which is a 50% relative jump). A `-` means the model didn't exist yet in 2023.
+
+> **One-line summary:** HumanEval is nearly maxed out (models sit around 90%), so the field moved to harder benchmarks like SWE-bench and LiveCodeBench.
+
 ### 7.3 Real-World Evaluation Pipeline — Production Case
 
 This is an example of **a team of 20 devs using a daily evaluation pipeline in production**: running the benchmark overnight, checking for regressions, generating reports, and alerting immediately when quality drops. Read it as a "sample blueprint" for your own pipeline — learn how a real team organizes continuous monitoring instead of evaluating just once.
@@ -606,6 +678,8 @@ This is an example of **a team of 20 devs using a daily evaluation pipeline in p
 > 📄 **Example code:** [`examples/13-7-3-real-world-evaluation-pipeline-production-case.py`](examples/13-7-3-real-world-evaluation-pipeline-production-case.py)
 
 </details>
+
+> **One-line summary:** A real team's blueprint: run benchmarks overnight, diff against yesterday's baseline, auto-report, and alert the moment quality drops.
 
 ---
 
@@ -656,6 +730,10 @@ This diagram divides the evaluation tool ecosystem into 4 groups: benchmark suit
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Quick glosses: **linting** = automatically flagging style mistakes and bug-prone patterns; **test coverage** = the share of your code that tests actually execute; **dependency scanning** = checking the third-party libraries you install for known security holes.
+
+> **One-line summary:** Don't build evaluation from scratch — pick from 4 ready tool groups (benchmarks, frameworks, quality, security) whatever fits your current stage.
+
 ### 8.2 PromptFoo Configuration Example
 
 This YAML configuration helps you run PromptFoo — a popular prompt testing tool — on your coding agent: declare the provider (which model), the prompt, and the assertions (conditions the output must satisfy). It's like writing an "inspection contract": the machine automatically grades whether the model meets each condition (e.g. `contains` or `llm-rubric`).
@@ -666,6 +744,10 @@ This YAML configuration helps you run PromptFoo — a popular prompt testing too
 > 📄 **Example code:** [`examples/14-8-2-promptfoo-configuration-example.yaml`](examples/14-8-2-promptfoo-configuration-example.yaml)
 
 </details>
+
+(YAML = a text format written as indented `key: value` lines, commonly used for config files. `llm-rubric` = an assertion where an LLM checks the output against a written criterion.)
+
+> **One-line summary:** PromptFoo is an "inspection contract": you declare the model, prompt, and pass conditions in YAML, and it grades every output automatically.
 
 ---
 
@@ -743,6 +825,10 @@ This is the shortest "law table" for not evaluating wrong: **10 things to DO** (
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+How to read it: the top half is the ✅ DO list (each item = one rule, the `→` line explains the payoff), the bottom half is the ❌ DON'T list. For instance, DO #4 "Baseline Tracking" means: save today's scores so tomorrow you can tell improvement from decline.
+
+> **One-line summary:** Use this as a checklist — automate, measure many dimensions, keep a baseline, and never trust auto-eval without human calibration.
+
 ### 9.2 Evaluation Strategy
 
 This pyramid shows you **the frequency and cost of each checking layer**: the lower layers are cheap and run continuously (static analysis on every keystroke), the upper layers cost more and run less often (E2E tests weekly). The idea: use the fast, cheap layers to catch errors early in large volume, so the slow, expensive layers only have to handle the remaining essentials.
@@ -777,6 +863,10 @@ This pyramid shows you **the frequency and cost of each checking layer**: the lo
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+How to read the pyramid: the bottom layer runs constantly and costs almost nothing (static analysis = tools checking code without executing it, e.g. a type checker), the top layer runs rarely and costs the most (E2E test = end-to-end test driving the app like a real user). Errors caught at the bottom are cheap; errors that slip to the top are expensive.
+
+> **One-line summary:** Stack checks like a pyramid — cheap fast checks (lint, unit tests) run constantly and filter out most errors, so expensive slow checks (integration, E2E) stay rare.
 
 ---
 
@@ -828,6 +918,10 @@ This case study analyzes SWE-bench — a benchmark of real bug fixes from 2294 G
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+How to read the leaderboard: **Resolve** = % of issues the system fixed; **Token Use** = how much text it consumed per issue (~20K ≈ 20,000 tokens, roughly 15 pages of text); **Cost/Issue** = money spent per attempted issue. Patch = the block of code changes that fixes the bug.
+
+> **One-line summary:** SWE-bench grades real bug fixes from 2,294 GitHub issues — and shows a simple, cheap system can match a fancy agent loop at a fraction of the cost.
+
 ### 10.2 Aider: LLM Leaderboard for Coding
 
 This case study is the leaderboard of the Aider project, grading LLMs by how well they edit files in edit-format and the quality of the diff. The key point lies in the **COST-EFFECTIVENESS section**: DeepSeek V3 reaches 92% of GPT-4o's quality at only 11% of the cost — illustrating that a cheap model can be the optimal choice for routine tasks.
@@ -860,6 +954,10 @@ This case study is the leaderboard of the Aider project, grading LLMs by how wel
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+How to read it: **Score** = quality of the file edits; **Cost/1M** = price per million tokens as `$input/$output` (e.g. `$3/$15` means $3 per million input tokens and $15 per million output tokens); **Best For** = the use case where that model is the sensible pick. Diff = the record of what lines were added/removed by an edit.
+
+> **One-line summary:** Aider's leaderboard shows quality per dollar — DeepSeek V3 delivers 92% of GPT-4o's quality for 11% of the cost, so match the model to the task's difficulty.
 
 ### 10.3 LiveCodeBench: Dynamic Evaluation
 
@@ -898,6 +996,10 @@ LiveCodeBench solves the weakness of static benchmarks: models may have "cheated
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+Gloss: **Contamination** = the benchmark's questions leaked into a model's training data, so the model may have memorized the answers instead of solving them. Temporal awareness = only grading on problems published *after* the model's training cutoff, so memorization is impossible.
+
+> **One-line summary:** LiveCodeBench fights benchmark cheating by adding fresh problems weekly from coding contests and scoring only post-cutoff questions.
 
 ### 10.4 Anthropic's Evaluation Methodology
 
@@ -944,6 +1046,10 @@ Anthropic evaluates in **4 layers**, from machines (automated benchmarks) to peo
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+How to read it: the 4 layers go from fully automatic (Layer 1) to fully real-world (Layer 4); each layer lists what it measures plus its **Limitation** — the reason you can't rely on it alone. Model routing = automatically sending each task to the cheapest model that can handle it.
+
+> **One-line summary:** Anthropic evaluates on 4 layers — automated benchmarks, human review, real user feedback, A/B tests — because every single layer has a blind spot; the headline metric is Acceptance Rate.
+
 ---
 
 ### 10.5 DeepSeek Harness — Minimal Benchmark Harness for Unbiased Evaluation
@@ -957,6 +1063,8 @@ Anthropic evaluates in **4 layers**, from machines (automated benchmarks) to peo
 
 </details>
 
+How to read the table: each row compares one property between a normal (traditional) harness and the minimal one. For instance, "Isolation: Process-level vs Container-level" means the minimal harness runs each task inside its own sealed container (a self-contained box with its own filesystem), not just a separate OS process — so tasks can't interfere with each other.
+
 **Key Innovations**:
 
 | Feature | Traditional Harness | Minimal Benchmark Harness |
@@ -968,14 +1076,16 @@ Anthropic evaluates in **4 layers**, from machines (automated benchmarks) to peo
 | **Reproducibility** | Hard | **Native** (container snapshots) |
 | **SWE-bench Score** | Varies | **Baseline for comparison** |
 
-**Why Only 2 Tools?**:
+**Why Only 2 Tools?** (tool selection bias = when a model looks smart only because it happens to have fancy tools, not because it reasons better):
 1. **Scientific Control** — Eliminates "tool selection bias" where models with better tool-use appear smarter
-2. **Reproducibility** — Container + fixed toolset = deterministic environment
+2. **Reproducibility** — Container + fixed toolset = deterministic environment (same input always gives the same result)
 3. **Focus on Reasoning** — Forces model to demonstrate actual code understanding, not tool mastery
 4. **Cost Control** — Fewer tool calls = lower token usage, predictable costs
 5. **Fair Comparison** — All models evaluated on same minimal interface
 
 **File Reference**: For implementation details, see [`minimal-benchmark-harness.md`](minimal-benchmark-harness.md)
+
+> **One-line summary:** Strip the harness down to `bash` + `editor` in a sealed container, and you measure the model's reasoning instead of its tool-collection.
 
 ---
 
@@ -997,6 +1107,8 @@ This TypeScript block is the **type dictionary of the whole evaluation system**:
 > 📄 **Example code:** [`examples/16-11-1-core-evaluation-types.ts`](examples/16-11-1-core-evaluation-types.ts)
 
 </details>
+
+> **One-line summary:** TypeScript types are the shared data contract — every metric, test case, and report has a fixed shape, so mistakes surface at compile time instead of in production numbers.
 
 ---
 
@@ -1044,6 +1156,10 @@ This diagram applies the 5 classic SOLID principles to evaluation systems: each 
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+How to read it: each letter of SOLID is one rule; the ✅ line shows the compliant way, the ❌ line the trap. For example, D (Dependency Inversion) means your evaluator talks to a generic `IModelProvider` interface, so swapping OpenAI for another provider touches one line, not the whole system.
+
+> **One-line summary:** Apply SOLID to evaluators — one job each, easy to add new metrics without touching old code, so the system stays maintainable for years.
 
 ### 12.2 Evaluation Design Principles
 
@@ -1096,6 +1212,10 @@ These are **10 commandments** for designing evaluation, from "measure what matte
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+("Thou shall" is old-style English for "you must" — each numbered item is one commandment. E.g. #6, reproducible, means: pin the random seed and keep benchmark data in version control, so re-running gives identical scores.)
+
+> **One-line summary:** Ten commandments of evaluation — measure what matters, use multiple metrics, calibrate with humans, track cost, and audit the evaluator itself.
+
 ---
 
 ## 13. Testing Evaluation Harness
@@ -1116,6 +1236,8 @@ This is a test suite that **checks the evaluation system itself**: whether metri
 > 📄 **Example code:** [`examples/17-13-1-evaluation-test-harness.py`](examples/17-13-1-evaluation-test-harness.py)
 
 </details>
+
+> **One-line summary:** Test the tests: verify your metrics compute correctly, benchmarks reproduce, and cost tracking is accurate — otherwise every number downstream is suspect.
 
 ---
 
@@ -1174,15 +1296,21 @@ This table summarizes **6 major trends** shaping AI evaluation from 2024 to 2026
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+How to read it: 6 trend blocks, each with 4 concrete sub-items you can adopt. For example, TREND 6 "Evaluation-as-Code" means your evaluation suite lives in the repo like source code — versioned, run by CI/CD (the automated build-and-test pipeline), and posting results as PR comments (CI/CD = Continuous Integration/Continuous Delivery, the automation that builds and tests every change).
+
+> **One-line summary:** 2024–2026 direction: evaluation becomes automated, real-time, cost-aware, human-calibrated, domain-specific, and lives in code like any other test.
+
 ---
 
 ## 15. Trajectory, Contamination, Cost-per-Quality & Human Calibration
 
-Pass/fail hides *how* an agent worked. This section adds trajectory scoring (efficiency, precision, recovery), leakage-proof harness hygiene, $/pass-task routing, and calibration of LLM judges against humans. Analogy: like judging a rally driver — finish line matters, but so do wrong turns (steps), detours (tool calls), crashes recovered from (recovery), and whether the track was already practiced on (contamination).
+Pass/fail hides *how* an agent worked. This section adds trajectory scoring (efficiency, precision, recovery), leakage-proof harness hygiene, $/pass-task routing, and calibration of LLM judges against humans. Trajectory = the full path the agent took (every thought, tool call, and result), not just the final answer. Analogy: like judging a rally driver — finish line matters, but so do wrong turns (steps), detours (tool calls), crashes recovered from (recovery), and whether the track was already practiced on (contamination).
 
 > **Dedup note:** §7 and §10 both narrate SWE-bench end-to-end. Convention: §7 = *benchmark definitions* (what SWE-bench/HumanEval measure); §10 = *case-study results* (who scored what). This §15 adds only *method* (trajectory metrics, isolation, cost, calibration).
 
 ### 15.1 Trajectory Eval — Step-Efficiency, Precision, Recovery
+
+How to read it: each row is one metric — name, what it counts, and the target value you should hold it to. For instance, `tool_precision ≥ 0.6` means at least 60% of the agent's tool calls must actually help; p50 = the median (middle value across runs).
 
 | Metric | Definition | Target |
 |---|---|---|
@@ -1193,18 +1321,28 @@ Pass/fail hides *how* an agent worked. This section adds trajectory scoring (eff
 | `wasted_edits` | File writes reverted in same run ÷ total writes | ≤ 0.2 |
 | `trajectory_score` | `0.5·pass + 0.2·efficiency + 0.15·precision + 0.15·recovery` | CI gate ≥ 0.65 |
 
-Score trajectories, not just outcomes: log every `(thought, tool, args, result, cost)` span; penalize brute-force retry loops that pass by luck.
+Score trajectories, not just outcomes: log every `(thought, tool, args, result, cost)` span; penalize brute-force retry loops that pass by luck. (Span = one logged unit of work: what the agent thought, which tool it called, with what arguments, what came back, and what it cost.)
+
+> **One-line summary:** Score the journey as well as the destination — reward efficient steps and clean tool use, and punish lucky brute-force retries.
 
 ### 15.2 Contamination & Isolation Hygiene
 
-- **Leakage:** quarantine any task whose solution/issue text appears in training cutoff; tag `leak_risk: high` and exclude from headline numbers (report separately).
-- **Seeds:** fix `seed` + `temperature=0` for regression suites; run nondeterministic evals 3× and report mean ± std.
-- **Flaky quarantine:** auto-quarantine tests failing <5% over 50 runs into `flaky/` lane; they never block promotion, but file a tracking issue.
-- **Isolation:** fresh container/FS per task, no shared cache between tasks, network deny except allow-listed mirrors; hash dataset + record commit SHA in report.
+(Contamination = benchmark tasks leaked into training data, so scores measure memory, not skill. Hygiene here = the habits that keep your measurements clean.)
+
+- **Leakage:** quarantine any task whose solution/issue text appears in training cutoff; tag `leak_risk: high` and exclude from headline numbers (report separately). (Quarantine = pull it out of the main scoreboard into a side list, like isolating a sick patient.)
+- **Seeds:** fix `seed` + `temperature=0` for regression suites; run nondeterministic evals 3× and report mean ± std. (Seed/temperature control the model's randomness; `temperature=0` = make output as deterministic as possible; mean ± std = average plus how much it wobbles.)
+- **Flaky quarantine:** auto-quarantine tests failing <5% over 50 runs into `flaky/` lane; they never block promotion, but file a tracking issue. (Flaky test = passes and fails randomly on identical code, often due to timing or environment, not real bugs.)
+- **Isolation:** fresh container/FS per task, no shared cache between tasks, network deny except allow-listed mirrors; hash dataset + record commit SHA in report. (FS = filesystem; commit SHA = the unique ID of the exact code version tested; hash of dataset = a fingerprint proving which task set was used.)
+
+> **One-line summary:** Keep measurements clean: quarantine leaked or flaky items, pin randomness, isolate each task in its own container, and record exactly what you tested.
 
 ### 15.3 Cost-per-Quality — $/Pass-Task Routing Metric
 
-`$/pass-task = total_eval_cost ÷ tasks_passed`. Track per model/route; route easy tasks to cheap model, escalate only on failure (cascade). Report Pareto table:
+(`$/pass-task` = total money spent on evaluation divided by number of tasks solved — your true price per success. Routing = choosing which model handles which task.)
+
+`$/pass-task = total_eval_cost ÷ tasks_passed`. Track per model/route; route easy tasks to cheap model, escalate only on failure (cascade = try the cheap model first, and only hand the task to the expensive model if the cheap one fails). Report Pareto table (Pareto = comparing options where improving one axis — quality — worsens the other — cost):
+
+How to read the table: each row is one routing strategy; **Pass %** is the solve rate, **$/pass-task** the price per solved task, and **Verdict** the recommendation. For instance, the cascade gets 71% solved at $0.065 each — nearly the quality of large-only at a quarter of the price.
 
 | Route | Pass % | $/1k tasks | $/pass-task | Verdict |
 |---|---|---|---|---|
@@ -1212,13 +1350,17 @@ Score trajectories, not just outcomes: log every `(thought, tool, args, result, 
 | small→large cascade | 71% | $46 | $0.065 | ✅ best tradeoff |
 | large-only | 74% | $210 | $0.284 | only when quality-critical |
 
-Gate model upgrades on *both* Δpass ≥ +2pp *and* Δ$/pass-task ≤ +10%.
+Gate model upgrades on *both* Δpass ≥ +2pp *and* Δ$/pass-task ≤ +10%. (Δ = "change in"; +2pp = at least 2 percentage points more tasks solved; the second condition = cost per solved task must not rise more than 10%.)
+
+> **One-line summary:** Judge models by price per solved task, route easy work to cheap models with a cascade fallback, and only accept upgrades that add accuracy without inflating cost.
 
 ### 15.4 Human Calibration — Judge-vs-Human Agreement
 
-- Sample 100–200 tasks/quarter for blind human re-grade; compute Cohen's κ and agreement rate per dimension (correctness/style/safety).
-- Require κ ≥ 0.7 before judge gates promotion; below → retune rubric + few-shots, never lower the bar.
-- **Bias checks:** length bias (longer ≠ better), self-preference (judge favoring own family), position bias (shuffle A/B order); report bias deltas alongside scores.
+(Calibration = periodically checking that the LLM judge scores the way skilled humans would, and correcting it when it drifts.)
+
+- Sample 100–200 tasks/quarter for blind human re-grade; compute Cohen's κ and agreement rate per dimension (correctness/style/safety). (Blind = the human doesn't see the judge's score; Cohen's κ = a 0–1 statistic for agreement between two raters, where 1 is perfect and 0 is random chance.)
+- Require κ ≥ 0.7 before judge gates promotion; below → retune rubric + few-shots, never lower the bar. (Few-shots = example input-output pairs added to the judge's prompt to teach it the standard.)
+- **Bias checks:** length bias (longer ≠ better), self-preference (judge favoring own family), position bias (shuffle A/B order); report bias deltas alongside scores. (Bias delta = how much the judge's score shifts due to that quirk alone, e.g. favoring the longer of two equal answers.)
 
 <details>
 <summary>Python Code — Trajectory Scorer (Click to expand/collapse)</summary>
@@ -1229,22 +1371,28 @@ Gate model upgrades on *both* Δpass ≥ +2pp *and* Δ$/pass-task ≤ +10%.
 
 ### 15.5 Checklist
 
+(Each box is one habit to install; tick it when your pipeline does it automatically.)
+
 - [ ] Log full trajectories + compute efficiency/precision/recovery
 - [ ] Gate on `trajectory_score`, not pass% alone
-- [ ] Leakage quarantine + seed pinning + 3× reruns for stochastic evals
+- [ ] Leakage quarantine + seed pinning + 3× reruns for stochastic evals (stochastic = involving randomness, so results vary between runs)
 - [ ] Flaky lane separate from blocking suite
 - [ ] Report $/pass-task per route + cascade policy
 - [ ] Quarterly human calibration (κ ≥ 0.7) + length/self/position bias checks
 - [ ] Dataset hash + env SHA in every report
 
+> **One-line summary:** If you install only one habit from §15, make it this checklist — it turns everything above into a repeatable routine.
+
 ---
 
 ## References
 
+(These are the sources behind the document — papers first, then tools, benchmarks, and the case studies above. Each link opens the original page.)
+
 ### Papers & Research
 - [HumanEval Benchmark](https://github.com/openai/human-eval) — OpenAI code generation benchmark
 - [SWE-bench](https://www.swebench.com/) — Princeton NLP real-world bug fix benchmark
-- [CodeBLEU](https://github.com/microsoft/CodeXGLUE) — Microsoft code evaluation metric
+- [CodeBLEU](https://github.com/microsoft/CodeXGLUE) — Microsoft code evaluation metric (a formula that scores how similar generated code is to reference code)
 - [Evaluating Large Language Models Trained on Code](https://arxiv.org/abs/2107.03374) — Codex paper
 
 ### Frameworks & Tools
@@ -1266,6 +1414,8 @@ Gate model upgrades on *both* Δpass ≥ +2pp *and* Δ$/pass-task ≤ +10%.
 - [Aider](https://aider.chat)
 - [Anthropic Claude Code](https://docs.anthropic.com/en/docs/claude-code)
 
+> **One-line summary:** All primary sources in one place — use them to verify numbers or go deeper on any benchmark or tool named above.
+
 ---
 
 ---
@@ -1273,6 +1423,8 @@ Gate model upgrades on *both* Δpass ≥ +2pp *and* Δ$/pass-task ≤ +10%.
 > **Oct-2026 addendum:** evals now extend beyond chat to automation (per-node + workflow evals,
 > Custom Graders Library, generated graders). Pair `minimal-benchmark-harness.md` with trajectory
 > logs from `13-trajectory-observability` + OTel `_meta` trace keys for reproducible scoring.
+> (Grader = the component that scores one output; OTel = OpenTelemetry, a standard for collecting
+> traces and logs from software; per-node + workflow evals = grading each step *and* the whole run.)
 
 **Last updated:** 16/10/2026  
 **Author:** AI Knowledge Repository
@@ -1281,11 +1433,17 @@ Gate model upgrades on *both* Δpass ≥ +2pp *and* Δ$/pass-task ≤ +10%.
 
 > **📌 Context:** Distilled from the article *Demystifying Evals for AI Agents* (Anthropic, 06/2025). The core message: **don't wait for the perfect eval to get started** — start small, grade with an LLM, and evaluate the end state instead of every step.
 
+This closing section distills Anthropic's practical advice: don't wait for a perfect eval, grade with an LLM, and evaluate final outcomes. It's included because it contradicts two common instincts — postpone evaluation, and grade every step.
+
 ### 1. Eval-First — Start with ~20 Test Cases
 
-The most common mistake: **postponing eval building** until the system is "stable" — then when you need to measure, there's no baseline to compare against. Reality is the opposite:
+This section argues for building evaluation on day one, and tells you how many test cases you actually need at each stage.
 
-> **Key point:** The earliest changes have the **largest effect sizes** — when improving success rate from **30% → 80%**, you can **see the difference with a small sample** (~20 test cases). But once the system is at 85%, seeing a difference of 85% → 87% requires thousands of cases.
+The most common mistake: **postponing eval building** until the system is "stable" — then when you need to measure, there's no baseline to compare against. (Baseline = an earlier saved set of scores to diff against.) Reality is the opposite:
+
+> **Key point:** The earliest changes have the **largest effect sizes** — when improving success rate from **30% → 80%**, you can **see the difference with a small sample** (~20 test cases). But once the system is at 85%, seeing a difference of 85% → 87% requires thousands of cases. (Effect size = how big the change you're looking for actually is — the bigger it is, the fewer samples you need to see it.)
+
+How to read the table: each row is a project stage; the middle column is how many test cases are enough there, the last column explains why that's enough.
 
 | Stage | Number of test cases | Why it's enough |
 |---|---|---|
@@ -1293,9 +1451,11 @@ The most common mistake: **postponing eval building** until the system is "stabl
 | Maturing | 100–500 | Detect regressions as features are added |
 | Stable | Hundreds–thousands | Compare models/versions, fine-tuning |
 
+> **One-line summary:** Start evaluating with just ~20 test cases on day one — early improvements are so big that a tiny sample shows them.
+
 ### 2. LLM-as-Judge Pattern
 
-This is the **simplest scoring method that aligns best with human judgment**: 1 LLM call, 1 prompt, graded against a fixed rubric:
+This is the **simplest scoring method that aligns best with human judgment**: 1 LLM call, 1 prompt, graded against a fixed rubric. How to read the table: each row is one rubric criterion, and the question is what the judge asks itself for that criterion.
 
 | Criterion | Scoring question |
 |---|---|
@@ -1307,11 +1467,17 @@ This is the **simplest scoring method that aligns best with human judgment**: 1 
 
 **Output:** score `0.0–1.0` + label `pass/fail`. Because the output is structured, it scales to **hundreds of outputs** without manually reading each one.
 
+> **One-line summary:** One LLM call with a fixed rubric scores 0.0–1.0 with pass/fail — cheap enough to run on hundreds of outputs.
+
 ### 3. End-State Evaluation
 
-For agents that **mutate state** (write files, run commands, change the DB), don't grade each step — grade the **end state**:
+This section tells you *what point in the run to grade* for agents that change things — grade the finish line, not the footprints.
 
-> **Why?** The same destination can be reached via **many different paths**. Grading each step punishes unusual paths even when the result is correct; grading end-state is fair and reflects the real value the user receives.
+For agents that **mutate state** (write files, run commands, change the DB — mutate state = permanently change something, not just produce text), don't grade each step — grade the **end state**:
+
+> **Why?** The same destination can be reached via **many different paths**. Grading each step punishes unusual paths even when the result is correct; grading end-state is fair and reflects the real value the user receives. (End state = the final situation after the agent finishes, e.g. "tests pass and build succeeds".)
+
+How to read the table: each row is one task type; the ✅ question is the single check that decides success.
 
 | Task type | Evaluation |
 |---|---|
@@ -1319,21 +1485,31 @@ For agents that **mutate state** (write files, run commands, change the DB), don
 | Agent deploys infra | ✅ Does the endpoint return correct results? Is the cluster state correct? |
 | Agent does research | ✅ Does the answer address the question with trustworthy sources? |
 
-For **complex workflows**, split the progress into **checkpoints** — each checkpoint corresponds to an **expected state change** — so you grade end-state while also knowing where the break happened if it fails.
+For **complex workflows**, split the progress into **checkpoints** — each checkpoint corresponds to an **expected state change** — so you grade end-state while also knowing where the break happened if it fails. (Checkpoint = a midway stop where you verify one state change, e.g. "config file written correctly" before moving on.)
+
+> **One-line summary:** Grade where the agent *ended up*, not how it got there — with checkpoints in long workflows so failures are easy to locate.
 
 ### 4. Human Evaluation — Catching Edge Cases
+
+This section covers what only humans can catch: failure types your automated rubric doesn't know how to grade yet.
 
 Automation can't catch everything — you need **humans reading batches of outputs** (in the early stages) to catch error classes the rubric doesn't yet cover:
 
 - **Hallucinated answers:** the agent asserts confidently with no supporting source.
 - **System failures:** timeouts, wrong tool calls, silent crashes that don't get graded as fails.
-- **Source selection bias:** the classic example — agents **choosing SEO content farms over academic PDFs**. Fix: add **source quality heuristics to the prompt** (prefer `.edu`, `.gov`, reputable domains; penalize content farms).
+- **Source selection bias:** the classic example — agents **choosing SEO content farms over academic PDFs**. (SEO content farm = websites mass-producing shallow articles to rank high in search, vs. trustworthy primary sources like university PDFs.) Fix: add **source quality heuristics to the prompt** (prefer `.edu`, `.gov`, reputable domains; penalize content farms). (Heuristic = a practical rule of thumb baked into the prompt.)
 
-> Pattern: a human finds an edge case → turn the edge case into a new test case → rubric/heuristics get updated → the LLM-judge can grade that error class on its own next time. **Human evaluation feeds the automated eval; it doesn't replace it.**
+> **Pattern:** a human finds an edge case → turn the edge case into a new test case → rubric/heuristics get updated → the LLM-judge can grade that error class on its own next time. **Human evaluation feeds the automated eval; it doesn't replace it.**
+
+> **One-line summary:** Humans read early outputs to discover failure types automation misses, then feed each one back into the rubric so the judge catches it next time.
 
 ### 5. Production Reliability Eval
 
+This section is about evaluation *after* launch — its job shifts from scoring work to guarding quality.
+
 After going to production, evaluation shifts roles from "grading papers" to "standing guard":
+
+How to read the table: each row is one ongoing activity and the purpose it serves.
 
 | Activity | Purpose |
 |---|---|
@@ -1344,9 +1520,11 @@ After going to production, evaluation shifts roles from "grading papers" to "sta
 
 > 📄 **Example code:** [`examples/19-6-python-code-llm-judge-with-rubric-prompt.py`](examples/19-6-python-code-llm-judge-with-rubric-prompt.py)
 
-**Key point:** 1 call, 1 rubric, parseable JSON output, pass/fail by threshold — good enough for CI running hundreds of test cases without a complex harness.
+**Key point:** 1 call, 1 rubric, parseable JSON output, pass/fail by threshold — good enough for CI running hundreds of test cases without a complex harness. (CI = continuous integration, the robot that builds and tests every change automatically; threshold = the cutoff score, e.g. anything under 0.8 fails.)
 
 ### 7. Cross-Reference
+
+Where to go next: the architecture doc places evaluation in the bigger system, section 4.2 above shows the same judge idea applied to code, and `07-workflow` covers the checkpoint idea for long runs.
 
 > 📎 **Related:** [`../../AGENT_SYSTEM_ARCHITECTURE.md`](../../AGENT_SYSTEM_ARCHITECTURE.md) — **Layer 8** (Evaluation). See also Section 4.2 (LLM-as-Judge Evaluation) above for a more detailed code-grading pattern, and `07-workflow` for checkpoints during long agent runs.
 

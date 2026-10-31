@@ -44,17 +44,25 @@
 
 ### Câu Chuyện Mở Đầu
 
+Phần này mở bài bằng một câu chuyện đời thường, để giải thích vì sao ta cần "cập nhật bộ nhớ" thay vì chỉ "ghi thêm" mỗi ngày.
+
 Hãy tưởng tượng bạn mới nhận việc trông thư viện phường. Sáng nào cũng có người mang sách mới tới tặng, chiều lại có người trả sách cũ. Nếu bạn cứ hồn nhiên nhận hết rồi chồng bừa lên kệ, chẳng bao giờ xếp lại cho gọn, chẳng dám bỏ cuốn nào đã mục nát, cũng không buồn ghi thêm vào cuốn catalog — thì chỉ một năm sau thôi, thư viện sẽ thành một **kho chứa đồ lộn xộn**, muốn tìm một cuốn truyện cũng phải bới tung cả đống.
 
 **Bộ nhớ của AI cũng y hệt như vậy nếu chỉ biết "ghi vào" mà quên "dọn lại".**
 
-LLM thì rất ham học cái mới, nhưng nếu mình không giúp nó **consolidate** (gộp cái trùng nhau lại), **prune** (mạnh dạn bỏ cái đã cũ), và **index** (xếp lại cho ngay ngắn để dễ tìm) — thì knowledge base cứ ngày một chậm, ngày một nhiễu, rồi trả lời sai lúc nào không hay. Kết cục quen thuộc là: Agent cứ lặp lại đúng một lỗi cũ, hồn nhiên đưa ra thông tin đã hết hạn, và hallucinate chỉ vì thiếu factual grounding để bám vào.
+LLM (mô hình ngôn ngữ lớn — "cái não" đằng sau các trợ lý AI) thì rất ham học cái mới, nhưng nếu mình không giúp nó **consolidate** (gộp cái trùng nhau lại, như gộp 3 tờ ghi chú nói cùng một việc thành 1 tờ), **prune** (mạnh dạn bỏ cái đã cũ, như tỉa cành khô), và **index** (xếp lại cho ngay ngắn để dễ tìm, như dán nhãn trên kệ sách) — thì knowledge base (kho kiến thức của hệ thống) cứ ngày một chậm, ngày một nhiễu, rồi trả lời sai lúc nào không hay. Kết cục quen thuộc là: Agent (trợ lý AI tự hành động) cứ lặp lại đúng một lỗi cũ, hồn nhiên đưa ra thông tin đã hết hạn, và hallucinate (tự bịa ra câu trả lời nghe có vẻ đúng nhưng thật ra sai) chỉ vì thiếu factual grounding (điểm tựa là các fact có thật trong kho) để bám vào.
+
+> **Tóm gọn 1 câu:** Chỉ ghi thêm mà không gộp, bỏ và xếp lại thì bộ nhớ AI sẽ thành kho lộn xộn — agent trả lời sai vì kiến thức cũ và thiếu chỗ đáng tin để dựa vào.
 
 ### Tại Sao Update Memory Quan Trọng?
 
-> *"Bộ não to chưa chắc đã giỏi — quan trọng là mình có chịu lau chùi, sắp xếp cho gọn gàng, cập nhật thường xuyên hay không."*
+Phần này đưa ra 3 nghiên cứu khoa học chứng minh rằng "dọn dẹp bộ nhớ" thực sự cải thiện chất lượng AI.
 
 #### 3 Bằng Chứng Khoa Học
+
+> *"Bộ não to chưa chắc đã giỏi — quan trọng là mình có chịu lau chùi, sắp xếp cho gọn gàng, cập nhật thường xuyên hay không."*
+
+Cách đọc bảng này: mỗi dòng là một nghiên cứu, cột "Phát Hiện Quan Trọng" là điều họ tìm ra — con số bôi đậm là điểm chính.
 
 | # | Nghiên Cứu | Phát Hiện Quan Trọng |
 |---|-----------|----------------------|
@@ -78,7 +86,11 @@ Update Memory = Learn → Consolidate → Preserve → Evolve
 
 **Nếu mình lười cập nhật**: knowledge base sẽ cũ dần như tờ lịch treo tường — agent cứ dùng lịch năm ngoái để hẹn việc năm nay, trả lời sai, đưa tin cũ, rồi hallucinate vì không còn chỗ nào đáng tin để dựa vào, cuối cùng người dùng mất niềm tin và bỏ đi lúc nào không hay.
 
+> **Tóm gọn 1 câu:** Cập nhật bộ nhớ = ghi mới (Capture) + gộp trùng (Consolidate) + bỏ cũ (Prune) + xếp gọn (Index) — thiếu bước nào bộ nhớ cũng xuống cấp.
+
 ## Tổng Quan
+
+Phần này vẽ bức tranh tổng thể: update memory gồm những khối nào, chúng nối với nhau ra sao.
 
 > **📌 Khái Niệm Cơ Bản**
 > 
@@ -113,7 +125,13 @@ Sau khi đã retrieve và xử lý thông tin xong, việc tiếp theo rất t�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Cách đọc sơ đồ: bên trái là kho biết đọc (Vector DB, Knowledge Graph, Files/DB), bên phải là "bộ máy ghi" gồm 4 công việc — ghi sự kiện mới, gộp fact cũ+mới, tạo báo cáo, và thêm/sửa/xóa kiến thức. Mũi tên cho thấy ghi và đọc là hai chiều đi lại giữa kho và bộ máy này.
+
+> **Tóm gọn 1 câu:** Tổng quan này nói về chiều "ghi ngược" (write-back) — sau khi tra cứu và xử lý xong, hệ thống phải ghi lại điều mới học được vào kho, dọn kho, rồi làm báo cáo.
+
 ## Tại Sao Update Memory & Knowledge Store Quan Trọng?
+
+Phần này giải thích tại sao việc cập nhật bộ nhớ quan trọng hơn cả việc bộ nhớ "to", bằng chuyện bếp núc, bằng số liệu, và bằng chi phí nếu bỏ qua.
 
 > **📌 Khái Niệm Cơ Bản**
 > 
@@ -133,7 +151,9 @@ Ba ý cốt lõi cứ nhớ như nhớ lời dặn của mẹ:
 
 1. **Memory là một khu vườn sống, chứ không phải cái kho khóa cửa để đấy**: thông tin cũ cũng như lá úa — phải cập nhật, gộp lại, có khi phải tỉa bỏ. Bộ não mình còn tự quên bớt chuyện không còn relevance nữa là.
 2. **Mỗi lần trò chuyện là một lần học nghề**: mỗi conversation, mỗi lời feedback, mỗi quyết định đều rơi rớt ra chút kiến thức mới. Không nhặt lên ghi lại là mình đang để tiền rơi ngoài chợ.
-3. **Gộp gọn ăn đứt ôm đồm**: cứ thấy gì cũng nhét vào thì chỉ tạo ra **noise** ồn ào. Chịu khó consolidation — ngồi lại merge, dedupe, update — mới chắt được **signal** trong veo.
+3. **Gộp gọn ăn đứt ôm đồm**: cứ thấy gì cũng nhét vào thì chỉ tạo ra **noise** ồn ào (nhiễu — thông tin rác khiến bạn khó tìm cái đúng). Chịu khó consolidation — ngồi lại merge (gộp), dedupe (loại trùng lặp), update (cập nhật) — mới chắt được **signal** trong veo (signal = tín hiệu quý, phần thông tin thật sự đúng và đáng dùng).
+
+> **Tóm gọn 1 câu:** Memory là khu vườn sống cần chăm — mỗi lần trò chuyện đều cho kiến thức mới, và gộp gọn luôn tốt hơn ôm đồm.
 
 ### Bằng Chứng Nghiên Cûu
 
@@ -153,7 +173,13 @@ Nhờ vậy mà bớt được **68% câu hỏi lặp lại** qua các sessions 
 #### IBM Enterprise AI Research (2025)
 > Ở mấy công ty mà không chịu làm memory consolidation, nhân viên mất **gấp 2.3 lần thời gian** cho mấy việc lặp đi lặp lại, chỉ vì con AI cứ như tấm chiếu mới, lần nào cũng phải "học lại từ đầu".
 
+> **Tóm gọn 1 câu:** Số liệu từ Google, Anthropic và IBM cùng chỉ về một điểm: có ghi lại và dọn dẹp bộ nhớ thì agent ít hỏi lại, ít sai, và làm việc nhanh hơn hẳn.
+
 ### Cost-Benefit Analysis
+
+Phần này tính bài toán "có đáng công không" khi làm write-back.
+
+Cách đọc bảng này: mỗi dòng là một khía cạnh chi phí/giá trị; cột giữa là hậu quả khi KHÔNG có write-back, cột phải là kết quả khi CÓ write-back kèm consolidation. Ví dụ dòng "Duplicate Work": không ghi lại thì agent làm lại việc cũ, có ghi lại thì nó biết mình đã làm gì.
 
 | Chi Phí / Giá Trị | Không Có Write-back | Có Write-back + Consolidation |
 |---|---|---|
@@ -163,9 +189,13 @@ Nhờ vậy mà bớt được **68% câu hỏi lặp lại** qua các sessions 
 | **Response Quality** | Giảm dần theo thời gian | Cải thiện liên tục qua feedback loop |
 | **User Trust** | Giảm vì phải lặp lại thông tin | Tăng vì agent "nhớ" context |
 
-**Kể chuyện tiền nong cho dễ hình dung**: mỗi tháng bỏ ra $500 nuôi memory infrastructure cho tử tế, thì tiết kiệm được cỡ $2,000 tiền chạy agent lòng vòng (vì bớt được 75% câu hỏi trùng lặp). Đầu tư một, lời ba — ai mà chê.
+**Kể chuyện tiền nong cho dễ hình dung**: mỗi tháng bỏ ra $500 nuôi memory infrastructure cho tử tế (hạ tầng lưu bộ nhớ — server, database dùng để ghi/đọc memory), thì tiết kiệm được cỡ $2,000 tiền chạy agent lòng vòng (vì bớt được 75% câu hỏi trùng lặp). Đầu tư một, lời ba — ai mà chê.
+
+> **Tóm gọn 1 câu:** Bảng này trả lời "có đáng không": bỏ ra $500/tháng cho hạ tầng bộ nhớ đổi lại $2,000 tiết kiệm và chất lượng trả lời tăng dần theo thời gian.
 
 ### Analogies Minh Họa
+
+Phần này kể 3 chuyện đời thường để bạn hình dung write-back, consolidation và event sourcing mà không cần code.
 
 **Chuyện 1: Bác Sĩ Và Cuốn Hồ Sơ Bệnh Án**
 - **Retrieval** = Bác sĩ lật cuốn hồ sơ ra đọc lại
@@ -180,12 +210,16 @@ Nhờ vậy mà bớt được **68% câu hỏi lặp lại** qua các sessions 
 - **Nếu lười consolidation** = Thư viện toàn sách trùng, tìm một cuốn mà phải lật tung 5 bản giống nhau
 
 **Chuyện 3: Dân Code Với Git Quen Thuộc**
-- **Write-back** = Vừa code xong là commit ngay cho nóng
-- **Consolidation** = Ngồi merge branches, gỡ rối conflicts
+- **Write-back** = Vừa code xong là commit ngay cho nóng (commit = lưu một "chụp ảnh" thay đổi vào lịch sử Git)
+- **Consolidation** = Ngồi merge branches, gỡ rối conflicts (merge = gộp 2 nhánh làm việc riêng thành một; conflict = hai chỗ sửa cùng một dòng phải chọn 1)
 - **Event Sourcing** = Cuốn sổ Git log — thích là time-travel về bất kỳ commit nào trong quá khứ
 - **Nếu không consolidation** = Hàng trăm branches chĩa ra tứ phía, không ai dám merge vì sợ toang
 
+> **Tóm gọn 1 câu:** Ba câu chuyện một ý: chỉ "đọc" mà không "ghi lại + dọn dẹp" thì cả bác sĩ, thủ thư lẫn dân code đều vấp chính thông tin cũ của mình.
+
 ### Evolutionary Context: Từ Simple Storage đến Intelligent Memory
+
+Phần này kể lịch sử 4 thời kỳ của memory system, để bạn thấy vấn đề mỗi thời kỳ và vì sao các giải pháp mới ra đời.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -211,9 +245,13 @@ Nhờ vậy mà bớt được **68% câu hỏi lặp lại** qua các sessions 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-**Điều rút ra rất đời**: "Chỗ để đồ thì rẻ, cái đắt là công ngồi sắp xếp cho gọn." Một cái vector store ôm 10,000 documents mà không bao giờ consolidation thì thua xa một knowledge graph chỉ 100 facts nhưng được chăm chút gọn gàng.
+**Điều rút ra rất đời**: "Chỗ để đồ thì rẻ, cái đắt là công ngồi sắp xếp cho gọn." Một cái vector store (kho lưu text dạng vector số để tìm kiếm theo nghĩa, không cần khớp từng chữ) ôm 10,000 documents mà không bao giờ consolidation thì thua xa một knowledge graph (kho lưu fact dưới dạng "A liên quan B", như sơ đồ tư duy) chỉ 100 facts nhưng được chăm chút gọn gàng.
+
+> **Tóm gọn 1 câu:** Memory system đã tiến từ "kho key-value ngu" đến "bộ nhớ tự dọn, tự làm mới" — bài học: chất lượng sắp xếp quan trọng hơn số lượng lưu trữ.
 
 ### Nếu Bạn Kệ Luôn, Không Thèm Update Memory...
+
+Phần này liệt kê 5 hậu quả cụ thể khi bỏ bê việc cập nhật bộ nhớ — mỗi cái có ví dụ thực tế.
 
 **1. Kiến thức mốc meo (Knowledge Staleness)**
 - Facts cũ không ai buồn update → Agent hồn nhiên trả lời bằng tin hết hạn
@@ -233,22 +271,34 @@ Nhờ vậy mà bớt được **68% câu hỏi lặp lại** qua các sessions 
 
 **5. Gặp nhau như người xa lạ (Lost Context Between Sessions)**
 - Session mới mở ra trắng trơn như chưa từng quen → Người dùng tủi thân vì phải kể lại từ đầu
-- Không có session handoff, đồng đội vào sau cũng mù mờ chẳng biết chuyện gì đã xảy ra
+- Không có session handoff (bàn giao ngữ cảnh từ phiên cũ sang phiên mới), đồng đội vào sau cũng mù mờ chẳng biết chuyện gì đã xảy ra
+
+> **Tóm gọn 1 câu:** Bỏ bê update memory dẫn tới 5 cái giá: tin cũ, kho phình, fact đá nhau, không học được từ lỗi, và quên sạch context giữa các phiên.
 
 ### Best Practices (Và Tại Sao)
+
+Phần này là 6 quy tắc "nên làm" — kèm lý do để bạn hiểu chứ không cần học vẹt.
+
+Cách đọc bảng này: cột "Rule" là quy tắc, cột "Why" là lý do nên làm. Ví dụ dòng đầu: luôn ghi timestamp (dấu thời gian — ghi lại fact này được tạo lúc nào) để khi 2 fact mâu thuẫn, hệ thống biết cái nào mới hơn.
 
 | Rule | Why |
 |---|---|
 | Luôn ghi timestamp cho mọi fact | Để biết fact nào mới nhất khi có conflict |
-| Consolidate định kỳ (không phải real-time) | Real-time consolidation quá tốn compute; batch processing hiệu quả hơn 5x |
-| Luôn log mọi write operation (audit trail) | Để debug khi memory bị corruption; để rollback nếu cần |
-| Version facts (với source và confidence) | Để resolve conflict: fact từ source nào đáng tin hơn |
+| Consolidate định kỳ (không phải real-time) | Real-time consolidation quá tốn compute; batch processing (xử lý theo đợt, ví dụ mỗi giờ một lần) hiệu quả hơn 5x |
+| Luôn log mọi write operation (audit trail) | Để debug khi memory bị corruption (hỏng dữ liệu); để rollback (quay lại trạng thái cũ) nếu cần |
+| Version facts (với source và confidence) | Để resolve conflict: fact từ source nào đáng tin hơn (confidence = điểm tự tin 0-100% cho một fact) |
 | Auto-expire outdated facts | Facts 6 tháng tuổi có 73% chance là đã lỗi thời (research data) |
 | Tách Episodic vs Semantic memory | Episodic = "điều gì đã xảy ra", Semantic = "sự thật là gì" — 2 loại memory cần xử lý khác nhau |
+
+> **Tóm gọn 1 câu:** Ghi dấu thời gian, gộp theo đợt, log mọi lần ghi, đánh version cho fact, tự hết hạn tin cũ, tách hai loại nhớ — sáu quy tắc này là nền của mọi memory system tốt.
 
 ---
 
 ## Nội Dung
+
+Phần này là mục lục tóm tắt của 5 chủ đề chính phía dưới.
+
+Cách đọc bảng này: mỗi dòng là một chủ đề; bấm vào tên chủ đề để nhảy tới phần đó. Ví dụ dòng 1 là "Write-back Memory" — cách ghi sự kiện mới vào bộ nhớ.
 
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
@@ -257,6 +307,8 @@ Nhờ vậy mà bớt được **68% câu hỏi lặp lại** qua các sessions 
 | 3 | [Report Generation](#3-report-generation) | Tạo output có cấu trúc |
 | 4 | [KB Maintenance](#4-kb-maintenance) | Thêm/sửa/xóa knowledge base |
 | 5 | [Event Sourcing Pattern](#5-event-sourcing-pattern) | Lưu trữ dạng event log |
+
+> **Tóm gọn 1 câu:** Phần nội dung chính gồm 5 chủ đề nối tiếp nhau: ghi mới → gộp dọn → làm báo cáo → bảo trì kho → lưu lịch sử sự kiện.
 
 ---
 
@@ -271,6 +323,8 @@ Nhờ vậy mà bớt được **68% câu hỏi lặp lại** qua các sessions 
 > **Vì sao quan trọng:** Nếu chỉ retrieve mà không write-back, AI không bao giờ "khôn hơn" qua mỗi lần trò chuyện và luôn lặp lại câu hỏi cũ.
 
 ### 1.1 Khi Nào Cần Write-back?
+
+Phần này trả lời câu hỏi "tin gì thì đáng ghi lại?" qua 3 kịch bản.
 
 Không phải cứ có tin mới là ghi — hãy write-back khi nó **thay đổi trạng thái** của user, của hệ thống, hoặc tạo ra bài học. Ba tình huống dưới đây nên đọc như ba kịch bản: dòng đầu là điều xảy ra trong cuộc trò chuyện, các dòng `→` là những việc hệ thống cần làm theo.
 
@@ -305,9 +359,15 @@ Không phải cứ có tin mới là ghi — hãy write-back khi nó **thay đ�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích nhanh 3 kịch bản: (1) user nói tin cá nhân mới ("tôi chuyển làm freelancer") thì lưu vào hồ sơ user; (2) hệ thống tìm ra kiến thức mới (luật BHYT mới) thì cập nhật kho và vô hiệu hóa bản tin cũ đã cache (cache = bản lưu tạm để trả lời nhanh); (3) user chê câu trả lời sai thì lưu lại cặp "sai → đúng" để lần sau trả lời tốt hơn.
+
+> **Tóm gọn 1 câu:** Chỉ write-back khi tin mới làm thay đổi hồ sơ user, kiến thức của hệ thống, hoặc là feedback có bài học — mỗi lần ghi kèm việc cập nhật những chỗ liên quan.
+
 ### 1.2 Write-back Implementation
 
-Lớp `MemoryWriter` bên dưới là "cây bút" của hệ thống: `write_episodic` ghi sự kiện, `write_fact` ghi fact, `update_fact` sửa fact, `write_user_profile` cập nhật thông tin user. Không cần hiểu từng dòng — chỉ cần để ý điểm chung: **hàm nào cũng ghi vào `event_log`** để sau này truy vết được ai đã ghi gì, lúc nào.
+Phần này giới thiệu class Python làm nhiệm vụ ghi, để bạn biết "cây bút" của hệ thống gồm những cây bút con nào.
+
+Lớp `MemoryWriter` bên dưới là "cây bút" của hệ thống: `write_episodic` ghi sự kiện (episodic memory = loại nhớ "chuyện gì đã xảy ra", như nhật ký), `write_fact` ghi fact (semantic memory = loại nhớ "sự thật là gì", như sách giáo khoa), `update_fact` sửa fact, `write_user_profile` cập nhật thông tin user. Không cần hiểu từng dòng — chỉ cần để ý điểm chung: **hàm nào cũng ghi vào `event_log`** (sổ nhật ký ghi lại mọi lần ghi) để sau này truy vết được ai đã ghi gì, lúc nào.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -315,6 +375,8 @@ Lớp `MemoryWriter` bên dưới là "cây bút" của hệ thống: `write_epi
 > 📄 **Code ví dụ:** [`examples/01-1-2-write-back-implementation.py`](examples/01-1-2-write-back-implementation.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** `MemoryWriter` ghi 4 loại dữ liệu (sự kiện, fact, sửa fact, hồ sơ user) và mọi lần ghi đều được ghi log vào `event_log` để truy vết về sau.
 
 ---
 
@@ -330,7 +392,9 @@ Lớp `MemoryWriter` bên dưới là "cây bút" của hệ thống: `write_epi
 
 ### 2.1 Consolidation Là Gì?
 
-Khối ASCII dưới đây so sánh memory **TRƯỚC** và **SAU** khi consolidation. Phần trên là 5 fact rời rạc về BHYT (trùng lặp, cũ mới lẫn lộn); phần dưới là kết quả sau khi dọn — chỉ còn 2 fact rõ ràng. Ý tưởng cốt lõi nằm ở dòng cuối: **Consolidation = Merge + Dedupe + Update + Summarize**.
+Phần này so sánh kho nhớ trước và sau khi dọn, để bạn thấy consolidation "làm ra cái gì".
+
+Khối ASCII dưới đây so sánh memory **TRƯỚC** và **SAU** khi consolidation. Phần trên là 5 fact rời rạc về BHYT (Bảo hiểm y tế; trùng lặp, cũ mới lẫn lộn); phần dưới là kết quả sau khi dọn — chỉ còn 2 fact rõ ràng. Ý tưởng cốt lõi nằm ở dòng cuối: **Consolidation = Merge (gộp) + Dedupe (loại trùng) + Update (cập nhật) + Summarize (tóm tắt)**.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -353,9 +417,13 @@ Khối ASCII dưới đây so sánh memory **TRƯỚC** và **SAU** khi consolid
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Ví dụ cụ thể: 3 fact "BHYT đóng 4.5%" (ngày 1, 2, 3 từ 3 nguồn) được gộp thành 1 fact kèm năm 2024; bản "đóng 5% từ 2025" là tin mới nên giữ nguyên; bản trùng ngày 5 bị xóa.
+
 ### 2.2 Implementation
 
-Class `MemoryConsolidator` thực hiện 4 bước dọn dẹp: gộp fact giống nhau (`consolidate_facts`), loại fact quá cũ (`temporal_consolidation`), tóm tắt thông tin về một entity (`summarize_entities`), và phát hiện fact mâu thuẫn (`conflict_resolution`). Mỗi hàm trả về các con số thống kê (merged/deleted/removed) — bạn chỉ cần đọc kết quả trả về để biết đã dọn được những gì.
+Phần này giới thiệu class Python thực hiện 4 bước dọn dẹp.
+
+Class `MemoryConsolidator` thực hiện 4 bước dọn dẹp: gộp fact giống nhau (`consolidate_facts`), loại fact quá cũ (`temporal_consolidation` — temporal = theo thời gian), tóm tắt thông tin về một entity (entity = đối tượng được nhắc tới, như "BHYT" hay "user An"), và phát hiện fact mâu thuẫn (`conflict_resolution`). Mỗi hàm trả về các con số thống kê (merged/deleted/removed) — bạn chỉ cần đọc kết quả trả về để biết đã dọn được những gì.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -363,6 +431,8 @@ Class `MemoryConsolidator` thực hiện 4 bước dọn dẹp: gộp fact giố
 > 📄 **Code ví dụ:** [`examples/02-2-2-implementation.py`](examples/02-2-2-implementation.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Consolidation = dọn kho theo 4 bước (gộp trùng, bỏ cũ, tóm tắt theo đối tượng, xử lý mâu thuẫn); class `MemoryConsolidator` làm hộ bạn cả 4 và báo lại số liệu.
 
 ---
 
@@ -378,7 +448,9 @@ Class `MemoryConsolidator` thực hiện 4 bước dọn dẹp: gộp fact giố
 
 ### 3.1 Report Types
 
-4 loại báo cáo cơ bản mà hệ thống có thể tạo ra. Đọc mỗi khối theo 3 dòng: **Input** (lấy dữ liệu gì) → **Output** (tạo ra gì) → **Use** (dùng để làm gì). Ví dụ "Conversation Summary" lấy chat history để tạo bản tóm tắt bàn giao cho phiên làm việc kế tiếp.
+Phần này liệt kê 4 loại báo cáo hệ thống có thể tạo, để bạn chọn đúng loại cho đúng nhu cầu.
+
+4 loại báo cáo cơ bản mà hệ thống có thể tạo ra. Đọc mỗi khối theo 3 dòng: **Input** (lấy dữ liệu gì) → **Output** (tạo ra gì) → **Use** (dùng để làm gì). Ví dụ "Conversation Summary" lấy chat history để tạo bản tóm tắt bàn giao cho phiên làm việc kế tiếp (session handoff = bàn giao ngữ cảnh giữa hai phiên).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -407,9 +479,15 @@ Class `MemoryConsolidator` thực hiện 4 bước dọn dẹp: gộp fact giố
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Diễn giải 4 loại bằng một câu mỗi loại: (1) Tóm tắt hội thoại — để phiên sau đọc vào là biết chuyện; (2) Knowledge report — nhìn tổng quan kho kiến thức để bảo trì; (3) Analysis report — phân tích nhiều nguồn kèm citations (trích dẫn nguồn) để phục vụ ra quyết định; (4) Feedback report — gom ý kiến người dùng thành gợi ý cải thiện.
+
+> **Tóm gọn 1 câu:** Có 4 loại báo cáo (tóm tắt hội thoại, tổng quan kiến thức, phân tích, feedback) — mỗi loại lấy một nguồn dữ liệu đầu vào để phục vụ một mục đích khác nhau.
+
 ### 3.2 Implementation
 
-Class `ReportGenerator` hiện thực 3 loại báo cáo: `conversation_summary` (tóm tắt hội thoại), `knowledge_report` (tổng quan knowledge base) và `analysis_report` (phân tích nhiều nguồn kèm citations). Các hàm này gọi LLM để viết báo cáo rồi ép kết quả về JSON — nếu LLM trả sai định dạng, code có nhánh fallback trả về dữ liệu mặc định thay vì gây lỗi.
+Phần này giới thiệu class Python tạo báo cáo bằng LLM.
+
+Class `ReportGenerator` hiện thực 3 loại báo cáo: `conversation_summary` (tóm tắt hội thoại), `knowledge_report` (tổng quan knowledge base) và `analysis_report` (phân tích nhiều nguồn kèm citations). Các hàm này gọi LLM để viết báo cáo rồi ép kết quả về JSON (định dạng dữ liệu dạng `{khóa: giá trị}`, máy đọc được) — nếu LLM trả sai định dạng, code có nhánh fallback (kế hoạch dự phòng) trả về dữ liệu mặc định thay vì gây lỗi.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -417,6 +495,8 @@ Class `ReportGenerator` hiện thực 3 loại báo cáo: `conversation_summary`
 > 📄 **Code ví dụ:** [`examples/03-3-2-implementation.py`](examples/03-3-2-implementation.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** `ReportGenerator` nhờ LLM viết 3 loại báo cáo rồi ép về JSON; nếu LLM trả sai định dạng, code dùng nhánh dự phòng thay vì crash.
 
 ---
 
@@ -432,7 +512,9 @@ Class `ReportGenerator` hiện thực 3 loại báo cáo: `conversation_summary`
 
 ### 4.1 Knowledge Base Operations
 
-Class `KBMaintainer` là "người quản lý kho kiến thức" với 4 thao tác chính: `add_knowledge` (thêm), `update_knowledge` (sửa), `delete_knowledge` (xóa theo chủ đề hoặc chi tiết), và `validate_knowledge` (rà soát tìm fact mâu thuẫn, entity bị mồ côi). Điểm đáng chú ý: mọi thao tác đều ghi vào `changelog` — giống nhật ký lịch sử để biết đã đụng vào kiến thức nào.
+Phần này giới thiệu class Python "quản lý kho kiến thức" với 4 thao tác.
+
+Class `KBMaintainer` là "người quản lý kho kiến thức" với 4 thao tác chính: `add_knowledge` (thêm), `update_knowledge` (sửa), `delete_knowledge` (xóa theo chủ đề hoặc chi tiết), và `validate_knowledge` (rà soát tìm fact mâu thuẫn, entity bị mồ côi — entity mồ côi là đối tượng còn nằm trong kho nhưng không còn nối với fact nào, như cuốn sách không ai mượn và không ai nhắc tới). Điểm đáng chú ý: mọi thao tác đều ghi vào `changelog` (sổ nhật ký thay đổi — giống lịch sử Git) để biết đã đụng vào kiến thức nào.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -440,6 +522,8 @@ Class `KBMaintainer` là "người quản lý kho kiến thức" với 4 thao t�
 > 📄 **Code ví dụ:** [`examples/04-4-1-knowledge-base-operations.py`](examples/04-4-1-knowledge-base-operations.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** `KBMaintainer` cho thêm/sửa/xóa/rà soát kho kiến thức, và mọi thao tác đều ghi vào `changelog` để luôn biết ai đã đụng vào đâu.
 
 ---
 
@@ -455,7 +539,9 @@ Class `KBMaintainer` là "người quản lý kho kiến thức" với 4 thao t�
 
 ### 5.1 Concept
 
-Phần này giới thiệu ý tưởng gốc của event sourcing. Khối ASCII cho thấy cách lưu theo "nhật ký sự kiện" — mỗi dòng là một sự kiện có đánh dấu thời gian (`@ t=...`). Ba siêu năng lực nằm ở giữa khối: **Current State = Replay all events** (trạng thái hiện tại được dựng lại bằng cách phát lại mọi sự kiện), **Time Travel** (phát lại tới thời điểm T), và **Audit Trail** (giữ đầy đủ lịch sử thay đổi).
+Phần này giới thiệu ý tưởng gốc của event sourcing qua một khối sơ đồ.
+
+Khối ASCII cho thấy cách lưu theo "nhật ký sự kiện" — mỗi dòng là một sự kiện có đánh dấu thời gian (`@ t=...`). Ba siêu năng lực nằm ở giữa khối: **Current State = Replay all events** (trạng thái hiện tại được dựng lại bằng cách phát lại mọi sự kiện), **Time Travel** (phát lại tới thời điểm T), và **Audit Trail** (giữ đầy đủ lịch sử thay đổi).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -485,9 +571,15 @@ Phần này giới thiệu ý tưởng gốc của event sourcing. Khối ASCII 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Cách đọc khối: phần "Events Log" là cuốn sổ sự kiện — ví dụ dòng 3 nghĩa là "ở thời điểm t=2, fact mức đóng BHYT được sửa từ 4.5% lên 5%". Ba dòng "Current State / Time Travel / Audit Trail" là 3 thứ bạn làm được nhờ cuốn sổ đó: dựng lại hiện tại, quay về quá khứ, và soát lịch sử.
+
+> **Tóm gọn 1 câu:** Event sourcing = thay vì chỉ lưu trạng thái hiện tại, lưu mọi sự kiện đã xảy ra — nhờ đó được 3 siêu năng lực: dựng lại hiện tại, quay về quá khứ, và soát đầy đủ lịch sử.
+
 ### 5.2 Implementation
 
-Class `EventSourcedMemory` hiện thực ý tưởng trên bằng code. Hãy chú ý `record_event` — mọi thay đổi đều đi qua hàm này, được lưu vào danh sách `events`, rồi cập nhật `state` bằng `_apply_event`. Hai hàm thú vị nhất: `get_state_at(event_id)` cho phép "time travel" về trạng thái tại một sự kiện nào đó, và `undo_last()` hủy sự kiện cuối bằng cách dựng lại toàn bộ state từ đầu.
+Phần này hiện thực ý tưởng trên bằng class Python `EventSourcedMemory`.
+
+Class `EventSourcedMemory` hiện thực ý tưởng trên bằng code. Hãy chú ý `record_event` — mọi thay đổi đều đi qua hàm này, được lưu vào danh sách `events`, rồi cập nhật `state` bằng `_apply_event`. Hai hàm thú vị nhất: `get_state_at(event_id)` cho phép "time travel" về trạng thái tại một sự kiện nào đó, và `undo_last()` hủy sự kiện cuối bằng cách dựng lại toàn bộ state từ đầu (undo = hoàn tác, trả về như trước khi sự kiện đó xảy ra).
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -495,6 +587,8 @@ Class `EventSourcedMemory` hiện thực ý tưởng trên bằng code. Hãy ch�
 > 📄 **Code ví dụ:** [`examples/05-5-2-implementation.py`](examples/05-5-2-implementation.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** `EventSourcedMemory` đưa mọi thay đổi qua `record_event` vào sổ sự kiện; muốn xem quá khứ dùng `get_state_at`, muốn hoàn tác dùng `undo_last`.
 
 ---
 
@@ -514,7 +608,9 @@ Các case studies dưới đây giống như mình đi thăm nhà mấy anh ch�
 
 ### 6.1. Claude Code — Session Memory & Cross-Session Persistence
 
-**Chuyện nhà Claude Code**: team Anthropic đau đầu vì Claude hay "quên bài" qua mỗi session mới, không nhớ project đang làm dở kiểu gì. Thế là họ đẻ ra cách nhớ 3 tầng để đi đâu cũng mang theo được.
+Phần này kể cách Anthropic giải quyết bài toán "AI quên bài" trong công cụ Claude Code.
+
+**Chuyện nhà Claude Code**: team Anthropic đau đầu vì Claude hay "quên bài" qua mỗi session mới (session = một phiên làm việc từ lúc mở đến lúc đóng), không nhớ project đang làm dở kiểu gì. Thế là họ đẻ ra cách nhớ 3 tầng để đi đâu cũng mang theo được.
 
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
@@ -529,11 +625,15 @@ Các case studies dưới đây giống như mình đi thăm nhà mấy anh ch�
 3. ✅ **Biết người biết ta** — Đoán trình độ user để nói ngắn gọn hay giải thích kỹ
 4. ✅ **Dọn dẹp cuối buổi** — Hết session là chắt lọc cái hay giữ lại, cái vụn thì cho qua
 
+> **Tóm gọn 1 câu:** Claude Code nhớ theo 3 tầng (trong buổi → trong project qua file CLAUDE.md → dùng chung nhiều project), biến mỗi lần bị sửa thành bài học cho lần sau.
+
 ---
 
 ### 6.2. Mem0 — Production Memory Layer for AI Agents
 
-**Mem0** (trước đây mọi người biết với tên EmbedChain) là một memory layer open-source cho AI agents, kiểu như có một bạn thư ký cần mẫn ngồi ghi chép hộ mình:
+Phần này kể cách Mem0 làm "thư ký ghi chép hộ" cho AI agent.
+
+**Mem0** (trước đây mọi người biết với tên EmbedChain) là một memory layer (tầng nhớ — dịch vụ chuyên quản lý bộ nhớ cho agent) open-source (mã nguồn mở — ai cũng tải về, sửa và dùng được) cho AI agents, kiểu như có một bạn thư ký cần mẫn ngồi ghi chép hộ mình:
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -546,13 +646,17 @@ Các case studies dưới đây giống như mình đi thăm nhà mấy anh ch�
 1. ✅ **Tự bóc facts** — Để LLM ngồi nghe hội thoại rồi tự nhặt ra facts, khỏi phải ghi tay
 2. ✅ **Càng cũ càng mờ** — Memories cũ tự giảm độ quan trọng theo thời gian (temporal decay)
 3. ✅ **Dàn xếp mâu thuẫn** — Chấm điểm theo thời gian + độ tin cậy để chọn bên đáng tin hơn
-4. ✅ **Mỗi nhà một sổ riêng** — Chia namespacing theo user nên không sợ lẫn lộn
+4. ✅ **Mỗi nhà một sổ riêng** — Chia namespacing theo user nên không sợ lẫn lộn (namespacing = chia vùng nhớ riêng cho từng user/project, như mỗi người một ngăn tủ)
+
+> **Tóm gọn 1 câu:** Mem0 nhờ LLM tự bóc facts khỏi hội thoại, cho tin cũ mờ dần theo thời gian (temporal decay = tin cũ tự giảm độ tin), dàn xếp mâu thuẫn theo độ tin cậy, và chia ngăn tủ riêng cho từng user.
 
 ---
 
 ### 6.3. OpenMemory — MCP-Based Memory Server
 
-Case study này đóng vai một memory server theo chuẩn MCP (Model Context Protocol) — tức các thao tác bộ nhớ được "phơi ra" dưới dạng tool mà LLM có thể gọi trực tiếp: `create_memory`, `search_memory`, `update_memory`, `delete_memory`, `list_memories`, `consolidate_memories`. Đọc giống như danh mục của một API: mỗi hàm là một thao tác chuẩn, giúp bất kỳ agent nào cũng dùng được bộ nhớ mà không cần biết cách lưu trữ bên trong.
+Phần này giới thiệu một memory server mở bộ nhớ ra thành các "tool" chuẩn mà AI agent gọi được.
+
+Case study này đóng vai một memory server theo chuẩn MCP (Model Context Protocol — giao thức mở để LLM gọi các công cụ/dịch vụ bên ngoài một cách thống nhất) — tức các thao tác bộ nhớ được "phơi ra" dưới dạng tool mà LLM có thể gọi trực tiếp: `create_memory` (tạo), `search_memory` (tìm), `update_memory` (sửa), `delete_memory` (xóa), `list_memories` (liệt kê), `consolidate_memories` (gộp dọn). Đọc giống như danh mục của một API: mỗi hàm là một thao tác chuẩn, giúp bất kỳ agent nào cũng dùng được bộ nhớ mà không cần biết cách lưu trữ bên trong.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -560,6 +664,8 @@ Case study này đóng vai một memory server theo chuẩn MCP (Model Context P
 > 📄 **Code ví dụ:** [`examples/08-6-3-openmemory-mcp-based-memory-server.py`](examples/08-6-3-openmemory-mcp-based-memory-server.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** OpenMemory biến bộ nhớ thành 6 thao tác chuẩn (tạo/tìm/sửa/xóa/liệt kê/gộp) theo chuẩn MCP — agent nào cũng dùng được mà không cần biết bên trong lưu kiểu gì.
 
 ---
 
@@ -595,9 +701,15 @@ Case study này đóng vai một memory server theo chuẩn MCP (Model Context P
 
 **Tài liệu chi tiết**: muốn xem code chạy thật thế nào thì ghé [`trajectory-fork-replay.md`](trajectory-fork-replay.md)
 
+Cách đọc bảng 4 chế độ: cột "Mode" là tên chế độ, "Use Case" là khi nào dùng, "Tools Available" là agent được dùng những công cụ gì trong chế độ đó. Ví dụ "Code Mode" chỉ cho 2 công cụ `bash` (chạy lệnh terminal) và `editor` (sửa file), gom nhóm để chạy nhanh.
+
+> **Tóm gọn 1 câu:** DeepSeek Harness ghi lại toàn bộ hành trình session như camera hành trình — không sửa lịch sử, chỉ nối thêm — nhờ đó replay được từng bước, rẽ nhánh thử phương án khác, nghỉ rồi chạy tiếp, và soi ra pattern lỗi thường gặp.
+
 ---
 
 ## 7. Advanced Memory Patterns
+
+Phần này nâng cấp từ "ghi và dọn thủ công" lên các pattern tự động, dùng được khi vào production.
 
 > **📌 Khái Niệm Cơ Bản**
 > 
@@ -618,9 +730,13 @@ Pattern này trả lời câu hỏi: "ghi xuống đĩa chậm quá thì làm sa
 
 </details>
 
+> **Tóm gọn 1 câu:** Write-behind cache = trả lời người dùng ngay từ cache rồi ghi xuống kho theo đợt chạy ngầm — nhanh hơn nhiều, đổi lại nếu chương trình sập giữa chừng thì có thể mất vài bản ghi chưa kịp xuống kho.
+
 ### 7.2. Memory Consolidation Pipeline
 
-Khác với consolidation thủ công ở mục 2, đây là "dây chuyền dọn dẹp tự động" chạy định kỳ theo 5 giai đoạn: deduplicate → resolve conflicts → temporal decay → archive memory cũ → xóa memory có confidence thấp. Mỗi giai đoạn là một hàm `_stage_*`, và `run_full_consolidation` chạy cả dây chuyền rồi trả về report thống kê — đọc báo cáo này là biết ngay mỗi giai đoạn đã dọn được bao nhiêu mục.
+Phần này giới thiệu "dây chuyền dọn dẹp tự động" chạy định kỳ, khác với dọn thủ công ở mục 2.
+
+Khác với consolidation thủ công ở mục 2, đây là "dây chuyền dọn dẹp tự động" chạy định kỳ theo 5 giai đoạn: deduplicate (loại trùng) → resolve conflicts (dàn xếp mâu thuẫn) → temporal decay (giảm độ tin của tin cũ) → archive memory cũ (chuyển vào kho lưu trữ) → xóa memory có confidence thấp (confidence = điểm tự tin; tin này hệ thống không chắc đúng). Mỗi giai đoạn là một hàm `_stage_*`, và `run_full_consolidation` chạy cả dây chuyền rồi trả về report thống kê — đọc báo cáo này là biết ngay mỗi giai đoạn đã dọn được bao nhiêu mục.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -629,9 +745,13 @@ Khác với consolidation thủ công ở mục 2, đây là "dây chuyền dọ
 
 </details>
 
+> **Tóm gọn 1 câu:** Consolidation pipeline = dây chuyền 5 giai đoạn (loại trùng → dàn xếp mâu thuẫn → giảm tin cũ → lưu trữ → xóa tin không chắc) chạy định kỳ tự động và báo cáo số liệu từng giai đoạn.
+
 ### 7.3. Versioned Memory (Git-like Memory)
 
-Pattern này mượn đúng ý tưởng Git áp dụng cho bộ nhớ: mỗi lần `set` một giá trị là tạo một **version** mới kèm snapshot toàn bộ state. Nhờ đó bạn có `diff` (so sánh 2 thời điểm), `rollback` (quay lại version cũ như git revert), và `log` (xem lịch sử thay đổi). Nói dân dã: bộ nhớ biết mình "từng được sửa thế nào", nên sửa sai là kéo lại được.
+Phần này mượn ý tưởng Git (hệ thống quản lý phiên bản code mà dân lập trình dùng hằng ngày) để làm bộ nhớ biết "quay lại được".
+
+Pattern này mượn đúng ý tưởng Git áp dụng cho bộ nhớ: mỗi lần `set` một giá trị là tạo một **version** (phiên bản) mới kèm snapshot (ảnh chụp toàn bộ trạng thái tại một thời điểm). Nhờ đó bạn có `diff` (so sánh 2 thời điểm xem cái gì thay đổi), `rollback` (quay lại version cũ như git revert — hủy thay đổi gần nhất), và `log` (xem lịch sử thay đổi). Nói dân dã: bộ nhớ biết mình "từng được sửa thế nào", nên sửa sai là kéo lại được.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -640,9 +760,13 @@ Pattern này mượn đúng ý tưởng Git áp dụng cho bộ nhớ: mỗi l�
 
 </details>
 
+> **Tóm gọn 1 câu:** Versioned memory = mỗi lần ghi là một version mới có snapshot; nhờ vậy so sánh được (diff), quay lui được (rollback), và xem lịch sử được (log).
+
 ---
 
 ## 8. Best Practices & Anti-Patterns
+
+Phần này là bảng luật "đi / dừng" khi làm update memory — gom từ kinh nghiệm production.
 
 > **📌 Khái Niệm Cơ Bản**
 > 
@@ -651,6 +775,8 @@ Pattern này mượn đúng ý tưởng Git áp dụng cho bộ nhớ: mỗi l�
 > **Ẩn dụ/so sánh:** Giống bảng điều luật giao thông — không cần nhớ lý do chi tiết, chỉ cần biết "đèn xanh đi, đèn đỏ dừng" để không gặp tai nạn.
 > 
 > **Vì sao quan trọng:** Giúp bạn tránh những lỗi đắt giá mà nhiều đội đã vấp phải, tiết kiệm thời gian fix bug về sau.
+
+Hai khối dưới đây nên đọc như bảng điều khiển: khối ✅ DO là 7 việc nên làm (mỗi việc kèm 2 dòng lý do), khối ❌ DON'T là 6 việc không nên làm. Ví dụ DO đầu tiên: luôn log mọi lần ghi — để có bằng chứng truy vết khi cần debug hay rollback.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -720,9 +846,13 @@ Pattern này mượn đúng ý tưởng Git áp dụng cho bộ nhớ: mỗi l�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Cẩm nang này tóm lại thành: log mọi lần ghi, loại trùng trước khi lưu, chấm độ tin, cho tin cũ mờ dần, dọn định kỳ, đánh version, chia vùng nhớ riêng — và ngược lại, đừng ghi đè thiếu version, đừng lưu hội thoại thô, đừng bỏ qua feedback.
+
 ---
 
 ## 9. Performance Metrics
+
+Phần này nói về cách "bắt mạch" cho memory system bằng các chỉ số đo lường.
 
 > **📌 Khái Niệm Cơ Bản**
 > 
@@ -731,6 +861,10 @@ Pattern này mượn đúng ý tưởng Git áp dụng cho bộ nhớ: mỗi l�
 > **Ẩn dụ/so sánh:** Giống đồng hồ táp-lô trên xe — không cần nhìn suốt đường đi, nhưng khi nghi ngờ có vấn đề thì phải biết đọc.
 > 
 > **Vì sao quan trọng:** Không đo lường thì không biết memory system đang dần xuống cấp hay đang hoạt động tốt.
+
+Giải nghĩa các chỉ số: latency = thời gian chờ một thao tác (ghi/đọc) hoàn thành; dedup rate = tỉ lệ bản ghi bị loại vì trùng; conflict rate = tỉ lệ fact mâu thuẫn phải xử lý. Đo vài tuần một lần là đủ — giống soi đồng hồ táp-lô khi nghi xe hao xăng chứ không cần nhìn liên tục.
+
+> **Tóm gọn 1 câu:** Đo 4 thứ cơ bản — tốc độ ghi/đọc, tỉ lệ trùng lặp, số mâu thuẫn, thời gian dọn kho — để phát hiện sớm memory system xuống cấp.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -742,6 +876,8 @@ Pattern này mượn đúng ý tưởng Git áp dụng cho bộ nhớ: mỗi l�
 ---
 
 ## 10. Labs Thực Hành
+
+Phần này là 4 bài tập tự tay chạy bằng Python — làm xong là hiểu sâu hơn chỉ đọc.
 
 > **📌 Khái Niệm Cơ Bản**
 > 
@@ -762,6 +898,8 @@ Trong bài này bạn dùng `MemoryWriter` để ghi một episodic memory, hai 
 
 </details>
 
+> **Tóm gọn 1 câu:** Lab 1 cho bạn tự tay dùng `MemoryWriter` ghi sự kiện, fact và hồ sơ user, rồi kiểm tra bằng `get_stats()` xem hệ thống đã nhớ được bao nhiêu.
+
 ### Lab 2: Consolidation
 
 Thực hành dọn dẹp với `MemoryConsolidator`: tạo 3 fact về BHYT (hai cái gần như trùng nhau, một cái là bản cập nhật mới hơn), chạy `generate_memory_report` và xem `conflict_resolution` phát hiện được mâu thuẫn nào.
@@ -772,6 +910,8 @@ Thực hành dọn dẹp với `MemoryConsolidator`: tạo 3 fact về BHYT (hai
 > 📄 **Code ví dụ:** [`examples/15-lab-2-consolidation.py`](examples/15-lab-2-consolidation.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Lab 2 tạo 3 fact gần trùng nhau rồi dùng `MemoryConsolidator` dọn, xem báo cáo và thấy rõ conflict resolution bắt được mâu thuẫn nào.
 
 ### Lab 3: Versioned Memory
 
@@ -784,6 +924,8 @@ Mô phỏng một fact về mức đóng BHYT thay đổi qua 3 phiên bản, xe
 
 </details>
 
+> **Tóm gọn 1 câu:** Lab 3 cho fact BHYT "sống" qua 3 phiên bản — xem lịch sử (`vm.log`), so sánh (`vm.diff`), và quay lui (`vm.rollback`) — để cảm nhận versioned memory như Git.
+
 ### Lab 4: Metrics
 
 Mô phỏng 100 thao tác ghi/đọc với số liệu ngẫu nhiên và 2 lần consolidation, rồi in ra báo cáo `metrics.report()` để xem hệ thống được đo lường như thế nào.
@@ -795,11 +937,19 @@ Mô phỏng 100 thao tác ghi/đọc với số liệu ngẫu nhiên và 2 lần
 
 </details>
 
+> **Tóm gọn 1 câu:** Bốn lab phủ đủ 4 kỹ năng: ghi nhớ (Lab 1), dọn kho (Lab 2), quay lui theo phiên bản (Lab 3), và đo lường (Lab 4).
+
 ## 12. Bổ Sung Production: Retention, Consolidation, Hợp Đồng Compaction & SLO
 
 > Nói nôm na: nối chuyện "lược bớt" của §02 với chuyện "giữ lại" của §03 — cái gì được bỏ qua, cái gì nhất định phải giữ lại cho bằng được.
 
+Phần này nói về 4 thứ bắt buộc phải có khi memory system chạy thật: thời hạn sống của dữ liệu, quy tắc dọn dẹp, "hợp đồng" giữa phần được xóa và phần được giữ, và cam kết về tốc độ ghi.
+
 ### 12.1 Định nghĩa
+
+Phần này định nghĩa 5 thuật ngữ sẽ dùng xuyên suốt.
+
+Cách đọc bảng này: cột "Thuật ngữ" là từ chuyên môn, cột "Định nghĩa" là nghĩa và cách xử lý. Ví dụ dòng đầu: Retention / TTL (Time To Live = thời gian sống của dữ liệu — mỗi loại nhớ có hạn dùng riêng, hết hạn thì lưu trữ hoặc xóa).
 
 | Thuật ngữ | Định nghĩa |
 |------|------------|
@@ -809,29 +959,53 @@ Mô phỏng 100 thao tác ghi/đọc với số liệu ngẫu nhiên và 2 lần
 | Hợp đồng compaction↔memory | Ranh giới: §02 được loại mọi thứ trừ những gì §03 đã ghim là durable |
 | SLO đường ghi | p50/p99 + đảm bảo durability cho đường ingest (ví dụ `p99 < 300ms, 0 mất dữ liệu khi đã ack`) |
 
+Giải nghĩa thêm mấy từ trong bảng: archive = chuyển dữ liệu cũ sang kho lưu trữ ít dùng thay vì xóa hẳn; tenant = một khách hàng/đơn vị thuê hệ thống (dữ liệu mỗi tenant phải tách biệt); primary store = kho dữ liệu chính; vector index = chỉ mục tìm kiếm theo nghĩa; p50/p99 = thời gian chờ mà 50% / 99% các yêu cầu không vượt quá (p99 < 300ms nghĩa là chỉ 1% yêu cầu chậm hơn 300ms); durability = độ bền dữ liệu (ghi xong là không mất); ingest = đường đưa dữ liệu vào; ack = xác nhận đã nhận.
+
+> **Tóm gọn 1 câu:** Mục này định nghĩa "luật chơi" production: mỗi loại nhớ có hạn dùng (TTL), có quyền xóa theo luật GDPR, có điều kiện kích hoạt dọn dẹp, có ranh giới rõ với phần lược bớt, và có cam kết tốc độ ghi (SLO).
+
 ### 12.2 Retention / Tuân Thủ
+
+Phần này quy định "hạn dùng" của từng loại dữ liệu, cách tách dữ liệu giữa các khách hàng, và cách xóa khi user yêu cầu.
 
 - **TTL mặc định, nhớ như hạn dùng của đồ ăn:** `session: 24h là dọn; episodic: 30–90d thì cho vào kho archive; semantic fact: không đặt hạn cứng nhưng phải ghi valid_until + nguồn gốc; user profile: giữ tới khi user bảo xóa.` Có một bạn sweeper chạy hàng giờ để quét; trước khi xóa cứng là phải archive sang cold store đã.
 - **Nhà ai nấy ở theo tenant:** lấy `tenant_id` làm vách ngăn cho mọi bảng/namespace; câu query nào cũng phải kèm bộ lọc; đọc lấn sang nhà hàng xóm là bị chặn ngay ở API + policy DB (RLS). Tenant enterprise nào cũng có chìa khóa mã hóa riêng.
-- **Xóa theo kiểu GDPR/CCPA cho đàng hoàng:** gọi `DELETE /memory?user=X` là đi một vòng tombstone → xóa ở vector + KG + log (redact) → dọn backup trong ≤30d → trả về `deletion_receipt{id, scope, ts}` làm bằng. SLA 24h là xong.
+- **Xóa theo kiểu GDPR/CCPA cho đàng hoàng:** gọi `DELETE /memory?user=X` là đi một vòng tombstone (đá mồ — đánh dấu "đã xóa" trước khi xóa thật, để các bản sao biết đường) → xóa ở vector + KG + log (redact — xóa/m che thông tin nhạy cảm trong log) → dọn backup trong ≤30d → trả về `deletion_receipt{id, scope, ts}` làm bằng (biên nhận xóa: id nào, xóa phạm vi nào, lúc nào). SLA 24h là xong (SLA = cam kết mức dịch vụ — ở đây là cam kết xóa xong trong 24h).
+
+> **Tóm gọn 1 câu:** Dữ liệu có hạn dùng như hạn sử dụng (session 24h, episodic 30–90 ngày, fact sống tới khi bị thay thế), dữ liệu các khách hàng ngăn cách tuyệt đối, và yêu cầu xóa phải xóa sạch mọi bản sao kèm biên nhận trong 24h.
 
 ### 12.3 Trigger Consolidation + Giải Quyết Xung Đột
 
-Mình cho chạy consolidation mỗi khi **thấy một trong mấy dấu hiệu này**: `unconsolidated_writes > 500`, tới giờ cron hàng giờ, `conflict_rate > 5%`, hay có feedback chê một fact nào đó. Dây chuyền làm như dọn nhà cuối tuần: dedup (cosine ≥0.9 là gộp) → soi conflict (cùng subject+predicate mà object khác nhau) → dàn xếp: `last-writer-wins` chỉ khi nguồn mới tin cậy bằng hoặc hơn nguồn cũ; không thì theo `highest-trust-wins`; bí quá thì `escalate_to_user` nhờ người phân xử. Lúc nào cũng giữ cả hai version + gắn cạnh `supersedes` — tuyệt đối không lén ghi đè.
+Phần này quy định khi nào thì kích hoạt dọn dẹp và khi 2 fact mâu thuẫn thì tin bên nào.
+
+Mình cho chạy consolidation mỗi khi **thấy một trong mấy dấu hiệu này**: `unconsolidated_writes > 500` (hơn 500 lần ghi chưa được dọn), tới giờ cron hàng giờ (cron = hẹn giờ chạy tự động), `conflict_rate > 5%` (hơn 5% fact mâu thuẫn), hay có feedback chê một fact nào đó. Dây chuyền làm như dọn nhà cuối tuần: dedup (cosine ≥0.9 là gộp — cosine = thước đo độ giống giữa 2 câu dựa trên vector; 0.9 = giống 90% trở lên) → soi conflict (cùng subject+predicate mà object khác nhau — tạm hiểu là cùng nói về một thuộc tính của một đối tượng nhưng giá trị khác nhau, ví dụ "BHYT đóng 4.5%" và "BHYT đóng 5%") → dàn xếp: `last-writer-wins` (bản ghi sau thắng — chọn ai sửa sau) chỉ khi nguồn mới tin cậy bằng hoặc hơn nguồn cũ; không thì theo `highest-trust-wins` (nguồn uy tín hơn thắng — ví dụ cổng chính phủ thắng bài blog); bí quá thì `escalate_to_user` (chuyển lên nhờ người dùng phân xử). Lúc nào cũng giữ cả hai version + gắn cạnh `supersedes` (thay thế cho — mối nối ghi rõ fact này thay fact nào) — tuyệt đối không lén ghi đè.
+
+> **Tóm gọn 1 câu:** Dọn dẹp được kích hoạt theo dung lượng, giờ hẹn, tỉ lệ mâu thuẫn hoặc feedback; khi 2 fact đá nhau thì tin bản mới hơn hoặc nguồn uy tín hơn, giữ cả hai bản kèm mối nối "thay thế cho", không bao giờ xóa lặng lẽ.
 
 ### 12.4 Hợp Đồng Compaction↔Memory
+
+Phần này vẽ ranh giới giữa 2 bên: phần nào được phép bỏ khi nén context, phần nào buộc phải giữ lại.
+
+Cách đọc bảng này: cột trái là những thứ §02 (bước nén context — compaction = nén hội thoại dài lại cho vừa cửa sổ context) được phép loại; cột phải là những thứ §03 (bộ nhớ) buộc phải giữ. Ví dụ: tán gẫu được bỏ, nhưng quyết định đã chốt và TODO đang mở phải giữ.
 
 | §02 được loại (transient) | §03 phải giữ (durable) |
 |---|---|
 | stdout tool thô, chunk retrieval cũ, diff đã thay thế, tán gẫu | Fact đã ghim, quyết định, TODO mở, preference user, block resume |
 | Được bỏ sau khi tóm tắt resume | Phải sống sót sau compaction; nạp lại được qua retrieve |
 
-Quy tắc nằm lòng: compaction có nhả ra `resume_block` thì write-back **phải** cất kỹ `resume_block + decisions + open items` rồi mới được dọn chúng khỏi context. Tới lúc mở lại session, §02 chỉ việc hydrate từ §03 bằng query `tenant+task` là đủ đồ nghề làm tiếp.
+Giải nghĩa: transient = tạm thời, dùng xong là bỏ; durable = bền vững, phải sống sót qua mọi lần nén. resume_block = khối thông tin "bàn giao" để mở lại công việc dở (những việc đang làm, quyết định đã chốt).
+
+Quy tắc nằm lòng: compaction có nhả ra `resume_block` thì write-back **phải** cất kỹ `resume_block + decisions + open items` rồi mới được dọn chúng khỏi context. Tới lúc mở lại session, §02 chỉ việc hydrate từ §03 bằng query `tenant+task` là đủ đồ nghề làm tiếp (hydrate = "tưới nước" — nạp lại dữ liệu từ kho vào context cho đầy đủ).
+
+> **Tóm gọn 1 câu:** Hợp đồng giữa 2 bên: những gì tạm (stdout thô, tán gẫu, diff cũ) được bỏ khi nén; những gì bền (fact ghim, quyết định, TODO mở, resume_block) phải được ghi vào bộ nhớ trước rồi mới được nén.
 
 ### 12.5 SLO Đường Ghi
 
-- Đường ghi phải nhanh như chớp: `p50 write < 80ms, p99 < 300ms`; còn consolidation nặng thì cho chạy nền `p99 < 5min`. Lúc đang ghi thì tranh thủ kiểm tra dedup luôn; mấy vụ merge nặng thì đẩy ra hàng đợi write-behind cho khỏi nghẽn critical path.
-- Độ bền thì chắc như đinh: chỉ dám ack khi đã ghi xong WAL + primary; hàng đợi retry có idempotency key `tenant:doc_hash` chống ghi trùng. Thấy `write_error% > 1%` hay `queue_lag > 10k` là phải kêu lên ngay.
+Phần này đặt cam kết về tốc độ và độ bền cho việc ghi dữ liệu (SLO = Service Level Objective — mức cam kết đo được, ví dụ "99% yêu cầu dưới 300ms").
+
+- Đường ghi phải nhanh như chớp: `p50 write < 80ms, p99 < 300ms` (nửa số lần ghi dưới 80ms, 99% dưới 300ms); còn consolidation nặng thì cho chạy nền `p99 < 5min`. Lúc đang ghi thì tranh thủ kiểm tra dedup luôn; mấy vụ merge nặng thì đẩy ra hàng đợi write-behind cho khỏi nghẽn critical path (critical path = chặng "giao hàng" cho người dùng — việc gì nằm trên đó mà chậm là người dùng chờ).
+- Độ bền thì chắc như đinh: chỉ dám ack (xác nhận "đã ghi xong") khi đã ghi xong WAL (Write-Ahead Log — sổ ghi trước mọi thay đổi để nếu sập giữa chừng vẫn phục hồi được) + primary (kho chính); hàng đợi retry có idempotency key `tenant:doc_hash` (chống ghi trùng: cùng một khóa thì ghi lại bao nhiêu lần kết quả cũng chỉ là một bản) chống ghi trùng. Thấy `write_error% > 1%` (hơn 1% lần ghi thất bại) hay `queue_lag > 10k` (hàng đợi dồn hơn 10 nghìn việc chưa xử) là phải kêu lên ngay.
+
+> **Tóm gọn 1 câu:** Cam kết tốc độ (99% lần ghi dưới 300ms) và độ bền (chỉ báo "thành công" khi dữ liệu đã nằm an toàn trong sổ ghi trước + kho chính), với còi báo động khi tỉ lệ lỗi vượt 1% hoặc hàng đợi dồn quá 10 nghìn việc.
 
 <details>
 <summary>TypeScript Code — Memory Có Version với Consolidation (Click to expand/collapse)</summary>
@@ -842,14 +1016,20 @@ Quy tắc nằm lòng: compaction có nhả ra `resume_block` thì write-back **
 
 ### 12.6 Checklist
 
+Phần này gom cả mục 12 thành 6 câu kiểm tra nhanh — dùng như danh sách dò trước khi đi production.
+
+Cách đọc bảng này: mỗi dòng là một quy tắc, đánh số để dễ viện dẫn. Ví dụ dòng 1: dữ liệu phải có hạn dùng và có "người quét" hàng giờ, phải lưu trữ trước khi xóa hẳn.
+
 | # | Quy tắc |
 |---|------|
-| 1 | TTL theo lớp + sweeper hàng giờ; archive trước khi xóa cứng |
-| 2 | Phân vùng `tenant_id` + RLS; không tồn tại đường query liên tenant |
+| 1 | TTL theo lớp + sweeper hàng giờ (sweeper = "người quét" — job tự động chạy định kỳ tìm và xử lý dữ liệu hết hạn); archive trước khi xóa cứng |
+| 2 | Phân vùng `tenant_id` + RLS (Row-Level Security — khóa dữ liệu theo dòng: query của tenant này không bao giờ chạm tới dòng của tenant khác); không tồn tại đường query liên tenant |
 | 3 | Xóa GDPR quét facts + vector + log với biên nhận ≤24h |
 | 4 | Consolidation theo trigger kích thước/thời gian/tín hiệu; giải conflict theo độ tin cậy, không ghi đè âm thầm |
 | 5 | Thực thi hợp đồng compaction↔memory: resume/quyết định được lưu trước khi loại |
 | 6 | Dashboard SLO ghi: p99, error%, queue lag, dedup rate, conflict rate |
+
+> **Tóm gọn 1 câu:** Sáu câu dò cuối: có hạn dùng + người quét, tách tenant triệt để, xóa GDPR có biên nhận, dọn dẹp có điều kích hoạt và không ghi đè âm thầm, giữ resume trước khi nén, và có dashboard theo dõi.
 
 ---
 
@@ -882,6 +1062,8 @@ Quy tắc nằm lòng: compaction có nhả ra `resume_block` thì write-back **
 2. **LangChain — Building Long-Term Memory** — Practical guide
 3. **Mem0 Blog** — Memory patterns for production AI
 
+> **Tóm gọn 1 câu:** Danh sách này là "tủ sách đọc thêm" chia 3 ngăn — papers khoa học (nền lý thuyết), frameworks/tools (đồ dùng có sẵn), blogs (kinh nghiệm thực chiến).
+
 ---
 
 **Kết Luận**
@@ -912,14 +1094,18 @@ Mấy điều mang về gối đầu giường:
 
 ## Cập nhật 10/2026 — Structured Note-Taking & Long-Running Memory
 
+Phần bổ sung này kể 2 pattern mới của Anthropic: agent tự ghi chú ra file bên ngoài, và cách chạy các session kéo dài nhiều ngày không mất mạch.
+
 ### 1. Structured note-taking / agentic memory (Anthropic 09/2025)
 
-Agent tự ghi NOTES.md/todo ra ngoài context window để:
+Phần này giải thích vì sao agent cần tự ghi NOTES.md ra file thay vì ôm hết trong đầu.
+
+Context window (cửa sổ ngữ cảnh — số token tối đa model có thể "nhớ" trong một lần) có hạn, nên agent tự ghi NOTES.md/todo ra ngoài context window để:
 - Giữ state giữa các turn trong cùng session
 - Bàn giao context cho session tiếp theo
 - Tránh quên action items đã đề ra
 
-**Memory tool (Claude Developer Platform):** Persistent memory giữa các summarization — agent có thể đọc/ghi memory store riêng, không phụ thuộc conversation window.
+**Memory tool (Claude Developer Platform):** Persistent memory giữa các summarization (summarization = nén hội thoại dài thành bản tóm tắt; persistent memory = bộ nhớ sống sót qua các lần nén đó) — agent có thể đọc/ghi memory store riêng, không phụ thuộc conversation window.
 
 **Pattern đề xuất:**
 
@@ -931,9 +1117,17 @@ PROJECT/
 └── PROGRESS.md        # Feature progress tracking
 ```
 
+Giải nghĩa 4 file: CLAUDE.md là "luật nhà" (hướng dẫn hệ thống + quy ước code), NOTES.md là sổ tay của agent (ghi chú, todo, trạng thái), SPEC.md là bản đặc tả yêu cầu, PROGRESS.md là bảng theo dõi tiến độ từng feature.
+
+> **Tóm gọn 1 câu:** Khi context window có hạn, agent phải tự ghi chú ra các file bên ngoài (NOTES.md, todo...) để giữ trạng thái, bàn giao cho phiên sau, và không quên việc đã hẹn.
+
 ### 2. Long-running agent memory pattern (Anthropic 11/2025)
 
-Initializer agent tạo cấu trúc ban đầu, các session sau đọc và tiếp tục:
+Phần này giải thích cách chạy agent qua nhiều session dài hơi: một "initializer" dựng khung ban đầu, các session sau đọc vào và làm tiếp.
+
+Initializer agent tạo cấu trúc ban đầu (initializer = agent "khởi động" — session đầu tiên dựng sẵn các file khung), các session sau đọc và tiếp tục:
+
+Cách đọc bảng này: cột "File" là tên file/kho lưu trữ, cột "Mục đích" là nó dùng để làm gì. Ví dụ `feature_list.json` là danh sách tính năng cần làm, kèm cờ `passes: false` (chưa vượt qua kiểm thử).
 
 | File | Mục đích |
 |------|----------|
@@ -948,12 +1142,18 @@ Initializer agent tạo cấu trúc ban đầu, các session sau đọc và ti�
 3. Nếu test pass → mark feature trong JSON + git commit + update progress
 4. Nếu fail → ghi note vào progress file
 
+> **Tóm gọn 1 câu:** Session nào cũng mở bằng cách đọc `feature_list.json` + `git log` để biết mình đang ở đâu, làm xong feature nào thì tick trong JSON + commit + cập nhật tiến độ — nhờ đó chạy nhiều ngày vẫn không mất mạch.
+
 **Tại sao JSON được ưa chuộng hơn Markdown:**
 - Model ít ghi đè/ghi sai format JSON so với Markdown tự do
-- Parse machine-readable, không phải regex parse text
+- Parse machine-readable, không phải regex parse text (parse = phân tích cú pháp để máy đọc được; regex = biểu thức chính quy — cách "bới" chữ theo khuôn mẫu, dễ gãy với văn bản tự do)
 - Dễ diff trong git, conflict resolution đơn giản hơn
 
+> **Tóm gọn 1 câu:** JSON thắng Markdown vì model ít viết sai format, máy đọc trực tiếp được mà không cần "bới chữ", và diff trong git gọn gàng hơn.
+
 ### 3. Khi nào reset memory hoàn toàn
+
+Phần này định nghĩa ranh giới: khi nào thì xóa sạch bộ nhớ được, khi nào thì tuyệt đối không.
 
 **Nên reset khi:**
 - Task đã hoàn thành hoàn toàn
@@ -963,12 +1163,20 @@ Initializer agent tạo cấu trúc ban đầu, các session sau đọc và ti�
 **Không nên reset khi:**
 - Đang giữa milestone/cuộc họp quan trọng
 - Facts chưa được consolidate (sẽ mất insights)
-- Cần audit trail cho compliance
+- Cần audit trail cho compliance (compliance = tuân thủ pháp lý/nội bộ — cần sổ sách để đối chiếu khi thanh tra)
+
+> **Tóm gọn 1 câu:** Reset bộ nhớ chỉ khi công việc đã xong và mọi fact quý đã được chuyển vào kho lâu dài — còn đang dở hay cần chứng minh "đã làm gì" thì đừng đụng vào.
 
 ### 4. Python code: ProgressStore class
 
+Phần này cung cấp class Python quản lý file tiến độ (PROGRESS) nói ở trên.
+
 > 📄 **Code ví dụ:** [`examples/19-4-python-code-progressstore-class.py`](examples/19-4-python-code-progressstore-class.py)
 
+> **Tóm gọn 1 câu:** `ProgressStore` là bản hiện thực Python của pattern ở mục 2 — đọc/ghi file tiến độ một chỗ, các session sau chỉ cần nạp vào là làm tiếp được.
+
 ### 5. Cross-link
+
+Phần này trỏ sang tài liệu liên quan để đọc nối.
 
 - `[AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md)` — Layer 6 (Agent Memory & State) — structured memory patterns cho production agents.

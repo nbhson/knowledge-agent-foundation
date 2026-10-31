@@ -2,6 +2,8 @@
 
 Nếu câu hỏi nào khó hiểu thì đọc `README.md` phần trong ngoặc vuông.
 
+Giải nghĩa nhanh: **rtk (Rust Token Killer)** = công cụ cắt bớt output lệnh bash trước khi vào model; **MCP** = chuẩn kết nối giữa AI và công cụ/dữ liệu ngoài; **vector DB** = kho dữ liệu tìm kiếm theo ý nghĩa, dùng làm trí nhớ; **guardrails** = lớp chặn an toàn cho từng hành động của agent; **observability** = ghi lại chi phí, độ trễ để soi sau; **evaluation** = bộ đề kiểm tra chất lượng; **loop-cli** = bộ lệnh dựng vòng lặp tự chạy; **harness** = môi trường một agent chạy (công cụ, ngữ cảnh, quyền); **token** = đơn vị tính chữ model đọc/ghi, cũng là đơn vị tính tiền; **regression** = chất lượng tụt sau một thay đổi.
+
 ---
 
 ## Q1. Trong `tools/` có 9 thư mục con, tôi nên bắt đầu từ cái nào? [→ Lộ Trình Học]
@@ -30,6 +32,8 @@ GĐ1: rtk → GĐ2: framework + vector-db → GĐ3: mcp-ecosystem
 
 Sau giai đoạn 1, đo lượng token tiết kiệm được từ các lệnh lặp lại (xem Q6). Nếu chưa đo được gì thì đừng đi tiếp — bạn sẽ không biết các thay đổi sau giúp hay làm hại.
 
+> **Tóm gọn 1 câu:** Cài `rtk` trước vì có hiệu quả ngay không cần code, rồi đi theo thứ tự framework + vector DB → MCP → guardrails → đo lường → loop-cli; chưa đo được tiết kiệm thì đừng đi tiếp.
+
 ---
 
 ## Q2. Có phải tôi phải cài hết 9 cái không? [→ Lộ Trình Học, Tại Sao Tools Quan Trọng?]
@@ -49,6 +53,8 @@ Vì đây là **bản đồ** chứ không phải **đề bài**. Lý do chính 
 | Đã chạy thật, sợ hỏng ngoài dự kiến | `guardrails`, `evaluation` |
 | Đã ổn định, mới đến giờ tự động hoá | `loop-cli` |
 
+Cách đọc bảng này: cột trái mô tả bạn đang ở giai đoạn nào, cột phải là thứ duy nhất nên cài ở giai đoạn đó. Ví dụ, mới bắt đầu thì chỉ cần `rtk`, chưa cần đụng framework nào.
+
 **Làm gì**
 
 1. Chọn theo bảng trên, cài tối đa hai thứ mỗi lần.
@@ -59,6 +65,8 @@ Vì đây là **bản đồ** chứ không phải **đề bài**. Lý do chính 
 **Kiểm tra**
 
 Sau mỗi lần thêm, chạy task thật của bạn. Thứ bạn không dùng đến mà vẫn phải cấu hình (khoá, biến môi trường, endpoint) thì đó là thừa — gỡ ra.
+
+> **Tóm gọn 1 câu:** Đây là bản đồ để tra theo nhu cầu, không phải đề bài cài hết — mỗi lần thêm tối đa hai thứ, chạy task thật để xác nhận có ích, và gỡ bỏ thứ phải cấu hình mà không dùng đến.
 
 ---
 
@@ -83,6 +91,8 @@ Vì cả ba đều đúng, khác nhau ở đơn vị tổ chức. LangChain/Lang
 
 Chạy cùng một task trên hai framework ứng viên, so số token, số lần phải sửa tay, và số dòng code để chạy được. Framework thắng là cái giúp bạn đổi ý nhanh nhất khi có lỗi — không phải cái viết code ngắn nhất.
 
+> **Tóm gọn 1 câu:** Cả ba framework đều làm được việc nhiều agent, khác ở đơn vị tổ chức — LangChain là đồ thị, AutoGen là cuộc trò chuyện, CrewAI là bảng công việc — chọn theo cách bạn muốn chia việc và chỉ dùng một cái.
+
 ---
 
 ## Q4. Có cái nào hay bị bỏ qua mà lại rất quan trọng không? [→ Nhóm 1, Tầng Security, Tầng Quality]
@@ -105,6 +115,8 @@ Vì framework, vector DB và MCP đều là **thứ làm việc**. Còn `guardra
 **Kiểm tra**
 
 Cố tình làm thay đổi làm kết quả tệ đi một chút: bộ `evaluation` phải đỏ và chặn được việc phát hành. Nếu không có gì đỏ, bạn đang chạy mà không có cảm biến.
+
+> **Tóm gọn 1 câu:** Framework, vector DB và MCP là thứ làm việc, còn guardrails/observability/evaluation là thứ làm cho tin được — chặn tác dụng phụ trước khi xảy ra và phát hiện hỏng trước khi người dùng thấy; thiếu bốn thứ này là chạy mà không có cảm biến.
 
 ---
 
@@ -129,6 +141,8 @@ Vì chúng ở hai đầu khác nhau của đường ống. Vector DB (Chroma, P
 
 Viết hai câu hỏi thử: một câu hỏi có câu trả lời nằm trong tài liệu đã nạp (đường vector DB), một việc cần hành động lên hệ thống bên ngoài (đường MCP). Cả hai phải đi qua đúng đường của nó, không lẫn.
 
+> **Tóm gọn 1 câu:** Vector DB là kho kiến thức trả lời "cái gì liên quan tới câu hỏi này", còn MCP là đường ống trả lời "làm việc này bằng cách gọi gì" — không thay thế nhau, dùng chung được.
+
 ---
 
 ## Q6. RTK cắt được bao nhiêu token, có đáng cài không? [→ Case Studies 3 — Kết Quả Đo Lường RTK]
@@ -148,6 +162,8 @@ Vì ý tưởng của RTK rất đơn giản: nó đứng giữa, cắt và bóp
 | `cargo test` (>200 dòng, fail) | >200 dòng | `FAILED: 2/15 tests` | ~90% |
 | `ruff check` | nhiều dòng | gom theo luật / theo file | ~80% |
 
+Cách đọc bảng này: cột "Output thô" là số dòng lệnh trả về không qua RTK, cột "Qua RTK" là số dòng model thực sự đọc, cột "Giảm" là tỷ lệ token được cắt. Ví dụ, `git push` từ 15 dòng còn 1 dòng — giảm 93%.
+
 **Làm gì**
 
 1. Chọn lệnh hay lặp lại nhất trong dự án của bạn — thường là `git status`, `git push`, kiểm tra lint, chạy test.
@@ -158,6 +174,8 @@ Vì ý tưởng của RTK rất đơn giản: nó đứng giữa, cắt và bóp
 **Kiểm tra**
 
 Chạy một task có nhiều lệnh lặp lại và so token trước/sau. Con số giảm nhưng kết quả cuối phù hợp ý bạn nghĩa là RTK đang cắt đúng chỗ. Nếu agent bỏ sót lỗi quan trọng, hãy xem lại chiến lược nén ở `rtk/01-concepts/`.
+
+> **Tóm gọn 1 câu:** RTK cắt 40–90% token của output bash bằng cách đứng giữa bóp gọn kết quả lệnh — đáng cài, miễn là cắt công khai (ghi rõ còn bao nhiêu dòng) chứ không giấu thông tin.
 
 ---
 

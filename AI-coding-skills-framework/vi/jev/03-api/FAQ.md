@@ -2,6 +2,8 @@
 
 Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
+> **Tài liệu này nói về gì:** cách gọi Jev thật (endpoint = địa chỉ máy chủ nhận request; xác thực bằng API key), xử lý các lỗi hay gặp, và chọn thư viện tích hợp phù hợp.
+
 ---
 
 ## Q1. Gọi Jev lần đầu thì làm gì, khóa và địa chỉ ở đâu? [→ §1 Endpoint & xác thực]
@@ -12,7 +14,7 @@ Bạn mới bắt đầu và muốn xem Jev thật sự trả về cái gì. B�
 
 **Vì sao**
 
-Jev cố tình chỉ có **một** điểm giao diện: `POST https://api.typesafe.ai/v1/systemone`, xác thực bằng khóa dạng `tsk_...` trong phần đầu `Authorization: Bearer`. Không có hội thoại nhiều lượt nghĩa là **bạn phải tự giữ phần ngữ cảnh**: lượt sau bạn gửi lại trạng thái, Jev không nhớ lượt trước. Đây không phải hạn chế cần vượt, nó là cách bạn kiểm soát được dữ liệu đưa vào.
+Jev cố tình chỉ có **một** điểm giao diện: `POST https://api.typesafe.ai/v1/systemone` (POST = kiểu HTTP request gửi dữ liệu đi; endpoint = địa chỉ duy nhất nhận lời gọi), xác thực bằng khóa dạng `tsk_...` trong phần đầu `Authorization: Bearer` (Bearer = kiểu xác thực: kèm khóa trong phần đầu của request). Không có hội thoại nhiều lượt nghĩa là **bạn phải tự giữ phần ngữ cảnh**: lượt sau bạn gửi lại trạng thái, Jev không nhớ lượt trước. Đây không phải hạn chế cần vượt, nó là cách bạn kiểm soát được dữ liệu đưa vào.
 
 **Làm gì**
 
@@ -29,13 +31,15 @@ Hai mã lỗi xác thực bạn sẽ gặp sớm: **401** là sai hoặc thiếu
 
 Gọi một lượt với ba câu hỏi (một chọn, một chấm điểm, một có/không) và xác nhận phản hồi có đủ ba nhánh kết quả, đồng thời trường `usage.output_tokens` bằng `0` — dấu hiệu bạn không phải trả tiền cho phần đầu ra.
 
+> **Tóm gọn 1 câu:** Jev chỉ có một endpoint và xác thực bằng khóa `tsk_...` đặt trong biến môi trường (không viết vào code); production phải ghim phiên bản `jev-1.13.0` và luôn lưu `request_id` để truy vết.
+
 ---
 
 ## Q2. Tôi khai một trường boolean không kèm mô tả, thì báo `UserError` — tại sao? [→ §4.3 Các trường hợp đặc biệt]
 
 **Bạn sẽ thấy**
 
-Trong Pydantic AI, bạn định nghĩa một mô hình kết quả có trường `urgent: bool` không kèm mô tả. Chạy thì nhận `UserError`. Bạn thử bỏ trường `bool` thay bằng `str` thì chạy được. Bạn đang phân vân đây là lỗi trong thư viện.
+Trong Pydantic AI, bạn định nghĩa một mô hình kết quả có trường `urgent: bool` không kèm mô tả (Pydantic AI = thư viện Python khai báo kiểu dữ liệu đầu ra cho agent). Chạy thì nhận `UserError` (UserError = lỗi do cách dùng sai của bạn, không phải lỗi hệ thống). Bạn thử bỏ trường `bool` thay bằng `str` thì chạy được. Bạn đang phân vân đây là lỗi trong thư viện.
 
 **Vì sao**
 
@@ -53,6 +57,8 @@ Trong Pydantic AI, bạn định nghĩa một mô hình kết quả có trườn
 **Kiểm tra**
 
 Chạy kiểm tra tự động trên mọi mô hình kết quả của bạn: quét tìm trường kiểu `bool` không có `description` và fail nếu còn. Đây là loại lỗi dễ tái phát khi thêm trường mới.
+
+> **Tóm gọn 1 câu:** `UserError` với trường boolean là chốt chặn có chủ đích: câu hỏi có/không phải là mệnh đề rõ ràng — hãy thêm mô tả cho mọi trường `bool` trong mô hình kết quả.
 
 ---
 
@@ -81,13 +87,15 @@ Kèm theo đó, hãy ghi nhớ những việc Jev cố ý không làm, để kh�
 
 Thêm một bước kiểm tra kích thước trước khi gọi: nếu phần trạng thái ước lượng vượt 30 nghìn token thì chặn và yêu cầu rút gọn. Chạy lại bộ kiểm tra này mỗi khi đổi cách lấy dữ liệu đầu vào.
 
+> **Tóm gọn 1 câu:** `max_tokens_exceeded` là chặn cứng theo kích thước đầu vào (trần 64k token, state tối đa 32k), không phải lỗi mạng — cắt phần thừa và tóm tắt trong code, tuyệt đối đừng retry mù.
+
 ---
 
 ## Q4. Tôi đã có một khóa cho nhiều mô hình — có phải tạo thêm khóa không? [→ §6 OpenRouter]
 
 **Bạn sẽ thấy**
 
-Đội của bạn đã chuẩn hoá một nhà cung cấp trung gian và dùng một khóa duy nhất cho mọi mô hình. Bạn không muốn thêm một khóa thứ hai vào kho bí mật, và cũng không muốn phải sửa lại toàn bộ lớp gọi mô hình.
+Đội của bạn đã chuẩn hoá một nhà cung cấp trung gian và dùng một khóa duy nhất cho mọi mô hình (nhà cung cấp trung gian ở đây là OpenRouter — nơi bán lẻ nhiều mô hình qua một khóa). Bạn không muốn thêm một khóa thứ hai vào kho bí mật, và cũng không muốn phải sửa lại toàn bộ lớp gọi mô hình.
 
 **Vì sao**
 
@@ -105,6 +113,8 @@ Jev đã có sẵn trên nhà cung cấp trung gian đó qua một điểm giao 
 **Kiểm tra**
 
 Gọi thử qua đường trung gian và so kết quả với một lượt gọi thẳng cùng nội dung: danh sách xác suất và giá trị đã chọn phải khớp. Nếu lệch, kiểm tra lại tên mô hình và địa chỉ nền tảng.
+
+> **Tóm gọn 1 câu:** Không cần khóa mới — Jev có sẵn trên OpenRouter (`POST /api/alpha/decisions`, tên mô hình `typesafe/jev-1.13`); chọn đường trung gian cho dễ vận hành, chọn gọi thẳng cho độ trễ và ghim phiên bản chặt nhất.
 
 ---
 
@@ -132,6 +142,8 @@ Trước khi lên production, đi qua danh sách kiểm tra: đã ghim phiên b�
 **Kiểm tra**
 
 Viết một bài kiểm tra tự động cho từng kiểu câu hỏi, khẳng định đúng tên trường được đọc ra. Điều này bắt được lỗi đổi tên trường khi bạn nâng cấp thư viện.
+
+> **Tóm gọn 1 câu:** Chọn theo nhu cầu: gọi thẳng cho mọi nền tảng, thư viện Python/JS cho dịch vụ tương ứng, Pydantic AI cho agent có kiểu rõ ràng, LangChain cho chuỗi sẵn có — và nhớ rằng confidence (Choice/Score) khác p (Noul).
 
 ---
 

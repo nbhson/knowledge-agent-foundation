@@ -4,6 +4,8 @@ Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
 Từ viết tắt dùng trong file: **CLI** = chương trình chạy bằng dòng lệnh; **MCP** = cách để agent đọc dữ liệu của công cụ ngoài (ở đây là tài liệu của loop); **denylist / allowlist** = danh sách cấm / danh sách được phép; **git worktree** = một bản sao riêng của repo để thử sửa mà không đụng code chính.
 
+Giải nghĩa thêm: **triage** = bước xếp hạng việc theo mức ưu tiên; **exit code** = con số lệnh trả về khi thoát (0 = thành công, khác 0 = có vấn đề); **drift detection** = phát hiện hai bản ghi lệch nhau dần; **sub-agent** = agent nhỏ được agent chính gọi ra; **token** = đơn vị tính chữ mà model đọc/ghi, cũng là đơn vị tính tiền.
+
 ---
 
 ## Q1. Mới bắt đầu thì tự dựng loop bằng tay hay dùng CLI có sẵn? [→ §1 Front Door]
@@ -34,6 +36,8 @@ npx @cobusgreyling/loop init . --pattern daily-triage --tool claude --with-found
 
 Lệnh `init` phải in ra điểm sẵn sàng (Loop Ready score) và câu lệnh loop đầu tiên để chạy. Sau đó `doctor` phải ra đúng 3 việc tiếp theo, không phải danh sách 20 việc.
 
+> **Tóm gọn 1 câu:** Dựng loop bằng tay dễ sót phần an toàn — hãy dùng một lệnh `init` làm cả ba việc khởi tạo, khám sức khoẻ, xem trạng thái, rồi làm đúng 3 việc mà `doctor` chỉ ra.
+
 ---
 
 ## Q2. Điểm Loop Ready của tôi 12/100 — làm sao lên 80? [→ §2 loop-audit]
@@ -62,6 +66,8 @@ npx @cobusgreyling/loop audit . --suggest
 **Kiểm tra**
 
 Chạy lại audit sau mỗi lần thêm một file. Điểm phải tăng theo từng bước, và mức L3 chỉ mở khi cả ba điều kiện trên cùng tồn tại.
+
+> **Tóm gọn 1 câu:** Điểm 12 lên 80 bằng cách thêm ba thứ hay bị sót: file ngân sách (`loop-budget.md`), nhật ký chạy (`loop-run-log.md`), và mục ngân sách trong `LOOP.md` — chấm dứt L3 không mở khi thiếu một trong ba.
 
 ---
 
@@ -92,6 +98,8 @@ npx @cobusgreyling/loop context --check --ledger run.json
 
 Số ước tính phải khớp với hóa đơn tuần đầu trong khoảng 30%. Nếu lệch, hãy xem lại nhịp chạy và số lần retry trước khi tăng nhịp.
 
+> **Tóm gọn 1 câu:** Chạy 96 lần/ngày là sai số nhỏ cũng thành hóa đơn lớn — ước chi phí trước khi đặt lịch, chạy thử L1 một tuần lấy số thật, và đặt hạn mức token theo ngày để tự dừng.
+
 ---
 
 ## Q4. `STATE.md` và `LOOP.md` lệch nhau, loop cứ làm theo file sai — làm sao biết? [→ §4 loop-sync + §5 loop-context]
@@ -120,6 +128,8 @@ npx @cobusgreyling/loop context --check --ledger run.json
 **Kiểm tra**
 
 Cố tình đổi `LOOP.md` mà không đụng `STATE.md`, chạy `sync` phải báo lệch và nêu đúng dòng nào lệch.
+
+> **Tóm gọn 1 câu:** `LOOP.md` là cấu hình còn `STATE.md` là trạng thái, để lâu sẽ lệch nhau — chạy `sync` phát hiện lệch trước khi đổi cấu hình, và luôn cập nhật cả hai file trong cùng một commit.
 
 ---
 
@@ -150,6 +160,8 @@ npx @cobusgreyling/loop-sandbox run -- <cmd>    # exit 2 = chuyển người, 0 
 **Kiểm tra**
 
 Đưa một file trong danh sách cấm vào tham số `--paths`: lệnh phải trả về exit 2 và không có thay đổi nào lên nhánh chính. Với hai loop cùng một nhánh, phải thấy khoá worktree thay vì hai thay đổi chồng lên nhau.
+
+> **Tóm gọn 1 câu:** Chặn loop không phụ thuộc vào việc nó "đọc lời nhắc có hay không": worktree riêng cho mỗi lần thử, khoá `lock` chặn hai loop đụng nhau, và `gate check` trả exit 2 (cấm đi) trước khi gộp code.
 
 ---
 

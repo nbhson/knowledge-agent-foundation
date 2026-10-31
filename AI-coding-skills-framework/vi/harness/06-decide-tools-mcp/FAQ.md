@@ -2,11 +2,17 @@
 
 Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
+> **Cách đọc FAQ này:** mỗi câu trả lời có 4 khối — **Bạn sẽ thấy** (triệu chứng), **Vì sao** (gốc rễ), **Làm gì** (các bước), **Kiểm tra** (cách xác nhận đã hết bệnh). MCP = Model Context Protocol, ngôn ngữ chung để agent gọi công cụ ngoài.
+
 ---
 
 ## README.md
 
+*(Bảy câu hỏi đầu lấy từ `README.md` của module "chọn công cụ & gọi MCP" — module dạy agent cách chọn đúng công cụ và gọi nó an toàn.)*
+
 ### Q1. Agent tôi có 50 công cụ, nó cứ "dùng búa đập kính" — sửa sao? [→ §1 Tool Registry + §2 Intent Classification]
+
+> **Bối cảnh:** Tool Registry = danh mục khai báo tất cả công cụ; Intent Classification = bước phân loại ý định người dùng trước khi chọn công cụ. "Dùng búa đập kính" = có tool sai việc mà vẫn dùng.
 
 **Bạn sẽ thấy**
 
@@ -32,9 +38,13 @@ LLM không thiếu khả năng — nó thiếu *đường đi*. Cho cả 50 đ�
 
 Bốn bài kiểm tra mẫu phải xanh: "Tìm thông tin về BHYT" ra `intent == "search"`; "Tính 15% của 5000000" ra `calculate`; "Xin chào!" rơi vào `chat` và không gọi công cụ nào; "Đọc file và chạy test" tách ra **2** ý định. Rồi chạy 200 câu thật lấy từ log người dùng và đo tỉ lệ chọn đúng.
 
+> **Tóm gọn 1 câu:** Khai hồ sơ đầy đủ cho từng công cụ, tách riêng bước phân loại ý định trước khi chọn công cụ, và ghi số liệu thành công/trễ sau mỗi lần gọi để xếp hạng.
+
 ---
 
 ### Q2. Cùng một câu hỏi, đôi khi gọi đúng công cụ, đôi khi gọi sai — làm sao ổn định? [→ §2.1 Multi-Strategy Intent Classifier]
+
+> **Bối cảnh:** Multi-Strategy = dùng nhiều cách phân loại chồng lên nhau (dò từ khoá + gọi model) để bớt đoán mò.
 
 **Bạn sẽ thấy**
 
@@ -60,15 +70,21 @@ Tài liệu bày ba tầng: dò từ khoá (nhanh, rẻ), gọi mô hình để 
 
 Chạy bộ câu mẫu có gắn nhãn sẵn và đo riêng ba mức: tầng 1 một mình, hợp hai tầng, và tầng 2 một mình. Mục tiêu là tầng 1 đạt khoảng 90%, hợp hai tầng vượt 92%. Nếu hợp hai tầng không tốt hơn tầng 1 thì tầng 2 đang chỉ làm tốn tiền.
 
+> **Tóm gọn 1 câu:** Phân loại hai tầng: dò từ khoá trước (rẻ), chỉ gọi model khi độ tin cậy dưới 0,7 (đắt) — và ghi điểm mọi nhóm để khi sai còn truy ra chỗ chấm sai.
+
 ---
 
 ### Q3. Công cụ báo "Invalid parameters" rồi cứ thử lại mãi — xử sao? [→ §4 Tool Executor + §13 Best Practices]
+
+> **Bối cảnh:** Tool Executor = bộ phận thực thi lời gọi công cụ; "thử lại mãi" = retry vô hạn, tốn tiền mà không hết lỗi.
 
 **Bạn sẽ thấy**
 
 Log đầy dòng kiểu `Invalid parameters: ['Missing required param: query']`, rồi `Failed after 3 attempts: Timeout after 30s`. Những lần gọi y hệt vẫn tiếp tục chạy vì không ai chặn ở cửa. Kết quả: một task vốn đã hỏng tốn thêm 3 lượt gọi, kéo dài độ trễ và làm nễn rate limit.
 
 Sáu thông báo lỗi cần phân biệt được, không gộp làm một:
+
+Cách đọc bảng này: cột **Lỗi trả về** là đúng chuỗi lỗi hệ thống in ra; cột **Nghĩa là** diễn giải nguyên nhân thật phía sau. Ví dụ, dòng `Rate limit exceeded: 60s` nghĩa là bạn gọi quá 60 lần/phút và phải chờ.
 
 | Lỗi trả về | Nghĩa là |
 |---|---|
@@ -95,9 +111,13 @@ Sáu thông báo lỗi cần phân biệt được, không gộp làm một:
 
 Bốn bài kiểm tra mẫu phải xanh: gọi công cụ không tồn tại thì `success` là `False` và chuỗi lỗi chứa `not found`; gọi `vector_search` không truyền tham số thì chứa `Invalid parameters`; hai lần gọi `calculator` thì `total_calls` bằng 2; gọi một công cụ đã ngừng dùng phải trả về đúng tên công cụ thay thế.
 
+> **Tóm gọn 1 câu:** Thực thi đi đúng thứ tự 6 cửa kiểm tra; chỉ thử lại lỗi tạm thời, tối đa 3 lần với nghỉ nhân đôi — sai tham số thì thử lại chỉ đốt tiền.
+
 ---
 
 ### Q4. Nó xoá file nhầm / ghi đè code tôi đang làm dở — chặn được không? [→ §8 Permission System]
+
+> **Bối cảnh:** Permission System = hệ thống phân quyền, quyết định ai được làm gì.
 
 **Bạn sẽ thấy**
 
@@ -110,6 +130,8 @@ Phân quyền theo vai trò (RBAC — cơ chế cho phép mỗi vai trò đượ
 **Làm gì**
 
 1. Gán vai trò cho từng người và giữ bảng ánh xạ vai trò → quyền ở đúng một chỗ:
+
+Cách đọc bảng này: cột **Vai trò** là cấp bậc người dùng; cột **Quyền có được** là mức hành động được phép (`public` < `standard` < `elevated` < `admin` — từ đọc-cho-tiếng đến chỉ-admin-mới-đụng-được). Ví dụ, `user` được làm việc mức `standard` nhưng bị chặn mức `elevated`.
 
 | Vai trò | Quyền có được |
 |---|---|
@@ -129,9 +151,13 @@ Phân quyền theo vai trò (RBAC — cơ chế cho phép mỗi vai trò đượ
 
 Bốn bài kiểm tra phải xanh: `user` dùng được `standard`; `user` bị chặn `elevated`; `admin` qua được mọi thứ; sau khi `grant_permission("user1", "elevated")` thì `user1` qua được. Sổ kiểm toán phải có cả bản ghi `allowed: false` chứ không chỉ bản ghi thành công.
 
+> **Tóm gọn 1 câu:** Phân quyền theo vai trò, kiểm tra trước khi chạy, người lạ coi như `guest`, và ghi sổ kiểm toán cả lần từ chối — quyền nguy hiểm thì cấp riêng từng người, đừng nới cả vai trò.
+
 ---
 
 ### Q5. Nó gọi công cụ liên tục làm cháy ví / bị API khoá IP — chặn sao? [→ §9 Rate Limiting + §17.3 Quy tắc MCP]
+
+> **Bối cảnh:** Rate Limiting = giới hạn tần suất gọi; "khoá IP" = nhà cung cấp chặn hẳn địa chỉ mạng của bạn vì gọi quá nhiều.
 
 **Bạn sẽ thấy**
 
@@ -155,9 +181,13 @@ Giới hạn tần suất không phải tuỳ chọn trang trí — nó là phao
 
 Đặt trần 3 lần/phút rồi gọi 4 lần: ba lần đầu `allowed` là `True`, lần thứ tư phải có `retry_after` trong kết quả. Kiểm tra thêm hai điều: lần gọi MCP vượt 128KB phải bị cắt kèm dòng `[truncated: result cap 128k]`, và lần gọi lại y hệt trong 60 giây phải được đánh dấu là dùng bộ nhớ đệm.
 
+> **Tóm gọn 1 câu:** Giới hạn theo cửa sổ trượt, chặn thì báo số giây chờ còn lại, trần riêng cho công cụ đắt tiền, và cache kết quả 60 giây để cùng một câu hỏi không trả tiền hai lần.
+
 ---
 
 ### Q6. Thêm một công cụ mới thì phải sửa code ở mấy chỗ — có cách nào ít sửa không? [→ §10.1 TypeScript Interfaces + §1.1 Tool Registry]
+
+> **Bối cảnh:** interface = hợp đồng khai báo chung, giúp mọi bộ phận đọc cùng một định dạng dữ liệu.
 
 **Bạn sẽ thấy**
 
@@ -181,9 +211,13 @@ Khi mỗi công cụ có nhiều khai báo rải rác ở các module khác nhau
 
 Thử một công cụ mới: chỉ thêm một mục đăng ký, không sửa file nào khác, rồi xác nhận nó xuất hiện trong cả hai định dạng xuất ra, được tìm thấy bởi tìm kiếm theo từ khoá, và bị chặn đúng khi người dùng thiếu quyền.
 
+> **Tóm gọn 1 câu:** Gom mọi khai báo về một hợp đồng + một hồ sơ duy nhất cho mỗi công cụ — thêm công cụ mới là thêm một mục, không phải sửa bốn nơi.
+
 ---
 
 ### Q7. Chạy cả tuần, agent vẫn hay chọn cái công cụ chậm nhất — nó tự học được không? [→ §15.1 Tool Learning]
+
+> **Bối cảnh:** Tool Learning = xếp hạng công cụ bằng số liệu thực tế (tỉ lệ thành công, độ trễ) thay vì để model đoán.
 
 **Bạn sẽ thấy**
 
@@ -207,7 +241,11 @@ Hồ sơ công cụ đã lưu `success_rate` và `avg_latency_ms`, cả hai đư
 
 Chạy lại hàm xếp hạng sau 500 lượt thật với một loại công việc cố định: công cụ đứng đầu phải là công cụ có tỉ lệ thành công cao nhất trong nhóm. Thử tiếp bằng cách cố tình làm một công cụ chậm đi 5 lần và xem thứ hạng có đổi không.
 
+> **Tóm gọn 1 câu:** Dùng số liệu đã ghi (tỉ lệ thành công × độ trễ) để chấm điểm và xếp hạng công cụ — công cụ chưa từng dùng được điểm 0,5 để có cơ hội được thử.
+
 ## code-mode-sdk.md
+
+*(Hai câu hỏi cuối lấy từ tài liệu "Code Mode SDK" — cách để model viết một chương trình duy nhất thay vì trả lời JSON từng bước.)*
 
 ### Q8. Một việc 5 bước phải chờ 10-15 giây, làm sao nhanh hơn? [→ §1 Bối Cảnh + §2 Lợi Ích Cốt Lõi]
 
@@ -233,9 +271,13 @@ Một việc rất cơ bản: tìm tất cả file `.ts`, đọc từng file, th
 
 Chạy đúng ví dụ trên một kho mã thật và so với cách làm 5 lượt: đếm số lượt tương tác, tổng thời gian, tổng token đầu vào. Sau đó xác nhận nhật ký vẫn cho thấy từng file đã đọc và lệnh kiểm tra lỗi trả về đúng kết quả.
 
+> **Tóm gọn 1 câu:** Thay N lượt hỏi-đáp JSON bằng một đoạn code duy nhất chạy trong môi trường cách ly — giảm ~80% độ trễ và token.
+
 ---
 
 ### Q9. Cho mô hình tự viết code gọi công cụ — có an toàn không? [→ §7 Best Practices & Security Guardrails]
+
+> **Bối cảnh:** sandbox = "lồng kính" cô lập code chạy trong đó; không có lồng kính thì code của model chạy với quyền của chính bạn.
 
 **Bạn sẽ thấy**
 
@@ -258,7 +300,9 @@ Code mode là cách **đóng gói**, không phải ranh giới an toàn. Nó gom
 
 **Kiểm tra**
 
-Cố tình cho mã viết ra `/etc/passwd`, gọi một tên miền ngoài danh sách, và chạy vòng lặp vô hạn: cả ba phải bị chặn hoặc bị giết. Rồi kiểm tra một lần gọi thao tác ghi xoá đã đi qua cổng hỏi và đã để lại bản ghi ai-duyệt-gì.
+Cố tình cho mã viết ra `/etc/passwd` (file hệ thống nhạy cảm), gọi một tên miền ngoài danh sách, và chạy vòng lặp vô hạn: cả ba phải bị chặn hoặc bị giết. Rồi kiểm tra một lần gọi thao tác ghi xoá đã đi qua cổng hỏi và đã để lại bản ghi ai-duyệt-gì.
+
+> **Tóm gọn 1 câu:** Code mode chỉ nhanh chứ không an toàn — an toàn đến từ sandbox cô lập, tắt mạng mặc định, giới hạn tài nguyên, và bắt hỏi người trước thao tác không thể hoàn tác.
 
 ---
 

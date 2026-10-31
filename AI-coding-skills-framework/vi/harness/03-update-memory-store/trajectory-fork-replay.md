@@ -2,6 +2,10 @@
 
 > **Pattern kế thừa từ DeepSeek Harness**: Hệ thống quản lý toàn bộ vết thực thi (trajectory) dưới dạng **Session Event Stream**, hỗ trợ truy vết 100%, Replay để audit/debug, và Fork/Resume để thử nghiệm nhiều nhánh giải quyết vấn đề mà không làm hỏng lịch sử gốc.
 
+> **Đọc trang này để làm gì:** tài liệu dạy cách ghi lại *mọi bước* agent đã làm thành chuỗi sự kiện có đánh số — nhờ vậy bạn tua lại được (replay), rẽ nhánh thử cách khác (fork), và chạy tiếp sau khi máy chết (resume).
+>
+> **Từ khóa nhanh:** *trajectory* = vết thực thi, nhật ký toàn bộ hành trình; *session* = một phiên làm việc; *event* = một sự kiện được ghi lại (một câu hỏi, một lần gọi tool...).
+
 > **⚠️ Schema chuẩn nằm ở `13-trajectory-observability`.** Shape `TrajectoryEvent`, danh mục
 > `EventKind`, retention/redaction, và các câu truy vấn metric được đặc tả ở
 > [`13-trajectory-observability`](../13-trajectory-observability/README.md) — module đó là hợp
@@ -33,16 +37,22 @@
 
 ## 1. Bối Cảnh & Động Cơ
 
-Trong các hệ thống AI Agent phức tạp (đặc biệt là AI Coding Agents), một phiên tương tác có thể kéo dài hàng chục turn, gọi hàng trăm công cụ (file search, edit, terminal, git), và tạo ra lượng ngữ cảnh khổng lồ.
+> Phần này nêu vì sao cần ghi lại vết thực thi: không ghi thì không truy vết, không tua, không debug được.
+
+Trong các hệ thống AI Agent phức tạp (đặc biệt là AI Coding Agents), một phiên tương tác có thể kéo dài hàng chục turn (turn = một lượt hỏi–đáp), gọi hàng trăm công cụ (file search, edit, terminal, git), và tạo ra lượng ngữ cảnh khổng lồ.
 
 **Các vấn đề thường gặp ở Agent truyền thống:**
 - **Black-box Execution**: Khi Agent mắc lỗi ở bước 15, người dùng không thể biết lỗi phát sinh từ bước nào (prompt sai, tool trả kết quả lỗi, hay LLM suy luận sai).
 - **Không Thể Đảo Nược State (No Undo/Branching)**: Nếu Agent thực thi sai hướng ở bước 10, cách duy nhất là xóa toàn bộ session và bắt đầu lại từ đầu.
 - **Khó khăn trong Debug & Evaluation**: Không thể phát lại chính xác chuỗi sự kiện đã xảy ra để reproduce bug hoặc benchmark mô hình.
 
+> **Tóm gọn 1 câu:** Không ghi lại từng bước thì lỗi không truy vết được, sai hướng không quay lại được, bug không tái hiện được.
+
 ---
 
 ## 2. Triết Lý Trajectory Traceability Engine
+
+> Phần này nêu ý tưởng cốt lõi: coi cả phiên làm việc như một dải băng ghi hình từng sự kiện.
 
 DeepSeek Harness giải quyết các vấn đề trên bằng triết lý **Full Traceability**:
 
@@ -50,7 +60,9 @@ DeepSeek Harness giải quyết các vấn đề trên bằng triết lý **Full
 Agent Execution = Sequence of State-Changing Events (Event Stream)
 ```
 
-Thay vì lưu trữ cuộc trò chuyện dưới dạng danh sách tin nhắn phẳng (flat list of messages `[{role, content}]`), hệ thống lưu dưới dạng **Append-Only Event Stream**. Mọi hành động, kết quả công cụ, sự thay đổi state, và prompt injection đều được ghi lại dưới dạng Event có mốc thời gian (timestamp) và ID duy nhất.
+*(Đọc dòng trên: toàn bộ phiên làm việc = một chuỗi các sự kiện làm thay đổi trạng thái.)*
+
+Thay vì lưu trữ cuộc trò chuyện dưới dạng danh sách tin nhắn phẳng (flat list of messages `[{role, content}]` — chỉ lưu "ai nói gì", không lưu các bước ngầm), hệ thống lưu dưới dạng **Append-Only Event Stream** (chỉ ghi thêm, không sửa không xóa — như sổ kế toán). Mọi hành động, kết quả công cụ, sự thay đổi state, và prompt injection đều được ghi lại dưới dạng Event có mốc thời gian (timestamp) và ID duy nhất.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -69,6 +81,8 @@ Thay vì lưu trữ cuộc trò chuyện dưới dạng danh sách tin nhắn ph
 │       [Main Branch: Evt 7a...]            [Fork Branch: Evt 7b...]     │
 └────────────────────────────────────────────────────────────────────────┘
 ```
+
+> **Tóm gọn 1 câu:** Lưu phiên thành dải băng sự kiện chỉ-ghi-thêm, mỗi sự kiện có thời gian và ID — đây là nền cho cả replay, fork lẫn resume.
 
 ---
 
@@ -99,28 +113,38 @@ suy ra `parentTaskId` từ đồ thị plan chứ không được đổi tên fi
 | `metadata.tokensUsed: number` | `tokens: { in, out }` | tách; không rõ thì đưa hết vào `in` |
 | *(không có)* | `seq`, `actor`, `model`, `costUsd`, `fingerprint` | backfill: `seq` theo vị trí, `actor` theo nguồn, còn lại nullable |
 
+Cách đọc bảng này: cột **Cũ** là tên field/kind mà engine cũ dùng; cột **Chuẩn** là tên mới theo hợp đồng `13`; cột **Ghi chú** nói cần làm gì khi chuyển. Ví dụ, dòng 5: field `timestamp` chỉ được đổi tên thành `ts` thôi, không cần tính lại gì.
+
+Giải nghĩa thêm: *backfill* = điền lại dữ liệu còn thiếu cho các bản ghi cũ (đánh số `seq` theo vị trí, đoán `actor` theo nguồn); *payload* = phần dữ liệu đính kèm trong sự kiện; *nullable* = được phép để trống.
+
 Engine bên dưới phát trực tiếp shape chuẩn. Nếu bạn đang migrate một store sẵn có, hãy chạy
 backfill một lần rồi **xoá** nhánh cũ đi — hai schema cùng sống trong một store chính là cách
 mà event mồ côi và audit không nối được bắt đầu.
+
+> **Tóm gọn 1 câu:** Bảng trên là bản đồ đổi tên từ schema cũ sang chuẩn `13` — chuyển một lần, backfill cho đủ, rồi xoá hẳn schema cũ.
 
 ---
 
 ## 4. Các Thao Tác Cốt Lõi: Replay, Fork, Resume & Search
 
+> Phần này mô tả bốn thao tác chính trên dải băng sự kiện: phát lại, rẽ nhánh, chạy tiếp, và tìm kiếm.
+
 ### 4.1. Replay (Phát lại Trajectory)
-Replay cho phép tải lại toàn bộ danh sách Event từ bước 1 đến bước $N$ và tái tạo trạng thái (state) chính xác của Agent tại bất kỳ mốc thời gian nào.
-- **Deterministic Replay**: Tái tạo chính xác các câu trả lời và kết quả công cụ đã lưu trong quá khứ mà không cần gọi lại LLM hay execute lại command thực tế.
+Replay cho phép tải lại toàn bộ danh sách Event từ bước 1 đến bước $N$ và tái tạo trạng thái (state) chính xác của Agent tại bất kỳ mốc thời gian nào. Nói ngắn: "chiếu lại cuốn băng" phiên làm việc.
+- **Deterministic Replay**: Tái tạo chính xác các câu trả lời và kết quả công cụ đã lưu trong quá khứ mà không cần gọi lại LLM hay execute lại command thực tế (xem lại phim cũ, không quay lại phim mới).
 - **Live Replay (Dry-run)**: Giữ nguyên lịch sử Tool Execution nhưng gọi lại LLM thế hệ mới hơn để so sánh kết quả.
 
 *Độ trung thực của replay* — bước nào an toàn để thực thi lại, bước nào phải phục vụ từ kết quả
 đã ghi, và cách phát hiện sai lệch khi replay trực tiếp — được đặc tả ở
 `13-trajectory-observability` §3.3. Luật ngắn: một `tool_call` trong replay có `fingerprint`
-khớp với kết quả đã ghi thì tái dùng kết quả đã ghi; bất kỳ bước nào tạo side effect phải
-được bảo vệ bằng idempotency key từ `07-workflow` §13.3.
+(dấu vân tay = mã băm nhận dạng gồm tên lệnh + tham số) khớp với kết quả đã ghi thì tái dùng kết quả đã ghi; bất kỳ bước nào tạo side effect (side effect = hành động làm thay đổi bên ngoài, ví dụ xóa file, gửi email) phải
+được bảo vệ bằng idempotency key (nhãn duy nhất chống chạy-hai-lần) từ `07-workflow` §13.3.
+
+> **Tóm gọn 1 câu:** Replay mặc định chỉ đọc lại kết quả đã ghi; chỉ bước không đổi gì bên ngoài mới được chạy thật để so sánh.
 
 ### 4.2. Fork (Tách Nhánh Session)
-Nếu người dùng thấy Agent đi sai hướng tại Event thứ $K$, người dùng có thể **Fork** tại Event $K$:
-- Tạo một Session con (`parentSessionId`) chia sẻ lịch sử Event từ $1 \to K$.
+Nếu người dùng thấy Agent đi sai hướng tại Event thứ $K$, người dùng có thể **Fork** (rẽ nhánh) tại Event $K$:
+- Tạo một Session con (`parentSessionId` = trường ghi tên phiên cha) chia sẻ lịch sử Event từ $1 \to K$.
 - Mọi Event mới từ bước $K+1$ trở đi của Fork Session sẽ nằm ở một nhánh độc lập.
 - Giúp người dùng thử nghiệm lời gọi prompt khác, chọn công cụ khác mà không ảnh hưởng tới Session ban đầu.
 
@@ -131,16 +155,20 @@ vào session mới cho dễ hình dung — đó là minh hoạ, không phải ch
 thật chia sẻ tiền tố theo tham chiếu (hoặc qua con trỏ chuỗi cha–con) để một session 10.000
 event không biến thành 20.000 event; quy tắc dedup đó được đặc tả ở `13` §2.2, không phải ở đây.
 
-### 4.3. Resume (Tiếp Tục Phiên Làm Việc)
-Tất cả trạng thái Session đều được persisted trên đĩa (disk/DB) theo cơ chế Event Sourcing. Khi hệ thống bị gián đoạn (crash, restart, network timeout), Agent có thể **Resume** lập tức từ Event cuối cùng mà không mất bất kỳ context nào.
+> **Tóm gọn 1 câu:** Fork = rẽ nhánh từ một sự kiện bất kỳ, dùng chung lịch sử cũ theo tham chiếu (không chép lại), nên thử nghiệm cách khác không tốn thêm bộ nhớ và không đụng phiên gốc.
 
-Resume không được thực thi lại side effect đã commit. Engine nạp `checkpoint` cuối cùng, rồi
+### 4.3. Resume (Tiếp Tục Phiên Làm Việc)
+Tất cả trạng thái Session đều được persisted (lưu xuống đĩa) trên đĩa (disk/DB) theo cơ chế Event Sourcing (lưu bằng cách ghi từng sự kiện, và dựng lại trạng thái bằng cách đọc lại chuỗi sự kiện đó). Khi hệ thống bị gián đoạn (crash, restart, network timeout), Agent có thể **Resume** (chạy tiếp) lập tức từ Event cuối cùng mà không mất bất kỳ context nào.
+
+Resume không được thực thi lại side effect đã commit. Engine nạp `checkpoint` (mốc cắm cờ "đã tới đây an toàn") cuối cùng, rồi
 đọc các event ghi sau thời điểm crash và suy ra tập bước đã hoàn thành
-(`stepsToSkip()` ở `13` §3.2); `07-workflow` §13.3 cung cấp idempotency key làm cho thao tác
+(`stepsToSkip()` ở `13` §3.2); `07-workflow` §13.3 cung cấp idempotency key (nhãn chống chạy-hai-lần) làm cho thao tác
 bỏ qua đó an toàn, và `08-task` §11 là nơi trạng thái task được đối soát.
 
+> **Tóm gọn 1 câu:** Trạng thái nằm trên đĩa dưới dạng chuỗi sự kiện, nên sau crash hệ thống đọc lại là biết đã làm tới đâu và bỏ qua đúng các bước đã xong.
+
 ### 4.4. Event Search (Tìm Kiếm Vết Thực Thi)
-Cho phép tìm kiếm chi tiết trong Trajectory Log:
+Cho phép tìm kiếm chi tiết trong Trajectory Log (sổ ghi chép vết thực thi):
 - Tìm tất cả các Tool Call bị lỗi (`error.retryable === false`, hoặc `kind === "error"`).
 - Tìm các dòng lệnh bash đã chạy thành công chứa từ khóa `pnpm build`.
 - Lọc theo lượng token mỗi turn (`tokens.in + tokens.out`).
@@ -149,37 +177,49 @@ Catalog truy vấn production cho các truy vấn này — cộng phát hiện `
 quy chiếu chi phí, và sức khoẻ compaction — nằm ở `13-trajectory-observability` §6.1. Engine
 ở đây giữ một bộ lọc có kiểu cho unit test; SQL mới là chỗ đúng cho store.
 
+> **Tóm gọn 1 câu:** Vì mọi bước đều nằm trong dải băng sự kiện, bạn lọc được chính xác "lần nào, bước nào, lỗi gì, tốn bao nhiêu token".
+
 ---
 
 ## 5. Triển Khai Minh Họa (TypeScript Implementation)
 
-Dưới đây là implementation mô phỏng Engine quản lý Trajectory Event Stream, phát đúng shape
-chuẩn của `13`. Các tầng độ bền, live tailing, và cam kết append-only được đặc tả ở `13` §2.2;
-`inMemory` ở đây đóng vai một sink JSONL.
+Dưới đây là implementation (bản hiện thực bằng code) mô phỏng Engine quản lý Trajectory Event Stream, phát đúng shape
+chuẩn của `13`. Các tầng độ bền, live tailing (theo dõi trực tiếp khi sự kiện vừa ghi), và cam kết append-only được đặc tả ở `13` §2.2;
+`inMemory` ở đây đóng vai một sink JSONL (nơi ghi dữ liệu dạng file JSON mỗi dòng một bản ghi).
 
 > 📄 **Code ví dụ:** [`examples/02-5-trien-khai-minh-hoa-typescript-implementation.ts`](examples/02-5-trien-khai-minh-hoa-typescript-implementation.ts)
+
+> **Tóm gọn 1 câu:** Code minh họa dưới đây hiện thực đủ bốn thao tác trên đúng shape chuẩn `13`, dùng bộ nhớ làm chỗ ghi tạm.
 
 ---
 
 ## 6. DeepSeek Harness Case Study: Trajectory Viewer & Event Inspector
 
-Trong Web UI của DeepSeek Harness (chạy tại port `3080`), tính năng **Trajectory View** cung cấp một giao diện trực quan cho phép kỹ sư:
+> Phần này mô tả giao diện xem vết thực thi trong Web UI của DeepSeek Harness.
+
+Trong Web UI của DeepSeek Harness (chạy tại port `3080` — cổng mạng để mở trang trong trình duyệt), tính năng **Trajectory View** cung cấp một giao diện trực quan cho phép kỹ sư:
 1. **Visual Timeline**: Xem trục thời gian của phiên làm việc với các khối màu tương ứng cho Reasoning, Tool Call (Bash/Edit), và Execution Result.
 2. **One-Click Replay**: Nhấn vào bất kỳ node nào trong timeline để phát lại chính xác câu thoại và ngữ cảnh lúc đó.
 3. **Fork & Branch**: Nút "Fork Session from here" cho phép rẽ nhánh lập tức từ giao diện web, tạo môi trường thử nghiệm an toàn.
+
+> **Tóm gọn 1 câu:** Web UI biến dải băng sự kiện thành timeline trực quan: bấm vào đâu xem lại đó, bấm Fork là có nhánh thử nghiệm mới.
 
 ---
 
 ## 7. Best Practices & Anti-Patterns
 
+> Phần này tổng hợp việc nên làm và việc không nên làm khi vận hành event stream.
+
 ### ✅ Best Practices
-- **Append-Only Immutability**: Không bao giờ chỉnh sửa trực tiếp các Event đã ghi. Nếu muốn rollback hay sửa đổi, hãy fork session hoặc ghi một Event bù trừ thuộc kind chuẩn — `plan_revision` cho thay đổi plan, `compaction` cho việc thu nhỏ context window. (`state_change` là tên *legacy*; xem bảng migrate ở §1, đừng ghi kind này.)
-- **Compact Payload**: Với các Tool Result trả về dữ liệu cực lớn (vd: log 10,000 dòng), hãy lưu payload ngắn gọn và trích xuất reference sang file blob để tránh làm đầy RAM/DB. Hợp đồng `13` giới hạn payload inline ở 64KB và bắt buộc `{ ref }` vượt ngưỡng đó.
+- **Append-Only Immutability**: Không bao giờ chỉnh sửa trực tiếp các Event đã ghi. Nếu muốn rollback hay sửa đổi, hãy fork session hoặc ghi một Event bù trừ thuộc kind chuẩn (bù trừ = ghi thêm một sự kiện mới để "đính chính", không xóa sự kiện cũ) — `plan_revision` cho thay đổi plan, `compaction` cho việc thu nhỏ context window. (`state_change` là tên *legacy* (tên cũ); xem bảng migrate ở §1, đừng ghi kind này.)
+- **Compact Payload**: Với các Tool Result trả về dữ liệu cực lớn (vd: log 10,000 dòng), hãy lưu payload (phần dữ liệu đính kèm) ngắn gọn và trích xuất reference (tham chiếu = con trỏ trỏ tới file chứa nội dung đầy đủ) sang file blob để tránh làm đầy RAM/DB. Hợp đồng `13` giới hạn payload inline ở 64KB và bắt buộc `{ ref }` vượt ngưỡng đó.
 - **Regular Checkpointing**: Ghi event `checkpoint` sau mỗi mốc hoàn thành task quan trọng (vd: xong phase planning, xong phase refactoring) để dễ dàng Fork.
-- **Luôn gán `actor`**: Một `tool_call` không có `actor` là không truy vết được — đó là thứ audit không thể sửa lại sau.
-- **Luôn gán `parentTaskId`**: Một event không có nó là orphan — không nối được vào plan, và vì vậy vô hình với mọi truy vấn xuyên module ở `13` §4.1.
+- **Luôn gán `actor`**: Một `tool_call` không có `actor` (ai/thứ gì làm ra nó) là không truy vết được — đó là thứ audit không thể sửa lại sau.
+- **Luôn gán `parentTaskId`**: Một event không có nó là orphan (mồ côi — không nối được vào kế hoạch), và vì vậy vô hình với mọi truy vấn xuyên module ở `13` §4.1.
 
 ### ❌ Anti-Patterns
 - **Incomplete Logging**: Chỉ lưu câu thoại chat giữa User và Agent mà không lưu các sự kiện ngầm (Context Injection, Internal Tool Calls, System Errors). Chat log không phải là trajectory — xem `13` §14.
 - **Non-deterministic Events**: Lưu kết quả Tool Call nhưng không lưu cấu hình môi trường/tham số, làm hỏng Replay về sau.
 - **Hai schema cùng sống**: Chạy song song shape cũ `type`/`timestamp`/`parentId` của engine này với hợp đồng `13`. Hãy chọn một, migrate, xoá cái kia.
+
+> **Tóm gọn 1 câu:** Ghi thêm chứ không sửa, payload lớn gửi ra file, checkpoint thường xuyên, luôn ghi `actor` + `parentTaskId` — và đừng để hai schema cũ mới cùng sống trong một store.

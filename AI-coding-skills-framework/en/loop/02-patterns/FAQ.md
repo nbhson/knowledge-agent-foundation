@@ -1,9 +1,8 @@
 # ❓ FAQ — Loop Patterns (Real Stories, Plain Language)
 
-If a question is unclear, read the section in the named file (named in brackets).
+If a question is unclear, read the section in the named file (named in brackets). "Loop" below = an agent that runs on a schedule and repeats the same job, like a night watchman doing rounds.
 
 ---
-
 
 ## README.md
 
@@ -11,7 +10,7 @@ If a question is unclear, read the section in the named file (named in brackets)
 
 **What you see**
 
-You open `02-patterns/`, count seven pattern files, and stall. Meanwhile CI (continuous integration — the automated test run on every push) has been red for two days because nothing was ever started.
+You open `02-patterns/`, count seven pattern files, and stall. Meanwhile CI (continuous integration — the automated test run on every push; "red" = tests are failing) has been red for two days because nothing was ever started.
 
 **Why**
 
@@ -19,17 +18,19 @@ Each pattern was built for one specific pain, so you do not need to understand a
 
 **What to do**
 
-1. CI red → CI Sweeper, at 15 minutes or slower first.
-2. Pull requests (PRs) stalling with no reviewer reaction → PR Babysitter.
-3. Noisy issues plus morning chaos → Daily Triage **and** Issue Triage.
-4. Dependabot or CVE (a published vulnerability) noise → Dependency Sweeper.
-5. Not sure at all → Daily Triage at L1 (report only, no code changes).
+1. CI red → CI Sweeper, at 15 minutes or slower first. (CI Sweeper = the loop that finds and fixes failing test runs.)
+2. Pull requests (PRs — proposed changes waiting for review) stalling with no reviewer reaction → PR Babysitter.
+3. Noisy issues plus morning chaos → Daily Triage **and** Issue Triage. (Triage = sorting items by priority, like a hospital emergency room.)
+4. Dependabot or CVE (a published vulnerability, e.g. "your `lodash` has a known hole") noise → Dependency Sweeper. (Dependabot = GitHub's robot that opens update PRs for your libraries.)
+5. Not sure at all → Daily Triage at L1 (report only, no code changes). (L1/L2/L3 = level 1 report-only, level 2 propose a fix, level 3 act on its own.)
 
 > 📄 **Example code:** [`examples/01-q1-there-are-seven-patterns-and-i-cannot.sh`](examples/01-q1-there-are-seven-patterns-and-i-cannot.sh)
 
 **Verify**
 
-After `audit . --suggest`, a state file and a scheduler entry exist, and the first run produces a report with no commits. If you cannot name the pain in one sentence, stay with Daily Triage at L1 — it teaches state discipline without the risk of auto-merge.
+After `audit . --suggest` (a command that inspects the repo and suggests a loop setup), a state file and a scheduler entry exist, and the first run produces a report with no commits. If you cannot name the pain in one sentence, stay with Daily Triage at L1 — it teaches state discipline without the risk of auto-merge.
+
+> **One-line summary:** Pick the pattern that matches your current pain, and if in doubt start with the report-only one.
 
 ---
 
@@ -37,11 +38,11 @@ After `audit . --suggest`, a state file and a scheduler entry exist, and the fir
 
 **What you see**
 
-The summary table has a "Token cost" column: Daily Triage and Changelog Drafter are Low, Dependency Sweeper Medium, PR Babysitter High, CI Sweeper Very high. You also see the warning that a 15-minute cadence without early exit can pass 5M tokens per day.
+The summary table has a "Token cost" column (tokens = the units you pay for each model call; more work = more tokens): Daily Triage and Changelog Drafter are Low, Dependency Sweeper Medium, PR Babysitter High, CI Sweeper Very high. You also see the warning that a 15-minute cadence (cadence = how often the loop runs) without early exit can pass 5M tokens per day.
 
 **Why**
 
-Cadence multiplies per-run cost. A no-op run is about 5k tokens; a full action run is about 200k. Ninety-six runs a day at 200k is a budget decision, not a bug — and CI Sweeper alone carries a 1M daily cap.
+Cadence multiplies per-run cost. A no-op run (no-op = a run that finds nothing to do) is about 5k tokens; a full action run is about 200k. Ninety-six runs a day at 200k is a budget decision, not a bug — and CI Sweeper alone carries a 1M daily cap.
 
 **What to do**
 
@@ -49,6 +50,8 @@ Cadence multiplies per-run cost. A no-op run is about 5k tokens; a full action r
 2. CI is red → CI Sweeper at **15m or slower**, with early exit.
 3. Many open PRs → PR Babysitter at 10–15m, L1 watch first, no L2 fix loop on every tick.
 4. Release week → Changelog Drafter daily; no unattended Dependency Sweeper or CI Sweeper.
+
+How to read it: each row is one pattern; "No-op" is what an empty run costs, "Full run" is what a run that actually does work costs. For instance, Daily Triage costs ~5k tokens when nothing is pending, but ~200k at L2 when it drafts a full fix.
 
 | Pattern | No-op | Full run |
 |---|---|---|
@@ -62,17 +65,19 @@ Cadence multiplies per-run cost. A no-op run is about 5k tokens; a full action r
 
 The cost command prints the projected tokens per day for the exact cadence and level you typed. Run it before every cadence change and keep the number in your loop notes.
 
+> **One-line summary:** How often you run matters as much as what you run — always check the projected daily cost before tightening a cadence.
+
 ---
 
 ### Q3. I turned on two loops and they edited the same branch within one hour — who owns what? [→ Overlap Rules]
 
 **What you see**
 
-CI Sweeper opened a worktree on `fix/ci-auth-refresh`. Forty minutes later another loop opened a second worktree on the same branch. One of them is silently overwritten and the state file shows two different "last actions" for one job.
+CI Sweeper opened a worktree (worktree = a separate working folder for one branch, so two loops do not overwrite each other's files) on `fix/ci-auth-refresh`. Forty minutes later another loop opened a second worktree on the same branch. One of them is silently overwritten and the state file (state file = the loop's notes file recording what it did) shows two different "last actions" for one job.
 
 **Why**
 
-Two loops doing the same job is not parallel work, it is a race. The README ships an explicit overlap table so every loop has exactly one owner per job.
+Two loops doing the same job is not parallel work, it is a race (race = two workers grab the same task and one clobbers the other). The README ships an explicit overlap table so every loop has exactly one owner per job.
 
 **What to do**
 
@@ -92,6 +97,8 @@ Daily Triage  -> report only (L1)
 
 Two consecutive `loop audit . --suggest` runs show no branch claimed by two state files, and every open worktree has exactly one owner line naming the loop that created it.
 
+> **One-line summary:** One job, one owner — never let two loops touch the same branch in the same window.
+
 ---
 
 ### Q4. My team wants to jump straight to L3 with auto-merge on a production repo — is that fine? [→ First Loop Recommendation / Golden rule]
@@ -102,7 +109,7 @@ A PR merged overnight without review because "the agent was confident". The diff
 
 **Why**
 
-The README's golden rule is explicit: never skip to L3 for a new pattern on a production repo. L1 is report-only, L2 proposes a fix, L3 acts. Model confidence is not evidence, and each level exists because the previous one was boring enough to trust.
+The README's golden rule is explicit: never skip to L3 for a new pattern on a production repo. L1 is report-only, L2 proposes a fix, L3 acts. Model confidence is not evidence (the model saying "I'm sure" is not proof the change is safe), and each level exists because the previous one was boring enough to trust.
 
 **What to do**
 
@@ -118,6 +125,8 @@ The README's golden rule is explicit: never skip to L3 for a new pattern on a pr
 
 The first seven days of `loop-run-log.md` contain zero merge commits, and a named human opened every PR in that window. If that is not true, drop back to L1 and re-run the week.
 
+> **One-line summary:** Earn L3 level by level — start report-only on production repos and let a human own every merge.
+
 ---
 
 ## daily-triage.md
@@ -126,15 +135,15 @@ The first seven days of `loop-run-log.md` contain zero merge commits, and a name
 
 **What you see**
 
-A `Last run: 2026-06-09 08:15 UTC` timestamp sits on top of forty closed items. PR #1238 has been on the Watch List since March. The one line that matters — "flaky test in auth flow, CI red on main" — is buried at line 300.
+A `Last run: 2026-06-09 08:15 UTC` timestamp sits on top of forty closed items. PR #1238 has been on the Watch List (Watch List = items the loop keeps an eye on but does not act on) since March. The one line that matters — "flaky test in auth flow, CI red on main" — is buried at line 300.
 
 **Why**
 
-`STATE.md` is the loop's memory spine, but nothing ever deletes from it. The file's own failure table names this: "state file grows without bound → prune merged/closed items every run".
+`STATE.md` is the loop's memory spine (its single notes file about what is pending and what was done), but nothing ever deletes from it. The file's own failure table names this: "state file grows without bound → prune merged/closed items every run".
 
 **What to do**
 
-1. Prune resolved and merged items on **every** run, not once a week.
+1. Prune resolved and merged items on **every** run, not once a week. (Prune = delete entries that are finished.)
 2. Move recurring low-value entries (Dependabot PRs and similar) into a `## Recent Noise` section instead of deleting them, so the loop stops re-reporting them.
 3. Update the three fields the loop must write every run: the `Last run` timestamp, item status plus last action taken, and human decisions that overrode the loop.
 4. Keep the Watch List to one line per stalled item.
@@ -152,6 +161,8 @@ A `Last run: 2026-06-09 08:15 UTC` timestamp sits on top of forty closed items. 
 
 After a run, every item under `High Priority` has a status line newer than the previous `Last run`, and the file is no longer than it was before the run started. If it grew, the pruning step was skipped.
 
+> **One-line summary:** A state file only stays useful if every run deletes what is done — prune first, then write.
+
 ---
 
 ### Q2. The 08:15 report lists 30 items and 25 are junk — how do I cut the noise? [→ Failure Modes & Mitigations]
@@ -162,12 +173,12 @@ Morning state lists a Dependabot PR, three duplicate issues, and a build failure
 
 **Why**
 
-Triage produces noise when the skill has no ignore list. It also burns money: a no-op run is ~5k tokens, a full L1 triage is ~50k, and every noisy run is a full run instead of a cheap one.
+Triage produces noise when the skill has no ignore list (ignore list = items the loop is told to skip, like a spam filter). It also burns money: a no-op run is ~5k tokens, a full L1 triage is ~50k, and every noisy run is a full run instead of a cheap one.
 
 **What to do**
 
 1. Tighten the `loop-triage` skill rules and add a "Noise / Ignore" section to the state template.
-2. Start report-only, then add effort and risk gates before allowing auto-fixes — wrong-priority fixes are the named failure here.
+2. Start report-only, then add effort and risk gates (gate = a checkpoint that must pass before an action runs) before allowing auto-fixes — wrong-priority fixes are the named failure here.
 3. Use `/loop 1d` for morning triage and `/loop 2h` only during an active sprint, for faster signal rather than louder signal.
 4. Write the post-run critique every cycle: false positives, repeated items, one adjustment for next time.
 
@@ -176,6 +187,8 @@ Triage produces noise when the skill has no ignore list. It also burns money: a 
 **Verify**
 
 For three mornings in a row, the number of items you actually acted on is at least half the items listed. If not, move the offenders into `## Recent Noise` and tighten the skill the same day.
+
+> **One-line summary:** Noise is an ignore-list problem — every item you never act on should teach the loop to skip it next time.
 
 ---
 
@@ -187,7 +200,7 @@ One line reads `Loop action: Opened worktree. Fix proposed. Waiting for human PR
 
 **Why**
 
-A proposal sitting in a file is not a notification. The loop has explicit handoff conditions — anything surfaced for 3+ days without resolution is one of them — but nothing pushes them to a human.
+A proposal sitting in a file is not a notification. The loop has explicit handoff conditions (handoff = a point where the loop must stop and pass the work to a person) — anything surfaced for 3+ days without resolution is one of them — but nothing pushes them to a human.
 
 **What to do**
 
@@ -205,6 +218,8 @@ A proposal sitting in a file is not a notification. The loop has explicit handof
 
 No item under `High Priority` is older than three days without either an owner or an escalation line. Count the leftovers each morning and treat a non-zero count as the alarm.
 
+> **One-line summary:** Anything waiting on a human for 3+ days must be escalated, not just re-listed.
+
 ---
 
 ### Q4. The loop ran at 08:00 and I never heard about the 02:00 failure — how do I catch overnight? [→ Scheduling]
@@ -215,13 +230,13 @@ No item under `High Priority` is older than three days without either an owner o
 
 **Why**
 
-A daily schedule is a sampling window, not a monitor. Between two ticks you are blind, and the 100k daily token cap is the reason the cadence exists in the first place.
+A daily schedule is a sampling window, not a monitor — between two ticks (two scheduled runs) you are blind. The 100k daily token cap is the reason the cadence exists in the first place.
 
 **What to do**
 
 1. Set `fireImmediately: true` so the scheduler fires the moment CI turns red.
 2. Or run twice per day: at the start of the day plus a midday pass.
-3. No terminal interface (TUI)? Use the GitHub Action cron `0 8 * * 1-5`; `daily-triage.yml` updates `STATE.md` and `loop-run-log.md`.
+3. No terminal interface (TUI = the text screen you type commands into)? Use the GitHub Action cron `0 8 * * 1-5`; `daily-triage.yml` updates `STATE.md` and `loop-run-log.md`. (cron = a time-based job scheduler; `0 8 * * 1-5` = 08:00 on weekdays.)
 4. Check the projected cost before tightening the interval below 2h.
 
 > 📄 **Example code:** [`examples/05-q4-the-loop-ran-at-08-00-and.sh`](examples/05-q4-the-loop-ran-at-08-00-and.sh)
@@ -229,6 +244,8 @@ A daily schedule is a sampling window, not a monitor. Between two ticks you are 
 **Verify**
 
 Break `main` on purpose after the morning run. Within one interval, `Last run` in `STATE.md` is newer and the new failure appears under `High Priority` with a suggested next action.
+
+> **One-line summary:** A daily loop cannot see between runs — add triggers or a second daily pass to catch overnight failures.
 
 ---
 
@@ -238,7 +255,7 @@ Break `main` on purpose after the morning run. Within one interval, `Last run` i
 
 **What you see**
 
-Issue #1311 — "app slow" — shows up in the state file with a suggested next action. Nobody can reproduce it, so the suggestion is a guess wearing a plan's clothes.
+Issue #1311 — "app slow" — shows up in the state file with a suggested next action. Nobody can reproduce it (reproduce = make the bug happen again on demand), so the suggestion is a guess wearing a plan's clothes.
 
 **Why**
 
@@ -246,7 +263,7 @@ Issue #1311 — "app slow" — shows up in the state file with a suggested next 
 
 **What to do**
 
-1. Classify every issue as bug, feature, question, duplicate, or stale.
+1. Classify every issue as bug, feature, question, duplicate, or stale (stale = old and no longer relevant).
 2. If it is ambiguous, `issue-intake` asks the reporter through a comment or escalates — never guess.
 3. If it is actionable, write the suggested next action into `issue-triage-state.md`. Suggestions only, no code edits: this loop is L1 propose-only.
 4. Attach evidence to every finding — the issue link plus the reasoning behind the classification.
@@ -260,13 +277,15 @@ Issue #1311 — "app slow" — shows up in the state file with a suggested next 
 
 Every `[Ambiguous]` line has a matching comment on the issue asking for more, or an entry under `## Needs Human`. No line anywhere says "guessed" or "probably".
 
+> **One-line summary:** An ambiguous issue gets questions or escalation — never a fix suggestion built on a guess.
+
 ---
 
 ### Q2. The backlog has 500 open issues and one run reads all of them — what stops the cost? [→ Failure Modes & Mitigations]
 
 **What you see**
 
-A 2-hour schedule meets a 500-issue backlog. A no-op run is ~5k tokens and a full triage scan is ~40k, and this pattern shares the same suggested daily cap of 100k as Daily Triage.
+A 2-hour schedule meets a 500-issue backlog (backlog = all open issues waiting to be handled). A no-op run is ~5k tokens and a full triage scan is ~40k, and this pattern shares the same suggested daily cap of 100k as Daily Triage.
 
 **Why**
 
@@ -285,13 +304,15 @@ A 2-hour schedule meets a 500-issue backlog. A no-op run is ~5k tokens and a ful
 
 Each run log shows a processed count at or below the cap, and the `## Needs Human` bucket is not growing faster than a human empties it.
 
+> **One-line summary:** Cap each run to a small, severity-sorted slice of the backlog — the cure for overload is a smaller slice, not a bigger model.
+
 ---
 
 ### Q3. A security issue landed in the backlog — should the loop treat it like any other issue? [→ Human Handoff Points]
 
 **What you see**
 
-An issue describing an authentication bypass sits in `## New Issues (last 24h)` with a classification and a suggested action, listed right next to a typo report.
+An issue describing an authentication bypass (bypass = a way to log in without permission) sits in `## New Issues (last 24h)` with a classification and a suggested action, listed right next to a typo report.
 
 **Why**
 
@@ -314,6 +335,8 @@ Security issues are an escalate-immediately handoff point, not a classification 
 
 No security issue stays in `New Issues` for more than one run interval. Each one appears in `Needs Human` with a timestamp, and the escalation comment is on the issue itself.
 
+> **One-line summary:** Security issues escalate in the same run they are found — the loop never drafts fixes for vulnerabilities.
+
 ---
 
 ## ci-sweeper.md
@@ -322,11 +345,11 @@ No security issue stays in `New Issues` for more than one run interval. Each one
 
 **What you see**
 
-`loop-ledger.json` shows attempts climbing on job `test-auth` with `AssertionError in test_refresh_token_expiry` and nothing new in the message. Each L2 fix attempt costs ~200k tokens, and the README warns that 15m cadence without early exit exceeds 5M tokens per day.
+`loop-ledger.json` (ledger = the loop's attempt log, one line per try) shows attempts climbing on job `test-auth` with `AssertionError in test_refresh_token_expiry` and nothing new in the message. Each L2 fix attempt costs ~200k tokens, and the README warns that 15m cadence without early exit exceeds 5M tokens per day.
 
 **Why**
 
-Without a circuit breaker the sweeper keeps proposing minimal fixes for a failure it cannot resolve. Repeating a fix that does not work is the exact loop the `loop-guard` skill exists to break.
+Without a circuit breaker (circuit breaker = a hard stop switch that trips after N repeated failures, like the one in your home fuse box) the sweeper keeps proposing minimal fixes for a failure it cannot resolve. Repeating a fix that does not work is the exact loop the `loop-guard` skill exists to break.
 
 **What to do**
 
@@ -341,13 +364,15 @@ Without a circuit breaker the sweeper keeps proposing minimal fixes for a failur
 
 `Attempts: 1/3` in `ci-sweeper-state.md` never exceeds 3, and any failure sitting at 3/3 has an escalation line with a named human owner.
 
+> **One-line summary:** A circuit breaker with a hard attempt cap is what turns "retry all night" into "escalate to a human".
+
 ---
 
 ### Q2. The loop turned CI green by deleting the failing test — is that a fix? [→ Verification Strategy]
 
 **What you see**
 
-A small PR, a green pipeline, and a diff that removes an assertion. The implementer also marked the item done itself, so nobody else ever looked.
+A small PR, a green pipeline, and a diff that removes an assertion (assertion = the line inside a test that checks the code did the right thing; delete it and the test passes while checking nothing). The implementer also marked the item done itself, so nobody else ever looked.
 
 **Why**
 
@@ -355,7 +380,7 @@ Green CI is necessary but not sufficient. The named failure mode is fix-the-symp
 
 **What to do**
 
-1. The verifier sub-agent runs the tests **in the worktree** before approving.
+1. The verifier sub-agent (verifier = a second agent whose only job is to check the first one's work) runs the tests **in the worktree** before approving.
 2. It confirms the fix scope — no unrelated changes, and tests pass locally.
 3. The implementer never marks itself done and must never merge; it only proposes.
 4. Watch the repeat-failure rate: the same job failing again within 48 hours means the cause was never found.
@@ -371,6 +396,8 @@ Green CI is necessary but not sufficient. The named failure mode is fix-the-symp
 
 Every sweeper PR carries a verifier line naming the tests it ran, and the number of tests in the repository never goes down across those diffs.
 
+> **One-line summary:** Green CI is not proof — a separate verifier must confirm the root cause is fixed and no tests were removed.
+
 ---
 
 ### Q3. One flaky test fails every third run and the loop keeps patching it — how do I stop it? [→ How the Loop Runs / Verification Strategy]
@@ -381,13 +408,13 @@ The same test alternates red and green with no code change. The sweeper opens a 
 
 **Why**
 
-Flake detection has a clear rule: if the same test fails then passes on retry with no code change, do not auto-fix. "Fighting flakes with retries" is its own failure mode, and each retry costs ~200k tokens.
+Flake detection has a clear rule (flaky test = a test that passes and fails randomly on the same code, usually from timing or shared state): if the same test fails then passes on retry with no code change, do not auto-fix. "Fighting flakes with retries" is its own failure mode, and each retry costs ~200k tokens.
 
 **What to do**
 
-1. Classify first: flake, real regression, or infrastructure.
+1. Classify first: flake, real regression (regression = code that used to work now breaks), or infrastructure.
 2. If it is a flake, add it to the Watch list and do **not** auto-fix.
-3. Quarantine or skip it with a ticket, so the noise has a named owner.
+3. Quarantine or skip it with a ticket (quarantine = mark the test as skipped-with-reason so it stops blocking CI), so the noise has a named owner.
 4. Escalate infrastructure failures — runner out of memory, registry down, missing secrets — instead of patching code.
 
 ```markdown
@@ -400,6 +427,8 @@ Flake detection has a clear rule: if the same test fails then passes on retry wi
 
 No flake-classified job has an open worktree or a PR. Review the Watch list count weekly — if it grows, you need quarantine rules, not more retries.
 
+> **One-line summary:** A flaky test is classified and quarantined, never auto-fixed — retries against randomness just burn tokens.
+
 ---
 
 ### Q4. The sweeper opened a PR touching 12 files on a branch I never named — how do I bound it? [→ Failure Modes & Mitigations / Human Handoff Points]
@@ -410,7 +439,7 @@ A PR against `main` from a branch named after the failing job, changing 12 files
 
 **Why**
 
-Two guards are missing. An explicit branch allowlist in the skill prevents the wrong-branch failure, and the human handoff rule for failures touching more than 5 files or core architecture catches the rest.
+Two guards are missing. An explicit branch allowlist (allowlist = the "white list" of branches the loop is permitted to touch; anything not listed is off-limits) in the skill prevents the wrong-branch failure, and the human handoff rule for failures touching more than 5 files or core architecture catches the rest.
 
 **What to do**
 
@@ -428,8 +457,9 @@ escalate: >5 files changed, core architecture, security tests, attempts exhauste
 
 Every open sweeper PR names a watched branch and touches 5 files or fewer. Anything larger should be sitting in the human queue rather than waiting in review.
 
----
+> **One-line summary:** Bound the sweeper with a branch allowlist plus a 5-file ceiling — anything bigger escalates to a human.
 
+---
 
 ## dependency-sweeper.md
 
@@ -437,7 +467,7 @@ Every open sweeper PR names a watched branch and touches 5 files or fewer. Anyth
 
 **What you see**
 
-You open the Dependabot page and count 40 alerts: a critical one in `lodash`, 30 patch bumps, and 9 major version jumps. The sweeper opens exactly one pull request — `lodash 4.17.20 → 4.17.21 (CVE-2023-XXXX, low)` — and leaves the other 39 sitting there. The state file shows one item in flight and one on hold:
+You open the Dependabot page and count 40 alerts: a critical one in `lodash`, 30 patch bumps (patch bump = an upgrade like 4.17.20 → 4.17.21 that only fixes bugs, no new features), and 9 major version jumps. The sweeper opens exactly one pull request — `lodash 4.17.20 → 4.17.21 (CVE-2023-XXXX, low)` — and leaves the other 39 sitting there. The state file shows one item in flight and one on hold:
 
 ```
 ## In-flight
@@ -448,7 +478,7 @@ You open the Dependabot page and count 40 alerts: a critical one in `lodash`, 30
 
 **Why**
 
-The sweeper is not a bulk updater on purpose. Only **low-risk CVEs with a patch-only fix inside the first 30 days** get automatic worktree + patch + verify treatment. Major version bumps and denylisted packages (`openssl`, auth, payments, infrastructure libraries) are escalated to a human instead. Patching everything at once means forty separate breaking changes landing in one week, and nobody can review forty diffs.
+The sweeper is not a bulk updater on purpose. Only **low-risk CVEs with a patch-only fix inside the first 30 days** get automatic worktree + patch + verify treatment. Major version bumps and denylisted packages (denylist = the "black list" of packages the loop is never allowed to patch; here `openssl`, auth, payments, infrastructure libraries) are escalated to a human instead. Patching everything at once means forty separate breaking changes landing in one week, and nobody can review forty diffs.
 
 **What to do**
 
@@ -462,6 +492,8 @@ The sweeper is not a bulk updater on purpose. Only **low-risk CVEs with a patch-
 **Verify**
 
 The "% of alerts resolved without a human" number should only be high for the low-risk bucket. Open the state file after a run: anything sitting under `Denylisted (human required)` should have a named human owner or a decision date, and the patch-only items should all show `verifier PASS` and a pull request number.
+
+> **One-line summary:** The sweeper is selective by design — it auto-patches only low-risk patch-only updates and hands majors and denylisted packages to a human.
 
 ---
 
@@ -486,6 +518,8 @@ Because "major" and "denylisted" are two separate escalation triggers, and both 
 
 Try the loop against a synthetic alert for `openssl 1.1 → 3.0`: no worktree is created, no pull request is opened, and the state file gains an entry under `## Denylisted (human required)` saying `waiting on human decision`. Re-run it a second time and confirm nothing is retried.
 
+> **One-line summary:** A denylist only protects you if code checks it before opening a worktree — documented-but-unenforced rules always slip through.
+
 ---
 
 ### Q3. The patch passed `npm test` and still broke the build after merge — how is that possible? [→ Verification Strategy]
@@ -496,7 +530,7 @@ A verified pull request lands. `npm test` was green in the sweeper's run. Twenty
 
 **Why**
 
-The rule that saves you here is that the verifier runs the **full** `npm ci && npm test`, not a subset. A clean install first (`npm ci`, not `npm install`) is what proves the lockfile actually resolves — a leftover `node_modules` from a previous state can hide a broken or missing package. The second half of the rule is that a dependency change often breaks the **build**, not the tests, so a test-only check would have passed anyway.
+The rule that saves you here is that the verifier runs the **full** `npm ci && npm test`, not a subset. A clean install first (`npm ci` = delete `node_modules` and install exactly what the lockfile says; `npm install` may resolve to newer versions) is what proves the lockfile actually resolves — a leftover `node_modules` from a previous state can hide a broken or missing package. The second half of the rule is that a dependency change often breaks the **build**, not the tests, so a test-only check would have passed anyway.
 
 **What to do**
 
@@ -514,6 +548,8 @@ The rule that saves you here is that the verifier runs the **full** `npm ci && n
 
 The success metric is "number of patches that broke the build — target: 0". Check it every week. If it is not zero, read the failing run: either the verifier command is not the full build, or it ran without a clean install.
 
+> **One-line summary:** Verification means full clean build plus tests — a test-only check on a dirty `node_modules` proves nothing.
+
 ---
 
 ### Q4. My dependency-sweeper bill jumped from near zero to thousands of tokens a day — where did it go? [→ Cost Profile]
@@ -521,6 +557,8 @@ The success metric is "number of patches that broke the build — target: 0". Ch
 **What you see**
 
 A quiet month of roughly 5k tokens a day, then a week at 90k per run. The daily total crosses the 500k suggested cap. Looking at the numbers, one patch-plus-verify cycle is the expensive part, and it runs for every single alert.
+
+How to read it: each row is one kind of run and what it costs in tokens. For instance, a run that only reads alerts ("Triage alerts") is ~20k, while one that actually patches and verifies ("Patch + verify") is ~150k — and that 150k repeats per alert.
 
 | Scenario | Tokens/run |
 |---|---|
@@ -543,6 +581,8 @@ Cost is not proportional to the size of the diff. Reading alerts is cheap (~20k)
 
 Run the cost command above for your real cadence and level, then compare one week against the 500k daily cap. If the average is above the cap, the batching rule above is not being applied — check how many separate pull requests one week produced.
 
+> **One-line summary:** The expensive part is the per-alert patch-and-verify cycle — batch non-urgent bumps weekly and match the cadence to the alert rate.
+
 ---
 
 ## pr-babysitter.md
@@ -551,7 +591,7 @@ Run the cost command above for your real cadence and level, then compare one wee
 
 **What you see**
 
-Twelve pull requests sit without review. At 09:00 the babysitter wakes up and, because all twelve are stale past the threshold, it posts the same gentle nudge on every one. By 09:05 the team channel has 27 notifications, and three people muted the bot. One developer replies "I said yesterday I would look at it after the release" — which is correct and was in the pull request description.
+Twelve pull requests sit without review. At 09:00 the babysitter wakes up and, because all twelve are stale past the threshold (stale = no activity for longer than the limit you set), it posts the same gentle nudge on every one. By 09:05 the team channel has 27 notifications, and three people muted the bot. One developer replies "I said yesterday I would look at it after the release" — which is correct and was in the pull request description.
 
 **Why**
 
@@ -568,6 +608,8 @@ Nudging is the correct action for a stale pull request, but nudging is only corr
 
 Pick one pull request that has been nudged today and let the loop run three more times. No new comment appears on it. Also confirm the state file line for it still reads `Loop action: Nudge comment sent. Waiting on review.` and does not accumulate repeats.
 
+> **One-line summary:** A nudge is right once — one per PR per day, label before comment, and never when a human already answered.
+
 ---
 
 ### Q2. The cost command says 200k tokens per fix attempt and my daily cap is 2M — one busy day blows it, doesn't it? [→ Cost Profile]
@@ -575,6 +617,8 @@ Pick one pull request that has been nudged today and let the loop run three more
 **What you see**
 
 Ten pull requests go red at 09:00 because one shared test fixture broke. The babysitter scans them, opens ten worktrees, runs implementer plus verifier on each. That is 10 × 200k = 2M tokens — the entire daily cap — spent on what is really one problem reported ten times.
+
+How to read it: each row is one level of activity and its cost per run. For instance, "No-op" must stay ~5k even on a busy repo, while "Fix attempt (L2)" is ~200k each time the loop opens a worktree and tries a fix.
 
 | Scenario | Tokens/run | Notes |
 |---|---|---|
@@ -596,6 +640,8 @@ The babysitter is the highest tier pattern in the set: cadence 5–15m, daily ca
 **Verify**
 
 Instrument the loop to log which scenario it took per run (no-op, watch + nudge, or fix attempt). A day with more than about ten L2 attempts is a red flag: either the cap is missing or something common is breaking every pull request at once.
+
+> **One-line summary:** Cap fix attempts per run and group PRs sharing one root cause — ten red PRs from one broken fixture should cost one fix, not ten.
 
 ---
 
@@ -626,6 +672,8 @@ Retrying is only correct up to a point. The rule is three attempts on the same p
 
 Force three rejections on a test pull request. The fourth attempt must not happen; the state file shows `attempts: 3` and an escalation entry, and `git worktree list` shows no leftover worktree from the failed attempts.
 
+> **One-line summary:** Three attempts, then stop and escalate — and the attempt count must live in the state file, not in the model's memory.
+
 ---
 
 ### Q4. The loop "fixed" a red CI by changing 12 files — that PR wasn't a CI fix at all [→ Human Handoff Points]
@@ -649,6 +697,8 @@ The babysitter is supposed to draft *small* fixes — the `minimal-fix` skill ex
 
 Feed the loop a deliberately broad "CI fix" target and confirm the answer is escalation, not a 12-file pull request. Check the verifier's own record: a PASS on a wide diff should be treated as a bug in the verifier, not a win.
 
+> **One-line summary:** Check the fix's size and sensitivity before writing any code — over 5 files or anything security-related goes straight to a human.
+
 ---
 
 ## changelog-drafter.md
@@ -661,7 +711,7 @@ Release prep starts. The draft `RELEASE_NOTES_DRAFT.md` is ready, and its summar
 
 **Why**
 
-Classification depends entirely on a *project conventions skill* that knows how your project separates breaking, feature, and fix. Without that, the drafter falls back on the pull request title and the commit text, and a breaking change titled "fix: correct response shape" is classified as a fix. The category counts in the state file are therefore accurate arithmetic over a wrong input.
+Classification depends entirely on a *project conventions skill* that knows how your project separates breaking, feature, and fix (breaking = a change that forces people using your code to update theirs). Without that, the drafter falls back on the pull request title and the commit text, and a breaking change titled "fix: correct response shape" is classified as a fix. The category counts in the state file are therefore accurate arithmetic over a wrong input.
 
 **What to do**
 
@@ -673,6 +723,8 @@ Classification depends entirely on a *project conventions skill* that knows how 
 **Verify**
 
 Count merged pull requests against draft entries (see Q2), then read every entry in the `Breaking` section and confirm each one really is breaking. The metric to watch is "% of draft entries that are correct (no rework)" — if that number drops after a release, the conventions skill needs updating.
+
+> **One-line summary:** Wrong categories come from missing project conventions — write the rules down and treat the counts as a checklist, not a verdict.
 
 ---
 
@@ -695,7 +747,7 @@ The draft itself reads as a clean, plausible document, so nothing looks broken. 
 
 **Why**
 
-The drafter collects merged pull requests and commits since the last tag, then groups them. Grouping is where entries disappear: several small pull requests folded into one bullet, a docs-only commit skipped, or a merge whose text was too thin to summarize. The arithmetic check exists precisely for this, and it has to be an explicit step rather than something the model does mentally while writing.
+The drafter collects merged pull requests and commits since the last tag (tag = a named checkpoint like v1.4.0 marking a release), then groups them. Grouping is where entries disappear: several small pull requests folded into one bullet, a docs-only commit skipped, or a merge whose text was too thin to summarize. The arithmetic check exists precisely for this, and it has to be an explicit step rather than something the model does mentally while writing.
 
 **What to do**
 
@@ -708,6 +760,8 @@ The drafter collects merged pull requests and commits since the last tag, then g
 
 Recompute the category totals from the draft text itself and compare against `Merged PRs: 42`. The two numbers must reconcile. A draft where the totals do not add up is a reject, regardless of how good it reads.
 
+> **One-line summary:** Run the arithmetic check — if category counts do not add up to the merged PR count, the draft is rejected, not published.
+
 ---
 
 ### Q3. Will it just publish to GitHub Releases and update `CHANGELOG.md` on its own? [→ Verification Strategy]
@@ -718,7 +772,7 @@ You were expecting a draft. Instead the tag exists, the GitHub release page is l
 
 **Why**
 
-No. This pattern is **level 1, draft only, and no auto-publish** — it is a read-mostly loop that is safe to run alongside other loops for exactly that reason. The draft lands in `RELEASE_NOTES_DRAFT.md` and waits. Publishing, updating `CHANGELOG.md`, choosing the version number, and highlighting breaking changes are all human handoff points. If a run ever published on its own, the human gate is not wired in.
+No. This pattern is **level 1, draft only, and no auto-publish** — it is a read-mostly loop that is safe to run alongside other loops for exactly that reason. The draft lands in `RELEASE_NOTES_DRAFT.md` and waits. Publishing, updating `CHANGELOG.md`, choosing the version number, and highlighting breaking changes are all human handoff points. If a run ever published on its own, the human gate (the approval checkpoint a person must pass before anything goes public) is not wired in.
 
 **What to do**
 
@@ -733,6 +787,8 @@ No. This pattern is **level 1, draft only, and no auto-publish** — it is a rea
 
 Run the loop and confirm that afterwards the only new file is `RELEASE_NOTES_DRAFT.md` and the state file says `awaiting human approval`. If a release or a `CHANGELOG.md` commit appears without a human action, the no-auto-publish gate is broken.
 
+> **One-line summary:** The drafter only writes a draft file and waits — a human, never the loop, publishes and picks the version number.
+
 ---
 
 ## post-merge-cleanup.md
@@ -741,7 +797,7 @@ Run the loop and confirm that afterwards the only new file is `RELEASE_NOTES_DRA
 
 **What you see**
 
-PR #1255 merged a feature and left three `TODO`s in `auth/service.py`, one of them reading `# TODO: remove after migration flag ships`. The cleanup loop drafted a patch, the verifier passed it, and the TODO was deleted. The migration flag shipped four weeks later, and from that day the old code path was unreferenced but still shipping — the flag now flips to a path that was already partially deleted.
+PR #1255 merged a feature and left three `TODO`s in `auth/service.py`, one of them reading `# TODO: remove after migration flag ships` (a TODO = a note in code saying "this still needs doing"; a migration flag = a settings switch that turns new code on gradually). The cleanup loop drafted a patch, the verifier passed it, and the TODO was deleted. The migration flag shipped four weeks later, and from that day the old code path was unreferenced but still shipping — the flag now flips to a path that was already partially deleted.
 
 **Why**
 
@@ -763,6 +819,8 @@ A `TODO` is a comment, but comments often document a condition — *after X happ
 
 Every TODO removal in a merged cleanup pull request should be readable as a no-op for behavior. Track "% of cleanups merged without rework" and "new TODO/FIXME count per day" — the second should trend down, and rework should stay near zero.
 
+> **One-line summary:** A TODO can be the only record of a future condition — delete it only when its context is clear, else backlog it.
+
 ---
 
 ### Q2. The loop pushed a cleanup PR at 23:00 the night before a release — why does the time matter? [→ Scheduling]
@@ -773,7 +831,7 @@ Release is at 09:00 the next morning. At 23:00 the cleanup loop opened a pull re
 
 **Why**
 
-This pattern is scheduled `1d–6h` and **only in off-peak hours** — for example 22:00 or weekends — and it must not run concurrently with the PR babysitter. Timing is not a nicety here: the risk of cleanup work is not that it is wrong, it is that it lands at the moment when the smallest possible reviewer attention is available. A cleanup during a release window is a merge into a moving target.
+This pattern is scheduled `1d–6h` and **only in off-peak hours** (off-peak = times when almost nobody is around to review, like nights and weekends) — for example 22:00 or weekends — and it must not run concurrently with the PR babysitter. Timing is not a nicety here: the risk of cleanup work is not that it is wrong, it is that it lands at the moment when the smallest possible reviewer attention is available. A cleanup during a release window is a merge into a moving target.
 
 **What to do**
 
@@ -786,17 +844,19 @@ This pattern is scheduled `1d–6h` and **only in off-peak hours** — for examp
 
 Check the `Last run` timestamp in `post-merge-state.md` on a few mornings. It should land in the off-peak window every time, and never on the evening before a release. The loop also records a `Last run` line, so a daytime timestamp is the visible proof of a misconfiguration.
 
+> **One-line summary:** Cleanup runs off-peak and never near a release — bad timing turns harmless cleanup into an unreviewed merge.
+
 ---
 
 ### Q3. It deleted a branch someone was still working on — how do I stop that? [→ Human Handoff Points]
 
 **What you see**
 
-`fix/ci-auth-refresh` is still listed as a suggested delete, but three open pull requests are based on it. Deleting it breaks their diffs and makes the next rebase painful. The cleanup loop reads merged pull requests plus `git log`, sees a branch that has not been touched since its merge, and concludes it is leftover.
+`fix/ci-auth-refresh` is still listed as a suggested delete, but three open pull requests are based on it. Deleting it breaks their diffs and makes the next rebase (rebase = replaying your commits on top of a new base; painful when the base branch is gone) painful. The cleanup loop reads merged pull requests plus `git log`, sees a branch that has not been touched since its merge, and concludes it is leftover.
 
 **Why**
 
-Branch age is a weak signal. A branch can look stale for a week and still be the base of active work — especially when people batch their work and merge later. Deleting dead code that is not *certain* to be unused, and force-deleting any branch, are both explicit human handoff points in the source file.
+Branch age is a weak signal. A branch can look stale for a week and still be the base of active work — especially when people batch their work and merge later. Deleting dead code that is not *certain* to be unused, and force-deleting any branch (force-delete = `git push --force`-style removal that ignores protections and leaves no backup), are both explicit human handoff points in the source file.
 
 **What to do**
 
@@ -808,6 +868,8 @@ Branch age is a weak signal. A branch can look stale for a week and still be the
 **Verify**
 
 Create a test branch that was merged once but has an open pull request based on it. Run the loop: the entry must stay in the backlog as a suggestion and must not be marked resolved. The resolved list only gains an entry after a person confirms the deletion.
+
+> **One-line summary:** The loop only *suggests* branch deletion — anything force-deleted, or with open PRs based on it, goes to a human.
 
 ---
 

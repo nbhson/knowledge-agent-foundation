@@ -2,13 +2,17 @@
 
 If a question is unclear, read the section in `../README.md` (named in brackets).
 
+> How to read this file: compaction = shrinking a full context window (e.g. 188k tokens) into a smaller one that still keeps the facts the agent needs. Each question is a failure caused by shrinking the wrong things.
+
 ---
 
 ## Q1. My agent died at turn 47 with a context-length error after 20 minutes of work. Why not just drop the oldest messages? [→ §2 Trigger Policy]
 
+This section explains why "drop the oldest" and "summarize everything" both fail, and when to trigger compaction instead.
+
 **What you see**
 
-Turn 47. The run has done 31 tool calls, rewritten four files, run two test suites, and buried one confusing stack trace in the middle. Context is at 96% of the budget. The next tool result is 4,000 tokens and it does not fit. The user sees "something went wrong" after 20 minutes of work.
+Turn 47. The run has done 31 tool calls, rewritten four files, run two test suites, and buried one confusing stack trace in the middle. Context is at 96% of the budget (the token budget = the maximum text the model can hold; a token ≈ ¾ of a word). The next tool result is 4,000 tokens and it does not fit. The user sees "something went wrong" after 20 minutes of work.
 
 **Why**
 
@@ -21,7 +25,7 @@ Trigger on measured token counts, at 70% used, not 90%. The arithmetic of a 200k
 1. Add a turn-count backstop for when token estimates are unreliable.
 2. Reserve 30% headroom so the next 2–3 tool results always fit.
 3. Never let the model decide. Ask it "should we compact?" while it holds 195k tokens and it answers "no, I'm fine".
-4. Trigger at a task seam when the plan has one, instead of in the middle of a task's reasoning.
+4. Trigger at a task seam when the plan has one, instead of in the middle of a task's reasoning (a seam = a natural boundary between two tasks).
 
 > 📄 **Example code:** [`examples/01-q1-my-agent-died-at-turn-47-with.ts`](examples/01-q1-my-agent-died-at-turn-47-with.ts)
 
@@ -29,9 +33,13 @@ Trigger on measured token counts, at 70% used, not 90%. The arithmetic of a 200k
 
 Run a long recorded trajectory and confirm the run passes turn 47 without a context-length error, and that no compaction ever fires above 70%. Track the compaction ratio (`tokens_before ÷ tokens_after`); alert when it drops below 1.5 on a large context, because that means the summarizer is barely shrinking anything.
 
+> **One-line summary:** Trigger compaction at 70% of the budget with headroom in reserve — dropping oldest messages or summarizing everything loses exactly the facts the agent still needs.
+
 ---
 
 ## Q2. Right after compaction the agent re-reads files it already edited and undoes its own changes. What did I miss? [→ §3 The Pin Set, §5 The Resume Block]
+
+This section explains the two pieces that keep an agent on track after compaction: a pin set and a fixed-format resume block.
 
 **What you see**
 
@@ -39,7 +47,7 @@ Compaction runs, the transcript shrinks from 188k to 74k tokens, and the run con
 
 **Why**
 
-Two pieces were missing. Without a pin set, the task specification, the invariants, the currently edited files, and the last user instruction are all just old messages competing to be evicted. Without a resume block, the agent wakes up with no state, so it re-derives everything from scratch and the bill triples.
+Two pieces were missing. Without a pin set (the list of messages that are never dropped), the task specification, the invariants (rules that must always hold), the currently edited files, and the last user instruction are all just old messages competing to be evicted. Without a resume block (a short state note left after compaction), the agent wakes up with no state, so it re-derives everything from scratch and the bill triples.
 
 **What to do**
 
@@ -56,11 +64,15 @@ Invariants: [no new deps][JWT v1 must validate]
 
 **Verify**
 
-Assert three things on every compaction: no pinned span id appears in the dropped list, `totalTokens(kept) ≤ budget`, and the resume block is under 300 tokens. Derive the pin set from the plan and the pending gate list, never by hand — and make a resolved loop's failure signal become evictable again, or your pin set grows until it eats the budget on its own.
+Assert three things on every compaction: no pinned span id appears in the dropped list (a span = one message or tool result), `totalTokens(kept) ≤ budget`, and the resume block is under 300 tokens. Derive the pin set from the plan and the pending gate list, never by hand — and make a resolved loop's failure signal become evictable again, or your pin set grows until it eats the budget on its own.
+
+> **One-line summary:** Pin the task-defining facts and leave a fixed-key resume block under 300 tokens — otherwise the agent wakes up stateless and undoes its own work.
 
 ---
 
 ## Q3. The agent forgot a rule I gave it in turn 12 — "no new runtime dependencies" — and added a package. How does that happen? [→ §4 Utility-Based Pruning]
+
+This section explains why "oldest first" eviction throws away the wrong things, and how scoring by usefulness fixes it.
 
 **What you see**
 
@@ -68,11 +80,11 @@ Turn 12 carried an 80-token constraint: `no new deps`. Turn 44 the agent install
 
 **Why**
 
-Oldest-first eviction assumes value decays with age. In an agent run it does not. That order throws away one irrelevant span and one fatal one, and keeps three recent directory listings. Value lives in the plan graph, not in the message list: a span that feeds a *pending* task is gold, a span that feeds a *finished* task is dead weight.
+Oldest-first eviction (FIFO = first in, first out) assumes value decays with age. In an agent run it does not. That order throws away one irrelevant span (one message or tool result) and one fatal one, and keeps three recent directory listings. Value lives in the plan graph, not in the message list: a span that feeds a *pending* task is gold, a span that feeds a *finished* task is dead weight.
 
 **What to do**
 
-Score each span, evict ascending score, never crossing the budget. Weight recency at only 0.30 so it cannot outvote structure.
+Score each span, evict ascending score (lowest score first), never crossing the budget. Weight recency at only 0.30 so it cannot outvote structure.
 
 ```text
 utility = 0.30·recency + 0.40·structural_reachability + 0.30·failure_signal
@@ -81,15 +93,21 @@ reachability = 1.0  if the span feeds a PENDING plan task
                 0.4  otherwise (parallel work or unknown)
 ```
 
+Glosses: recency = how new the span is. Structural reachability = will a still-unfinished task need this span? Failure signal = does the span contain an unresolved error?
+
 Two refinements pay for themselves immediately. Collapse three or more identical retries into one line — six failing `npm test` runs become `retried 6×, last_err: E2BIG @ test_refresh_rotation`, 18k tokens down to 24, with the error preserved verbatim. And summarize a finished branch in one line instead of dropping it: `branch t3 (vector cache) rejected: adds 400ms p99`. That one line stops the agent from re-exploring a road it already drove.
 
 **Verify**
 
 Assert no FIFO ordering in code review, and check that a span carrying the active loop's error line scores highest among its peers. Prune first, summarize second — pruning dead spans is free and lossless, so summarizing before pruning costs roughly 40% more and keeps less.
 
+> **One-line summary:** Evict by usefulness score, not by age — a span feeding a pending task outranks a newer directory listing, and pruning dead spans beats summarizing them.
+
 ---
 
 ## Q4. The run finished green, but the code quietly contradicts a decision the user agreed to 40 minutes ago. What went wrong? [→ §6 The Compaction↔Memory Contract]
+
+This section explains the boundary between short-lived context and durable memory, and why persisting before evicting is non-negotiable.
 
 **What you see**
 
@@ -111,13 +129,19 @@ Ask one question to sort the two sides: *will this still be needed after this ru
 5. replace evicted spans with the resume block
 ```
 
+Glosses: `fsync: true` = force the write physically to disk before continuing. `resumeHash` = a fingerprint of the resume block, for the audit log.
+
 **Verify**
 
 Write the test that matters most: point the harness at a memory store whose `persist()` always throws, run a compaction over 40 real messages, and assert it rejects *and* that all 40 spans are still present. Then confirm every run's audit record contains `keptIds`, `evictedIds`, `ratio`, and `resumeHash`. A harness where you cannot reconstruct what the model lost is a harness you cannot debug.
 
+> **One-line summary:** Anything needed after this run must be written to durable memory before eviction — and if that write fails, the compaction aborts, full stop.
+
 ---
 
 ## Q5. My resume block reads well and looks informative — and the agent still gets lost. How do I test it honestly? [→ §7 Compaction-Safe Prompts, §9 Testing Compaction]
+
+This section explains why fluent summaries mislead, and how to test a resume block by cold-start performance rather than by reading it.
 
 **What you see**
 
@@ -139,6 +163,8 @@ A fluent summary creates a false impression of coverage — models often do *wor
 **Verify**
 
 Run that test plus the invariant checks on every recorded trajectory that hit a compaction, in nightly CI. Real trajectories catch the edge cases synthetic ones never do. Finally, track the post-compaction eval score against non-compacted runs in SQL — a specific run that fails only when a compaction happened right before the failure is the strongest possible signal that your pin set is missing something.
+
+> **One-line summary:** Test a resume block by giving a fresh agent only that block and checking its next action — and keep numbers, paths, and error lines verbatim, because paraphrase is where precision dies.
 
 ---
 

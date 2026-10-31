@@ -1,6 +1,6 @@
 # ❓ FAQ — Jev Không Làm Được Gì, Và Đo Thế Nào Trước Khi Lên Production
 
-Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
+Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông. Giải nghĩa nhanh: **state** = dữ liệu đầu vào bạn gửi cho Jev; **nhãn vàng (gold label)** = đáp án đúng do người có chuyên môn chấm; **calibration** = độ khớp giữa xác suất nói ra và tỉ lệ đúng thật; **production** = môi trường chạy thật phục vụ người dùng.
 
 ---
 
@@ -25,7 +25,9 @@ Bạn hỏi Jev đọc nội dung một tệp để tóm tắt, hoặc hỏi nó
 
 **Kiểm tra**
 
-Duyệt 30 tác vụ trong backlog, tự đánh dấu tác vụ nào cần văn bản, tác vụ nào cần đọc tệp, tác vụ nào cần tính toán. Nếu còn tác vụ loại đó trong danh sách gọi Jev, hãy dời chúng sang đúng công cụ.
+Duyệt 30 tác vụ trong backlog, tự đánh dấu tác vụ nào cần văn bản, tác vụ nào cần đọc tệp, tác vụ nào cần tính toán. Nếu còn tác vụ loại đó trong danh sách gọi Jev, hãy dời chúng sang đúng công cụ. (Backlog = danh sách việc chờ xử lý; hàm bao bọc (wrapper) = hàm bọc ngoài để kiểm tra điều kiện trước khi cho gọi.)
+
+> **Tóm gọn 1 câu:** Jev không sinh văn bản, không đọc tệp, không xử lý ảnh và không tính toán — nếu giao nhầm việc, nó vẫn trả kết quả "hợp lệ" nhưng vô dụng và không báo lỗi, nên phải chặn từ đầu bằng hàm bao bọc.
 
 ---
 
@@ -48,7 +50,9 @@ Bạn đang gộp hai trục độc lập. **Hình dạng đúng** nghĩa là k�
 
 **Kiểm tra**
 
-Tính độ đúng riêng cho từng nhãn trên bộ dữ liệu kiểm tra. Nếu một nhãn có độ đúng thấp bất thường, nguyên nhân gần như luôn là mô tả nhãn chồng lấn, không phải mô hình hỏng.
+Tính độ đúng riêng cho từng nhãn trên bộ dữ liệu kiểm tra. Nếu một nhãn có độ đúng thấp bất thường, nguyên nhân gần như luôn là mô tả nhãn chồng lấn, không phải mô hình hỏng. (Chồng lấn (overlap) = hai nhãn có ranh giới mơ hồ, một dữ liệu có thể thuộc cả hai.)
+
+> **Tóm gọn 1 câu:** Type-safety đảm bảo kết quả luôn nằm trong danh sách, không đảm bảo chọn đúng — độ đúng phải đo bằng dữ liệu thật, và nhãn hay sai thường là do mô tả chồng lấn.
 
 ---
 
@@ -78,9 +82,13 @@ Các đại lượng nên theo dõi:
 | Tỉ lệ gần hòa | Bao nhiêu % có biên độ mỏng? |
 | Độ phủ và độ chính xác | Ở ngưỡng t, bao nhiêu % tự xử lý và đúng bao nhiêu? |
 
+Cách đọc bảng trên: cột **Đại lượng** là chỉ số cần theo dõi; cột **Trả lời câu hỏi** giải thích chỉ số đó cho biết điều gì. Ví dụ, hàng "Độ phủ và độ chính xác" nghĩa là: tại ngưỡng t, đo hai con số — bao nhiêu phần trăm được xử lý tự động (độ phủ) và trong số đó đúng bao nhiêu (độ chính xác); cần cả hai, không được chọn một. (**Sai số hiệu chỉnh (ECE)** = khoảng cách trung bình giữa xác suất nói ra và tỉ lệ đúng đo được; **biên độ** = chênh lệch giữa hai lựa chọn đứng đầu.)
+
 **Kiểm tra**
 
 Ngưỡng trong môi trường thật phải bằng hoặc cao hơn ngưỡng bạn chọn sau khi đo. Nếu bạn phải đặt nhỏ hơn để "chạy cho có", hãy ghi lại lý do và kèm cờ cảnh báo.
+
+> **Tóm gọn 1 câu:** Con số 80% là trung bình trên tập khác — hãy đo trên dữ liệu có nhãn vàng của chính bạn, với tập giữ lại riêng để kiểm tra, trước khi lên production.
 
 ---
 
@@ -103,11 +111,13 @@ Con số mặc định là **điểm khởi đầu, không phải giá trị đ�
 
 > 📄 **Code ví dụ:** [`examples/02-q4-nguong-0-6-va-0-8-mac.py`](examples/02-q4-nguong-0-6-va-0-8-mac.py)
 
-Mỗi lần tăng ngưỡng, bạn đánh đổi: ít chuyển giao hơn và chuyển giao đúng hơn, nhưng độ phủ tự xử lý giảm. Cả hai trục đều phải đo, không được bỏ cái nào.
+Mỗi lần tăng ngưỡng, bạn đánh đổi: ít chuyển giao hơn và chuyển giao đúng hơn, nhưng độ phủ tự xử lý giảm. Cả hai trục đều phải đo, không được bỏ cái nào. (Chuyển giao (handoff) = nhường việc cho người hoặc model khác.)
 
 **Kiểm tra**
 
 Trước mỗi lần đổi ngưỡng, chạy lại báo cáo đo trên tập kiểm tra và lưu lại **cả hai** con số: độ chính xác và độ phủ. Một con số đơn lẻ không đủ để ra quyết định.
+
+> **Tóm gọn 1 câu:** 0.6 và 0.8 chỉ là điểm khởi đầu — chọn ngưỡng thấp nhất vẫn đạt độ chính xác yêu cầu, đặt riêng theo từng câu hỏi, và luôn đo kèm cả độ chính xác lẫn độ phủ.
 
 ---
 
@@ -133,7 +143,9 @@ Nhật ký quyết định chỉ có giá trị khi nó **tái lập được m�
 
 **Kiểm tra**
 
-Chọn ngẫu nhiên 10 dòng nhật ký và trả lời ba câu: ca này dùng mã yêu cầu nào, ngưỡng nào đã áp dụng, hành động là gì. Nếu phải mở dữ liệu đầu vào mới trả lời được, nhật ký của bạn đang thiếu trường.
+Chọn ngẫu nhiên 10 dòng nhật ký và trả lời ba câu: ca này dùng mã yêu cầu nào, ngưỡng nào đã áp dụng, hành động là gì. Nếu phải mở dữ liệu đầu vào mới trả lời được, nhật ký của bạn đang thiếu trường. (Băm (hash) = biến dữ liệu thành chuỗi không đọc ngược lại được; che (redact) = xóa/che thông tin nhạy cảm.)
+
+> **Tóm gọn 1 câu:** Ghi đủ chín trường cho mỗi quyết định để tái lập được ca và nối xác suất với kết quả thật — nhưng không bao giờ ghi dữ liệu đầu vào thô vì chứa thông tin cá nhân.
 
 ---
 

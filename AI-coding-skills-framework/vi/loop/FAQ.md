@@ -4,6 +4,8 @@ Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
 Từ viết tắt dùng trong file: **harness** = môi trường một agent chạy (công cụ, ngữ cảnh, quyền); **prompt** = câu lệnh bạn gõ; **CI** = hệ thống kiểm tra tự động khi đẩy code; **L1/L2/L3** = ba mức tự chủ của loop; **triage** = bước xếp hạng việc theo mức ưu tiên.
 
+Giải nghĩa thêm: **state** = file ghi lại loop đã làm gì để lần sau nhớ; **scheduler/cron** = trình hẹn giờ chạy việc theo lịch; **sub-agent** = agent nhỏ được agent chính gọi ra; **token** = đơn vị tính chữ model đọc/ghi, cũng là đơn vị tính tiền; **benchmark SWE-bench** = bộ đề chuẩn để chấm khả năng sửa code của model.
+
 ---
 
 ## Q1. "Loop" trong AI coding nghĩa là gì, khác gõ prompt thường ở chỗ nào? [→ Câu Chuyện Mở Đầu + Tổng Quan]
@@ -35,6 +37,8 @@ loop   : harness + lịch chạy + trạng thái + chuỗi kiểm chứng
 
 Đóng hết phiên chat rồi chạy loop lần nữa: nó phải biết đã làm gì, không hỏi lại từ đầu.
 
+> **Tóm gọn 1 câu:** Loop là dây chuyền có lịch chạy, trạng thái và chuỗi kiểm chứng — khác gõ prompt ở chỗ nó nhớ việc đã làm giữa các lần chạy, không cần bạn đứng nếm thử từng lượt.
+
 ---
 
 ## Q2. Loop khác harness khác chỗ nào — tôi đang xài harness, có cần thêm loop không? [→ Phân biệt quan trọng]
@@ -54,6 +58,8 @@ Harness trả lời câu hỏi "một agent chạy được những gì và đư
 | Agent giỏi một việc | Chuỗi kiểm chứng: người viết tách khỏi người duyệt |
 | Bạn ngồi quyết định | Cổng duyệt của người ở đúng chỗ, ngân sách, nút dừng |
 
+Cách đọc bảng này: cột trái là những gì harness đã cho bạn, cột phải là thứ còn thiếu khi muốn loop tự chạy. Ví dụ, harness cho bạn "công cụ, quyền, sandbox" nhưng không có lịch chạy định kỳ — đó là việc của loop.
+
 **Làm gì**
 
 1. Nếu bạn vẫn phải ngồi gõ prompt mỗi sáng và muốn hệ thống tự phát hiện việc — bạn cần loop.
@@ -64,6 +70,8 @@ Harness trả lời câu hỏi "một agent chạy được những gì và đư
 **Kiểm tra**
 
 Viết một câu: "Nếu tôi không ngồi trước máy, việc này có tự chạy không?" Trả lời không thì bạn đang dùng harness, chưa có loop.
+
+> **Tóm gọn 1 câu:** Harness là môi trường cho một agent chạy một phiên; loop là lớp chồng lên trên thêm lịch chạy, trạng thái bền vững và chuỗi kiểm chứng — có harness rồi vẫn cần loop nếu muốn việc tự chạy khi bạn vắng mặt.
 
 ---
 
@@ -94,6 +102,8 @@ L1 Báo cáo ──► L2 Có người duyệt ──► L3 Không cần ngườ
 **Kiểm tra**
 
 Sau một tuần ở L1, bạn phải trả lời được: loop xếp hạng sai bao nhiêu việc? Nếu không trả lời được, chưa được lên L2.
+
+> **Tóm gọn 1 câu:** Đừng bật L3 ngay — đi từng bậc: L1 một tuần để đo độ chính xác của triage, L2 khi số đó chấp nhận được, L3 chỉ cho việc nhàm chán có mẫu lệnh rõ và danh sách cấm tuyệt đối.
 
 ---
 
@@ -129,6 +139,8 @@ Bước 7  07-tools      — dựng khung, chấm điểm
 
 Sau hai tuần bạn phải trả lời được: loop chạy lúc mấy giờ, báo cáo gì, tốn bao nhiêu token, dừng bằng cách nào. Trả lời được cả bốn thì mới sang loop thứ hai.
 
+> **Tóm gọn 1 câu:** Bắt đầu từ Daily Triage ở mức L1 — rẻ, nhanh, nhìn thấy kết quả — đi theo lộ trình 7 bước trong README, và chỉ mở rộng loop thứ hai khi bạn trả lời được 4 câu: chạy lúc nào, báo gì, tốn bao nhiêu, dừng thế nào.
+
 ---
 
 ## Q5. Tin bằng chứng nào rằng loop này đáng làm, không phải chỉ là thời thơm? [→ Tại Sao Loop Engineering Quan Trọng]
@@ -153,6 +165,8 @@ Hai con số đo tác dụng: agent có vòng lặp phản hồi có cấu trúc
 **Kiểm tra**
 
 Sau hai tuần, bạn phải có bảng so sánh trước/sau về số vòng lặp lại, số việc triage sai, và tổng token đã dùng.
+
+> **Tóm gọn 1 câu:** Bằng chứng nằm ở ba con số: loop có cấu trúc giảm 52% lỗi lặp lại, tăng 38% chất lượng code, và repo tham chiếu đạt 5.5k sao trong 6 tháng — hãy đo trước/sau trên chính repo của bạn để xác nhận nó đáng làm.
 
 ---
 

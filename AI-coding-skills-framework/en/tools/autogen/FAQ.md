@@ -20,12 +20,14 @@ They solve three different shapes of the same problem, and the shape is the deci
 | Each worker has one fixed job | CrewAI | `Agent(role=..., goal=...)` + `Task` |
 | The flow has branches and loops | LangGraph | `StateGraph` + `add_conditional_edges` |
 
+> **How to read this table:** **Shape** = how your problem naturally looks. **Framework** = the tool that fits that shape. **You get** = the main mechanism. For example, if your agents need to debate back and forth until they converge, AutoGen's `GroupChat` (a moderated group conversation) fits; if the flow is a fixed checklist, none of them are needed — a plain script is cheaper.
+
 AutoGen's core idea is a **conversation**. `User → UserProxyAgent → AssistantAgent (calls tool) → UserProxyAgent (runs code) → AssistantAgent` — agents exchange messages until someone replies to the user. That is the right fit when the number of steps is not known in advance, for example a critic that keeps sending work back to a coder. It maps straight onto `harness/09-multi-agent`.
 
 **What to do**
 
 1. Count your steps before writing code. Fixed order, known count → do not use a conversation framework; a linear pipeline is easier to debug and cheaper.
-2. If you must have open-ended back-and-forth (plan → code → review → fix → review), start AutoGen at the smallest shape: one `UserProxyAgent` + one `AssistantAgent`, then add a `Planner` and a `Critic` as plain `AssistantAgent` objects with a `system_message`.
+2. If you must have open-ended back-and-forth (plan → code → review → fix → review), start AutoGen at the smallest shape: one `UserProxyAgent` + one `AssistantAgent`, then add a `Planner` and a `Critic` as plain `AssistantAgent` objects with a `system_message` (*system_message = the standing instructions each agent reads before every reply*).
 3. Reach for `GroupChat` only after two agents already work. The manager is a model deciding who speaks — one more model call per round.
 4. Read `HARNESS_ENGINEERING.md` section 9.1 first. The AutoGen sample there is already written for this repo, and copying a working pair beats assembling your own.
 
@@ -33,17 +35,19 @@ AutoGen's core idea is a **conversation**. `User → UserProxyAgent → Assistan
 
 Run the two-agent pair on one tiny task ("write a function that reverses a string"). You should see exactly one tool call, one code execution, and one final reply to the user. If the transcript shows more than a handful of messages, your agents are negotiating instead of working.
 
+> **One-line summary:** Pick by shape — conversations that need to argue = AutoGen; fixed roles = CrewAI; branches and loops = LangGraph; a fixed pipeline needs none of them.
+
 ---
 
 ## Q2. The agents talk to each other forever and my bill goes up — how do I stop it? [→ GroupChat — Multiple Agents]
 
 **What you see**
 
-A run that was supposed to take 30 seconds reaches round 14. The planner asks for a plan, the coder writes code, the critic finds a nit, the coder "fixes" it, the critic finds another nit. `planner` and `coder` keep trading the same two sentences. You kill the process and find `max_round=20` in your `GroupChat` — you were one step from the ceiling you set yourself, and you never noticed the pair had deadlocked.
+A run that was supposed to take 30 seconds reaches round 14. The planner asks for a plan, the coder writes code, the critic finds a nit, the coder "fixes" it, the critic finds another nit. `planner` and `coder` keep trading the same two sentences. You kill the process and find `max_round=20` in your `GroupChat` — you were one step from the ceiling you set yourself, and you never noticed the pair had deadlocked (*deadlock = two agents endlessly answering each other without progress*).
 
 **Why**
 
-A conversation has no natural end. Two caps exist and you must set both. `max_round=20` in `GroupChat` is the hard ceiling on **group rounds**. `max_consecutive_auto_reply=10` on `UserProxyAgent` is the cap on **one agent replying repeatedly without a human**. If neither is set, an "auto" speaker selection can pick the same pair forever, because from the manager's point of view every message looks like forward progress.
+A conversation has no natural end. Two caps exist and you must set both. `max_round=20` in `GroupChat` is the hard ceiling on **group rounds** (*round = one pass where each agent speaks once*). `max_consecutive_auto_reply=10` on `UserProxyAgent` is the cap on **one agent replying repeatedly without a human**. If neither is set, an "auto" speaker selection can pick the same pair forever, because from the manager's point of view every message looks like forward progress.
 
 **What to do**
 
@@ -51,13 +55,15 @@ A conversation has no natural end. Two caps exist and you must set both. `max_ro
 2. Give the critic a stopping condition in its `system_message`: "approve when the only remaining notes are stylistic". A critic with no exit criteria never approves.
 3. Make the coder answer only concrete objections. If its reply starts with "You're right, I'll fix", the loop is healthy; if it rewrites the same file with the same content, break the loop.
 4. Add a repeat detector on the last message of each agent. Two identical messages in a row → force `END`.
-5. If you use `speaker_selection_method`, `"auto"` is a model call per round. `"round_robin"` is free and predictable — use it while debugging.
+5. If you use `speaker_selection_method`, `"auto"` is a model call per round. `"round_robin"` is free and predictable — use it while debugging (*round_robin = agents take turns in a fixed order, like dealing cards*).
 
 > 📄 **Example code:** [`examples/01-q2-the-agents-talk-to-each-other-forever.py`](examples/01-q2-the-agents-talk-to-each-other-forever.py)
 
 **Verify**
 
 Run the same task three times and compare round counts. If they differ by more than two rounds, the run is not deterministic — pin the model and the speaker selection method. No single run should ever reach `max_round`.
+
+> **One-line summary:** Cap both `max_round` and consecutive auto-replies, give the critic an exit condition, and detect repeated messages — or the conversation never ends and never stops billing.
 
 ---
 
@@ -77,6 +83,8 @@ You copy the sample from `HARNESS_ENGINEERING.md`, it runs the first task perfec
 | `"TERMINATE"` | stops only to ask confirmation | production, migrations, anything destructive |
 | `"ALWAYS"` | asks before every step | learning, first runs |
 
+> **How to read this table:** **Value** = the setting you write in code. **Behaviour** = what the agent does. **Use for** = the situation it's safe in. For example, `"NEVER"` = the agent never stops to ask you anything — fine in a scratch folder, dangerous in your real repo.
+
 `"NEVER"` plus `code_execution_config={"work_dir": "coding"}` gives the agent a shell and a writable folder with no human in the path. That is a fully automatic code writer. It is fine for a scratch directory and dangerous everywhere else, because the agent has no way to ask "are you sure?".
 
 **What to do**
@@ -92,6 +100,8 @@ You copy the sample from `HARNESS_ENGINEERING.md`, it runs the first task perfec
 **Verify**
 
 Run one sensitive task and confirm the process stops and waits for you. If it never pauses, `human_input_mode` is `"NEVER"` and your run is unattended — change it before proceeding.
+
+> **One-line summary:** `"NEVER"` means "never ask a human" — keep it off for anything that writes real files, and start on `"ALWAYS"` or `"TERMINATE"`.
 
 ---
 
@@ -117,6 +127,8 @@ In a conversation framework the **whole message history is resent on every model
 
 Log input and output token counts per call for one run. Cost per round should be visible as a rising line. If a single call is more than 3× the median, the transcript has grown past what your model window needs and the fix is fewer rounds, not a bigger context window.
 
+> **One-line summary:** Multi-agent conversations resend the whole history on every call — cost grows with rounds, so cut rounds and short personas first.
+
 ---
 
 **MAF new:** https://github.com/microsoft/agent-framework
@@ -125,7 +137,9 @@ Log input and output token counts per call for one run. Cost per round should be
 
 ## ⚠️ Update 10/2026: AutoGen → Microsoft Agent Framework (MAF)
 
-AutoGen has been **archived** and replaced by **Microsoft Agent Framework (MAF)**:
+This section is the headline news for AutoGen users: the library you are reading about has been retired and replaced.
+
+AutoGen has been **archived** (*archived = frozen by Microsoft; no bug fixes, no new features*) and replaced by **Microsoft Agent Framework (MAF)**:
 - AutoGen repo archived — no further development
 - MAF = unification of AutoGen + Semantic Kernel
 - Completely new API: `agents/`, no more `ConversableAgent`
@@ -134,5 +148,7 @@ AutoGen has been **archived** and replaced by **Microsoft Agent Framework (MAF)*
 
 **Migrate your project:** https://learn.microsoft.com/en-us/agent-framework/migration-guide/from-autogen/
 **MAF new:** https://github.com/microsoft/agent-framework
+
+> **One-line summary:** AutoGen is frozen forever — new projects should use Microsoft Agent Framework (MAF), and existing ones should plan the migration.
 
 *FAQ file riêng — file nguồn không bị sửa. Nguồn: README.md.*

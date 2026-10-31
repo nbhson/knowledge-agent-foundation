@@ -2,13 +2,15 @@
 
 Câu hỏi nào khó hiểu thì đọc `../README.md` phần trong ngoặc.
 
+**Cách đọc file này:** mỗi câu hỏi có 4 phần — **Bạn sẽ thấy** (tình huống thật), **Vì sao** (nguyên nhân), **Làm gì** (các bước), **Kiểm tra** (cách biết đúng). Thuật ngữ khó được giải thích ngay tại chỗ.
+
 ---
 
 ## Q1. Graph của tôi 100 nghìn node, dùng ma trận kề là máy chết — lưu kiểu nào cho đỡ tốn bộ nhớ? [→ §3 Biểu Diễn Graph]
 
 **Bạn sẽ thấy**
 
-Gọi `nx.adjacency_matrix(G).todense()` trên graph 100.000 node và máy treo hoặc báo hết bộ nhớ. Vì ma trận kề phải dựng đủ 100.000 × 100.000 ô = 10 tỷ ô, dù mỗi ô chỉ chứa 0 hoặc 1. Trong khi đó graph của bạn chỉ có vài chục nghìn cạnh — nghĩa là phần lớn 10 tỷ ô đó là số 0 vô dụng.
+Gọi `nx.adjacency_matrix(G).todense()` trên graph 100.000 node và máy treo hoặc báo hết bộ nhớ. (NetworkX = thư viện Python làm việc với graph; node = điểm trong đồ thị, mỗi node là một "thứ" như người hoặc tài liệu.) Vì ma trận kề phải dựng đủ 100.000 × 100.000 ô = 10 tỷ ô, dù mỗi ô chỉ chứa 0 hoặc 1. (ma trận kề = bảng lớn đánh dấu "cặp nào nối nhau".) Trong khi đó graph của bạn chỉ có vài chục nghìn cạnh — nghĩa là phần lớn 10 tỷ ô đó là số 0 vô dụng. (cạnh = edge — đường nối 2 node.)
 
 **Vì sao**
 
@@ -16,9 +18,9 @@ Ma trận kề (adjacency matrix) được thiết kế cho graph **đặc** (de
 
 **Làm gì**
 
-1. Bắt đầu bằng **danh sách kề** (adjacency list) — `O(V + E)`, NetworkX dùng sẵn kiểu này, tìm "ai kề ai" rất nhanh.
-2. Cần lưu file / truyền qua mạng → **danh sách cạnh** (edge list), nhẹ nhất `O(E)`, xuất ra CSV/parquet thoải mái.
-3. Trên 1 triệu node, cần huấn luyện mạng nơ-ron đồ thị → **CSR** (dạng nén), vừa gọn như list vừa duyệt nhanh.
+1. Bắt đầu bằng **danh sách kề** (adjacency list) — `O(V + E)`, NetworkX dùng sẵn kiểu này, tìm "ai kề ai" rất nhanh. (O(V+E) = dung lượng tỉ lệ với số node + số cạnh, tức là chỉ lưu cái có thật.)
+2. Cần lưu file / truyền qua mạng → **danh sách cạnh** (edge list), nhẹ nhất `O(E)`, xuất ra CSV/parquet thoải mái. (edge list = chỉ ghi từng cặp nối, giống danh sách cặp đôi.)
+3. Trên 1 triệu node, cần huấn luyện mạng nơ-ron đồ thị → **CSR** (dạng nén), vừa gọn như list vừa duyệt nhanh. (CSR = cách nén dữ liệu thưa phổ biến trong thư viện học máy.)
 4. Muốn giảm ma trận dành: chuyển sang biểu diễn "thưa" (sparse) bằng `scipy`, đừng `.todense()`.
 5. Nguyên tắc cho người mới: **đừng tối ưu sớm**. Chỉ đổi cách lưu khi bạn *đo được* vấn đề (chậm, hết RAM), không phải vì nghe nói "ma trận tốn".
 
@@ -28,13 +30,15 @@ Ma trận kề (adjacency matrix) được thiết kế cho graph **đặc** (de
 
 In `A.nnz` (số ô khác 0) và so với tổng số ô. Nếu nhỏ hơn 1% tổng thì graph thưa → dùng list/CSR. Sau đó chạy Lab 2 trong README: tạo `nx.erdos_renyi_graph(10000, 0.001)`, đo `nx.shortest_path` và `nx.degree_centrality`; nếu ra kết quả tính bằng mili giây thì cách lưu hiện tại không phải nút thắt của bạn.
 
+> **Tóm gọn 1 câu:** Graph tri thức thưa nên ma trận kề là sự lãng phí — dùng danh sách kề (NetworkX) cho tới khi đo được vấn đề thật thì mới đổi sang CSR.
+
 ---
 
 ## Q2. Tôi lưu quan hệ kiểu vô hướng, hỏi "ai báo cáo cho ai" thì ra kết quả sai — chọn loại graph nào? [→ §2 Các Loại Graph]
 
 **Bạn sẽ thấy**
 
-Bạn dùng `nx.Graph()` (vô hướng) rồi thêm `add_edge("Alice", "Bob", relation="REPORTS_TO")`. Truy vấn kiểu "Alice liên quan với Bob" chạy rất đẹp. Nhưng hỏi "ai báo cáo cho ai" thì ra cả hai chiều: hệ thống khẳng định Bob cũng báo cáo cho Alice — sai hoàn toàn. Trường hợp nặng hơn: quan hệ đã hết hạn năm 2024 vẫn được trả lời như đang hiệu lực.
+Bạn dùng `nx.Graph()` (vô hướng) rồi thêm `add_edge("Alice", "Bob", relation="REPORTS_TO")`. (vô hướng = cạnh không có mũi tên, A—B giống B—A.) Truy vấn kiểu "Alice liên quan với Bob" chạy rất đẹp. Nhưng hỏi "ai báo cáo cho ai" thì ra cả hai chiều: hệ thống khẳng định Bob cũng báo cáo cho Alice — sai hoàn toàn. Trường hợp nặng hơn: quan hệ đã hết hạn năm 2024 vẫn được trả lời như đang hiệu lực.
 
 **Vì sao**
 
@@ -53,17 +57,19 @@ Bạn dùng `nx.Graph()` (vô hướng) rồi thêm `add_edge("Alice", "Bob", re
 
 Hỏi "Bob báo cáo cho Alice không?" — với `DiGraph` phải trả về rỗng. Rồi thử một truy vấn có điều kiện thời gian và xác nhận quan hệ có `valid_until = 2024` không còn xuất hiện. Nếu hai bước này đều đúng thì bạn đã giữ được cả hướng lẫn thời gian.
 
+> **Tóm gọn 1 câu:** Quan hệ người-quản-người có chiều và có thời hạn — dùng `DiGraph` (có hướng) và gắn `valid_from`/`valid_until` vào cạnh, đừng dùng graph vô hướng.
+
 ---
 
 ## Q3. Bên tôi toàn dùng RDF và SPARQL, có phải bỏ hết sang Neo4j/Cypher không? [→ §5 Property Graph vs RDF]
 
 **Bạn sẽ thấy**
 
-Team của bạn mô tả dữ liệu bằng ontology (bộ luật định nghĩa thực thể), truy vấn bằng SPARQL. Mọi thuộc tính gắn trên quan hệ đều phải "bọc lại" thành một node trung gian (reification) — đội phát triển phải làm thêm bước này mỗi lần. Kết quả: câu hỏi duyệt 2–3 bước (traversal) chậm hơn property graph **3–5 lần** theo benchmark Neo4j 2024.
+Team của bạn mô tả dữ liệu bằng ontology (bộ luật định nghĩa thực thể), truy vấn bằng SPARQL. (RDF = chuẩn dữ liệu web ngữ nghĩa, lưu tri thức thành các bộ ba "chủ thể – quan hệ – đối tượng"; SPARQL = ngôn ngữ truy vấn của RDF; Neo4j/Cypher = database đồ thị và ngôn ngữ truy vấn của nó.) Mọi thuộc tính gắn trên quan hệ đều phải "bọc lại" thành một node trung gian (reification) — đội phát triển phải làm thêm bước này mỗi lần. Kết quả: câu hỏi duyệt 2–3 bước (traversal) chậm hơn property graph **3–5 lần** theo benchmark Neo4j 2024.
 
 **Vì sao**
 
-Property Graph cho phép thuộc tính nằm thẳng trên node và cạnh (`edge.weight = 0.9`), schema linh hoạt theo nhãn, truy vấn bằng Cypher trông như vẽ hình. RDF Triple Store thì đơn vị là bộ ba (chủ thể – vị – đối tượng) cộng định chỉ URI, schema phải tuân ontology chặt, suy luận (OWL reasoning) thì có sẵn — nhưng thuộc tính trên cạnh thì phức tạp.
+Property Graph cho phép thuộc tính nằm thẳng trên node và cạnh (`edge.weight = 0.9`), schema linh hoạt theo nhãn, truy vấn bằng Cypher trông như vẽ hình. RDF Triple Store thì đơn vị là bộ ba (chủ thể – vị – đối tượng) cộng định chỉ URI, schema phải tuân ontology chặt, suy luận (OWL reasoning) thì có sẵn — nhưng thuộc tính trên cạnh thì phức tạp. (URI = định danh duy nhất kiểu địa chỉ web; OWL = ngôn ngữ suy luận tự động trên ontology.)
 
 **Làm gì**
 
@@ -77,6 +83,8 @@ Property Graph cho phép thuộc tính nằm thẳng trên node và cạnh (`edg
 **Kiểm tra**
 
 Chạy cùng một câu hỏi duyệt 3 bước trên cả hai hệ thống và so thời gian trả lời. Nếu dự án của bạn không có ontology sẵn, không cần suy luận OWL, và người mới phải tự viết truy vấn — Property Graph là lựa chọn ít ma sát hơn rõ rệt.
+
+> **Tóm gọn 1 câu:** Dữ liệu liên tổ chức cần suy luận chuẩn thì giữ RDF/SPARQL; graph nội bộ cho GraphRAG thì Property Graph (Neo4j/Kuzu) nhanh và dễ dùng hơn.
 
 ---
 
@@ -97,6 +105,8 @@ Mỗi thước đo trả lời đúng một câu hỏi. **Degree** = số quan h
 3. Đo trên graph nhỏ trước (`nx.karate_club_graph()`, 34 node) để hiểu ý nghĩa từng con số, rồi mới áp lên dữ liệu thật.
 4. Với GraphRAG (tìm kiếm trên đồ thị), hai thước đo quan trọng nhất là **Clustering** và **Modularity** — chúng quyết định cách chia cụm để tóm tắt.
 
+**Cách đọc bảng này:** cột trái là câu hỏi bạn muốn trả lời; cột phải là thước đo đúng cho câu đó. Ví dụ, muốn biết "ai làm nghẽn quy trình" thì đo Betweenness, đừng đo số quan hệ.
+
 | Câu hỏi | Dùng thước đo |
 |---|---|
 | Ai kết nối nhiều nhất | Degree centrality |
@@ -109,6 +119,8 @@ Mỗi thước đo trả lời đúng một câu hỏi. **Degree** = số quan h
 **Kiểm tra**
 
 Trên graph thật, so sánh top-3 theo Degree với top-3 theo Betweenness. Nếu hai danh sách trùng nhau hết, bạn đang đo một thứ hai lần — hãy thử PageRank rồi xem bảng xếp hạng có thay đổi không. Nếu có, bạn đã tìm ra câu trả lời đúng cho từng câu hỏi.
+
+> **Tóm gọn 1 câu:** Mỗi thước đo trả lời đúng một câu hỏi — chọn metric theo câu hỏi (Degree = nhiều kết nối, Betweenness = cầu nối, PageRank = ảnh hưởng), đừng đo bừa.
 
 ---
 

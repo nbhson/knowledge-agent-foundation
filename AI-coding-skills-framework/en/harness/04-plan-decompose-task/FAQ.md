@@ -1,10 +1,12 @@
 # ❓ FAQ — Planning & Task Decomposition (Real Stories, Plain Language)
 
-If a question is unclear, read the section in `../README.md` (named in brackets).
+If a question is unclear, read the section in `../README.md` (named in brackets). Task decomposition = breaking one big job into small, ordered sub-tasks before writing any code.
 
 ---
 
 ## Q1. My agent wrote 400 lines in one shot and half of it was wrong — why is planning worth 30 seconds? [→ Why Are Planning & Decomposition Important?]
+
+This section explains what planning buys you, with the measured numbers.
 
 **What you see**
 
@@ -28,11 +30,15 @@ Re-plan when a sub-task fails — do not retry identically
 
 **Verify**
 
-Check the plan before execution: does each sub-task have a dependency list, a token budget, a termination condition, and a pass criteria? If a plan arrives with none of those four, it is not a plan yet — send it back.
+Check the plan before execution: does each sub-task have a dependency list (what must finish first), a token budget, a termination condition (when to stop), and a pass criteria (what counts as done)? If a plan arrives with none of those four, it is not a plan yet — send it back.
+
+> **One-line summary:** 15-30 seconds of structured planning (3-7 sub-tasks, each with a stop condition) multiplies success rate 2.4x — always plan before touching a file.
 
 ---
 
 ## Q2. The agent loops A → B → A → B forever, and "hello world" came back with authentication and i18n — what stops that? [→ If You Skip Planning... / 9.2 DON'T ❌]
+
+This section explains the two runaways — infinite loops and scope creep — and the guardrails that stop both.
 
 **What you see**
 
@@ -55,21 +61,27 @@ Three causes: no termination condition per sub-task, no hardcoded-but-computed o
 
 Run the module's own unit tests: `test_retry_logic` must return `False` after `retry_count = 3`, and `test_max_depth_limit` must keep depth at 2 when `max_depth=2`. A run that exits with `"Max steps reached without final answer"` means the guardrail fired — raise the diagnosis, not the limit.
 
+> **One-line summary:** Every sub-task needs a numeric cap and an exit condition, and the order must come from dependencies — that is what kills loops and scope creep.
+
 ---
 
 ## Q3. A subtask fails and the agent retries it exactly the same way, three times — how do I make it change strategy? [→ 14.2 Dynamic Replanning Decision Table]
 
+This section explains the difference between retry, replan, and escalate — and when each applies.
+
 **What you see**
 
-The log shows the identical command failing with `timeout`, then `429`, then `timeout` again. Each attempt costs real tokens and returns the same result. Eventually the run either dies or silently produces a half-finished tree.
+The log shows the identical command failing with `timeout`, then `429` (HTTP "too many requests"), then `timeout` again. Each attempt costs real tokens and returns the same result. Eventually the run either dies or silently produces a half-finished tree.
 
 **Why**
 
-Because "retry" and "replan" were treated as one action. They are different: a retry repeats the same decomposition, a replan produces a **different** one, and a third option stops and asks a human. Treating all failures as retryable wastes the budget and hides the real cause.
+Because "retry" and "replan" were treated as one action. They are different: a retry repeats the same decomposition, a replan produces a **different** one, and a third option stops and asks a human (escalate). Treating all failures as retryable wastes the budget and hides the real cause.
 
 **What to do**
 
 Classify every failure into one of three decisions, then log `attempt, error_class, decision, reason`. Cap auto-retries at **3** and auto-replans at **2**, then escalate — no infinite loops. A deny from an approval gate must trigger a **replan that excludes the denied branch**, never a retry, or it loops forever.
+
+How to read it: column 1 is the failure signal; columns 2-4 say which decision applies (yes) or not (—). For instance, a `timeout` on the first two attempts → retry; the same subtask failing 3 times → replan; a deploy/delete/payment step → always go through the approval gate (a human must approve).
 
 | Signal | Retry | Replan | Escalate |
 |---|---|---|---|
@@ -84,9 +96,13 @@ Classify every failure into one of three decisions, then log `attempt, error_cla
 
 Assert in tests that a run cannot exceed 3 retries and 2 replans, and that every transition wrote a decision and a reason to the log.
 
+> **One-line summary:** Classify each failure as retry, replan, or escalate — caps of 3 retries and 2 replans, and denied approvals must change the plan, never trigger a retry.
+
 ---
 
 ## Q4. A deploy subtask ran twice after a crash and the payment step fired twice — how do I stop double side effects? [→ 14.4 Subtask Idempotency + Partial Failure]
+
+This section explains idempotency (running the same step twice has the same effect as once) and how to report partial failures honestly.
 
 **What you see**
 
@@ -98,10 +114,10 @@ Side-effecting subtasks had no stable identity. Without one, "resume" and "run a
 
 **What to do**
 
-1. Build a stable key from plan, subtask and a hash of the inputs: `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`.
+1. Build a stable key from plan, subtask and a hash of the inputs: `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. (sha1 = a fingerprint of the input data; same inputs → same key.)
 2. Check the result store **before** executing; on replay, return the cached result.
 3. Tag risky subtasks during decomposition: `db.migrate, prod.deploy, user.delete, external.send` → `risk ∈ {high, irreversible}`. Untagged subtasks are `low` and never block.
-4. Track per-node status `ok/failed/skipped`, keep independent branches going, skip dependents of failed nodes, and return `partial:true + completed[] + failed[]` explicitly.
+4. Track per-node status `ok/failed/skipped`, keep independent branches going, skip dependents of failed nodes (anything that needed the failed step), and return `partial:true + completed[] + failed[]` explicitly.
 
 > 📄 **Example code:** [`examples/03-q4-a-deploy-subtask-ran-twice-after-a.py`](examples/03-q4-a-deploy-subtask-ran-twice-after-a.py)
 
@@ -109,13 +125,17 @@ Side-effecting subtasks had no stable identity. Without one, "resume" and "run a
 
 Crash the executor mid-subtask, replay it, and confirm the cache returns the first result with no second side effect. Confirm the caller receives `partial: true` with both `completed[]` and `failed[]` rather than a generic error.
 
+> **One-line summary:** Give every risky subtask a stable idempotency key and check for a saved result before executing — a crash-resume must never repeat a deploy, migration, or payment.
+
 ---
 
 ## Q5. My token bill exploded and Tree of Thoughts explored 27 paths to fix one typo — where is the ceiling? [→ 9.3 Token Budget Management / 14.5 Explosion Guards]
 
+This section explains the hard caps that stop planning from multiplying into runaway cost.
+
 **What you see**
 
-A "small" bug triggered a full branch search: `branching_factor=3`, `max_depth=3`, so `paths_explored` reported **27** rollouts. The run also passed the 100k token ceiling and the 50-tool-call limit, then kept going. Separately, a subtask that only needed 5,000 tokens was allocated 100,000 and used 9,500 without anyone noticing.
+A "small" bug triggered a full branch search: `branching_factor=3`, `max_depth=3`, so `paths_explored` reported **27** rollouts (complete trial runs — 3×3×3 = 27). The run also passed the 100k token ceiling and the 50-tool-call limit, then kept going. Separately, a subtask that only needed 5,000 tokens was allocated 100,000 and used 9,500 without anyone noticing.
 
 **Why**
 
@@ -123,13 +143,15 @@ Two missing ceilings. **Tree of Thoughts** (ToT — explore several reasoning br
 
 **What to do**
 
-Hard-cap structure and cost together: `MAX_DEPTH=4, MAX_FANOUT=5, MAX_SUBTASKS=25`; ToT `MAX_BRANCHES=3, MAX_ROLLOUTS=9`, prune any branch scoring below 0.3 after 2 steps. Globally: `MAX_TOKENS_PER_PLAN=100k` and `MAX_TOOL_CALLS=50`, with a warning subtask at 80% and a freeze plus escalate at 100%, carrying a `best-so-far` summary. Per task, stop at 90% of its own allocation.
+Hard-cap structure and cost together: `MAX_DEPTH=4, MAX_FANOUT=5, MAX_SUBTASKS=25` (fanout = how many children one task may split into); ToT `MAX_BRANCHES=3, MAX_ROLLOUTS=9`, prune any branch scoring below 0.3 after 2 steps (drop weak branches early). Globally: `MAX_TOKENS_PER_PLAN=100k` and `MAX_TOOL_CALLS=50`, with a warning subtask at 80% and a freeze plus escalate at 100%, carrying a `best-so-far` summary. Per task, stop at 90% of its own allocation.
 
 > 📄 **Example code:** [`examples/04-q5-my-token-bill-exploded-and-tree-of.ts`](examples/04-q5-my-token-bill-exploded-and-tree-of.ts)
 
 **Verify**
 
 Run the module's budget tests: allocating 30,000 then 25,000 against a 50,000 total must return `False`; reporting 5,000 then 4,500 on a 10,000 allocation must flip `canContinue` to `False`. Confirm no run exceeds 25 sub-tasks or 9 rollouts.
+
+> **One-line summary:** Cap depth, fanout, rollouts, tokens, and tool calls as hard numbers with warnings at 80% — otherwise branching strategies multiply into runaway bills.
 
 ---
 

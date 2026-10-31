@@ -4,6 +4,8 @@
 
 ## Failure Modes & Mitigations Table
 
+How to read this table: each row is one symptom. **Failure** = what you observe, **Cause** = why it happens, **Solution** = the fix. For instance, "bash commands not rewritten" almost always means the AI tool was not restarted after `rtk init`. ("Rewritten" = RTK silently replaces `git status` with `rtk git status`.)
+
 | Failure | Cause | Solution |
 |---------|-------|----------|
 | Bash commands not rewritten | Haven't restarted the AI tool after `rtk init` | Restart the tool and retest `git status` |
@@ -16,7 +18,11 @@
 | On Windows: legacy shell hook | Version < 0.37.2 | Re-run `rtk init -g` to migrate to the native binary hook |
 | Filter not applied for a specific project | Needs per-project config | See the Configuration guide (per-project filters) |
 
+> **One-line summary:** Most failures are "restart the tool", "install ripgrep", or "exclude this command" — check the table before reinstalling anything.
+
 ## Exclude Rules — When to Keep the Original Command
+
+This section lists when RTK should *not* touch a command. `exclude_commands` is a do-not-rewrite list in `config.toml` — commands on it run exactly as typed.
 
 Add a command to `exclude_commands` if:
 
@@ -26,7 +32,11 @@ Add a command to `exclude_commands` if:
 
 > 📄 **Example code:** [`examples/01-exclude-rules-when-to-keep-the-original-command.toml`](examples/01-exclude-rules-when-to-keep-the-original-command.toml)
 
+> **One-line summary:** Exclude any command whose full, raw output is the point — safety or format beats savings.
+
 ## Safety Notes (harness Guardrails connection)
+
+How to read this table: left = a safety principle from the harness guardrails, right = how RTK applies it in practice. For instance, "Tee recovery" means RTK keeps a full copy of failed output on disk so nothing is lost.
 
 | Principle | Applied to RTK |
 |-----------|----------------|
@@ -34,7 +44,11 @@ Add a command to `exclude_commands` if:
 | Tee recovery | When a command fails, RTK stores the full output — the agent should read the complete log before deciding on a fix. |
 | Privacy by default | Telemetry is off by default. AWS filters proactively strip secrets. Set `RTK_TELEMETRY_DISABLED=1` for an absolute block if desired. |
 
+> **One-line summary:** RTK compresses output but never destroys it — originals stay callable, failures keep full logs, and nothing is sent anywhere by default.
+
 ## When You Should Turn RTK Off
+
+This section is the "press the off switch" list — cases where compression costs more than it saves.
 
 - Debugging the exact output of a specific tool and you need the raw version.
 - A command with important side effects where you want to see the full log.
@@ -43,6 +57,8 @@ Add a command to `exclude_commands` if:
 > 📄 **Example code:** [`examples/02-when-you-should-turn-rtk-off.sh`](examples/02-when-you-should-turn-rtk-off.sh)
 
 Or use `exclude_commands` per command instead of turning it off entirely.
+
+> **One-line summary:** Turn RTK off (or exclude the single command) whenever you need the raw, untouched output.
 
 ---
 

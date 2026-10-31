@@ -2,13 +2,17 @@
 
 If a question is unclear, read the section in `README.md` (named in brackets).
 
+> How to read this file: each question is a beginner's honest doubt about the harness idea. **What you see** = the symptom, **Why** = the cause, **What to do** = the fix, **Verify** = how to prove it.
+
 ---
 
 ## Q1. My agent already calls the model — so what am I missing by adding a "harness"? [→ §1. What Is a Harness, in One Diagram]
 
+This section explains what a harness actually is, using only the words "prompt", "tool", and "proof".
+
 **What you see**
 
-You send a prompt, you get text back. Same prompt, two different answers. The model once edited three files, then in the next turn said it had "no record of that work". Another time it claimed a test passed and you never ran the test. You have a working demo and zero proof it works.
+You send a prompt (your instruction text), you get text back. Same prompt, two different answers. The model once edited three files, then in the next turn said it had "no record of that work". Another time it claimed a test passed and you never ran the test. You have a working demo and zero proof it works.
 
 **Why**
 
@@ -19,7 +23,7 @@ Retrieval (find documents, paste them into the prompt — commonly called RAG) o
 **What to do**
 
 1. Write down your outer loop on one line before you add any code.
-2. Make every request end in a verdict, not in text.
+2. Make every request end in a verdict, not in text (a verdict = a stored pass/fail decision, e.g. "tests: pass, 12/12").
 3. Stop treating retrieval as the whole system.
 
 ```text
@@ -31,9 +35,13 @@ outer loop (you own it):      plan → execute → validate → fix → persist 
 
 Pick one real request, e.g. *"Fix login bug"*. Walk the 10 steps in §3 and name the folder that owns each one. If you cannot name a folder for "validate", you do not have a harness — you have a prompt. If you have no verdict stored after the run, module `11` is missing.
 
+> **One-line summary:** A harness is everything around the model that adds proof — two loops (inner tool loop, outer manage loop), and without a stored verdict you only have a prompt.
+
 ---
 
 ## Q2. Fifteen folders for one agent — is that not overkill? [→ §2. The 7 Components → 15 Modules Map]
+
+This section explains why the repo has 15 folders and how few you actually need to start.
 
 **What you see**
 
@@ -60,13 +68,17 @@ then: 10 09             →  always wrap: 12 13 14 15
 
 Take one arrow in the §1 diagram and point at the module that owns it. Then run a request with only your minimum five enabled: if the run finishes with a stored verdict and a recorded event, you do not need folder sixteen yet.
 
+> **One-line summary:** The 15 folders are a menu, not a to-do list — start with five (02, 05, 06, 07, 11), add more when it hurts, and never skip the four wrappers 12–15.
+
 ---
 
 ## Q3. I opened the folder and got lost — which one do I read first? [→ §5. How to Read This Folder]
 
+This section gives a proven reading order and explains why numbered order is the wrong order.
+
 **What you see**
 
-You started with `01-retrieve-memory-knowledge` (it sounds foundational), then `09-multi-agent` (it sounds impressive), then `../HARNESS_ENGINEERING.md`, which is 40 pages. Forty minutes later you understand embeddings and nothing about your own runtime.
+You started with `01-retrieve-memory-knowledge` (it sounds foundational), then `09-multi-agent` (it sounds impressive), then `../HARNESS_ENGINEERING.md`, which is 40 pages. Forty minutes later you understand embeddings (numbers representing text meaning) and nothing about your own runtime.
 
 **Why**
 
@@ -84,13 +96,17 @@ Because reading order is not numbered order. `01` is where a request starts, not
 
 From memory, write a task node and a context object. If you can, open `08/README.md` and `04` of §4 and correct yourself in one pass, the order is working.
 
+> **One-line summary:** Read `08` first, then 07 → 02 → 06, then data (01, 03), then reasoning (04, 05), then feedback and wrappers — numbered folder order is a trap.
+
 ---
 
 ## Q4. Which module do people quietly skip, and why does it blow up weeks later? [→ §4. The Three Shared Contracts]
 
+This section names the modules that are safe to skip and the ones that look skippable but explode later.
+
 **What you see**
 
-Retrieval scores look great, and the agent still writes wrong code. A long run dies near the token ceiling with no error message. At night a destructive command executes with nobody watching. Afterwards nobody can tell what the run did, because there is no log to replay.
+Retrieval scores look great, and the agent still writes wrong code. A long run dies near the token ceiling (the maximum context size) with no error message. At night a destructive command executes with nobody watching. Afterwards nobody can tell what the run did, because there is no log to replay.
 
 **Why**
 
@@ -113,13 +129,17 @@ always inline: permission check in 06 + injection marking in 05
 
 Pick yesterday's worst run and try to replay it from its events. If you cannot, `13` was skipped. Separately, per §7, three things still have no owner anywhere — secret scrubbing, tenant isolation, cost-per-task targets — so track them yourself.
 
+> **One-line summary:** Skipping 09 and 10 is fine; skipping 12–15 stores up failures — no isolation, no replay, no compaction, no gate on destructive actions.
+
 ---
 
 ## Q5. The agent says "done" but the bug is still there — how do I find which stage broke? [→ §3. Request Lifecycle, End to End]
 
+This section explains how to debug a wrong "success" by walking the event log instead of guessing.
+
 **What you see**
 
-A clean final report: "Patched `auth.py`, tests pass." You run the tests — one still fails. You re-run the agent and get a different patch. Nothing says whether it retrieved the wrong file, put the wrong code in the prompt, called the wrong tool, or was graded by a rubric that rewards looking busy.
+A clean final report: "Patched `auth.py`, tests pass." You run the tests — one still fails. You re-run the agent and get a different patch. Nothing says whether it retrieved the wrong file, put the wrong code in the prompt, called the wrong tool, or was graded by a rubric (a scoring checklist) that rewards looking busy.
 
 **Why**
 
@@ -136,6 +156,8 @@ Because "it worked" was never measured, and no run left a record. §4 fixes both
 **Verify**
 
 Take one failed run, replay it with `03/trajectory-fork-replay.md`, and name the event id where it went wrong. Then check whether `11` has a stored verdict for it — if the verdict said "pass" while the test failed, the rubric is the bug, and §5 sends you there third.
+
+> **One-line summary:** Debug a false "done" from the event log, not the code — wrong context points to 02, wrong tool to 06, wrong verdict to 11.
 
 ---
 

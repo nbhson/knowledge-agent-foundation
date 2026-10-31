@@ -2,22 +2,26 @@
 
 Câu hỏi nào khó hiểu thì đọc `../README.md` phần trong ngoặc.
 
+**Cách đọc file này:** mỗi câu hỏi có 4 phần — **Bạn sẽ thấy** (tình huống thật), **Vì sao** (nguyên nhân), **Làm gì** (các bước), **Kiểm tra** (cách biết đúng). Thuật ngữ khó được giải thích ngay tại chỗ.
+
 ---
 
 ## Q1. Lưu graph thành file JSON, hỏi một câu mất 2 giây — có nên chuyển sang database đồ thị không? [→ §1 Chọn Graph Database]
 
 **Bạn sẽ thấy**
 
-Bạn trích được 5.000 thực thể và 12.000 quan hệ, lưu thành `graph.json` khoảng 50MB. Một tuần sau cần trả lời: *"Tìm tất cả dự án mà team của Alice đã làm, đi qua tối đa 3 bước quan hệ báo cáo/quản lý."* Bạn tự viết vòng lặp duyệt chiều rộng (BFS), nạp nguyên file vào bộ nhớ, chạy **2 giây**. Chạy 100 câu như vậy thì hết giờ.
+Bạn trích được 5.000 thực thể và 12.000 quan hệ, lưu thành `graph.json` khoảng 50MB. Một tuần sau cần trả lời: *"Tìm tất cả dự án mà team của Alice đã làm, đi qua tối đa 3 bước quan hệ báo cáo/quản lý."* Bạn tự viết vòng lặp duyệt chiều rộng (BFS), nạp nguyên file vào bộ nhớ, chạy **2 giây**. (BFS = Breadth-First Search — cách duyệt "loang" từ một điểm ra xung quanh từng lớp.) Chạy 100 câu như vậy thì hết giờ.
 
 **Vì sao**
 
-File JSON không có chỉ mục (index) và không có bộ máy truy vấn. Mỗi lần hỏi, bạn phải tự quét toàn bộ file. Database đồ thị lưu quan hệ theo đúng cấu trúc, có chỉ mục và có ngôn ngữ truy vấn — cùng câu hỏi đó trả lời trong **15ms** bằng một dòng Cypher. Benchmark Neo4j 2024 đo được lưu đồ thị gốc nhanh hơn phép nối bảng (JOIN) của cơ sở dữ liệu quan hệ tới **100–1000 lần** cho truy vấn 3 bước.
+File JSON không có chỉ mục (index) và không có bộ máy truy vấn. Mỗi lần hỏi, bạn phải tự quét toàn bộ file. Database đồ thị lưu quan hệ theo đúng cấu trúc, có chỉ mục và có ngôn ngữ truy vấn — cùng câu hỏi đó trả lời trong **15ms** bằng một dòng Cypher. (Cypher = ngôn ngữ truy vấn của Neo4j, viết kiểu vẽ hình `()-[]->`.) Benchmark Neo4j 2024 đo được lưu đồ thị gốc nhanh hơn phép nối bảng (JOIN) của cơ sở dữ liệu quan hệ tới **100–1000 lần** cho truy vấn 3 bước. (JOIN = phép ghép 2 bảng theo khóa trong database quan hệ như MySQL — đồ thị 3 bước thì phải JOIN 3 lần, chậm.)
 
 **Làm gì**
 
 1. Trước khi chuyển, hỏi một câu: truy vấn của tôi có luôn dạng `A —[…]→ B —[…]→ C` không? Nếu có 2 bước trở lên thì đã là ứng viên cho database đồ thị.
 2. Chọn theo giai đoạn, không chọn theo thương hiệu:
+
+**Cách đọc bảng này:** cột "Tình huống" là hoàn cảnh của bạn; cột "Chọn" là công cụ khuyến nghị. Ví dụ, học thử nghiệm trên máy mình thì dùng NetworkX hoặc Kuzu, chưa cần Docker.
 
 | Tình huống | Chọn |
 |---|---|
@@ -26,12 +30,14 @@ File JSON không có chỉ mục (index) và không có bộ máy truy vấn. M�
 | Dữ liệu nhiều, cần nhân bản, có người quản lý | Neo4j Aura hoặc NebulaGraph |
 | Cần phản hồi dưới 1 mili giây | FalkorDB hoặc Memgraph (lưu trong RAM) |
 
-3. Nếu cần độ trễ thấp mà vẫn giữ hệ sinh thái quen thuộc, xem FalkorDB: nó là database đồ thị chạy ngay trên Redis, dùng phép nhân ma trận thưa để duyệt đồ thị.
+3. Nếu cần độ trễ thấp mà vẫn giữ hệ sinh thái quen thuộc, xem FalkorDB: nó là database đồ thị chạy ngay trên Redis, dùng phép nhân ma trận thưa để duyệt đồ thị. (Redis = kho dữ liệu trong RAM rất nhanh; ma trận thưa = ma trận chỉ lưu ô khác 0.)
 4. Bắt đầu bằng NetworkX để học thuật ngữ (node, cạnh, traversal) — nó để bạn đổi sang Kuzu hoặc Neo4j sau mà không phải học lại.
 
 **Kiểm tra**
 
 Đo thời gian trả lời 3 câu hỏi (1 bước, 2 bước, 3 bước) trên BFS tự viết, rồi chạy lại bằng Cypher. Nếu khoảng cách giữa chúng là hàng chục lần thì đã đủ cơ sở để bỏ file JSON.
+
+> **Tóm gọn 1 câu:** Truy vấn cần đi 2+ bước quan hệ thì file JSON không đủ — chuyển sang database đồ thị (NetworkX học trước, Neo4j khi phát triển thật).
 
 ---
 
@@ -43,7 +49,7 @@ Bạn chạy `MATCH (n:Person) WHERE n.name = 'Alice' RETURN n` trên graph 10.0
 
 **Vì sao**
 
-Chỉ mục là "mục lục" của database: có nó, tìm "Alice" là tra một dòng; không có nó là lật từng trang. LDBC SNB Benchmark đo được chỉ mục trên nhãn + thuộc tính giảm **80%** độ trễ. Phần còn lại là do câu truy vấn viết quá rộng: `[*]` không chặn số bước, và `RETURN n` trả về cả đồ thị.
+Chỉ mục là "mục lục" của database: có nó, tìm "Alice" là tra một dòng; không có nó là lật từng trang. LDBC SNB Benchmark đo được chỉ mục trên nhãn + thuộc tính giảm **80%** độ trễ. (LDBC SNB = bộ benchmark chuẩn của ngành cho database đồ thị.) Phần còn lại là do câu truy vấn viết quá rộng: `[*]` không chặn số bước, và `RETURN n` trả về cả đồ thị. (`[*]` = "đi bao nhiêu bước cũng được" — nguy hiểm vì sinh vô số đường.)
 
 **Làm gì**
 
@@ -59,6 +65,8 @@ Chỉ mục là "mục lục" của database: có nó, tìm "Alice" là tra mộ
 **Kiểm tra**
 
 Làm đúng Lab 2: tạo 10.000 node **không** có chỉ mục, đo thời gian câu truy vấn theo tên; tạo chỉ mục rồi đo lại. Thời gian thường giảm 80–90%. Nếu không giảm, chạy `PROFILE` và kiểm tra có còn câu nào đang dùng `[*]` không giới hạn bước không.
+
+> **Tóm gọn 1 câu:** Chậm vì quét hết đồ thị — tạo chỉ mục cho trường hay truy vấn, chặn số bước (`*1..3`), thêm `LIMIT`, và đo bằng `PROFILE` trước và sau khi sửa.
 
 ---
 
@@ -86,6 +94,8 @@ Bạn có script nạp 12.000 quan hệ từ 1.000 tài liệu. Chạy lần th�
 
 Đếm số node trước, nạp lại đúng tập dữ liệu cũ ba lần, đếm lại. Số node không được đổi. Kiểm tra thêm cả cạnh: một quan hệ có `confidence` cập nhật được mà không nhân bản — đó là dấu hiệu `MERGE` đang hoạt động đúng.
 
+> **Tóm gọn 1 câu:** `CREATE` luôn tạo mới nên nạp lại là nhân bản — dùng `MERGE` + `UNWIND` theo lô + transaction để chạy lại bao nhiêu lần kết quả vẫn như một.
+
 ---
 
 ## Q4. Xoá một node thì báo lỗi vì còn cạnh nối vào — xoá kiểu nào cho đúng? [→ §2 và §4 Xoá Dữ Liệu]
@@ -111,6 +121,8 @@ Cạnh trong database đồ thị là một đối tượng độc lập, không
 **Kiểm tra**
 
 Sau khi xoá mềm, truy vấn `MATCH (n:Person) WHERE n.deleted IS NULL RETURN n.name` phải không còn "Bob", nhưng `MATCH ()-[r:MANAGES]->(n {name:'Bob'})` vẫn ra — nghĩa là lịch sử còn nguyên. Đối với `DETACH DELETE`, chạy lại `MATCH (n) RETURN count(n)` để xác nhận số node giảm đúng bằng số bạn kỳ vọng.
+
+> **Tóm gọn 1 câu:** Với knowledge graph, xoá mềm (đánh dấu `deleted = true`) gần như luôn đúng hơn xoá cứng — "nghỉ việc" không bằng "chưa từng tồn tại".
 
 ---
 

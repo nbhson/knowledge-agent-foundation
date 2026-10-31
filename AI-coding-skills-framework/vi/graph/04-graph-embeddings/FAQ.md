@@ -12,7 +12,7 @@ Bạn đã huấn luyện xong cách vector hoá đồ thị cho 10.000 node. Ng
 
 **Vì sao**
 
-Node2Vec và DeepWalk gán **mỗi node một vector riêng**, đúng như một từ trong từ điển. Thêm một từ mới vào từ điển thì phải dựng lại từ điển — đây gọi là cách tiếp cận *chuyển tiếp* (transductive). GraphSAGE thì học một **hàm gộp**: vector của một node là hàm của vector nó và vector bạn bè trực tiếp. Bất kỳ ai cũng mô tả được bằng cách "trung bình của bạn bè" — nên người mới chỉ cần chạy đúng hàm đó là có vector, không cần huấn luyện lại.
+Node2Vec và DeepWalk gán **mỗi node một vector riêng**, đúng như một từ trong từ điển. Thêm một từ mới vào từ điển thì phải dựng lại từ điển — đây gọi là cách tiếp cận *chuyển tiếp* (transductive — "học vẹt" từng node có sẵn: node mới xuất hiện thì phải học lại tất cả). GraphSAGE thì học một **hàm gộp**: vector của một node là hàm của vector nó và vector bạn bè trực tiếp. Bất kỳ ai cũng mô tả được bằng cách "trung bình của bạn bè" — nên người mới chỉ cần chạy đúng hàm đó là có vector, không cần huấn luyện lại.
 
 **Làm gì**
 
@@ -21,6 +21,8 @@ Node2Vec và DeepWalk gán **mỗi node một vector riêng**, đúng như một
 3. GraphSAGE tận dụng được **thuộc tính** của node (chức vụ, phòng ban), điều Node2Vec không làm được — nó chỉ nhìn cấu trúc.
 4. Nếu quan hệ không đồng đều (quan hệ quan trọng khác nhau), dùng **GAT**: thay vì lấy trung bình bạn bè, mô hình tự học xem ai đáng tin. Ví dụ trong sơ đồ tổ chức: đồng nghiệp báo cáo trực tiếp góp 83%, người quen xã giao góp 17%.
 5. Chọn mức "tầm nhìn" bằng số lớp: 3 lớp = biết thông tin cách 3 bước. Thừa dẫn tới mất thông tin và chậm.
+
+> **Cách đọc bảng này:** so sánh 3 mô hình theo 3 tiêu chí. Ví dụ, dòng 1: thêm node mới thì Node2Vec phải huấn luyện lại, còn GraphSAGE và GAT chỉ cần chạy hàm cho node đó.
 
 | | Node2Vec | GraphSAGE | GAT |
 |---|---|---|---|
@@ -32,7 +34,9 @@ Node2Vec và DeepWalk gán **mỗi node một vector riêng**, đúng như một
 
 **Kiểm tra**
 
-Che khoảng 20% cạnh của graph, dự đoán lại xem có đoán đúng không (bài kiểm tra *link prediction*). Chạy cho cả Node2Vec lẫn GraphSAGE, so sánh độ chính xác và thời gian. Nếu đồ thị của bạn thay đổi liên tục, ưu tiên phương án không cần huấn luyện lại.
+Che khoảng 20% cạnh của graph, dự đoán lại xem có đoán đúng không (bài kiểm tra *link prediction* — đoán quan hệ còn thiếu). Chạy cho cả Node2Vec lẫn GraphSAGE, so sánh độ chính xác và thời gian. Nếu đồ thị của bạn thay đổi liên tục, ưu tiên phương án không cần huấn luyện lại.
+
+> **Tóm gọn 1 câu:** Node2Vec "học vẹt" từng node nên thêm node là phải học lại; GraphSAGE học hàm gộp nên node mới chỉ cần chạy hàm — graph hay đổi thì chọn loại thứ hai.
 
 ---
 
@@ -54,13 +58,15 @@ Node2Vec không đi bộ hoàn toàn ngẫu nhiên. Hai tham số điều khiể
 2. Giữ `p` khoảng 1.0 khi bạn chưa rõ nên bám hay nên đi rộng; chỉnh `p` sau khi đã có `q` ổn.
 3. Tăng số lần đi bộ (mặc định `num_walks=10`, mỗi lần dài 20 bước) khi graph thưa — ít dữ liệu hơn thì vector kém ổn định.
 4. Đừng kỳ vọng dùng được thuộc tính: Node2Vec chỉ nhìn cấu trúc, nên "giống Alice" nghĩa là *vị trí trong đồ thị* giống, không phải *mô tả chức vụ* giống. Muốn dùng cả thuộc tính thì chuyển sang GraphSAGE.
-5. Kiểm tra chất lượng bằng cách nhìn kết quả theo cụm: vẽ bằng t-SNE và xem các node cùng team có nằm cạnh nhau không.
+5. Kiểm tra chất lượng bằng cách nhìn kết quả theo cụm: vẽ bằng t-SNE (t-SNE = kỹ thuật nén vector nhiều chiều xuống 2 chiều để vẽ ra hình) và xem các node cùng team có nằm cạnh nhau không.
 
 > 📄 **Code ví dụ:** [`examples/02-q2-tim-nguoi-giong-alice-ve-vai-tro.py`](examples/02-q2-tim-nguoi-giong-alice-ve-vai-tro.py)
 
 **Kiểm tra**
 
 Chạy ba bộ tham số: mặc định, `q=0.5` (xa), `q=2.0` (gần). Với mỗi bộ, lấy 10 node giống Alice nhất và tự đánh giá: có đúng là cùng vai trò / cùng team không. Bộ nào cho kết quả đúng với câu hỏi của bạn thì giữ.
+
+> **Tóm gọn 1 câu:** Tham số `q` là núm vặn "đi xa hay đi gần": muốn tìm người cùng vai trò ở team khác thì vặn về đi xa (`q < 1`), muốn tìm người cùng team thì vặn về đi gần (`q > 1`).
 
 ---
 
@@ -88,6 +94,8 @@ TransE học theo nguyên tắc **dịch chuyển**: `vector(Alice) + vector(WOR
 
 Với `(Nguyễn Văn A, WORKS_ON, ?)`, xem 5 kết quả đầu có chứa cả Phoenix lẫn dự án mới. Thử ngược lại cặp "đã kết hôn với" và xem dự đoán có đối xứng hay không. Nếu mô hình hiện tại không đạt, hãy đổi sang RotatE rồi đo lại cùng bộ câu hỏi.
 
+> **Tóm gọn 1 câu:** TransE coi quan hệ là "phép dịch" nên mù thời gian và xử lý kém quan hệ đối xứng; cần lịch sử hoặc quan hệ kiểu "kết hôn" thì chuyển sang RotatE hoặc bản có thời gian (TKGE).
+
 ---
 
 ## Q4. Có vector của văn bản lẫn vector của đồ thị — trộn lại bằng cách nào, tỉ lệ bao nhiêu? [→ §5 Hybrid Search]
@@ -105,6 +113,8 @@ Hai bộ vector bắt được hai thứ khác nhau: text bắt "nói gì", grap
 1. Cách đơn giản nhất: **pha theo trọng số** — điểm cuối = `alpha × điểm_text + (1 − alpha) × điểm_graph`. Đặt `alpha` theo *loại câu hỏi*, không đặt một con số cho mọi thứ.
 2. Tham khảo tỉ lệ theo từng loại câu hỏi:
 
+> **Cách đọc bảng này:** `alpha` là trọng số nghiêng về vector chữ (alpha = 1 → chỉ nghe text; alpha = 0 → chỉ nghe graph). Ví dụ, dòng 1: câu hỏi tìm 1 đoạn cụ thể thì nghe text nhiều hơn, đặt 0.8.
+
 | Loại câu hỏi | Nên đặt alpha |
 |---|---|
 | Tìm một đoạn văn cụ thể | 0.8 (thiên về chữ) |
@@ -112,7 +122,7 @@ Hai bộ vector bắt được hai thứ khác nhau: text bắt "nói gì", grap
 | Hỏi tổng quan, so sánh xu hướng | 0.2 (cực thiên về đồ thị) |
 | Cân bằng mặc định | 0.5 – 0.6 |
 
-3. Cách thứ hai: **RRF** (Reciprocal Rank Fusion) — cộng `1 / (60 + thứ hạng)` cho mỗi danh sách kết quả. Ưu điểm: **không cần chuẩn hoá điểm số** giữa các bộ, vì thứ hạng luôn cùng thang.
+3. Cách thứ hai: **RRF** (Reciprocal Rank Fusion) — cộng `1 / (60 + thứ hạng)` cho mỗi danh sách kết quả (thứ hạng = vị trí trong danh sách, #1, #2, ...). Ưu điểm: **không cần chuẩn hoá điểm số** giữa các bộ, vì thứ hạng luôn cùng thang.
 4. Chọn RRF khi bạn có 3 nguồn trở lên (vector + duyệt đồ thị + tìm toàn văn) và không muốn tinh chỉnh trọng số.
 5. Nhớ lấy gấp đôi số kết quả từ mỗi bộ rồi mới pha, vì bộ nào bị lọc sớm thì mất luôn ứng viên.
 
@@ -121,6 +131,8 @@ Hai bộ vector bắt được hai thứ khác nhau: text bắt "nói gì", grap
 **Kiểm tra**
 
 Làm Lab 3: tạo 50 câu hỏi, 25 câu tìm đoạn cụ thể và 25 câu nối nhiều bước. Chạy ba chế độ: chỉ text (`alpha=1.0`), chỉ đồ thị (`alpha=0.0`), pha trộn (`alpha=0.6`), đo độ chính xác trong 5 kết quả đầu cho từng nhóm. Nếu chế độ pha trộn không thắng ở nhóm nào, hãy dời `alpha` về phía nhóm đó.
+
+> **Tóm gọn 1 câu:** Text bắt "nói gì", graph bắt "đứng ở đâu" — pha hai điểm số theo trọng số `alpha`, hoặc dùng RRF khi không muốn tinh chỉnh trọng số.
 
 ---
 

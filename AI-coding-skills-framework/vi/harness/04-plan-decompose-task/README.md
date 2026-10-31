@@ -59,11 +59,15 @@ LLM nói rất hay — nhưng khi gặp việc khó kiểu *"triển khai hệ t
 
 **Cách gỡ**: Structured Planning — dạy agent **nghĩ trước khi làm**, nhưng vẫn **làm đúng lúc, không chần chừ**.
 
+> **Tóm gọn 1 câu:** Agent không lập kế hoạch thì hoặc làm vội sai, hoặc nghĩ mãi không làm; giải pháp là dạy nó nghĩ trước rồi hành động đúng lúc.
+
 ### Tại Sao Plan & Decompose Task Quan Trọng?
 
 > *"Mục tiêu mà không có kế hoạch thì chỉ là mong ước. Còn AI mà không biết chia việc thì cũng chỉ là chatbot mà thôi."*
 
 #### 3 Bằng Chứng Khoa Học
+
+> Cách đọc bảng này: cột **#** là số thứ tự; cột **Nghiên Cứu** là tổ chức nào công bố, năm nào; cột **Phát Hiện Quan Trọng** là con số chứng minh planning có ích. Ví dụ, dòng 1: agent không plan chỉ thành công 32%, có plan đạt 78%.
 
 | # | Nghiên Cứu | Phát Hiện Quan Trọng |
 |---|-----------|----------------------|
@@ -91,6 +95,8 @@ Plan & Decompose = Analyze → Prioritize → Sequence → Execute → Validate
 **Analogies**: Plan & Decompose giống như chạy xe có GPS — không chỉ biết điểm đến (goal), mà còn được chia chặng (decompose), gợi ý đường ngon nhất (prioritize), áng chừng thời gian tới nơi (estimate), và tự tìm đường khác khi kẹt xe (replan). Không có GPS, bạn có thể chạy cả ngày mà vẫn chẳng tới nơi.
 
 **Nếu bỏ qua bước này**: agent ôm mọi thứ làm cùng lúc → quá tải context, bịa bừa vì thiếu cấu trúc rõ ràng, code chỗ nọ đá chỗ kia, cuối cùng tốn token gấp 3-5 lần so với khi có kế hoạch tử tế.
+
+> **Tóm gọn 1 câu:** Nghiên cứu cho thấy planning + chia nhỏ giúp agent thành công gấp 2.4 lần và tiết kiệm 60% token; đây là kỹ năng bắt buộc, không phải tùy chọn.
 
 ## Tổng Quan
 
@@ -138,6 +144,8 @@ Trong Harness Engineering, Planning & Decomposition đóng vai **"bộ não tổ
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Planning & Decomposition là bộ não điều phối của harness: task lớn vào → lên kế hoạch → chia nhỏ → thực thi → kiểm tra, gắn liền với tools, memory, guardrails.
+
 ## Tại Sao Planning & Decomposition Quan Trọng?
 
 > 📌 **Khái Niệm Cơ Bản**
@@ -160,6 +168,8 @@ LLM "chém gió" thì giỏi, nhưng gặp việc khó kiểu **"triển khai h�
 
 **Cách gỡ**: Structured Planning — một khung rõ ràng giúp agent **nghĩ kỹ trước khi làm**, mà vẫn **ra tay đúng lúc**.
 
+> **Tóm gọn 1 câu:** Hai lỗi thường gặp là làm vội không plan (oversimplification) và nghĩ hoài không làm (analysis paralysis); structured planning sửa cả hai.
+
 ### Bằng Chứng Nghiên Cûu
 
 #### LangChain (2025): "ReAct vs Plan-and-Execute"
@@ -175,7 +185,11 @@ Nguyên nhân: lên plan trước nên biết cần tool nào → đỡ đi nh�
 #### Devin AI & OpenHands (2025)
 > Các coding agent xịn nhất hiện nay đều chơi kiểu **chia tầng**: Task → Epic → Story → Sub-task. Nhờ vậy làm nhanh **gấp 2.8 lần** so với liệt kê task kiểu danh sách phẳng.
 
+> **Tóm gọn 1 câu:** Số liệu từ 3 phòng nghiên cứu xác nhận: plan trước → ít gọi tool thừa, chính xác hơn khi chia 3-7 việc, nhanh gấp 2.8 lần khi chia theo tầng.
+
 ### Phân Tích Chi Phí & Lợi Ích (Cost-Benefit Analysis)
+
+> Cách đọc bảng này: so sánh cùng một chỉ số khi **không có** và **có** kế hoạch. **Retry Rate** = tỉ lệ task phải làm lại từ đầu khi bị lỗi; **Tool Calls** = số lần agent gọi công cụ; **Token Usage** = lượng "nhiên liệu" chữ đưa vào/ra khỏi model, càng nhiều càng tốn tiền.
 
 | Chi Phí / Giá Trị | Không Có Planning | Có Planning + Decomposition |
 |---|---|---|
@@ -186,6 +200,8 @@ Nguyên nhân: lên plan trước nên biết cần tool nào → đỡ đi nh�
 | **User Trust** | Thấp vì kết quả bất ngờ | Cao vì có visibility vào plan |
 
 **ROI**: bỏ ra 15-30 giây đầu để lên kế hoạch → tiết kiệm 5-15 phút sửa sai về sau. Tỉ lệ lời **1:20**.
+
+> **Tóm gọn 1 câu:** Đầu tư 15-30 giây lên kế hoạch để đổi lấy 5-15 phút đỡ sửa sai — tỉ lệ lời 1:20, đủ lí do để luôn plan trước.
 
 ### Analogies Minh Họa
 
@@ -203,6 +219,8 @@ Nguyên nhân: lên plan trước nên biết cần tool nào → đỡ đi nh�
 - **Không planning** = Developer code ngay không cần spec → Feature creep, bugs
 - **Có planning** = Sprint planning → User stories → Tasks → Code
 - **Decomposition** = Epic → Feature → Story → Sub-task → Code
+
+> **Tóm gọn 1 câu:** Ba ví dụ đời thực (thợ xây, đầu bếp, dự án phần mềm) cùng một bài học: không có bản vẽ/menu/spec thì phải làm lại từ đầu.
 
 ### Bối Cảnh Tiến Hóa (Evolutionary Context)
 
@@ -231,6 +249,8 @@ Nguyên nhân: lên plan trước nên biết cần tool nào → đỡ đi nh�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Planning đã tiến hóa từ suy nghĩ từng bước (2022) tới chia tầng thích ứng tự replan (2026) — mỗi giai đoạn sửa một điểm yếu của giai đoạn trước.
+
 ### Nếu Bạn Bỏ Qua Planning...
 
 **1. Vòng lặp vô tận (Infinite Loop)**
@@ -253,7 +273,11 @@ Nguyên nhân: lên plan trước nên biết cần tool nào → đỡ đi nh�
 - Bước 1 sai → các bước 2-3-4-5 sai theo dây chuyền → cuối cùng phải làm lại cả cụm
 - Vì thiếu điểm kiểm tra (validation checkpoint) chặn giữa các bước
 
+> **Tóm gọn 1 câu:** Bỏ planning dẫn tới 5 hậu quả: vòng lặp vô tận, tự đẻ thêm việc, chọn sai tool, quên bước, và lỗi lan truyền dây chuyền.
+
 ### Best Practices (Và Tại Sao)
+
+> Cách đọc bảng này: cột **Quy tắc** là việc nên làm; cột **Lý do** giải thích vì sao. Ví dụ, "decompose task > 3 steps" nghĩa là task cần hơn 3 bước thì phải chẻ nhỏ, vì context window (bộ nhớ làm việc của model) có hạn, task quá to dễ làm model "lạc đề".
 
 | Quy tắc | Lý do |
 |---|---|
@@ -263,6 +287,10 @@ Nguyên nhân: lên plan trước nên biết cần tool nào → đỡ đi nh�
 | Đánh giá dependency trước khi execute | Task A cần hoàn thành trước Task B → execute tuần tự |
 | Limit plan depth ≤ 4 levels | Quá sâu dễ lose context tổng thể |
 | Re-plan khi sub-task fail | Thay vì retry một cách mù quáng, phân tích root cause và adjust plan |
+
+> **Tóm gọn 1 câu:** 6 quy tắc thực hành: chia task lớn, đặt điều kiện dừng, kiểm tra từng bước, đánh giá dependency trước, giới hạn độ sâu, replan khi lỗi.
+
+> **Tóm gọn 1 câu (cả mục):** Planning & Decomposition là kỹ năng bắt buộc của agent: có nó thì ít lỗi, rẻ token, kết quả đoán được; không có nó thì vòng lặp, scope creep và lỗi dây chuyền.
 
 ---
 
@@ -275,6 +303,8 @@ Nguyên nhân: lên plan trước nên biết cần tool nào → đỡ đi nh�
 > **Ẩn dụ/so sánh:** Giống bản đồ tuyến tàu điện — nhìn qua các trạm để biết mình nên xuống ở đâu; đọc theo thứ tự 1 đến 13 là lộ trình hợp lý nhất.
 >
 > **Vì sao quan trọng:** Vì nhìn bao quát trước giúp bạn biết mình đang đứng ở đâu và nên đi sâu vào phần nào.
+
+> Cách đọc bảng này: cột **#** là thứ tự chương; cột **Chủ đề** là link bấm tới được; cột **Mô tả** là nội dung chính của chương đó. Ví dụ, dòng 1 dẫn tới các kiểu chia task, dòng 12 dẫn tới các framework làm sẵn.
 
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
@@ -292,6 +322,8 @@ Nguyên nhân: lên plan trước nên biết cần tool nào → đỡ đi nh�
 | 12 | [Tools & Frameworks](#12-tools--frameworks) | LangGraph, AutoGen, CrewAI |
 | 13 | [Tương Lai](#13-tương-lai) | Xu hướng 2026-2028 |
 
+> **Tóm gọn 1 câu:** Bảng mục lục liệt kê 13 chủ đề từ chia nhỏ task tới xu hướng tương lai — đọc theo thứ tự 1 đến 13 là lộ trình hợp lý nhất.
+
 ---
 
 ## 1. Task Decomposition Patterns
@@ -304,10 +336,9 @@ Nguyên nhân: lên plan trước nên biết cần tool nào → đỡ đi nh�
 >
 > **Vì sao quan trọng:** Vì một task quá to làm LLM dễ lạc đề, ngốn context window và hallucinate — chia nhỏ giúp agent thực hiện chắc chắn từng bước và kiểm soát tiến độ dễ dàng.
 
-
 ### 1.1 Các Mô Hình Phân Chia
 
-Mục này chỉ ra **đủ kiểu cắt việc lớn thành việc nhỏ**: làm nối đuôi nhau, làm song song, rẽ nhánh theo điều kiện, chia cha-con theo tầng, làm đi làm lại tới khi đạt, hoặc đan xen theo đồ thị. Mỗi kiểu là một "thế trận" chạy việc khác nhau — bạn cứ nhìn mấy ô hình ASCII bên dưới là thấy ngay dáng dấp từng kiểu, rồi hẵng chọn kiểu hợp với bài toán của mình.
+Mục này chỉ ra **đủ kiểu cắt việc lớn thành việc nhỏ**: làm nối đuôi nhau, làm song song, rẽ nhánh theo điều kiện, chia cha-con theo tầng, làm đi làm lại tới khi đạt, hoặc đan xen theo đồ thị (DAG = đồ thị có hướng không chu trình — mũi tên chỉ đi một chiều, không vòng lặp ngược). Mỗi kiểu là một "thế trận" chạy việc khác nhau — bạn cứ nhìn mấy ô hình ASCII bên dưới là thấy ngay dáng dấp từng kiểu, rồi hẵng chọn kiểu hợp với bài toán của mình.
 
 > Cứ hình dung như sếp chia việc cho đội: có việc phải làm nối tiếp nhau, có việc chia cho mấy người cùng làm một lúc (song song), có việc thì "làm xong A mới được đụng vào B".
 
@@ -379,7 +410,10 @@ Mục này chỉ ra **đủ kiểu cắt việc lớn thành việc nhỏ**: là
 │       └────┘     └────┘                                        │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
+
 ```
+
+> **Tóm gọn 1 câu:** Sáu kiểu chia việc: tuần tự, song song, rẽ nhánh theo điều kiện, cha-con nhiều tầng, lặp tới khi đạt, và DAG (đồ thị ưu tiên).
 
 ### 1.2 Implementation
 
@@ -395,6 +429,8 @@ Code bên dưới là bộ cài đặt Python đầy đủ cho các pattern ở 
 > 📄 **Code ví dụ:** [`examples/01-1-2-implementation.py`](examples/01-1-2-implementation.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Code cài đặt 6 pattern trên: lớp Task khai báo một mảnh việc, lớp TaskPlanner là bộ não chẻ việc lớn thành nhỏ và ước tính độ khó.
 
 ### 1.3 So Sánh Các Pattern
 
@@ -413,7 +449,12 @@ Bảng dưới là "bảng tổng kết" so điểm 6 pattern theo 4 tiêu chí:
 │ Iterative        │ ⭐       │ ⭐⭐⭐⭐⭐  │ High (lặp)     │ Quality-first│
 │ DAG              │ ⭐⭐⭐    │ ⭐⭐⭐⭐⭐  │ Medium         │ Dependencies │
 └──────────────────┴──────────┴──────────┴────────────────┴──────────────┘
+
 ```
+
+> **Tóm gọn 1 câu:** Chọn pattern theo nhu cầu: nhanh → Sequential/Parallel; chất lượng cao → Hierarchical/Iterative; nhiều ràng buộc thứ tự → DAG.
+>
+> **Tóm gọn 1 câu (cả mục 1):** Task decomposition là chia việc lớn thành mảnh nhỏ xử lý được; 6 pattern + bảng so sánh giúp chọn đúng kiểu cho từng bài toán.
 
 ---
 
@@ -426,7 +467,6 @@ Bảng dưới là "bảng tổng kết" so điểm 6 pattern theo 4 tiêu chí:
 > **Ẩn dụ/so sánh:** Giống người đi du lịch dùng GPS: người chỉ lên kế hoạch một lần rồi đi (Plan-and-Solve), người thử nhiều tuyến rồi chọn tuyến tốt nhất (Tree of Thoughts), người vẽ hết cả hành trình rồi giao cho ai đó chạy (ReWOO).
 >
 > **Vì sao quan trọng:** Vì chọn sai thứ tự hành động khiến agent lãng phí token và kẹt trong những bước không cần thiết — đúng thuật toán giúp làm ít mà đạt hiệu quả cao.
-
 
 ### 2.1 LLM-Based Planning (Plan-and-Solve)
 
@@ -441,9 +481,11 @@ Cách này đúng kiểu bạn lên "to-do list" trước khi xắn tay áo: AI 
 
 </details>
 
+> **Tóm gọn 1 câu:** Plan-and-Solve = viết to-do list trước, làm từng bước, kiểm tra và vẽ lại đường khi hỏng — như nấu ăn theo công thức rồi nếm chỉnh.
+
 ### 2.2 Tree of Thoughts (ToT)
 
-Khác với kiểu suy nghĩ một đường thẳng như Plan-and-Solve, ToT **bung ra nhiều nhánh suy nghĩ cùng lúc**, chấm điểm từng nhánh, rồi dồn sức đào sâu nhánh nào ngon ăn nhất. Code bên dưới dùng BFS (đi theo từng tầng) kèm tỉa cành (pruning) cho đỡ nổ số nhánh: mỗi tầng chỉ giữ lại top-k nhánh điểm cao nhất.
+Khác với kiểu suy nghĩ một đường thẳng như Plan-and-Solve, ToT **bung ra nhiều nhánh suy nghĩ cùng lúc**, chấm điểm từng nhánh, rồi dồn sức đào sâu nhánh nào ngon ăn nhất. Code bên dưới dùng BFS (breadth-first search — duyệt theo từng tầng) kèm tỉa cành (pruning — cắt bớt nhánh kém) cho đỡ nổ số nhánh: mỗi tầng chỉ giữ lại top-k nhánh điểm cao nhất.
 
 > Như hội chẩn của bác sĩ: đưa ra 3 phác đồ, chấm từng phác đồ theo rủi ro và triển vọng, rồi chọn phác đồ sáng cửa nhất để theo.
 
@@ -453,6 +495,8 @@ Khác với kiểu suy nghĩ một đường thẳng như Plan-and-Solve, ToT **
 > 📄 **Code ví dụ:** [`examples/03-2-2-tree-of-thoughts-tot.py`](examples/03-2-2-tree-of-thoughts-tot.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** ToT = bung nhiều nhánh suy nghĩ, chấm điểm, tỉa nhánh kém, đào sâu nhánh tốt — như hội chẩn chọn phác đồ.
 
 ### 2.3 ReWOO (Reasoning Without Observation)
 
@@ -469,6 +513,10 @@ Chiêu chính là **tách bạch lúc nghĩ và lúc chạy tool ra làm hai ca 
 
 </details>
 
+> **Tóm gọn 1 câu:** ReWOO = nghĩ hết một lần rồi chạy tool liên tục, ít gọi LLM nên rẻ; đổi lại ít linh hoạt khi có biến giữa đường.
+
+> **Tóm gọn 1 câu (cả mục 2):** Ba thuật toán planning: Plan-and-Solve (an toàn, chung thủy), ToT (chất lượng, tốn token), ReWOO (rẻ, kém linh hoạt) — chọn theo bài toán.
+
 ---
 
 ## 3. Agent Workflows
@@ -480,7 +528,6 @@ Chiêu chính là **tách bạch lúc nghĩ và lúc chạy tool ra làm hai ca 
 > **Ẩn dụ/so sánh:** Giống cách một đoàn phim tổ chức làm việc: đội một người tự lo mọi thứ (single agent), đội chia vai như đạo diễn – biên kịch – diễn viên (multi-agent), hay đội chạy theo quy trình cố định (state machine).
 >
 > **Vì sao quan trọng:** Vì kịch bản vận hành quyết định agent phản ứng linh hoạt hay máy móc — chọn đúng kiểu workflow giúp công việc hoàn thành mịn và đúng hạn.
-
 
 ### 3.1 Các Kiểu Agent
 
@@ -531,7 +578,10 @@ Chiêu chính là **tách bạch lúc nghĩ và lúc chạy tool ra làm hai ca 
 │  └──────────────────────────────────────────────────────────┘   │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
+
 ```
+
+> **Tóm gọn 1 câu:** 6 kiểu agent từ đơn tới phức tạp: ReAct, Plan-and-Execute, Reflective, Multi-Agent, LangGraph state machine, Hierarchical.
 
 ### 3.2 Agent Implementation
 
@@ -547,6 +597,10 @@ Code dưới đây dựng 2 kiểu workflow vừa kể thành hàng thật: lớ
 > 📄 **Code ví dụ:** [`examples/05-3-2-agent-implementation.py`](examples/05-3-2-agent-implementation.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Code dựng 2 kiểu thật: SimpleAgent (một người làm hết, có chốt an toàn) và MultiAgent (đội nhóm có điều phối viên chia việc, gom kết quả).
+
+> **Tóm gọn 1 câu (cả mục 3):** Agent workflow là kịch bản vận hành; chọn kiểu nào quyết định agent phản ứng linh hoạt hay máy móc.
 
 ---
 
@@ -569,6 +623,8 @@ Cuốn "sổ cái" bên dưới là lớp `AgentState`: lưu giá trị kèm l�
 
 </details>
 
+> **Tóm gọn 1 câu:** State Management = điểm lưu game: ghi trạng thái, chụp checkpoint, rollback về mốc cũ khi lỗi — sập giữa chừng không mất trắng.
+
 ---
 
 ## 5. ReAct Pattern
@@ -590,6 +646,8 @@ Lớp `ReActAgent` bên dưới là bản dựng chuẩn của vòng lặp Thoug
 
 </details>
 
+> **Tóm gọn 1 câu:** ReAct = vòng lặp nghĩ → làm → ngó kết quả, lặp tới khi ra đáp án; kèm giới hạn số bước và kiểm tra tool trước khi gọi.
+
 ---
 
 ## 6. Harness-Integrated Planning
@@ -601,7 +659,6 @@ Lớp `ReActAgent` bên dưới là bản dựng chuẩn của vòng lặp Thoug
 > **Ẩn dụ/so sánh:** Như công trình có ban giám sát: thợ (planner) vẫn chia giai đoạn và thi công, nhưng bản vẽ nào cũng phải qua kiểm duyệt (guardrails), có kho hồ sơ công trình cũ để tra (memory), và mỗi giai đoạn đều có biên bản nghiệm thu (feedback).
 >
 > **Vì sao quan trọng:** Vì kế hoạch mà thả rông, không ai coi chừng thì dễ lộng quyền hoặc ngã lại đúng cái hố cũ — cắm vào Harness là để kế hoạch vừa an toàn vừa biết tự thích nghi.
-
 
 ### 6.1 TypeScript Interface (Harness Architecture)
 
@@ -616,6 +673,10 @@ Mục này diễn giải **tờ "hợp đồng" (interface) của Harness**: m�
 
 </details>
 
+> **Tóm gọn 1 câu:** Interface TypeScript là bản hợp đồng cam kết năng lực của planning system; class HarnessPlanner là bản triển khai đúng hợp đồng đó.
+>
+> **Tóm gọn 1 câu (cả mục 6):** Cắm planner vào harness là cho nó có guardrails giám sát, memory nhắc bài và feedback góp ý — an toàn hơn đánh lẻ.
+
 ---
 
 ## 7. Case Studies Thực Tế
@@ -627,7 +688,6 @@ Mục này diễn giải **tờ "hợp đồng" (interface) của Harness**: m�
 > **Ẩn dụ/so sánh:** Như đi xem "bài văn 10 điểm" của bạn học giỏi: coi người ta mở bài, đặt câu hỏi, chữa lỗi ra sao — rồi đem mánh đó về áp cho bài của mình.
 >
 > **Vì sao quan trọng:** Vì lý thuyết trong sách hay bị "trên trời" — ngó hàng đang chạy ngon ngoài production giúp bạn lượm được mấy mẫu thiết kế đã có người kiểm chứng.
-
 
 ### 7.1. SWE-agent (Princeton NLP) — Planning-First Approach
 
@@ -654,6 +714,8 @@ Mục này diễn giải **tờ "hợp đồng" (interface) của Harness**: m�
 
 **Bài học**: **"Cứ vẽ bản đồ codebase trước rồi hẵng xắn tay — đỡ mất công đi lòng vòng khám phá"**
 
+> **Tóm gọn 1 câu:** SWE-agent vẽ bản đồ codebase trước khi sửa → thành công tăng 64%, token giảm 30% — lập bản đồ trước, xắn tay sau.
+
 ---
 
 ### 7.2. Anthropic Multi-Agent Architecture
@@ -678,6 +740,8 @@ Mục này diễn giải **tờ "hợp đồng" (interface) của Harness**: m�
 
 **Bài học**: **"Phân chia tác vụ → Song song hóa → Đánh giá (Decompose → Parallelize → Evaluate) — công thức 3 bước"**
 
+> **Tóm gọn 1 câu:** Anthropic chia 3 agent (lập kế hoạch – thực thi – kiểm duyệt) và chạy song song → thành công hơn 80% so với single-agent.
+
 ---
 
 ### 7.3. Claude Code — Hierarchical Planning System
@@ -700,6 +764,8 @@ Mục này diễn giải **tờ "hợp đồng" (interface) của Harness**: m�
 
 </details>
 
+> **Tóm gọn 1 câu:** Claude Code chia planning 3 tầng và replan động khi có biến — plan không phải văn bản cứng mà là tài liệu sống.
+
 ---
 
 ### 7.4. Cursor IDE — Context-Aware Planning
@@ -713,7 +779,11 @@ Bối cảnh: Cursor phải lên kế hoạch sửa code **nương theo đúng c
 
 </details>
 
+> **Tóm gọn 1 câu:** Cursor lên kế hoạch sửa code nương theo ngữ cảnh bạn đang mở, tự thu hẹp phạm vi để khỏi đụng file không liên quan.
+
 **Bài học từ Case Studies**:
+
+> Cách đọc bảng này: mỗi **cột** là một sản phẩm thật; ✅ nghĩa là "có áp dụng bài học đó", dấu `-` nghĩa là "không áp dụng". Ví dụ, hàng "Plan before act" cho thấy cả 4 sản phẩm đều lập kế hoạch trước khi hành động.
 
 | Bài học | SWE-agent | Anthropic | Claude Code | Cursor |
 |--------|-----------|-----------|-------------|--------|
@@ -722,6 +792,8 @@ Bối cảnh: Cursor phải lên kế hoạch sửa code **nương theo đúng c
 | **Re-plan on failure** | - | ✅ Evaluation loop | ✅ Dynamic replan | - |
 | **Parallel execution** | - | ✅ Group steps | ✅ Sub-agents | - |
 | **Use memory** | - | - | ✅ Past patterns | ✅ Recent edits |
+
+> **Tóm gọn 1 câu:** Bảng tổng kết 4 case study cùng hội tụ về: plan trước khi act, giới hạn phạm vi, replan khi lỗi, chạy song song, dùng memory.
 
 ---
 
@@ -734,7 +806,6 @@ Bối cảnh: Cursor phải lên kế hoạch sửa code **nương theo đúng c
 > **Ẩn dụ/so sánh:** Như bộ quy tắc xây nhà: tường chịu lực đặt đâu, dây điện đi đường nào — làm đúng thì nhà bền, hư chỗ nào sửa chỗ đó; làm ẩu thì sau này đục phá khắp nơi, tốn tiền.
 >
 > **Vì sao quan trọng:** Vì planner mà cứ đắp thêm tính năng vô tội vạ thì sớm muộn cũng thành "mớ mì spaghetti" rối nùi — giữ đúng nguyên tắc thì hệ sống lâu, nới rộng nhẹ nhàng.
-
 
 ### 8.1 SOLID Cho Planning System
 
@@ -757,6 +828,8 @@ Bối cảnh: Cursor phải lên kế hoạch sửa code **nương theo đúng c
 **5. Dependency Inversion (Đảo ngược Phụ thuộc)**
 - Planner phụ thuộc vào Task abstraction, không phụ thuộc vào implementation cụ thể
 - Dễ dàng swap decomposition strategy
+
+> **Tóm gọn 1 câu:** SOLID áp vào planner: mỗi planner một việc, mở cho thêm strategy, thay thế được cho nhau, không ép ôm hết, phụ thuộc vào abstraction.
 
 ### 8.2 The 10 Commandments of Task Planning
 
@@ -792,7 +865,12 @@ Bối cảnh: Cursor phải lên kế hoạch sửa code **nương theo đúng c
 
 10. Thou shall LEARN from past plans
     → Học từ kế hoạch cũ, để cải thiện kế hoạch mới
+
 ```
+
+> **Tóm gọn 1 câu:** 10 điều răn tóm cả module: chia trước khi chạy, tôn trọng thứ tự, đặt hạn mức, lưu checkpoint, replan khi lỗi, log, validate, song song hóa, ước lượng, học từ quá khứ.
+
+> **Tóm gọn 1 câu (cả mục 8):** Design Principles giữ planner gọn gàng mở rộng dễ — làm đúng nguyên tắc thì sửa một chỗ không đục cả hệ thống.
 
 ---
 
@@ -806,28 +884,31 @@ Bối cảnh: Cursor phải lên kế hoạch sửa code **nương theo đúng c
 >
 > **Vì sao quan trọng:** Vì mấy lỗi như kẹt vòng lặp hay cháy token rất dễ gặp mà sửa thì đắt — biết trước để né vẫn là cách rẻ nhất.
 
-
 ### 9.1 DO ✅
 
-- **Phân task theo granularities**: broad → medium → fine-grained
-- **Xác định dependencies trước khi execute**: Dùng DAG để represent
-- **Set timeout và retry cho mỗi task**: Prevent infinite loops
-- **Checkpoint trước mỗi operation quan trọng**: Để rollback
+- **Phân task theo mức độ mịn (granularities)**: broad → medium → fine-grained = thô → vừa → mịn
+- **Xác định dependencies trước khi execute**: Dùng DAG (đồ thị ràng buộc thứ tự) để biểu diễn
+- **Set timeout (hạn giờ) và retry (làm lại) cho mỗi task**: Prevent infinite loops
+- **Checkpoint (chụp ảnh trạng thái) trước mỗi operation quan trọng**: Để rollback (hoàn tác)
 - **Re-plan khi gặp failure**: Không retry y hệt
 - **Track token usage per task**: Để optimize cost
-- **Validate kết quả mỗi step**: Fail fast
+- **Validate kết quả mỗi step**: Fail fast = phát hiện lỗi sớm, dừng ngay, đỡ tốn
 - **Parallelize independent tasks**: Tiết kiệm thời gian
+
+> **Tóm gọn 1 câu:** 8 việc nên làm: chia nhỏ, vẽ DAG, đặt timeout/retry, checkpoint, replan khi lỗi, đếm token, validate từng bước, song song hóa việc độc lập.
 
 ### 9.2 DON'T ❌
 
 - **Đừng execute toàn bộ task 1 lần**: Quá rủi ro
 - **Đừng ignore failures**: Phân tích nguyên nhân
 - **Đừng over-decompose**: Task quá nhỏ = overhead lớn
-- **Đừng forget to update state**: State sync rất quan trọng
-- **Đừng hardcode task order**: Nên compute từ dependencies
+- **Đừng forget to update state**: State sync (đồng bộ trạng thái giữa các bước) rất quan trọng
+- **Đừng hardcode (fix cứng) task order**: Nên tự tính thứ tự từ dependencies (quan hệ phụ thuộc)
 - **Đừng skip validation**: Output chưa verify = chưa hoàn thành
 - **Đừng allocate token budget quá lớn**: Prevent waste
 - **Đừng use single agent cho complex tasks**: Multi-agent tốt hơn
+
+> **Tóm gọn 1 câu:** 8 điều nên tránh: chạy all-in một lần, lờ đi lỗi, chia quá nhỏ, quên update state, hardcode thứ tự, bỏ validate, xài token hoang, đơn Agent làm việc phức tạp.
 
 ### 9.3 Token Budget Management
 
@@ -839,6 +920,10 @@ Mỗi task nên có một "hạn mức chi tiêu" token cho riêng mình, y như
 > 📄 **Code ví dụ:** [`examples/14-9-3-token-budget-management.ts`](examples/14-9-3-token-budget-management.ts)
 
 </details>
+
+> **Tóm gọn 1 câu:** TokenBudgetManager chia hạn mức token cho từng task như hạn mức thẻ tín dụng — hết room thì dừng, khỏi cháy túi.
+
+> **Tóm gọn 1 câu (cả mục 9):** Best Practices = sổ tay né lỗi đắt tiền: làm đúng list DO, tránh list DON'T, giữ token budget chặt chẽ.
 
 ---
 
@@ -861,6 +946,8 @@ Bộ test mẫu bên dưới cover cả `TaskPlanner`, `TokenBudgetManager` lẫ
 
 </details>
 
+> **Tóm gọn 1 câu:** Viết unit test cho TaskPlanner, TokenBudgetManager, AgentState để bắt lỗi sớm — test lẻ từng phần rẻ hơn đợi cháy rồi chữa.
+
 ---
 
 ## 11. Advanced Patterns
@@ -872,7 +959,6 @@ Bộ test mẫu bên dưới cover cả `TaskPlanner`, `TokenBudgetManager` lẫ
 > **Ẩn dụ/so sánh:** Như bác đầu bếp lão làng: HTN là có sẵn cả tủ sách công thức để chẻ món; Self-Reflective là sau mỗi lần nấu tự ngẫm "lần sau bớt muối lại".
 >
 > **Vì sao quan trọng:** Vì ca cực khó thì kế hoạch thẳng một đường đỡ không nổi — mấy chiêu này cho agent vừa chẻ đa tầng vừa tự chữa sai ngay khi thấy mùi khét.
-
 
 ### 11.1 Hierarchical Task Network (HTN)
 
@@ -887,6 +973,8 @@ HTN nối dài ý tưởng chia nhỏ ở mục 1 bằng cách thủ sẵn **m�
 
 </details>
 
+> **Tóm gọn 1 câu:** HTN = tủ công thức chẻ việc có sẵn: gặp việc gì rút đúng mẫu đó, bóc dần tới khi còn việc làm được ngay.
+
 ### 11.2 Self-Reflective Planning
 
 Chiêu này là: agent vẽ kế hoạch xong thì **tự làm giám khảo chấm bài của mình** (đủ chưa, làm nổi không, rủi ro chỗ nào); điểm thấp thì tự sửa theo góp ý của chính mình rồi chấm lại vài vòng. Class `SelfReflectivePlanner` bên dưới code đúng vòng Plan → Reflect → Improve đó, lại còn lưu sổ lịch sử để học từ kết quả thật.
@@ -900,6 +988,10 @@ Chiêu này là: agent vẽ kế hoạch xong thì **tự làm giám khảo ch�
 
 </details>
 
+> **Tóm gọn 1 câu:** Self-Reflective Planning = agent tự chấm bài kế hoạch của mình, tự sửa theo góp ý, lặp tới khi đạt — như viết nháp rồi đọc lại.
+
+> **Tóm gọn 1 câu (cả mục 11):** Hai chiêu nâng cao cho bài toán khoai: HTN chẻ theo công thức nhiều tầng, Self-Reflective tự soi và tự sửa.
+
 ---
 
 ## 12. Tools & Frameworks
@@ -911,7 +1003,6 @@ Chiêu này là: agent vẽ kế hoạch xong thì **tự làm giám khảo ch�
 > **Ẩn dụ/so sánh:** Như mua nhà lắp ghép thay vì tự trộn hồ xây gạch: khung sườn (state machine, agent orchestration) có sẵn rồi, bạn chỉ việc ráp và sơn phết theo ý mình.
 >
 > **Vì sao quan trọng:** Vì ôm đồm viết lại từ đầu vừa lâu vừa dễ toang — xài framework đã có cộng đồng kiểm chứng vừa nhanh vừa chuẩn bài.
-
 
 ### 12.1 LangGraph (Recommended for Planning)
 
@@ -926,6 +1017,8 @@ LangGraph cho bạn vẽ workflow như một **máy trạng thái (state machine
 
 </details>
 
+> **Tóm gọn 1 câu:** LangGraph vẽ workflow thành đồ thị node/edge như sơ đồ metro, tới ngã ba rẽ theo điều kiện — recommended cho planning.
+
 ### 12.2 CrewAI (Multi-Agent Planning)
 
 CrewAI xếp các agent thành hẳn một **đội (crew)**: bạn cắt vai cho từng người (Agent) kèm mục tiêu và đồ nghề riêng, phát task cho từng vai, rồi để cả đội phối hợp "đá" cho xong. Đoạn code dựng ba vai quen thuộc: Planner (ông vẽ đường), Executor (ông xắn tay làm) và Reviewer (ông soi lỗi).
@@ -938,6 +1031,8 @@ CrewAI xếp các agent thành hẳn một **đội (crew)**: bạn cắt vai ch
 > 📄 **Code ví dụ:** [`examples/19-12-2-crewai-multi-agent-planning.py`](examples/19-12-2-crewai-multi-agent-planning.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** CrewAI xếp agent thành đội có vai rõ: Planner vẽ đường, Executor làm, Reviewer soi lỗi — cùng phối hợp xong một dự án.
 
 ### 12.3 AutoGen (Microsoft)
 
@@ -952,6 +1047,10 @@ AutoGen của Microsoft cho các agent **ngồi "chat" với nhau** để phối
 
 </details>
 
+> **Tóm gọn 1 câu:** AutoGen cho các agent chat với nhau để phối hợp: một người đề xuất, một người làm, một người chốt ok.
+
+> **Tóm gọn 1 câu (cả mục 12):** Ba framework mã nguồn mở giúp dựng planning/agent nhanh mà không phải viết lại từ đầu.
+
 ---
 
 ## 13. Tương Lai
@@ -963,7 +1062,6 @@ AutoGen của Microsoft cho các agent **ngồi "chat" với nhau** để phối
 > **Ẩn dụ/so sánh:** Như đọc dự báo thời tiết trước chuyến đi xa: biết trước gió máy ra sao để chuẩn bị áo ấm từ sớm, chứ đừng đợi người ta đi hết rồi mới chạy theo.
 >
 > **Vì sao quan trọng:** Vì móng nhà bạn đổ hôm nay quyết định 3 năm nữa có cơi thêm tầng được không — ngó trước để đặt tiền đúng chỗ.
-
 
 ### 13.1 Xu Hướng 2026-2028
 
@@ -992,6 +1090,8 @@ AutoGen của Microsoft cho các agent **ngồi "chat" với nhau** để phối
 - Nhìn thấy plan chạy trực tiếp theo thời gian thực
 - Thò tay chỉnh plan ngay trên giao diện
 
+> **Tóm gọn 1 câu:** 5 xu hướng 2026-2028: agent tự plan, nhiều agent cùng plan, đoán trước rủi ro, plan theo context, và giao diện kéo-thả.
+
 ### 13.2 Lời Khuyên
 
 ```
@@ -1009,13 +1109,20 @@ AutoGen của Microsoft cho các agent **ngồi "chat" với nhau** để phối
 
 5. Measure everything
    → Track tokens, time, success rate
+
 ```
+
+> **Tóm gọn 1 câu:** Lời khuyên: bắt đầu từ pattern đơn giản, tăng độ phức tạp dần, luôn validate, học từ lỗi, đo mọi thứ.
+
+> **Tóm gọn 1 câu (cả mục 13):** Nhìn trước xu hướng để đổ móng đúng — móng hôm nay quyết định 3 năm nữa có cơi thêm tầng được không.
 
 ## 14. Bổ Sung Production: Replanning, Cổng Approval, Idempotency & Chặn Bùng Nổ
 
 > Nốt chặn an toàn để plan từ §1–§13 chạy tự động ngoài production mà không "bung".
 
 ### 14.1 Định nghĩa
+
+> Cách đọc bảng này: cột **Thuật ngữ** là khái niệm kỹ thuật; cột **Định nghĩa** là nghĩa bằng lời thường. Ví dụ, "idempotency key" là mã định danh giúp làm lại an toàn: chạy trùng lần hai cũng không gây tác dụng phụ kép.
 
 | Thuật ngữ | Định nghĩa |
 |------|------------|
@@ -1024,7 +1131,11 @@ AutoGen của Microsoft cho các agent **ngồi "chat" với nhau** để phối
 | Idempotency key | `plan_id:subtask_id:input_hash` ổn định để retry không áp dụng side effect hai lần |
 | Chặn bùng nổ (explosion guard) | Trần cứng cho độ sâu, fan-out và nhánh ToT × chi phí để chặn planning chạy mất kiểm soát |
 
+> **Tóm gọn 1 câu:** Bảng định nghĩa 4 chốt an toàn: replan động, cổng duyệt người, idempotency key chống làm trùng, và trần cứng chặn bùng nổ.
+
 ### 14.2 Bảng Quyết Định Replanning Động
+
+> Cách đọc bảng này: mỗi **hàng** là một tình huống lỗi; dấu ✅ ở **cột** nào nghĩa là chọn hành động đó. **Retry** = thử lại y hệt (giữ nguyên plan); **Replan** = vẽ lại kế hoạch mới; **Escalate** = dừng máy và gọi người thật vào quyết định. Ví dụ, tool hỏng vì timeout (hết giờ chờ) hay 429 (bị giới hạn tần suất gọi) mới lần đầu thì chỉ cần retry.
 
 | Tín hiệu | Retry (giữ plan) | Replan (phân rã mới) | Escalate (con người) |
 |--------|-------------------|----------------------------|------------------|
@@ -1037,6 +1148,8 @@ AutoGen của Microsoft cho các agent **ngồi "chat" với nhau** để phối
 
 Luật chung: mỗi lần đổi hướng đều ghi log `attempt, error_class, decision, reason`; tối đa 3 lần auto-retry, 2 lần auto-replan, quá số đó là phải gọi người vào (escalate).
 
+> **Tóm gọn 1 câu:** Bảng quyết định: lỗi thoáng qua thì retry, hỏng lặp lại thì replan, việc không đảo ngược hoặc sắp cháy ngân sách thì gọi người vào.
+
 ### 14.3 Cổng Approval Human-in-Loop
 
 **Việc của planner ở cái cổng này.** Mức risk được dán nhãn *ngay lúc vẽ plan* — một subtask
@@ -1046,8 +1159,8 @@ gắn `risk ∈ {high, irreversible}` là ứng viên đi qua cổng, và chính
 1. **Gán tag, không gắn cổng.** Gắn `db.migrate, prod.deploy, user.delete, external.send`
    là `risk ∈ {high, irreversible}` ngay khi phân rã. Subtask không có tag là `low` và không
    bao giờ chặn.
-2. **Liệt kê bán kính ảnh hưởng từ registry policy.** Lấy đúng tập tài nguyên mà subtask
-   chạm tới từ registry sandbox/policy ở
+2. **Liệt kê bán kính ảnh hưởng từ registry policy.** "Bán kính ảnh hưởng" = phạm vi tài nguyên mà một hành động có thể đụng tới (blast radius). Lấy đúng tập tài nguyên mà subtask
+   chạm tới từ registry sandbox/policy (bảng đăng ký quyền và vùng được phép) ở
    [`12-sandbox-execution` §6](../12-sandbox-execution/README.md) — không phải từ một phỏng
    đoán trong plan.
 3. **Từ chối → replan, không retry.** Một lần từ chối ghi lại `reason` và kích hoạt replan
@@ -1061,18 +1174,27 @@ hai-người, và audit trail `approval_request` / `approval_verdict`. Đừng l
 đó ở đây — một planner và một gatekeeper bất đồng về cửa sổ hết hạn là một cổng hoặc treo
 vĩnh viễn, hoặc tự kích hoạt mà không ai canh.
 
+> Thuật ngữ trong đoạn trên, nghĩa là gì: **taxonomy tier** = cách xếp loại độ nguy hiểm theo bậc; **TTL** = thời hạn có hiệu lực của phê duyệt (time-to-live), hết hạn phải xin lại; **diff** = bản so sánh trước/sau cho thấy thay đổi gì; **dry-run** = chạy diễn thử, không tác động thật; **rollback** = lệnh hoàn tác về trạng thái cũ; **timeout-deny (fail closed)** = hết giờ chờ phê duyệt thì tự động từ chối, không mặc định cho qua; **checkpoint `PAUSED:`** = agent dừng lại và in dòng `PAUSED:` chờ người duyệt; **luật hai-người** = ngoài người yêu cầu phải có người thứ hai duyệt; **audit trail** = nhật ký truy vết ai duyệt, duyệt lúc nào.
+
 Mọi approval đều được ghi audit-log `(who, when, diff_hash)` rồi lưu vào trajectory store
+
 (`13-trajectory-observability` §6), để câu "người chưa từng thấy nó" nói ra là có bằng chứng kiểm được, chứ không phải lời chống chế suông.
+
+> **Tóm gọn 1 câu:** Planner chỉ gán tag risk và tra policy; mọi approval qua module 15-approval-gates, có audit log chứng minh người đã duyệt.
 
 ### 14.4 Idempotency Subtask + Lỗi Một Phần
 
-Key là `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. Executor ngó vào result-store trước; lỡ crash giữa chừng thì replay sẽ trả ngay kết quả cache. Gặp lỗi một phần: đánh dấu từng node DAG là `ok/failed/skipped`; nhánh độc lập cứ chạy tiếp, node nào ăn theo node hỏng thì bỏ qua, cuối cùng trả `partial:true + completed[] + failed[]`. Mấy side effect đã làm xong mà phải abort thì bù lại qua `rollback()` đã đăng ký sẵn cho từng subtask.
+Key là `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"` — trong đó `sha1(canonical_inputs)` là **vân tay (hash)** của dữ liệu đầu vào đã chuẩn hóa: cùng một đầu vào luôn ra cùng một vân tay. Executor (bộ thực thi) ngó vào result-store (kho kết quả đã làm) trước; lỡ crash (sập) giữa chừng thì replay (chạy lại) sẽ trả ngay kết quả cache thay vì làm lại từ đầu. Gặp lỗi một phần: đánh dấu từng node DAG là `ok/failed/skipped`; nhánh độc lập cứ chạy tiếp, node nào ăn theo node hỏng thì bỏ qua, cuối cùng trả `partial:true + completed[] + failed[]` — nghĩa là "chỉ xong một phần", kèm danh sách completed (đã xong) và failed (đã hỏng) để phía trên xử lý tiếp. Mấy side effect đã làm xong mà phải abort thì bù lại qua `rollback()` đã đăng ký sẵn cho từng subtask.
+
+> **Tóm gọn 1 câu:** Idempotency key giúp retry không làm trùng side effect; DAG một phần trả kết quả rõ: cái nào ok, cái nào hỏng, cái nào bị bỏ qua.
 
 ### 14.5 Chặn Bùng Nổ (Độ Sâu / Fan-out / Chi Phí ToT)
 
-- `MAX_DEPTH=4, MAX_FANOUT=5, MAX_SUBTASKS=25`. Lệnh decompose nào lố độ sâu thì trả về task nguyên tử, khỏi chẻ nữa.
-- ToT: `MAX_BRANCHES=3, MAX_ROLLOUTS=9`; mỗi rollout có hạn mức token/thời gian riêng; nhánh nào điểm <0.3 sau 2 bước thì tỉa bỏ.
-- Trần chi phí toàn cục: `MAX_TOKENS_PER_PLAN` (ví dụ 100k) + `MAX_TOOL_CALLS=50`; xài tới 80% thì bắn subtask cảnh báo, chạm 100% thì đóng băng và escalate kèm bản tóm tắt `best-so-far`.
+- `MAX_DEPTH=4, MAX_FANOUT=5, MAX_SUBTASKS=25` — `MAX_DEPTH` là số tầng chia tối đa, `MAX_FANOUT` là số nhánh con sinh ra cùng một lúc, `MAX_SUBTASKS` là tổng số subtask tối đa. Lệnh decompose nào lố độ sâu thì trả về task nguyên tử, khỏi chẻ nữa.
+- ToT: `MAX_BRANCHES=3, MAX_ROLLOUTS=9` — `MAX_BRANCHES` là số nhánh suy nghĩ tối đa, `MAX_ROLLOUTS` là số lần chạy thử mô phỏng tối đa (mỗi rollout = một lần thử một nhánh); mỗi rollout có hạn mức token/thời gian riêng; nhánh nào điểm <0.3 sau 2 bước thì tỉa bỏ.
+- Trần chi phí toàn cục: `MAX_TOKENS_PER_PLAN` (ví dụ 100k) + `MAX_TOOL_CALLS=50` — tổng token và tổng số lần gọi tool không được vượt ngưỡng; xài tới 80% thì bắn subtask cảnh báo, chạm 100% thì đóng băng và escalate kèm bản tóm tắt `best-so-far` (kết quả tốt nhất đạt được tới lúc dừng).
+
+> **Tóm gọn 1 câu:** Ba loại trần cứng: độ sâu và số nhánh chia việc, nhánh ToT và rollout, trần token/tool toàn cục — quá 80% cảnh báo, 100% đóng băng.
 
 <details>
 <summary>Python Code — Subtask Idempotent + Quyết Định Replan (Click to expand/collapse)</summary>
@@ -1081,7 +1203,11 @@ Key là `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. Executor ngó vào
 
 </details>
 
+> **Tóm gọn 1 câu:** Code minh họa idempotent subtask và quyết định replan trong code thật.
+
 ### 14.6 Checklist
+
+> Cách đọc bảng này: 6 quy tắc bắt buộc phải kiểm tra trước khi để planner chạy tự động; đánh số để tiện soát từng cái một. Ví dụ, dòng 1 yêu cầu ghi log (nhật ký) kèm lý do mỗi lần đổi hướng.
 
 | # | Quy tắc |
 |---|------|
@@ -1091,6 +1217,10 @@ Key là `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. Executor ngó vào
 | 4 | Idempotency key trên mọi subtask có side effect; cache kết quả để replay |
 | 5 | Theo dõi trạng thái DAG một phần; bù khi abort; trả `partial` tường minh |
 | 6 | Thực thi `depth ≤4, fan-out ≤5, nhánh ToT ≤3`, trần token/tool toàn cục với cảnh báo 80% |
+
+> **Tóm gọn 1 câu:** Checklist 6 điều: phân loại lỗi, giới hạn retry/replan, chặn việc nguy hiểm, idempotency, trạng thái DAG một phần, trần cứng toàn cục.
+
+> **Tóm gọn 1 câu (cả mục 14):** Bốn chốt an toàn (replan, approval gate, idempotency, trần cứng) giúp plan chạy tự động ngoài production mà không bung.
 
 ---
 
@@ -1126,12 +1256,18 @@ Key là `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. Executor ngó vào
    - Xu et al., 2023
    - https://arxiv.org/abs/2305.18323
 
+> **Tóm gọn 1 câu:** 5 bài paper gốc của ReAct, ToT, Plan-and-Solve, SWE-agent, ReWOO — nguồn học thuật cho mọi khái niệm trong module.
+
 ### Frameworks
 
 1. **LangGraph** - https://langchain-ai.github.io/langgraph/
 2. **CrewAI** - https://www.crewai.com
 3. **AutoGen** - https://microsoft.github.io/autogen/
 4. **LangChain** - https://langchain.com
+
+> **Tóm gọn 1 câu:** 4 framework chính đã giới thiệu ở mục 12 — link trang chủ để tra tài liệu mới nhất.
+
+> **Tóm gọn 1 câu (cả mục):** Mục tham khảo ghi nguồn gốc mọi số liệu và khái niệm — cần đào sâu thì bắt đầu từ đây.
 
 ---
 

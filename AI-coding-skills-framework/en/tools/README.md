@@ -14,13 +14,17 @@
 
 ### The Opening Story
 
-You have built a full harness — tools, memory, context, guardrails — and you have loops that check work on their own. But one quiet problem remains: **every time the agent runs `ls`, `cat`, `git status`, or `cargo test`... it gets back hundreds of lines**, which fill up the context window, and the one error line that matters gets lost in the noise.
+This section explains why this folder exists: even a perfect harness fails if every shell command dumps hundreds of lines into the model's memory.
+
+You have built a full harness — tools, memory, context, guardrails — and you have loops that check work on their own. But one quiet problem remains: **every time the agent runs `ls`, `cat`, `git status`, or `cargo test`... it gets back hundreds of lines**, which fill up the context window (*context window = the model's short-term memory; everything in it costs tokens and attention*), and the one error line that matters gets lost in the noise.
 
 > *"Input tokens are the currency of agent reasoning. Don't spend them on bash noise."*
 
 **Harness Engineering** teaches you how to shape the environment around AI. **Tools** is where the hands-on tooling lives — the apps and helpers you install and set up — that make those ideas work in real life.
 
 This folder gathers the tooling behind **each part of the harness**, grouped by role: **Tool** (RTK, Loop CLI), **Framework** (LangChain, AutoGen, CrewAI), **Vector DBs** (memory/RAG), and **MCP Ecosystem** (linking tools through MCP) — plus the **Security** (guardrails) and **Quality** (observability, evaluation) layers.
+
+> **One-line summary:** This folder holds the ready-to-install tools that turn harness ideas into working software — starting with cutting bash noise.
 
 ### Why Tools Matter?
 
@@ -34,7 +38,13 @@ This folder gathers the tooling behind **each part of the harness**, grouped by 
 | 2 | **Immediate token savings** | Installing RTK once can cut 40-90% of tokens from repeated bash commands — a direct win toward the "Cut Costs 40-60%" goal in HARNESS_ENGINEERING.md. |
 | 3 | **Separate knowledge from tooling** | Keep `harness/` for ideas and guides, `loop/` for loops, and `tools/` for ready-made binaries, CLIs, and plugins — each folder with a clear job. |
 
+> **How to read this table:** each row is one reason this folder exists. For example, row 2: a *token* is the unit of text the model reads and writes (you pay per token); RTK cuts 40-90% of the tokens spent on shell output — savings from day one, not after a rewrite.
+
+> **One-line summary:** Ideas alone don't run — this folder is the installable software that makes the harness real.
+
 ## Overview (The Tools Group)
+
+This section shows where `tools/` sits in the framework: it is the third branch, the one you install and run.
 
 **Tools** is the third branch of the framework, next to `harness/` (ideas) and `loop/` (loops). Each tool has its own folder with a guide, following the same style: an `README.md` overview plus a learning path with numbered topics.
 
@@ -47,6 +57,8 @@ This folder gathers the tooling behind **each part of the harness**, grouped by 
 │  tools/        → ❯ Execution tooling (binary/CLI/plugins)            │
 └──────────────────────────────────────────────────────────────────────┘
 ```
+
+> **One-line summary:** `harness/` teaches, `loop/` orchestrates, `tools/` installs — this branch is the software you actually run.
 
 ## Directory Structure Across 4 Groups
 
@@ -70,6 +82,10 @@ tools/
     └── README.md        ←   Scaffold + orchestrate loops, Harness Runtime score
 ```
 
+> **How to read this tree:** `rtk/` = a tool that shortens shell output before the model sees it (a *hook* = a trigger the agent runs before/after each command). `loop-cli/` = the command suite that creates and guards loops. The numbered folders (`01-` to `05-`) are the learning path, in order.
+
+> **One-line summary:** Group 1 is install-and-go software: RTK (cut bash noise) and loop-cli (create and guard loops).
+
 ### 🏗️ Group 2 — Framework (Building harness orchestration)
 
 > Coding frameworks that turn harness ideas into real working code.
@@ -86,6 +102,10 @@ tools/
     └── README.md        ←   Agent/Task/Crew, Process.sequential vs hierarchical
 ```
 
+> **How to read this tree:** these three are rival frameworks — pick one. LangGraph thinks in graphs (*StateGraph = your workflow drawn as boxes and arrows*), AutoGen thinks in conversations, CrewAI thinks in named roles with a task list.
+
+> **One-line summary:** Three alternative ways to code the same harness — graph, conversation, or roles.
+
 ### 🗄️ Group 3 — Vector DBs (Memory & Retrieval)
 
 > Storage and lookup for long-term memory in harness/01-03.
@@ -95,6 +115,10 @@ tools/
 └── vector-db/     →   Chroma, Pinecone, Qdrant, Weaviate — memory/RAG
     └── README.md        ←   Embeddings, semantic search, Tier 2 Warm Memory
 ```
+
+> **How to read this tree:** a *vector DB* stores text as embeddings (*embedding = text turned into a list of numbers that captures meaning*) and finds it again by meaning, not exact keywords. *RAG = the model answers using documents fetched from this store.*
+
+> **One-line summary:** Vector DBs are the agent's long-term memory — search by meaning, not keywords.
 
 ### 🔌 Group 4 — MCP Ecosystem (Connecting Tools ↔ AI)
 
@@ -106,6 +130,10 @@ tools/
     └── README.md        ←   GitHub MCP server, adding MCP servers, registry adapter
 ```
 
+> **How to read this tree:** *MCP (Model Context Protocol)* = a standard plug format between AI apps and external tools — like USB for agent tools. A tool server that speaks MCP plugs in without custom glue code.
+
+> **One-line summary:** MCP is the standard socket that lets any tool plug into any agent — no custom wiring per tool.
+
 ### 🛡️ Security Layer (Safe tool calls)
 
 > The safety check before the agent acts — so it avoids harmful side effects.
@@ -115,6 +143,10 @@ tools/
 └── guardrails/    →   Guardrails AI, NeMo, LlamaGuard
     └── README.md        ←   Validators, rails, permissions + rate limits (harness/06)
 ```
+
+> **How to read this tree:** *guardrails* = automatic checks that run before every tool call — a call that breaks a rule (wrong file, too many requests) is refused before it does damage.
+
+> **One-line summary:** Guardrails check every tool call before it executes — the seatbelt for agent actions.
 
 ### 📊 Quality Layer (Measurement & monitoring)
 
@@ -128,6 +160,10 @@ tools/
 └── evaluation/    →   PromptFoo, Deepeval, Ragas
     └── README.md        ←   Eval suites, regression detection, RAG metrics (harness/11)
 ```
+
+> **How to read this tree:** *observability* = recording what happened in every run (traces, cost, latency) so you can diagnose it; *SLO = a service-level objective, a target like "answers in under 2 seconds"*. *evaluation* = fixed test suites that catch regressions (*regression = something that worked gets worse after a change*).
+
+> **One-line summary:** Observability records what happened; evaluation blocks things getting worse — together they keep the harness honest.
 
 ---
 
@@ -175,9 +211,15 @@ tools/
     └── README.md
 ```
 
+> **How to read this tree:** the same ten directories as above, in one view. The emoji headers are the group names; each `←` comment is the one-line job of that folder. Only `rtk/` has all its numbered topics filled in today — the rest ship an overview README.
+
 > Each directory contains one `README.md` — consistent with the convention of `harness/` and `loop/`.
 
+> **One-line summary:** Ten directories, four groups plus two layers — this tree is the whole map at a glance.
+
 ## Learning Roadmap
+
+This section tells you what to install in what order, so you get value early instead of boiling the ocean.
 
 ### By Group (The Stack By Need)
 
@@ -192,6 +234,10 @@ tools/
 | Safe tool calls | 🛡️ Security | [guardrails](guardrails/) |
 | Monitor cost/latency | 📊 Quality | [observability](observability/) |
 | Measure response quality | 📊 Quality | [evaluation](evaluation/) |
+
+> **How to read this table:** start from your problem, in your words, in the **Need** column ("cut bash token costs now"). The **Group** column tells you the category, and **Tool** links to the exact folder. For example, if your bill is too high, go straight to `rtk/`.
+
+> **One-line summary:** Find your tool by problem, not by name — nine needs, nine folders.
 
 ### Recommended Roadmap (6 Stages)
 
@@ -217,13 +263,19 @@ Stage 6 — Automate:
    loop-cli/ → scaffold loops, loop gate in CI, worktree isolation
 ```
 
+> **How to read this roadmap:** install in this order — each stage builds on the last. Stage 1 pays for itself the same day; automation (Stage 6) comes last because automating an unsafe, unmeasured harness just breaks things faster.
+
+> **One-line summary:** Six stages, cheapest payoff first: compress tokens, pick a framework, connect tools, add safety, measure, then automate.
+
 ---
 
 ## Real-World Case Studies
 
+This section shows the tools working on real repos: RTK plugged into 16 AI tools, a complete production stack, and measured numbers.
+
 ### 1. RTK — Eating Its Own Dogfood
 
-The `rtk-ai/rtk` repo itself shows harness ideas in action: it supports **16 AI coding tools** through different hook and plugin setups:
+The `rtk-ai/rtk` repo itself shows harness ideas in action (*dogfood = a project uses its own product on itself, for real*): it supports **16 AI coding tools** through different hook and plugin setups:
 
 | AI Tool | Integration method | Level |
 |---------|-------------------|-------|
@@ -233,6 +285,10 @@ The `rtk-ai/rtk` repo itself shows harness ideas in action: it supports **16 AI 
 | Gemini CLI | BeforeTool hook | Transparent rewrite |
 | Codex | AGENTS.md + RTK.md instructions | Instruction-based |
 | Cursor | preToolUse hook (hooks.json) | Transparent rewrite |
+
+> **How to read this table:** **AI Tool** = the coding assistant. **Integration method** = how RTK attaches to it — a *PreToolUse hook* = a trigger that rewrites the command before it runs, so the agent never sees raw output. **Level** = how deep the integration goes: "Transparent rewrite" means the agent cannot tell RTK is there; "Instruction-based" means the agent is politely asked to use RTK.
+
+> **One-line summary:** RTK plugs into 16 AI tools — transparently via hooks where possible, via instruction files elsewhere.
 
 ### 2. A Complete Stack for a Production Harness (By Group)
 
@@ -260,6 +316,10 @@ evaluation/    → PromptFoo regression-check in CI (harness/11)
 loop-cli/      → loop gate + worktree isolation for automation (harness/10)
 ```
 
+> **How to read this stack:** each block is one layer of a full production setup, with the harness module it serves in brackets — for example, `rtk/` serves context management (harness/02) by cutting 90% of shell output before the model sees it. Read it top to bottom as "what to assemble for a serious harness".
+
+> **One-line summary:** A full production stack in eight blocks — each mapped to the harness module it serves.
+
 ### 3. Measured RTK Results
 
 | Command | Raw output | RTK output | Reduction |
@@ -270,9 +330,17 @@ loop-cli/      → loop gate + worktree isolation for automation (harness/10)
 | `docker ps` | Many columns | Essential fields only | ~70%+ |
 | `ruff check` | Many lines | Grouped by rule/file | ~80% |
 
+> **How to read this table:** **Command** = a common shell command. **Raw output** = the lines the model would receive without RTK. **RTK output** = what the model receives after compression — for example, 200+ failing test lines become one summary line plus details. **Reduction** = the share of tokens removed.
+
+> **One-line summary:** Measured on real commands, RTK removes 70–93% of shell output — the model sees the answer, not the noise.
+
 ---
 
 ## Reference Materials
+
+This section lists every tool with its role and link, plus pointers into the other framework branches.
+
+> **One-line summary:** Every tool with its job and link, plus pointers into harness/ and loop/.
 
 ### Across the 4 Groups
 
@@ -312,6 +380,10 @@ loop-cli/      → loop gate + worktree isolation for automation (harness/10)
 | 📊 Quality | **Observability** (LangSmith, Helicone, OpenLLMetry, W&B) | Monitor cost + latency | [observability](observability/) |
 | 📊 Quality | **Evaluation** (PromptFoo, Deepeval, Ragas) | Measure response quality | [evaluation](evaluation/) |
 
+> **How to read these tables:** each row = one tool with its job (**Role**) and where to get it (**Link** — a local folder plus an external URL). They repeat the directory structure above in reference form, so you can look a tool up by name.
+
+> **One-line summary:** The same ten tools in reference form — name, job, and where to get it.
+
 ### Links to Other Branches
 
 - [HARNESS_ENGINEERING.md](../HARNESS_ENGINEERING.md) — the 7 components of the harness
@@ -323,6 +395,8 @@ loop-cli/      → loop gate + worktree isolation for automation (harness/10)
 - [loop/](../loop/) — Self-maintaining loops (loop-cli)
 - [MCP_SETUP.md](../../../instruction/MCP_SETUP.md) — MCP ecosystem (harness/06, instruction/)
 
+> **One-line summary:** Eight links connecting each tool back to the harness module it supports.
+
 ---
 
 > **"A model is only as good as the information it can access at inference time — and every wasted token is information your agent doesn't get to reason with."**
@@ -330,6 +404,10 @@ loop-cli/      → loop gate + worktree isolation for automation (harness/10)
 ---
 
 ## ⚠️ Update 10/2026: New Frameworks in the Agent Ecosystem
+
+This section tracks the newer frameworks and protocols that appeared after this guide was written, so you don't adopt something already being replaced.
+
+> **One-line summary:** Four new frameworks/protocols since 2025 — and AutoGen itself is now archived.
 
 Beyond the 3 frameworks already listed in Group 2 (LangChain, AutoGen, CrewAI), the agent ecosystem has gained new frameworks/protocols since 2025 worth tracking:
 
@@ -340,6 +418,8 @@ Beyond the 3 frameworks already listed in Group 2 (LangChain, AutoGen, CrewAI), 
 | **Google ADK (Agent Development Kit)** | Google | Framework for building agents compatible with Gemini + Vertex AI, multi-agent support | https://google.github.io/adk-docs/ |
 | **A2A Protocol (Agent2Agent)** | Google → Linux Foundation | Standard protocol for agent-to-agent communication across different frameworks | https://a2a-protocol.org |
 
+> **How to read this table:** **Framework/Protocol** = the new name. **Publisher** = who maintains it. **Highlights** = what it does, in one line — for example, MAF = Microsoft merging its two older agent libraries into one; A2A = a shared language that lets agents from different frameworks talk to each other. **Link** = the official page.
+
 **Important note on AutoGen:** The AutoGen repo has been **archived** — Microsoft no longer maintains it. If you are using AutoGen, plan a migration to **Microsoft Agent Framework (MAF)**. See details in [tools/autogen/](autogen/).
 
 ### Version Updates for Existing Frameworks
@@ -348,5 +428,7 @@ Beyond the 3 frameworks already listed in Group 2 (LangChain, AutoGen, CrewAI), 
 - **CrewAI v1.x** (10/2025+): v1.0.0 released 10/2025, currently v1.15.x — see [tools/crewai/](crewai/)
 - **MCP Spec 2026-07-28**: Streamable HTTP replaces SSE, elicitation, sampling, registry — see [tools/mcp-ecosystem/](mcp-ecosystem/)
 - **Guardrails AI**: validators moved to standard PyPI (7/2026) — see [tools/guardrails/](guardrails/)
+
+> **One-line summary:** AutoGen is archived (migrate to MAF); LangChain, CrewAI, MCP and Guardrails all shipped major updates in 2025–2026 — check the linked folders before building.
 
 *This article is part of the [AI Coding Skills Framework](../..) — the Tools branch*

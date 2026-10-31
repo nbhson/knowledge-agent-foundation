@@ -37,9 +37,15 @@ Bạn hỏi: *"Team của Alice có ai làm AI không?"*
 
 **Graph Reasoning** biến những câu hỏi mơ hồ này thành **logic có thể thực thi**: rules, path constraints, và inference chains có thể verify.
 
+> **Tóm gọn 1 câu:** Graph Reasoning = biến câu hỏi mơ hồ ("team của Alice có ai làm AI?") thành chuỗi bước logic máy chạy được và kiểm chứng được.
+
 ### Tại Sao Graph Reasoning Quan Trọng?
 
 > *"Retrieval finds facts. Reasoning connects them into answers you didn't know to ask for."*
+>
+> (Dịch: truy xuất tìm ra sự kiện; suy luận nối chúng thành câu trả lời mà bạn chưa nghĩ ra cách hỏi.)
+
+> **Cách đọc bảng này:** mỗi dòng là 1 nghiên cứu/benchmark; cột "Phát Hiện" nói nó đo được điều gì. Ví dụ, dòng 1: câu hỏi cần nối 2+ bước suy luận chính xác hơn 27% khi đi qua graph.
 
 | # | Nguồn | Phát Hiện |
 |---|-------|-----------|
@@ -50,6 +56,8 @@ Bạn hỏi: *"Team của Alice có ai làm AI không?"*
 ---
 
 ## Tổng Quan
+
+Sơ đồ liệt kê 5 "bộ kỹ năng" của reasoning: đi thăm graph, tìm đường, suy ra quan hệ mới, đo tầm quan trọng, và xử lý theo thời gian.
 
 ```
 Knowledge Graph
@@ -73,6 +81,8 @@ Knowledge Graph
 ---
 
 ## Nội Dung
+
+> **Cách đọc bảng này:** cột "Chủ đề" là mục con bên dưới; cột "Mô tả" tóm tắt mục đó gồm những gì. Ví dụ, dòng 3 nói: phần Inference dạy viết luật để suy ra quan hệ chưa có trong graph.
 
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
@@ -114,11 +124,14 @@ Constrained BFS (chỉ qua MANAGES):
 ```
 
 **Khi nào chọn BFS, DFS?**
+
+> **Cách đọc bảng này:** mỗi dòng là 1 tình huống và kiểu đi nên chọn. Ví dụ, muốn biết tất cả node cách 1-2 bước → chọn BFS vì nó quét đủ từng vòng trước khi đi sâu.
+
 | Tình huống | Chọn | Lý do |
 |-----------|------|-------|
 | Muốn biết tất cả nodes cách 1-2 hops | **BFS** | Đảm bảo tìm được tất cả trước khi đi sâu |
 | Muốn tìm đường ngắn nhất | **BFS** | BFS luôn tìm đường ngắn nhất đầu tiên |
-| Muốn tìm đường bất kỳ, kiểm tra tồn tại | **DFS** | Nhanh hơn BFS khi muốnExists check |
+| Muốn tìm đường bất kỳ, kiểm tra tồn tại | **DFS** | Nhanh hơn BFS khi chỉ cần kiểm tra có đường hay không |
 | Graph lớn, cần giới hạn số nodes thăm | **Sampled BFS** | BFS có sampling, không visit hết |
 | Chỉ cần nodes thỏa điều kiện | **Constrained BFS** | Kết hợp BFS + filter |
 
@@ -134,6 +147,8 @@ Constrained BFS (chỉ qua MANAGES):
 Trên graph 1M+ nodes, không thể traverse toàn bộ:
 
 > 📄 **Code ví dụ:** [`examples/02-1-2-sampling-cho-graph-lon.py`](examples/02-1-2-sampling-cho-graph-lon.py)
+
+> **Tóm gọn 1 câu:** BFS quét theo vòng, DFS đi sâu từng nhánh — và với graph lớn luôn phải đặt điều kiện hoặc lấy mẫu, không chạy không ràng buộc.
 
 ---
 
@@ -176,6 +191,8 @@ Trên graph 1M+ nodes, không thể traverse toàn bộ:
 
 > 📄 **Code ví dụ:** [`examples/04-2-2-cypher-path-queries.cypher`](examples/04-2-2-cypher-path-queries.cypher)
 
+> **Tóm gọn 1 câu:** Đường ít bước chưa chắc là đường tốt — chọn loại tìm đường theo tiêu chí bạn cần: ít bước, đáng tin nhất, hay đưa nhiều lựa chọn cho LLM.
+
 ---
 
 ## 3. Inference Rules & Reasoning
@@ -207,9 +224,11 @@ Trên graph 1M+ nodes, không thể traverse toàn bộ:
 
 ### 3.2 Confidence Propagation
 
-Khi suy diễn qua nhiều bước, confidence giảm:
+Khi suy diễn qua nhiều bước, confidence giảm (đi qua càng nhiều cạnh suy ra, tin cậy càng thấp):
 
 > 📄 **Code ví dụ:** [`examples/06-3-2-confidence-propagation.py`](examples/06-3-2-confidence-propagation.py)
+
+> **Tóm gọn 1 câu:** Thay vì lưu mọi quan hệ dẫn xuất, viết luật "nếu... thì..." để máy tự suy ra cạnh mới — kèm độ tin cậy giảm dần theo số bước suy luận.
 
 ---
 
@@ -221,6 +240,8 @@ Khi suy diễn qua nhiều bước, confidence giảm:
 
 ### 4.2 Centrality — Ai Quan Trọng?
 
+> **Centrality** = bộ chỉ số đo "tầm quan trọng" của node: PageRank đo mức được trỏ tới, betweenness đo mức node "nằm trên đường đi" giữa các node khác.
+
 <details>
 <summary>Python Code — Centrality Analysis (Click để xem)</summary>
 
@@ -228,9 +249,13 @@ Khi suy diễn qua nhiều bước, confidence giảm:
 
 </details>
 
+> **Tóm gọn 1 câu:** Community chỉ ra "ai thuộc nhóm nào", centrality chỉ ra "ai nổi bật nhất" — cả hai giúp suy luận biết đâu là điểm quan trọng cần đi qua.
+
 ---
 
 ## 5. Temporal Reasoning
+
+Phần này xử lý quan hệ có "hạn sử dụng": khi nào còn đúng, khi nào hết.
 
 ### 5.1 Time-Aware Graph
 
@@ -239,6 +264,8 @@ Khi suy diễn qua nhiều bước, confidence giảm:
 ### 5.2 Versioning
 
 > 📄 **Code ví dụ:** [`examples/10-5-2-versioning.py`](examples/10-5-2-versioning.py)
+
+> **Tóm gọn 1 câu:** Mỗi cạnh gắn ngày hiệu lực, cập nhật thì "đóng hạn" cạnh cũ thay vì xoá — nhờ vậy câu hỏi về quá khứ vẫn trả lời được.
 
 ---
 
@@ -250,6 +277,8 @@ Khi suy diễn qua nhiều bước, confidence giảm:
 > 📄 **Code ví dụ:** [`examples/11-6-trien-khai-reasoning-engine.py`](examples/11-6-trien-khai-reasoning-engine.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Reasoning engine = gói 5 mảnh trên vào một lớp: đi graph có ràng buộc, tìm đường, áp luật, đo tầm quan trọng, lọc theo thời gian.
 
 ---
 
@@ -285,6 +314,8 @@ Khi suy diễn qua nhiều bước, confidence giảm:
 
 > **So với Think-on-Graph:** PER tách rõ Planner (đổi hướng) / Executor / Reasoner. Think-on-Graph remix mọi thứ trong LLM + graph. PER thường **hiệu quả hơn về chi phí** vì Executor không tốn token LLM.
 
+> **Tóm gọn 1 câu:** Để LLM chỉ huy, code chạy — mỗi bước suy luận đều có bằng chứng trong graph, nên giảm bịa và giảm chi phí token.
+
 ---
 
 ## 8. Labs Thực Hành
@@ -305,9 +336,13 @@ Khi suy diễn qua nhiều bước, confidence giảm:
 1. Tạo temporal graph với 20 edges có `valid_from/until` khác nhau
 2. Hỏi: "Ai quản lý team X vào 2023-06-01 vs 2024-06-01?" — verify kết quả khác nhau
 
+> **Tóm gọn 1 câu:** 3 lab cho bạn kiểm chứng: ràng buộc giúp nhanh hơn, luật suy ra cạnh đúng logic, và truy vấn theo thời gian trả đúng quá khứ.
+
 ---
 
 ## Tài Liệu Tham Khảo
+
+> Bài báo gốc + tài liệu GDS; cần kỹ thuật nào đọc bài đó.
 
 - *Reasoning with Knowledge Graphs* — Paulheim & Gangemi (2023)
 - Neo4j GDS — *Path Finding & Centrality* (https://neo4j.com/docs/graph-data-science/current/)
@@ -321,16 +356,20 @@ Khi suy diễn qua nhiều bước, confidence giảm:
 
 ## GraphRAG — Cập nhật 2026
 
+> **Đang nói về gì:** GraphRAG = RAG có trợ giúp của đồ thị (RAG = đưa tài liệu liên quan vào prompt cho LLM trả lời). **Multi-hop** = câu hỏi cần nối 2+ bước quan hệ; **vector-only RAG** = chỉ tìm theo "giống về nghĩa", không nhìn cấu trúc.
+
 Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query phức tạp (multi-hop) tốt hơn vector-only RAG.
 
 **Tin mới 2025-2026:**
-- **LazyGraphRAG** (Microsoft, cuối 2024): defer LLM summarisation tới query time — indexing cost ngang vector RAG, quality ngang full GraphRAG, query cost thấp hơn ~700×. Đã tích hợp Microsoft Discovery (2025) và Azure Local.
-- **LightRAG** (HKUDS, EMNLP 2025): dual-layer graph + vector, incremental update thay vì re-index toàn bộ.
+- **LazyGraphRAG** (Microsoft, cuối 2024): defer LLM summarisation tới query time — "defer" = trì hoãn bước tóm tắt đắt tiền đến khi có người hỏi, thay vì tóm trước mọi thứ — indexing cost ngang vector RAG, quality ngang full GraphRAG, query cost thấp hơn ~700×. Đã tích hợp Microsoft Discovery (2025) và Azure Local.
+- **LightRAG** (HKUDS, EMNLP 2025): dual-layer graph + vector, incremental update (thêm tài liệu mới chỉ cập nhật phần thay đổi) thay vì re-index toàn bộ.
 - **GraphRAG-Bench** (Microsoft, 06/2025): multi-hop + global queries GraphRAG thắng; single-hop factoid vanilla RAG thắng.
 - **Gartner (2026)**: GraphRAG trong "Top Trends in D&A for 2026" cho complex cases mà high-accuracy RAG thất bại.
 - **Knowledge Graph Market**: 1.48B USD (2025) → 2.04B USD (2026). GraphRAG chuyển từ "enterprise luxury" → production baseline.
 
 Ref: https://microsoft.github.io/graphrag/
+
+> **Tóm gọn 1 câu:** Từ 2025-2026, GraphRAG đã rẻ và phổ biến hơn nhiều — chọn đúng biến thể giúp trả các câu hỏi nhiều bước mà vector RAG bó tay.
 
 ---
 

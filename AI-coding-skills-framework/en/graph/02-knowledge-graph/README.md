@@ -29,16 +29,24 @@ Result: three different "Alice" nodes in the graph that don't link to each other
 
 **Knowledge Graph Construction** fixes this: it pulls knowledge out of raw text in a **steady, consistent way** and links it up so you can query it easily.
 
+> **One-line summary:** Raw extraction writes the same person three different ways; KG construction standardizes and merges so the graph stays connected.
+
 ### Why Is KG Construction Important?
+
+Signpost: this section justifies the effort with three measured findings — bad extraction poisons everything downstream.
 
 > *"Garbage in, garbage out — a bad extraction makes the graph worse than vectors. Extraction determines 80% of GraphRAG quality."*
 > — Microsoft GraphRAG Paper (2024)
+
+How to read this table: each row is one study, its finding, and what it means in practice. For instance, row 1 says: extracting in repeated rounds ("gleaning") finds 25% more entities than one pass.
 
 | # | Research | Finding |
 |---|-----------|-----------|
 | 1 | **Microsoft GraphRAG (2024)** | The gleaning loop (extracting in multiple rounds) increases **entity coverage by 25%** vs single-pass |
 | 2 | **LangChain Evaluation (2025)** | Deduplication via embedding similarity reduces **duplicate nodes by 40%** |
 | 3 | **Stanford KB Construction (2024)** | The schema-first approach reduces **invalid relations by 60%** compared to open extraction |
+
+> **One-line summary:** Extraction quality decides ~80% of final GraphRAG quality — gleaning, dedup, and a schema are the three measured levers.
 
 ---
 
@@ -71,9 +79,15 @@ Raw Documents
      Knowledge Graph (ready for Storage & GraphRAG)
 ```
 
+(Reading the diagram: data flows top to bottom through 5 stages. Each stage has its own section below. "Ontology" = the schema rulebook; "Resolution" = merging duplicate entities; "Incremental" = updating without rebuilding.)
+
+> **One-line summary:** Five stages in order: design the schema → extract entities → extract relations → merge duplicates → keep updating as new documents arrive.
+
 ---
 
 ## Contents
+
+How to read this table: each row is one section of this module — number, title, and what it covers. Links jump to the section.
 
 | # | Topic | Description |
 |---|--------|-------|
@@ -84,6 +98,8 @@ Raw Documents
 | 5 | [Incremental Updates](#5-incremental-kg-updates) | Add/modify/delete without rebuilding everything |
 | 6 | [Pipeline](#6-complete-pipeline) | End-to-end code |
 | 7 | [Agentic Construction](#7-agentic-kg-construction) | An LLM agent builds & self-corrects the KG via CRUD |
+
+> **One-line summary:** Seven sections, from schema design to agentic construction — theory first, code throughout.
 
 ---
 
@@ -115,9 +131,15 @@ Raw Documents
 └──────────────────┴──────────────────────────────────┴──────────────────────────────┘
 ```
 
+How to read this table: each row is one design approach, with its advantages (Pros) and drawbacks (Cons). For instance, "Schema-Free" means letting the LLM invent its own labels — flexible, but you get a hairball.
+
+> **One-line summary:** Schema-first is clean but rigid, schema-free is flexible but messy — hybrid takes the best of both.
+
 ### 1.2 Designing an Ontology
 
 > 📄 **Example code:** [`examples/01-1-2-designing-an-ontology.yaml`](examples/01-1-2-designing-an-ontology.yaml)
+
+> **One-line summary:** The ontology file is the rulebook: which node types exist, which fields are required, which edge directions are legal.
 
 ### 1.3 Validation Code
 
@@ -127,6 +149,8 @@ Raw Documents
 > 📄 **Example code:** [`examples/02-1-3-validation-code.py`](examples/02-1-3-validation-code.py)
 
 </details>
+
+> **One-line summary:** Validation code rejects edges that break the schema — e.g. `Project -[APPROVES]-> Person` — before they pollute the graph.
 
 ---
 
@@ -156,6 +180,10 @@ Raw Documents
 └──────────────────┴──────────┴──────────┴──────────────────────────────┘
 ```
 
+How to read this table: each row is one extraction method. **Precision** = of what it finds, how much is correct (more ⭐ = fewer false hits); **Recall** = of what exists, how much it finds (more ⭐ = fewer misses).
+
+> **One-line summary:** Regex is precise but narrow; LLM is broad but forgetful; LLM + gleaning gets both.
+
 ### 2.2 LLM Extraction with a Gleaning Loop (GraphRAG Pattern)
 
 <details>
@@ -165,11 +193,17 @@ Raw Documents
 
 </details>
 
+> **One-line summary:** The gleaning loop re-asks "any entities left?" until a round adds nothing — near-complete coverage.
+
 ### 2.3 Chunking Before Extraction
+
+Signpost: this explains why long documents must be cut into pieces before extraction.
 
 Like RAG, large documents need to be split up before extraction:
 
 > 📄 **Example code:** [`examples/04-2-3-chunking-before-extraction.py`](examples/04-2-3-chunking-before-extraction.py)
+
+> **One-line summary:** Split long documents into overlapping chunks first, or the LLM forgets the later pages.
 
 ### 2.4 Claims Extraction (GraphRAG Pattern)
 
@@ -185,9 +219,13 @@ Like RAG, large documents need to be split up before extraction:
 
 > 📄 **Example code:** [`examples/05-2-4-claims-extraction-graphrag-pattern.py`](examples/05-2-4-claims-extraction-graphrag-pattern.py)
 
+> **One-line summary:** Claims are extractable facts with their source attached, so every answer can point back to the sentence that proves it.
+
 ---
 
 ## 3. Relation Extraction
+
+Signpost: after finding *things*, this section finds the *verbs* between them — who manages whom, what belongs to what.
 
 ### 3.1 Schema-Guided Relation Extraction
 
@@ -198,11 +236,17 @@ Like RAG, large documents need to be split up before extraction:
 
 </details>
 
+> **One-line summary:** Schema-guided extraction checks each relation against the ontology, so invalid edges fail loudly instead of silently landing in the graph.
+
 ### 3.2 Confidence Scoring
 
-Each relation should carry a `confidence` for downstream filtering:
+Signpost: not every extracted relation is equally trustworthy — this stores *how* trustworthy.
+
+Each relation should carry a `confidence` (confidence = a 0-to-1 trust score; downstream filtering = later steps keep only edges above a cutoff, e.g. ≥ 0.7) for downstream filtering:
 
 > 📄 **Example code:** [`examples/07-3-2-confidence-scoring.py`](examples/07-3-2-confidence-scoring.py)
+
+> **One-line summary:** Stamp every relation with a confidence score so weak guesses can be filtered out later without re-extraction.
 
 ---
 
@@ -221,6 +265,8 @@ Each relation should carry a `confidence` for downstream filtering:
 > **Warning:** merging too aggressively → **two genuinely different people get fused together** (the HR Alice ≠ the CTO Alice). Always set a **threshold** and allow splitting back apart.
 
 ### 4.1 The Problem
+
+Signpost: a picture of the disease before the cure — the same entity extracted as many nodes.
 
 ```
 Raw extraction:
@@ -242,6 +288,8 @@ Raw extraction:
 
 </details>
 
+> **One-line summary:** Dedup runs three escalating checks — normalize spelling, fuzzy-match names, compare meaning with embeddings — and merges only above a safe threshold.
+
 ### 4.3 Entity Linking & Coreference Resolution
 
 > **📌 Core Concept:**
@@ -253,13 +301,19 @@ Raw extraction:
 
 > 📄 **Example code:** [`examples/09-4-3-entity-linking-coreference-resolution.py`](examples/09-4-3-entity-linking-coreference-resolution.py)
 
+> **One-line summary:** Entity linking happens *during* extraction ("NV A" = the existing Alice node), while dedup cleans up *after* — use both.
+
 ---
 
 ## 5. Incremental KG Updates
 
-A production KG changes every day — you can't rebuild the whole thing each time.
+Signpost: production graphs change daily; this shows how to add or fix facts without rebuilding everything.
+
+A production KG changes every day — you can't rebuild the whole thing each time. (In practice: upsert = update-if-exists-else-insert, and soft delete = mark `deleted: true` instead of erasing, so history survives.)
 
 > 📄 **Example code:** [`examples/10-5-incremental-kg-updates.py`](examples/10-5-incremental-kg-updates.py)
+
+> **One-line summary:** New documents trigger small upserts and soft deletes — never a full re-extraction.
 
 ---
 
@@ -272,6 +326,8 @@ A production KG changes every day — you can't rebuild the whole thing each tim
 
 </details>
 
+> **One-line summary:** §6 is everything above wired into one runnable script: extract → validate → dedup → upsert.
+
 ---
 
 ## 7. Agentic KG Construction
@@ -280,6 +336,8 @@ A production KG changes every day — you can't rebuild the whole thing each tim
 > **Agentic KG construction** = instead of an extract-then-merge batch pipeline, an **LLM agent operates the graph directly via CRUD** (Create/Read/Update/Delete through Cypher). The agent reads the text → writes `CREATE`/`MERGE` queries → checks the results → **catches its own errors and fixes them** when a query is wrong or the information isn't quite right.
 >
 > **Versus a batch pipeline (the sections above):**
+>
+> How to read this table: it compares the two construction styles row by row — flow, error handling, evidence, cost, and best use case.
 >
 > | | Batch Pipeline | Agentic Agent |
 > |---|---|---|
@@ -294,6 +352,8 @@ A production KG changes every day — you can't rebuild the whole thing each tim
 > Notable systems: **KnoBuilder, KG-Agent** (iteratively extract triplets in a loop), **RAGA** (evaluates KG quality, then has the agent fix it). 2025–2026 research shows the agentic approach **significantly reduces incorrect triplets** compared to single-pass batch, at a 2–3× higher cost.
 
 > 📄 **Example code:** [`examples/12-7-agentic-kg-construction.py`](examples/12-7-agentic-kg-construction.py)
+
+> **One-line summary:** An agentic builder loops read→write→check→fix and self-corrects its mistakes — 2–3× the cost for far fewer wrong facts.
 
 ---
 
@@ -315,6 +375,8 @@ A production KG changes every day — you can't rebuild the whole thing each tim
 - Try thresholds 0.80, 0.85, 0.90 for `deduplicate_entities`
 - Observe: low threshold → over-merging (false positives), high threshold → duplicates slip through
 
+> **One-line summary:** Three labs: build a small KG end-to-end, prove gleaning adds coverage, and tune the dedup threshold.
+
 ---
 
 ## References
@@ -326,9 +388,13 @@ A production KG changes every day — you can't rebuild the whole thing each tim
 - *Knowledge Graph Agent: An Agentic Construction Benchmark* — KnoBuilder/RAGA/KG-Agent (arXiv 2025)
 - *Knowledge Graph Construction Survey* — Paulheim (2017)
 
+> **One-line summary:** Primary sources: the GraphRAG docs, LangChain and spaCy guides, and two academic papers on agentic construction.
+
 ---
 
 ## GraphRAG — 2026 Update
+
+Signpost: this closing section tracks the fast-moving GraphRAG ecosystem so the module does not go stale.
 
 Microsoft GraphRAG (2024-2025): uses knowledge graphs to enhance RAG. Complex (multi-hop) queries outperform vector-only RAG.
 
@@ -340,6 +406,8 @@ Microsoft GraphRAG (2024-2025): uses knowledge graphs to enhance RAG. Complex (m
 - **Knowledge Graph Market**: $1.48B (2025) → $2.04B (2026). GraphRAG shifting from "enterprise luxury" → production baseline.
 
 Ref: https://microsoft.github.io/graphrag/
+
+> **One-line summary:** 2025–2026 brought cheaper GraphRAG variants (LazyGraphRAG, LightRAG) and market growth — graph-enhanced RAG is becoming the default, not the luxury.
 
 ---
 

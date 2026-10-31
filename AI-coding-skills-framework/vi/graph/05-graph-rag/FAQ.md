@@ -8,7 +8,7 @@ Câu hỏi nào khó hiểu thì đọc `../README.md` phần trong ngoặc.
 
 **Bạn sẽ thấy**
 
-Bạn có 1.000 tài liệu, khoảng 500.000 token chữ. RAG thường chỉ cần nhúng vector (embed) — khoảng **0.05 USD**. GraphRAG thì phải gọi mô hình ngôn ngữ để trích thực thể và quan hệ, tóm tắt từng cụm: khoảng **5.55 USD**, gấp hơn 100 lần. Với 50 tài liệu nội bộ thì con số này chưa đáng lo, nhưng nếu chạy lại mỗi tuần thì tiền bạc đáng cân nhắc.
+Bạn có 1.000 tài liệu, khoảng 500.000 token chữ. RAG thường chỉ cần nhúng vector (embed — biến chữ thành dãy số để máy so sánh độ giống) — khoảng **0.05 USD**. GraphRAG thì phải gọi mô hình ngôn ngữ để trích thực thể và quan hệ, tóm tắt từng cụm: khoảng **5.55 USD**, gấp hơn 100 lần. Với 50 tài liệu nội bộ thì con số này chưa đáng lo, nhưng nếu chạy lại mỗi tuần thì tiền bạc đáng cân nhắc.
 
 **Vì sao**
 
@@ -22,6 +22,8 @@ Chi phí phần lớn nằm ở bước *trích xuất* và *tóm tắt*, vì ha
 4. Đang phân vân thì dùng bản nhẹ hơn: LightRAG (nhanh hơn khoảng 10 lần, chi phí khoảng 1/3–1/4) hoặc HippoRAG bản 2 (trả lời nhiều bước với ít token hơn, rẻ hơn khoảng 20 lần).
 5. Dùng mô hình chạy cục bộ qua Ollama (ví dụ `gemma3:12b`) ở bước trích và tóm tắt — đây là bước tốn tiền nhất, chuyển sang local là cách giảm chi phí lớn nhất.
 
+> **Cách đọc bảng này:** mỗi dòng là 1 dạng câu hỏi và công cụ hợp nhất. Ví dụ, câu hỏi nối 2–4 bước quan hệ → tìm cục bộ trên đồ thị là đủ, chưa cần GraphRAG toàn phần.
+
 | Loại câu hỏi | Dùng gì |
 |---|---|
 | Một sự thật đơn lẻ, 1 bước | RAG thường hoặc tìm cục bộ |
@@ -31,6 +33,8 @@ Chi phí phần lớn nằm ở bước *trích xuất* và *tóm tắt*, vì ha
 **Kiểm tra**
 
 Làm Lab 1: 20 tài liệu cùng một chủ đề, chạy cả hai kiểu trên 10 câu hỏi, tự đánh giá câu nào thắng. Ghi lại chi phí LLM của mỗi lần. Chỉ dựng GraphRAG đầy đủ khi số câu thắng đủ bù chi phí dựng chỉ mục.
+
+> **Tóm gọn 1 câu:** GraphRAG đắt ~100 lần ở bước dựng chỉ mục nhưng chỉ trả 1 lần — đáng giá chỉ khi câu hỏi của bạn cần tổng hợp từ nhiều tài liệu.
 
 ---
 
@@ -62,6 +66,8 @@ Câu hỏi toàn cục: "Xu hướng AI 2024?"
 
 Chạy cùng câu hỏi đó qua cả hai chế độ. Chế độ toàn cục phải cho câu trả lời có nhiều mặt (đầu tư, quy định, y tế) và mỗi mặt đều dẫn được về cụm nguồn. Nếu vẫn thấy khẳng định không có bằng chứng, hãy thu hẹp tập cụm được đưa vào.
 
+> **Tóm gọn 1 câu:** Câu hỏi có tên thực thể cụ thể → tìm cục bộ quanh thực thể đó; câu hỏi tổng quan không thực thể → tìm toàn cục bằng map-reduce trên tóm tắt từng cụm.
+
 ---
 
 ## Q3. Cứ tăng "độ phân giải" của cụm thì cụm toàn vỡ, giảm thì chỉ còn 2 cụm — chọn thế nào? [→ §4 Chia Cụm Leiden]
@@ -88,6 +94,8 @@ Tham số `resolution` quyết định độ mịn của việc chia cụm: th�
 
 Với mỗi mức, hỏi cùng một câu toàn cục và so sánh chất lượng. Đồng thời đếm số cụm để cân đối với chi phí gọi mô hình. Mức tốt nhất là mức cho câu trả lời tốt nhất *với chi phí thấp nhất*, không phải mức cho nhiều cụm nhất.
 
+> **Tóm gọn 1 câu:** `resolution` là núm vặn "ít cụm to hay nhiều cụm nhỏ" — chọn mức mà mỗi cụm gom đúng 1 chủ đề và đủ lớn để tóm tắt trong 2–4 câu.
+
 ---
 
 ## Q4. Hỏi một chi tiết lặp về trong một tài liệu, GraphRAG lại tệ hơn RAG thường — vì sao? [→ §8 Khi nào KHÔNG nên dùng]
@@ -108,6 +116,8 @@ Nghiên cứu so sánh có hệ thống (RAG so với GraphRAG) cho thấy Graph
 4. Kiểm tra chất lượng trên tập câu hỏi thật của bạn, đừng tin vào kết quả trên tập ví dụ.
 5. Đứng ở giữa thì dùng **LightRAG** hoặc **HippoRAG** — nhẹ hơn, ít tốn token hơn.
 
+> **Cách đọc bảng này:** mỗi dòng là 1 dạng câu hỏi và "người thắng" tương ứng. Ví dụ, hỏi chi tiết một điều khoản → RAG thường thắng; hỏi chủ đề xuyên nhiều tài liệu → GraphRAG thắng.
+
 | Câu hỏi | Thắng hơn |
 |---|---|
 | Một sự thật đơn lẻ | RAG thường |
@@ -117,6 +127,8 @@ Nghiên cứu so sánh có hệ thống (RAG so với GraphRAG) cho thấy Graph
 **Kiểm tra**
 
 Lấy 30 câu hỏi thật của bạn, chạy cả hai kiểu, đánh dấu câu nào trả lời sai. Nếu phần lớn câu sai thuộc nhóm một sự thật đơn lẻ thì đừng dựng GraphRAG; nếu nhóm đa bước chiếm đa số thì nó đang đáng dùng.
+
+> **Tóm gọn 1 câu:** GraphRAG không luôn thắng — câu chi tiết đơn lẻ để RAG thường lo, GraphRAG chỉ nhận các câu nhiều bước hoặc tổng hợp cả kho.
 
 ---
 
@@ -143,6 +155,8 @@ Khi các nguồn dùng thang điểm khác nhau, phép cộng trực tiếp là 
 **Kiểm tra**
 
 Chạy cùng 20 câu hỏi với (a) chỉ một nguồn, (b) gộp bằng cộng điểm thô, (c) gộp bằng RRF. Đo độ chính xác trong 10 kết quả đầu. Nếu RRF không hơn (a), đồ thị của bạn chưa đủ thông tin để thêm vào.
+
+> **Tóm gọn 1 câu:** Đừng cộng điểm các nguồn khác thang đo — dùng RRF: cộng `1/(60 + thứ hạng)`, nguồn nào nhiều mục lên top ở nhiều danh sách thì được ưu tiên.
 
 ---
 

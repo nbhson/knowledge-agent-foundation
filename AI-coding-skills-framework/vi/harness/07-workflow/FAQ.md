@@ -2,11 +2,17 @@
 
 Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
+> **Cách đọc FAQ này:** mỗi câu trả lời có 4 khối — **Bạn sẽ thấy** (triệu chứng), **Vì sao** (gốc rễ), **Làm gì** (các bước), **Kiểm tra** (cách xác nhận đã hết bệnh). Workflow = chuỗi bước chạy tự động có thứ tự; plugin = mảnh code cắm thêm vào hệ thống mà không đụng vào lõi.
+
 ---
 
 ## README.md
 
+*(Bảy câu hỏi đầu lấy từ `README.md` của module "workflow & vận hành" — module dạy cách chạy chuỗi bước tự động một cách bền vững.)*
+
 ### Q1. Chạy giữa chừng thì lỗi, phải làm lại từ đầu cả chuỗi — sửa sao? [→ §4.1 Retry Strategies]
+
+> **Bối cảnh:** Retry Strategies = các cách thử lại khi bước nào đó lỗi tạm thời.
 
 **Bạn sẽ thấy**
 
@@ -30,9 +36,13 @@ Thử lại ngay lập tức và cố định không chỉ vô dụng mà còn g
 
 Mô phỏng một dịch vụ luôn lỗi 2 lần rồi thành công: workflow phải đi qua sau 3 lần gọi. Mô phỏng 10 tiến trình cùng gọi vào một dịch vụ chỉ chịu được 3 request mỗi giây: không được có lần thử nào đều đặn trùng nhịp. Và kiểm tra lỗi cuối cùng trả về có nêu rõ số lần đã thử.
 
+> **Tóm gọn 1 câu:** Thử lại có trần (3 lần), nghỉ tăng dần 1s→2s→4s cộng nhiễu ngẫu nhiên — để không dồn request đúng một nhịp làm sập server.
+
 ---
 
 ### Q2. Một dịch vụ chết làm cả hàng đợi workflow kẹt theo — chặn sao? [→ §4.2 Circuit Breaker Pattern]
+
+> **Bối cảnh:** Circuit Breaker = "cầu chì": đủ nhiều lỗi liên tiếp thì ngắt hẳn đường gọi, khỏi chờ timeout từng lần.
 
 **Bạn sẽ thấy**
 
@@ -56,13 +66,19 @@ Thử lại chữa được lỗi tạm thời, nhưng không chữa được l�
 | `OPEN` | Đủ lỗi, chặn không cho gọi |
 | `HALF_OPEN` | Hết thời gian chờ, thử đúng 1 lần |
 
+*(Đọc bảng trên: cầu chì có 3 trạng thái — đóng lại là gọi bình thường, mở ra là chặn hẳn, "mở nửa" là cho thử đúng 1 lần để thăm dò.)*
+
 **Kiểm tra**
 
 Làm một dịch vụ luôn lỗi: sau 5 lần gọi, lần thứ 6 phải bị từ chối ngay với thông điểp có số giây chờ. Chờ hết 30 giây rồi cho dịch vụ hoạt động trở lại: phải mất đúng 2 lần thành công mới đóng lại. Thử lại với dịch vụ vẫn chết: nó phải quay lại `OPEN` chứ không kẹt vô hạn ở `HALF_OPEN`.
 
+> **Tóm gọn 1 câu:** Cầu chì bọc quanh từng dịch vụ ngoài: 5 lỗi liên tiếp là chặn ngay, hết 30 giây thử 1 lần, thành công 2 lần liên tiếp mới mở lại.
+
 ---
 
 ### Q3. Bước 4 hỏng sau khi 3 bước đã thành công — làm sao hoàn tác? [→ §4.3 Saga Pattern]
+
+> **Bối cảnh:** Saga Pattern = chia giao dịch lớn thành nhiều bước nhỏ, mỗi bước có sẵn "bước bù" để hoàn tác khi có bước sau hỏng.
 
 **Bạn sẽ thấy**
 
@@ -86,9 +102,13 @@ Không thể xoá được một giao dịch đã xảy ra với dịch vụ bê
 
 Mô phỏng hỏng ở từng bước một và xác nhận thứ tự hoàn tác là ngược lại đúng thứ tự đã chạy. Thêm một lần chạy trong đó bước hoàn tác đầu tiên hỏng: hệ thống phải báo tên bước không hoàn tác được. Cuối cùng, chạy một ca hoàn toàn thành công và xác nhận không có bước bù nào bị kích hoạt.
 
+> **Tóm gọn 1 câu:** Mỗi bước đi cặp với một bước bù hoàn-tác-được; hỏng ở đâu thì chạy bù ngược từ gần nhất về đầu, và ghi rõ bước nào bù không xong.
+
 ---
 
 ### Q4. Khởi động lại máy là agent mất sạch tiến độ — làm sao nhớ? [→ §13.2 Checkpoint-Resume]
+
+> **Bối cảnh:** Checkpoint-Resume = ghi mốc tiến độ xuống đĩa để chết máy còn chạy tiếp được.
 
 **Bạn sẽ thấy**
 
@@ -100,8 +120,8 @@ Workflow chạy trong bộ nhớ thì bị giết là mất trắng. Muốn ti�
 
 **Làm gì**
 
-1. Ghi sổ trước: mỗi khi một bước xong, thêm một dòng `{seq, stepId, inputHash, status, outputRef}` vào tệp nhật ký, rồi mới chuyển sang bước sau.
-2. Định kỳ chụp ảnh trạng thái (snapshot) — không cần mỗi bước, cứ sau mỗi N bước. Lưu thành JSON hoặc SQLite ở máy local.
+1. Ghi sổ trước: mỗi khi một bước xong, thêm một dòng `{seq, stepId, inputHash, status, outputRef}` (số thứ tự, tên bước, vân tay đầu vào, trạng thái, chỗ chứa kết quả) vào tệp nhật ký, rồi mới chuyển sang bước sau.
+2. Định kỳ chụp ảnh trạng thái (snapshot — bản chụp toàn bộ trạng thái tại một thời điểm) — không cần mỗi bước, cứ sau mỗi N bước. Lưu thành JSON hoặc SQLite ở máy local.
 3. Khi khởi động lại: đọc ảnh trạng thái → phát lại phần đuôi nhật ký → bỏ qua bước đã xong → chạy tiếp bước đang dở.
 4. Giữ mã lần chạy (`runId`) **ổn định qua mọi lần khởi động lại**. Đổi mã là toàn bộ nhật ký cũ mất hiệu lực.
 5. Kết quả một bước vượt 64KB thì không nhét vào nhật ký — lưu ra kho kết quả riêng và chỉ ghi mã tham chiếu.
@@ -110,11 +130,15 @@ Workflow chạy trong bộ nhớ thì bị giết là mất trắng. Muốn ti�
 
 **Kiểm tra**
 
-Chạy một workflow dài, giữa bước 8 thì `kill -9`. Khởi động lại với **cùng `runId`** và xác nhận nó bắt đầu từ bước 9, không phải bước 1. Đổi `runId` và xác nhận nó chạy lại từ đầu — đúng như thiết kế. Sau đó kiểm tra một bước ghi file chạy đúng một lần, không phải hai.
+Chạy một workflow dài, giữa bước 8 thì `kill -9` (lệnh giết tiến trình ngay lập tức, không cho kịp lưu gì). Khởi động lại với **cùng `runId`** (mã định danh lần chạy) và xác nhận nó bắt đầu từ bước 9, không phải bước 1. Đổi `runId` và xác nhận nó chạy lại từ đầu — đúng như thiết kế. Sau đó kiểm tra một bước ghi file chạy đúng một lần, không phải hai.
+
+> **Tóm gọn 1 câu:** Ghi nhật ký bước-xong xuống đĩa *trước* khi sang bước kế, chụp snapshot định kỳ, giữ nguyên `runId` — chết giữa chừng thì chạy tiếp từ bước đang dở, không làm lại.
 
 ---
 
 ### Q5. Chạy lại một bước là ghi trùng dữ liệu, hàng đợi thì nổ — chặn sao? [→ §13.3 Idempotency + Backpressure + Deadline]
+
+> **Bối cảnh:** ba khái niệm: idempotency = chống làm-hai-lần, backpressure = chống dồn ép quá tải, deadline = mốc hết giờ.
 
 **Bạn sẽ thấy**
 
@@ -128,8 +152,8 @@ Hai triệu chứng xuất hiện cùng lúc. Một: bạn chạy lại một b�
 
 1. Khoá chống chạy hai lần = mã bước + mã băm đầu vào (+ số lần thử tối đa). Cùng khoá trong thời hạn lưu trữ thì trả lại kết quả đã lưu, không gọi lại.
 2. Chỉ bắt buộc khoá cho việc **ghi**. Việc đọc không cần, và bắt khoá cả đọc sẽ làm chậm hệ thống vô ích.
-3. Đặt khoá một hạn (TTL) hợp lý. Giữ vĩnh viễn thì bộ nhớ phình và lần sửa sai sẽ không bao giờ chạy lại được.
-4. Đặt trần song song toàn cục bằng một tín hiệu đếm (semaphore), tài liệu gợi ý 4-8. Giới hạn riêng độ dài hàng đợi, ví dụ 100.
+3. Đặt khoá một hạn (TTL = time-to-live, thời gian sống của khoá) hợp lý. Giữ vĩnh viễn thì bộ nhớ phình và lần sửa sai sẽ không bao giờ chạy lại được.
+4. Đặt trần song song toàn cục bằng một tín hiệu đếm (semaphore = bộ đếm chỉ cho phép N việc chạy cùng lúc), tài liệu gợi ý 4-8. Giới hạn riêng độ dài hàng đợi, ví dụ 100.
 5. Khi hàng đợi đầy, ném lỗi chuyên biệt để bên gọi biết phải thử lại sau — **không** được tăng hàng đợi vô hạn, đó chính là cách tự giết mình.
 6. Mỗi lần chạy có **một** mốc hết giờ duy nhất. Mỗi bước nhận phần thời gian còn lại trừ chút đệm, và truyền xuống qua `AbortSignal.timeout`. Tuyệt đối không âm thầm nới thêm.
 
@@ -139,9 +163,13 @@ Hai triệu chứng xuất hiện cùng lúc. Một: bạn chạy lại một b�
 
 Gọi lại một bước ghi đúng hai lần với cùng khoá và xác nhận hệ thống ngoài chỉ nhận **một** lần ghi. Đặt trần song song 4 rồi bắn 10 bước cùng lúc: phải thấy 4 chạy trước, phần còn lại phải chờ, và không lần nào phải chờ quá độ dài hàng đợi cho phép. Cuối cùng, đặt hết giờ ngắn và xác nhận tín hiệu huỷ truyền tới từng bước chứ không phải chỉ bước ngoài cùng.
 
+> **Tóm gọn 1 câu:** Chống trùng bằng khoá idempotency có hạn sống cho việc *ghi*, chống dồn ép bằng semaphore + hàng đợi có trần, và một mốc hết giờ duy nhất truyền xuống mọi bước.
+
 ---
 
 ### Q6. Workflow 30 bước chạy xong không biết hỏng ở đâu — làm sao thấy? [→ §5 Observability]
+
+> **Bối cảnh:** Observability = khả năng quan sát bên trong hệ thống đang chạy, qua ba loại dữ liệu: log, metric, trace.
 
 **Bạn sẽ thấy**
 
@@ -157,7 +185,7 @@ Nhật ký dạng văn bản tự do không lọc được. Ba loại dữ liệ
 2. Với mỗi bước, mở một khoảng thời gian (span) cha–con theo đúng thứ bậc thật: bước cha chứa các bước con. Nhờ vậy bạn dựng lại được toàn bộ hành trình.
 3. Ghi log ở dạng JSON có trường cố định: tên workflow, tên bước, trạng thái, thời điểm, thời lượng, dữ liệu kèm theo. Không có mẫu cố định thì không lọc nổi.
 4. Ghi mỗi bước **hai dòng**: một dòng `start`, một dòng kết quả (`success` hoặc `error` kèm thông điệp lỗi). Nhờ vậy bước chết treo cũng lộ ra.
-5. Tính độ trễ theo ba mốc chứ không chỉ trung bình: p50, p95, p99. Trung bình che mất đúng cái đuôi chậm — p95 mới là trải nghiệm thật.
+5. Tính độ trễ theo ba mốc chứ không chỉ trung bình: p50, p95, p99 (p95 = 95% các lần nhanh hơn con số này — con số còn lại mới phản ánh người dùng chậm nhất). Trung bình che mất đúng cái đuôi chậm — p95 mới là trải nghiệm thật.
 
 > 📄 **Code ví dụ:** [`examples/05-q6-workflow-30-buoc-chay-xong-khong-biet.py`](examples/05-q6-workflow-30-buoc-chay-xong-khong-biet.py)
 
@@ -165,9 +193,13 @@ Nhật ký dạng văn bản tự do không lọc được. Ba loại dữ liệ
 
 Chạy 100 lần và xác nhận lọc theo `trace_id` ra đúng một lần chạy đầy đủ các bước. Cố tình làm một bước chậm 5 giây và xác nhận nó hiện rõ ở p95 chứ không bị trung bình nuốt mất. Rồi giết một bước đang chạy và xác nhận trong log xuất hiện dòng `start` không có dòng kết quả — đó chính là dấu hiệu bước bị treo.
 
+> **Tóm gọn 1 câu:** Gán `trace_id` xuyên suốt, log JSON có mẫu cố định, mỗi bước ghi 2 dòng start/kết quả, và đo p50/p95/p99 thay vì trung bình.
+
 ---
 
 ### Q7. Muốn dừng lại chờ người duyệt giữa chừng rồi chạy tiếp — làm sao? [→ §13.4 Node phê duyệt / Tạm Dừng-Tiếp Tục]
+
+> **Bối cảnh:** đây là bài toán tạm dừng có kiểm soát — dừng workflow để chờ duyệt mà không mất tiến độ.
 
 **Bạn sẽ thấy**
 
@@ -189,9 +221,13 @@ Dừng giữa chừng theo kiểu "thoát ra rồi quay lại" là mất trắng
 
 **Kiểm tra**
 
-Cho workflow dừng ở bước duyệt rồi khởi động lại tiến trình: xác nhận bước đó vẫn ở `WAITING_APPROVAL` chứ không chạy lại. Duyệt rồi chạy lại: nó đi tiếp từ bước sau. Từ chối: nó bỏ qua nhánh đó và tiếp tục phần còn lại. Không phản hồi gì: nó dừng hẳn chứ không chạy âm thầm.
+Cho workflow dừng ở bước duyệt rồi khởi động lại tiến trình: xác nhận bước đó vẫn ở `WAITING_APPROVAL` (trạng thái "chờ người duyệt") chứ không chạy lại. Duyệt rồi chạy lại: nó đi tiếp từ bước sau. Từ chối: nó bỏ qua nhánh đó và tiếp tục phần còn lại. Không phản hồi gì: nó dừng hẳn chứ không chạy âm thầm.
+
+> **Tóm gọn 1 câu:** Đánh dấu bước cần duyệt, lưu checkpoint xuống đĩa *trước* khi phát tín hiệu `PAUSED:`, xử lý đủ 3 trường hợp (duyệt / từ chối / hết hạn) — và resume bằng đúng `runId` cũ.
 
 ## cordis-kernel-plugin.md
+
+*(Hai câu hỏi cuối lấy từ tài liệu "cordis-kernel-plugin" — kiến trúc lõi nhỏ + plugin cắm thêm.)*
 
 ### Q8. Code của tôi mỗi lần sửa một chức năng là phải sửa 5 file — có cách nào cắm thêm mà không đụng vào cả rồng? [→ §2 Kiến Trúc Micro-Kernel + §5 Kernel Engine]
 
@@ -201,7 +237,7 @@ Bạn thêm một tính năng nhỏ: mỗi lượt gọi công cụ đều cần
 
 **Vì sao**
 
-Khi nghiệp vụ nằm trực tiếp trong lõi, mọi tính năng mới đều phải chen vào lõi. Kiến trúc hạt nhân vi mô đảo ngược điều đó: lõi chỉ giữ ba việc — quản lý vòng đời, tra cứu dịch vụ, và phát sự kiện. Mọi thứ khác là plugin.
+Khi nghiệp vụ nằm trực tiếp trong lõi, mọi tính năng mới đều phải chen vào lõi. Kiến trúc hạt nhân vi mô (micro-kernel = lõi cực nhỏ, chỉ lo việc chung) đảo ngược điều đó: lõi chỉ giữ ba việc — quản lý vòng đời, tra cứu dịch vụ, và phát sự kiện. Mọi thứ khác là plugin.
 
 **Làm gì**
 
@@ -217,9 +253,13 @@ Khi nghiệp vụ nằm trực tiếp trong lõi, mọi tính năng mới đều
 
 Đếm số file phải sửa khi thêm một tính năng có ghi nhật ký: nếu là 1 file plugin và 1 dòng khai báo nạp thì kiến trúc đang đúng. Thử xoá plugin đó và xác nhận không còn dòng nhật ký nào được ghi. Rồi nạp lại và xác nhận nhật ký quay lại mà không cần sửa lõi.
 
+> **Tóm gọn 1 câu:** Lõi nhỏ chỉ lo 3 việc (vòng đời, tra cứu dịch vụ, phát sự kiện); plugin cắm qua `apply(ctx)` và lấy dịch vụ của nhau qua lõi — thêm tính năng là thêm 1 file plugin, không đụng lõi.
+
 ---
 
 ### Q9. Muốn chạy thử agent mà không cho nó toàn bộ công cụ — làm sao? [→ §4 Bốn Runtime Modes]
+
+> **Bối cảnh:** Runtime Modes = các chế độ chạy khác nhau, mỗi chế độ cấp một lượng công cụ và lời dẫn khác nhau.
 
 **Bạn sẽ thấy**
 
@@ -246,6 +286,8 @@ Vì cùng một mô hình có thể tốt ở một chế độ và tệ ở ch�
 **Kiểm tra**
 
 Chạy cùng một bài toán ở chế độ Minimal và Standard, lưu lại tên chế độ cùng kết quả. Đổi sang một mô hình khác và chạy lại y hệt: lần này sự khác biệt là của mô hình, không phải của lời dẫn dài. Kiểm tra thêm rằng ở chế độ Minimal, danh sách công cụ trả về đúng hai mục.
+
+> **Tóm gọn 1 câu:** Bốn chế độ bật/tắt được như plugin — đo năng lực gốc bằng Minimal, làm việc thật bằng Standard, và luôn ghi tên chế độ vào kết quả nếu không thì không so sánh được với ai.
 
 ---
 

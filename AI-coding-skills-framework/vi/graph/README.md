@@ -26,20 +26,24 @@ Hãy tưởng tượng thế này: bạn có cả một kho tài liệu công ty
                   └—[REPORTS_TO]→ (Trần Thị B - CTO)
 ```
 
-Chỉ cần một câu truy vấn `TRAVERSE 2 hops` là ra đáp án đúng phóc, **kèm luôn đường đi chứng minh tại sao đúng** — khỏi đoán mò, khỏi bịa.
+Chỉ cần một câu truy vấn `TRAVERSE 2 hops` là ra đáp án đúng phóc, **kèm luôn đường đi chứng minh tại sao đúng** — khỏi đoán mò, khỏi bịa. (`TRAVERSE 2 hops` = lệnh "đi đúng 2 bước" trên graph: từ Phoenix tới người phê duyệt là bước 1, từ người đó tới dự án AI là bước 2.)
 
 > *"Vector search tìm đoạn văn giống nhau. Graph search tìm mối quan hệ ẩn sau đoạn văn."*
 > — **Microsoft Research, GraphRAG (2024)**
 
 > *"Knowledge is not a pile of chunks. It's a web of relationships."*
 
-Nói dễ hiểu, **Graph Engineering** là cách mình thiết kế **substrate tri thức dạng đồ thị** — để AI không chỉ *đi tìm* thông tin, mà còn biết *lần theo sợi dây* suy luận qua nhiều bước, giải thích được vì sao, trích nguồn được rõ ràng.
+Nói dễ hiểu, **Graph Engineering** là cách mình thiết kế **substrate tri thức dạng đồ thị** — để AI không chỉ *đi tìm* thông tin, mà còn biết *lần theo sợi dây* suy luận qua nhiều bước, giải thích được vì sao, trích nguồn được rõ ràng. (**Substrate** = "mặt nền" — lớp nền tri thức bền vững nằm dưới, để agent đặt câu hỏi lên đó; **đồ thị** = mạng gồm các điểm (node) nối với nhau bằng các cạnh (edge), ví dụ `Phoenix —[APPROVED_BY]→ Nguyễn Văn A`.)
+
+> **Tóm gọn 1 câu:** Vector RAG chỉ so khớp chữ nên đoán mò với câu hỏi lòng vòng; Graph Engineering lưu sẵn các mối quan hệ để AI lần theo dây suy luận nhiều bước và chỉ ra được đường dẫn chứng minh.
 
 ### Tại Sao Graph Engineering Quan Trọng?
 
 > **"Stop chunking. Start connecting. Get a path."**
 
 #### 3 Bằng Chứng Khoa Học & Thực Tiễn
+
+Cách đọc bảng này: mỗi dòng là một nghiên cứu; cột **Phát Hiện Quan Trọng** ghi con số đo được. Ví dụ dòng 1: **comprehensiveness** = độ đầy đủ của câu trả lời; **win rate 70%** = trong 10 lượt chấm, GraphRAG thắng 7 lần; **LLM judge** = một LLM khác đóng vai giám khảo chấm điểm.
 
 | # | Nghiên Cứu / Nguồn | Phát Hiện Quan Trọng |
 |---|-------------------|----------------------|
@@ -68,6 +72,8 @@ GraphRAG   = Vector (recall) + Graph (precision + reasoning)
 **Analogies**: Nói nôm na cho dễ hình dung, Graph Engineering giống như **cái bản đồ thành phố**. Tìm bằng vector thì giống như hỏi "quanh đây có quán ăn nào không" — nó chỉ cho bạn cái tên. Còn tìm bằng graph thì nó chỉ luôn "quán này của ai mở, chủ quán còn mở thêm quán nào nữa, đường nào đi tới đó nhanh nhất". Ngược lại, **chỉ cắt nhỏ văn bản (chunking thuần)** thì giống như xé tấm bản đồ ra thành từng mảnh vụn, tới lúc cần tìm đường lại loay hoay ghép lại.
 
 **Nếu bỏ qua**: Nói thật, con agent vẫn trả lời ngon ơ mấy câu đơn giản, nhưng cứ gặp câu hỏi lòng vòng nhiều bước là lại bịa, hỏi "sao mày biết" thì ú ớ không chỉ được nguồn, muốn thêm tài liệu mới lại phải làm lại từ đầu rất cực.
+
+> **Tóm gọn 1 câu:** Ba nghiên cứu cho cùng kết luận: nối các sự thật thành graph giúp trả lời đúng hơn, bịa ít hơn, và giải thích được nguồn — nhất là với câu hỏi nhiều bước.
 
 ## Tổng Quan
 
@@ -106,6 +112,10 @@ Nó khác với Module 01 (Retrieve Memory & Knowledge) ở chỗ: Module 01 lo 
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+Đọc sơ đồ thế nào: từ trên xuống là 4 tầng — 7 thành phần cốt lõi cần xây, vòng đời dữ liệu đi qua (**lifecycle** = vòng đời: trích xuất → dựng → lưu → nhúng → truy vấn → suy luận → đánh giá), chỗ nối với Harness/Loop, và tầng đo lường cuối cùng. Các từ ngăn cách bằng "·" là các mục nằm ngang cùng một tầng.
+
+> **Tóm gọn 1 câu:** Graph Engineering gồm 7 thành phần chạy theo một vòng đời cố định, nối được với harness/loop của agent và có bộ đo ở cuối.
+
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 
 Module XIII này được chia thành **9 module nhỏ** — cách chia giống hệt bên `harness/` cho dễ theo dõi (mỗi module là một thư mục `NN-name/README.md`).
@@ -123,6 +133,10 @@ graph/
 ├── 08-graph-workflow/           ← Workflow: pipeline ETL, incremental updates, versioning
 └── 09-evaluation/               ← Đánh giá: coverage, hallucination, path precision, benchmarks
 ```
+
+Đọc cây thư mục thế nào: mỗi dòng là một module con; phần sau mũi tên `←` ghi module đó dạy gì. Ví dụ `02-knowledge-graph/` dạy cách trích xuất thực thể/quan hệ từ tài liệu; `09-evaluation/` dạy cách đo chất lượng.
+
+> **Tóm gọn 1 câu:** Track chia thành 9 module con theo đúng bố cục bên `harness/` — mỗi module một thư mục với README riêng, đọc theo thứ tự 01 → 09.
 
 > Mỗi thư mục đều có một file `README.md` riêng — đúng chuẩn như bên `harness/` và `loop/` thôi, nên bạn mở ra là quen ngay.
 
@@ -156,6 +170,10 @@ Bước 7: 08-graph-workflow/ + 09-evaluation/ — pipeline production + đánh 
 | Pipeline ETL, cập nhật incremental | [08-graph-workflow](08-graph-workflow/) |
 | Đo chất lượng graph & GraphRAG | [09-evaluation](09-evaluation/) |
 
+Cách đọc bảng này: cột trái là mục tiêu của bạn, cột phải là thư mục nên mở. Ví dụ: muốn AI trả lời câu hỏi đi qua nhiều bước quan hệ → mở `06-graph-reasoning/`.
+
+> **Tóm gọn 1 câu:** Bảng trên là "cẩm nang tra nhanh": biết mình muốn gì là biết mở module nào đọc trước.
+
 ---
 
 ## Case Studies Thực Tế
@@ -187,6 +205,10 @@ Documents ──► LLM Entity/Relation Extraction ──► Knowledge Graph
 | Global Search | Map-reduce over community summaries | Win rate 70% vs vanilla RAG trên global Q&A |
 | Local Search | Entity → neighbors → context | Chính xác cho factoid + multi-hop queries |
 
+Cách đọc bảng trên: mỗi dòng là một bước trong quy trình của Microsoft GraphRAG. Ví dụ: **gleaning loop** = vòng lặp cho LLM trích lại thêm nhiều lần, nên bắt được nhiều thực thể hơn 3-5 lần so với trích một lượt; **map-reduce** = tóm tắt từng cộng đồng riêng rồi gom lại thành câu trả lời chung; **factoid** = câu hỏi tra cứu một sự kiện cụ thể.
+
+> **Tóm gọn 1 câu:** Microsoft GraphRAG là bản mẫu chuẩn: trích thực thể → gom thành các nhóm cộng đồng → tóm tắt từng nhóm → tra cứu cục bộ hoặc toàn cục tùy loại câu hỏi.
+
 ### 2. Neo4j + LangChain — Enterprise Stack
 
 Đây là bộ đồ nghề mà nhiều team đem ra chạy production nhất trong giai đoạn 2025-2026:
@@ -195,6 +217,10 @@ Documents ──► LLM Entity/Relation Extraction ──► Knowledge Graph
 - **Query**: `GraphCypherQAChain` → LLM sinh Cypher từ natural language
 - **Hybrid**: Vector index trên `Document` nodes + graph traversal trên `Person/Project` nodes
 - **Scale**: Neo4j Aura / self-hosted cluster, billions of nodes
+
+Giải thích 4 dòng trên: **Construction** = bước dựng graph từ tài liệu bằng LLM; **Query** = bước hỏi đáp (LLM tự sinh câu truy vấn Cypher từ tiếng nói thường); **Hybrid** = dùng cả index vector lẫn đi trên graph; **Scale** = chạy được tới hàng tỷ node. (**Traversal** = đi lần theo các cạnh từ node này sang node kề.)
+
+> **Tóm gọn 1 câu:** Neo4j + LangChain là bộ đồ nghề doanh nghiệp phổ biến nhất 2025-2026: dựng graph bằng LLM, hỏi đáp bằng Cypher, tra cứu kết hợp vector + graph.
 
 ### 3. Trajectory as Graph — DeepSeek Pattern
 
@@ -225,9 +251,13 @@ Mấy câu kiểu "hàm này được gọi ở chỗ nào?", "sửa file này t
 | **LightRAG** | ~1/100 GraphRAG | 70-90% GraphRAG | Incremental update, cost-sensitive |
 | **HippoRAG2** | Rất thấp (20× rẻ hơn) | Tốt cho multi-hop | Token efficiency |
 
+Cách đọc bảng này: mỗi dòng là một biến thể GraphRAG; cột **Chi phí index** = tiền trả lúc dựng chỉ mục; cột **Chất lượng** = độ tốt khi trả lời so với GraphRAG gốc. Ví dụ: *LazyGraphRAG* trì hoãn bước tóm tắt tốn tiền tới lúc có câu hỏi nên rẻ ngang vector RAG mà chất lượng ngang GraphRAG.
+
 **Benchmark 2025:** GraphRAG-Bench (Microsoft, 06/2025) xác nhận: single-hop/factoid queries → vanilla RAG thắng; multi-hop + global → GraphRAG thắng rõ. Gartner đưa GraphRAG vào "Top Trends in D&A for 2026" như path cho complex AI use cases.
 
 > **Ref:** https://microsoft.github.io/graphrag/ | LazyGraphRAG: https://www.microsoft.com/en-us/research/blog/lazygraphrag-setting-a-new-standard-for-quality-and-cost
+
+> **Tóm gọn 1 câu:** 2025-2026 GraphRAG rẻ hơn hẳn nhờ LazyGraphRAG/LightRAG — chọn biến thể theo ngân sách, và nhớ GraphRAG thua vanilla RAG ở câu tra cứu một ý đơn giản.
 
 ---
 
@@ -257,6 +287,8 @@ Mấy câu kiểu "hàm này được gọi ở chỗ nào?", "sửa file này t
 - **OGB (Open Graph Benchmark)** — large-scale GNN benchmarks
 
 Chi tiết từng module: [01-foundations](01-foundations/) → [09-evaluation](09-evaluation/).
+
+> **Tóm gọn 1 câu:** Bộ công cụ (graphrag, Neo4j, PyG...) và bộ đề thi (HotpotQA, FB15k-237, OGB) ở trên là đủ để dựng và đo một hệ thống GraphRAG thực tế.
 
 ---
 

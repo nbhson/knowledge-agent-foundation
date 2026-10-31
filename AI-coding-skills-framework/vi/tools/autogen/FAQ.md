@@ -2,6 +2,8 @@
 
 Nếu câu hỏi nào khó hiểu thì đọc `../README.md` phần trong ngoặc vuông.
 
+Giải nghĩa nhanh: **AutoGen** = framework nhiều agent của Microsoft, các agent trò chuyện với nhau qua tin nhắn; **agent** = một AI có vai và công cụ riêng; **ConversableAgent** = lớp agent cơ bản của AutoGen, ai cũng nói chuyện được với ai; **UserProxyAgent** = agent đóng vai người: chạy code, gọi tool; **GroupChat** = phòng chat nhiều agent có quản lý chia lượt; **token** = đơn vị tính chữ model đọc/ghi, cũng là đơn vị tính tiền.
+
 ---
 
 ## Q1. Một agent ôm hết việc cũng chạy được, sao phải tách nhiều agent? [→ Câu Chuyện Mở Đầu]
@@ -21,6 +23,8 @@ README gọi trạng thái đó là "đơn khối": một agent ôm đồng th�
 | UserProxyAgent | harness/06 tool execution |
 | CriticAgent + GroupChat | harness/11 + harness/09 |
 
+Cách đọc bảng này: cột trái là vai trong AutoGen, cột phải là module harness tương ứng trong tài liệu này. Ví dụ, PlannerAgent (agent lên kế hoạch) đúng vai của harness/04 — module lập kế hoạch và chia việc.
+
 **Làm gì**
 
 1. Liệt kê các việc agent của bạn đang làm, rồi gán mỗi việc cho một agent riêng.
@@ -34,6 +38,8 @@ README gọi trạng thái đó là "đơn khối": một agent ôm đồng th�
 **Kiểm tra**
 
 Chạy bản một agent, ghi lại số token và số lần trả lời sai. Sau đó tách Planner + Critic, chạy lại đúng task đó. Nếu số token tăng nhưng số lần phải sửa tay giảm thì việc tách đang đáng tiền; nếu token tăng mà kết quả y như cũ thì vai bạn tạo ra chưa khác biệt, đổi cách chia.
+
+> **Tóm gọn 1 câu:** Một agent ôm nhiều vai sẽ đầy context, hỏng dây chuyền khi một lỗi nhỏ xảy ra và khó sửa đúng chỗ — tách từng vai thành agent riêng, kể cả một agent Critic chỉ lo bắt lỗi.
 
 ---
 
@@ -61,6 +67,8 @@ Hai agent cứ ping qua lọt lại: assistant sinh code, harness chạy code, c
 
 Chạy lại đúng task từng đổi trần `max_round` và ghi số lượt thực tế. Số lượt phải luôn dừng dưới trần, và báo cáo cuối phải có số lượt + lý do dừng. Nếu báo cáo thiếu lý do dừng thì trần chỉ đang cắt ngẫu nhiên, chưa phải điều kiện dừng thật.
 
+> **Tóm gọn 1 câu:** Agent nói chuyện không dừng vì chưa có trần số lượt — đặt `max_consecutive_auto_reply=10` (hai agent) và `max_round=20` (nhiều agent) ngay lúc khởi tạo, và dừng phải kèm lý do chứ không phải cắt ngẫu nhiên.
+
 ---
 
 ## Q3. Trong hội thoại nhiều agent, ai được quyền nói trước? [→ GroupChat — Nhiều Agent]
@@ -83,6 +91,8 @@ Bạn có bốn agent (planner, coder, critic, executor) nhưng không biết l�
 **Kiểm tra**
 
 In ra danh sách người nói theo thứ tự lượt, xem nó có khớp với trình tự mong muốn không. Chạy thử cả ba cách trên cùng một task và so số lượt + kết quả cuối. `"auto"` thắng khi lượt nói ít biến động; `"round_robin"` thắng khi bạn cần kết quả lặp lại được giữa các lần chạy.
+
+> **Tóm gọn 1 câu:** `GroupChat` cần bạn chỉ cách chia lượt qua `speaker_selection_method` — `"auto"` để quản lý tự chọn người, `"round_robin"` để đi vòng cố định, `"vote"` để biểu quyết — và luôn ghi tên người nói mỗi lượt để truy lỗi.
 
 ---
 
@@ -111,6 +121,8 @@ Hai dòng cấu hình chỉ khác một từ, nhưng hành vi khác hẳn. Một
 
 Chạy một task có bước nhạy cảm với cả hai chế độ. `"NEVER"` phải chạy trọn không dừng; `"TERMINATE"` phải dừng đúng bước nhạy cảm và chờ. Nếu `"TERMINATE"` vẫn chạy trọn, nghĩa là cấu hình chưa được đặt đúng chỗ. Đếm số lần phải bấm xác nhận trên cả 20 task: nếu tỷ lệ lượt hỏi/nghỉ cảnh vượt quá 1 phần 5, cấu hình đang hỏi nhiều hơn mức cần.
 
+> **Tóm gọn 1 câu:** `"NEVER"` là không bao giờ hỏi người (chạy hàng loạt), `"TERMINATE"` là chỉ dừng khi đụng bước nhạy cảm (production, xoá, gửi ra ngoài) — đặt sai chế độ thì hoặc bạn canh mệt, hoặc agent tự ý làm việc nguy hiểm.
+
 ---
 
 ## Q5. Cho agent chạy code thật trên máy tôi — lỡ nó xoá file thì sao? [→ Code Mẫu Từ HARNESS_ENGINEERING.md]
@@ -134,6 +146,10 @@ README chỉ ra điểm mấu chốt: `UserProxyAgent` mạnh vì nó là ngư�
 
 Cố tình cho agent chạy `rm -rf` trong thư mục làm việc và `printenv`: cái thứ nhất phải bị chặn, cái thứ hai không được thấy khoá nào. Xác nhận thư mục làm việc của bạn không đổi file nào sau cả lần chạy.
 
+Giải nghĩa: `rm -rf` = lệnh xoá sạch một thư mục cùng toàn bộ nội dung bên trong; `printenv` = lệnh in toàn bộ biến môi trường — trong đó có khóa API, mật khẩu; **sandbox** = hộp giới hạn: chặn mạng, giới hạn bộ nhớ, giới hạn số tiến trình.
+
+> **Tóm gọn 1 câu:** Chạy code thật trên máy bạn là một lệnh sai có thể xoá sạch công sức cả tuần — luôn trỏ `code_execution_config` vào thư mục riêng, bọc trong sandbox chặn mạng và giới hạn bộ nhớ, và tắt hẳn quyền chạy code với agent không cần.
+
 ---
 
 **MAF mới:** https://github.com/microsoft/agent-framework
@@ -147,9 +163,13 @@ AutoGen đã được **archive** và thay thế bởi **Microsoft Agent Framewo
 - MAF = sự hợp nhất AutoGen + Semantic Kernel
 - API hoàn toàn mới: `agents/`, không còn `ConversableAgent`
 
+Giải nghĩa: **archive** = repo bị đóng băng, không nhận sửa lỗi hay tính năng mới; **Semantic Kernel** = framework agent khác của Microsoft, nay gộp chung với AutoGen thành MAF.
+
 > 📄 **Code ví dụ:** [`examples/04-cap-nhat-10-2026-autogen-microsoft-agent-framework.py`](examples/04-cap-nhat-10-2026-autogen-microsoft-agent-framework.py)
 
 **Di chuyển project cũ:** https://learn.microsoft.com/en-us/agent-framework/migration-guide/from-autogen/
 **MAF mới:** https://github.com/microsoft/agent-framework
+
+> **Tóm gọn 1 câu:** AutoGen đã bị đóng băng và thay bằng Microsoft Agent Framework (MAF) — API hoàn toàn mới, nên nếu đang dùng AutoGen thì lên kế hoạch chuyển sang MAF theo hướng dẫn migrate của Microsoft.
 
 *FAQ file riêng — file nguồn không bị sửa. Nguồn: README.md.*

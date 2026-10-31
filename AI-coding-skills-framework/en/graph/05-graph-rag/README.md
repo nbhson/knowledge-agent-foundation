@@ -29,9 +29,15 @@ You have 1,000 financial reports. You ask:
 
 **GraphRAG does not replace RAG. It makes RAG smarter by using the shape of the graph.**
 
+> **One-line summary:** Vanilla RAG returns scattered chunks; GraphRAG pre-builds a graph with community summaries, so big-picture questions get one synthesized answer with citations.
+
+(KG = Knowledge Graph — a network of entities and labeled relations; chunk = a small slice of text cut from a document.)
+
 ### Why Does GraphRAG Matter?
 
 > *"Vanilla RAG answers WHERE. GraphRAG answers WHY and HOW, with evidence paths."*
+
+How to read this table: each row is one published result. **#** = row number, **Research** = who published it, **Finding** = the measured effect. For instance, row 1 says an LLM judge preferred GraphRAG's answers 70% of the time on big-picture questions.
 
 | # | Research | Finding |
 |---|-----------|-----------|
@@ -39,9 +45,15 @@ You have 1,000 financial reports. You ask:
 | 2 | **Microsoft GraphRAG (2024)** | Comprehensiveness: GraphRAG is **+35%**, Diversity: **+30%** vs baseline |
 | 3 | **Anthropic (2025)** | Graph-grounded generation cuts **hallucination by 28%** on enterprise QA |
 
+(sensemaking = "make sense of the whole corpus" questions; hallucination = the model inventing facts with a confident tone.)
+
+> **One-line summary:** Benchmarks show GraphRAG clearly wins on synthesis and hallucination reduction — that is the value you are paying extra indexing cost for.
+
 ---
 
 ## Overview
+
+This diagram shows the two halves of GraphRAG: a one-time offline indexing pipeline, and the per-query pipeline that runs when a user asks something.
 
 ```
                     ┌─────────────────────────────────┐
@@ -63,9 +75,13 @@ User Query ────────►│  Local Search  vs  Global Search  │
                     └─────────────────────────────────┘
 ```
 
+> **One-line summary:** Index once (extract graph → group → summarize), then at query time choose local (entity) or global (community) search and generate an answer with evidence paths.
+
 ---
 
 ## Contents
+
+How to read this table: each row is one section of this file. **#** = order, **Topic** = the clickable title, **Description** = what you will learn. For instance, row 3 covers the two query modes.
 
 | # | Topic | Description |
 |---|--------|-------|
@@ -79,9 +95,15 @@ User Query ────────►│  Local Search  vs  Global Search  │
 | 8 | [When to Use](#8-when-to-use-graphrag) | Decision guide + counter-evidence |
 | 9 | [Hands-On Labs](#9-hands-on-labs) | Practice |
 
+> **One-line summary:** The file walks from the comparison, through the 6-step pipeline and query modes, to variants and a "when to use" decision guide.
+
 ---
 
 ## 1. Vanilla RAG vs GraphRAG
+
+This section compares the two systems side by side, so you can see exactly what GraphRAG adds and what it costs.
+
+How to read it: each row compares one aspect. **Aspect** = the property, **Vanilla RAG** = plain chunk-based retrieval, **GraphRAG** = graph-based retrieval. For instance, the "Multi-hop" row says vanilla RAG invents missing connections, while GraphRAG follows real paths with citations.
 
 ```
 ┌──────────────────┬──────────────────────────────────┬──────────────────────────────────┐
@@ -101,19 +123,35 @@ User Query ────────►│  Local Search  vs  Global Search  │
 
 **GraphRAG's indexing cost** is higher (LLM calls to extract + summarize), but it's a **one-time offline cost**. Query cost is equivalent or lower thanks to the more concise context.
 
+(multi-hop = a question whose answer needs 2+ chained relations, e.g. "who approved the contract of the project Alice works on?")
+
+> **One-line summary:** GraphRAG costs more to build but less (or equal) per query, and it answers multi-hop and big-picture questions that vanilla RAG cannot.
+
 > 📄 **Example code:** [`examples/01-1-vanilla-rag-vs-graphrag.py`](examples/01-1-vanilla-rag-vs-graphrag.py)
 
 ---
 
 ## 2. The GraphRAG Pipeline in Detail — 6 Steps
 
+This section walks through the six steps that take raw documents to an answerable graph index.
+
 ### Step 1: Document Processing & Chunking
+
+**What this step does:** cut every document into small chunks, because LLMs read and embed text in pieces.
 
 > 📄 **Example code:** [`examples/02-step-1-document-processing-chunking.py`](examples/02-step-1-document-processing-chunking.py)
 
+> **One-line summary:** Documents are split into chunks — the unit everything downstream (extraction, embedding) works on.
+
 ### Step 2: Entity & Relation Extraction (LLM)
 
+**What this step does:** the LLM reads each chunk and pulls out entities (people, projects) and relations (WORKS_ON, MANAGES) between them.
+
 See details: [`02-knowledge-graph`](../02-knowledge-graph/) — use the gleaning loop `extract_entities` + `extract_relations`.
+
+(gleaning loop = a second extraction pass where the model is asked "what did you miss?", repeated until nothing new appears.)
+
+> **One-line summary:** An LLM turns text chunks into graph entities and relations, with a second "gleaning" pass to catch what it missed.
 
 ### Step 3: Community Detection (Leiden)
 
@@ -123,6 +161,8 @@ See details: [`02-knowledge-graph`](../02-knowledge-graph/) — use the gleaning
 >
 > The **Leiden** algorithm: an improvement over Louvain — faster + yields more clearly separated communities. Details in §4.1.
 
+> **One-line summary:** The graph is split into tightly connected communities, so global queries can read a few group summaries instead of millions of nodes.
+
 ### Step 4: Community Summarization (LLM)
 
 > **Concept:** for each community (group) found in Step 3, use the **LLM to summarize it into a short passage** describing what the group is about.
@@ -130,6 +170,8 @@ See details: [`02-knowledge-graph`](../02-knowledge-graph/) — use the gleaning
 > **Analogy:** like a "meeting-minutes summary" for each team: 100 teams → 100 short minutes instead of reading every person's file. When asked "what is the whole company doing?", you only read those 100 minutes.
 >
 > Result: each community gets one `summary` → stored in the graph as a node/attribute. Details in §4.2.
+
+> **One-line summary:** Each community gets one short LLM-written summary — the "meeting minutes" that global search later reads.
 
 ### Step 5: Retrieval (Local vs Global)
 
@@ -139,6 +181,10 @@ See details: [`02-knowledge-graph`](../02-knowledge-graph/) — use the gleaning
 >
 > **Analogy:** Local = looking up one person's file (reading their friends, team, projects). Global = reading a company-wide aggregate report (reading each department, then merging). Details in §3.
 
+(BFS = Breadth-First Search — visiting neighbors level by level, like ripples spreading on water.)
+
+> **One-line summary:** Retrieval splits into two modes: entity-centric local search and community-summary global search.
+
 ### Step 6: Generation (LLM with Graph Context)
 
 > **Concept:** the final step — put the context (a list of entities, relations, paths, or summaries) + the question into the prompt; the LLM produces the answer with **evidence sources** (the triple/paths taken from the graph).
@@ -147,11 +193,15 @@ See details: [`02-knowledge-graph`](../02-knowledge-graph/) — use the gleaning
 
 The whole pipeline is implemented in detail in §5.
 
+> **One-line summary:** The LLM writes the final answer from graph context, and because the context carries real paths, the answer cites its evidence.
+
 ---
 
 ## 3. Local Search vs Global Search
 
-This is the **core distinction** of GraphRAG that vanilla RAG doesn't have:
+This section explains the core split in GraphRAG: two query modes that answer two different shapes of question.
+
+How to read it: each row compares the two modes on one property. **Local Search** = start from named entities; **Global Search** = sweep all community summaries. For instance, "Who approved the Phoenix contract?" is local; "What are the AI trends of 2024?" is global.
 
 ```
 ┌──────────────────┬──────────────────────────────────┬──────────────────────────────────┐
@@ -180,6 +230,8 @@ Query: "Who approved the Phoenix contract?"
 6. Feed the LLM prompt with the paths
 ```
 
+> **One-line summary:** Local search extracts entities from the query, walks 1–2 hops around them, and hands the LLM a proof path with confidence scores.
+
 ### 3.2 Global Search — Community-Based
 
 ```
@@ -195,15 +247,23 @@ Query: "What are the AI trends of 2024?"
 5. Each claim carries a citation back to its source community
 ```
 
+> **One-line summary:** Global search asks the LLM about each community summary in parallel, then merges those partial answers into one cited big-picture response.
+
 ---
 
 ## 4. Community Summarization
 
+This section zooms into the two steps that create the community summaries: detecting groups, then summarizing each one.
+
 ### 4.1 Community Detection (Leiden Algorithm)
+
+**What this does:** the Leiden algorithm partitions the graph into tightly connected groups — the "departments" of your data.
 
 Leiden is currently the best community-detection algorithm (an improvement over Louvain):
 
 > 📄 **Example code:** [`examples/03-4-1-community-detection-leiden-algorithm.py`](examples/03-4-1-community-detection-leiden-algorithm.py)
+
+> **One-line summary:** Leiden finds the natural clusters in your graph; those clusters are the unit that gets summarized and queried.
 
 ### 4.2 LLM Community Summarization
 
@@ -213,6 +273,8 @@ Leiden is currently the best community-detection algorithm (an improvement over 
 > 📄 **Example code:** [`examples/04-4-2-llm-community-summarization.py`](examples/04-4-2-llm-community-summarization.py)
 
 </details>
+
+> **One-line summary:** Each community is summarized once by an LLM and stored in the graph — these summaries are what global search reads.
 
 ### 4.3 Hierarchical Communities
 
@@ -225,9 +287,13 @@ Level 0: the whole graph (1 community)
               └── Level 3: Entities + Relations (leaves)
 ```
 
+> **One-line summary:** Communities stack into levels — small groups merge into big ones — so global search can pick how coarse or fine an answer should be.
+
 ---
 
 ## 5. Implementing GraphRAG in Python
+
+This section points to the complete, runnable pipeline code combining all six steps.
 
 <details>
 <summary>Python Code — Complete GraphRAG Pipeline (Click to view)</summary>
@@ -236,14 +302,20 @@ Level 0: the whole graph (1 community)
 
 </details>
 
+> **One-line summary:** The full pipeline — chunking, extraction, Leiden, summarization, retrieval, generation — exists as one runnable Python example.
+
 ---
 
 ## 6. Retriever Types & Fusion
+
+This section catalogs the retriever types you can plug into GraphRAG, and how to merge results from several of them.
 
 > **📌 Core Concept:**
 > **Retriever** here means "the thing that pulls" — the part that decides **what to take** from the graph/vector to feed the LLM. It's not just "Local/Global". In practice there's a **catalog of many retriever types**, each fitting a different kind of question.
 
 ### 6.1 Catalog of Retriever Types
+
+How to read this table: each row is one retriever you can pick. **Retriever** = its name, **How it works** = the mechanism, **Example question it fits** = the kind of question it serves best, **Neo4j counterpart** = the equivalent feature in the Neo4j graph database. For instance, Text2Cypher fits counting/aggregation questions like "who manages the most projects?"
 
 | Retriever | How it works | Example question it fits | Neo4j counterpart |
 |---|---|---|---|
@@ -253,6 +325,10 @@ Level 0: the whole graph (1 community)
 | **Text2Cypher** | LLM translates the question → Cypher → run the query | "Who manages the most projects?" | LLM-generated Cypher |
 | **DRIFT** (Microsoft) | "Drive the search": fetch as fast and wide as possible | The first path hits a dead end → pivot | Agentic traversal |
 | **Tools/Agentic retriever** | An LLM agent picks its own tools (vector/traversal/cypher) | A mix of many question types | `ToolsRetriever` |
+
+(Cypher = Neo4j's query language, the SQL of graphs; KNN = k-nearest-neighbors, the standard "closest vectors" search.)
+
+> **One-line summary:** Pick the retriever by question type — vector for fuzzy text, Cypher for structured counts, hybrid for keywords, agentic for mixed workloads.
 
 ### 6.2 Text2Cypher (NL → Cypher) in Detail
 
@@ -273,6 +349,8 @@ Level 0: the whole graph (1 community)
 > # When a query returns empty → Text2Cypher self-corrects the Cypher statement (Self-correction)
 > # When the schema is insufficient → ask for more metadata itself (schema refinement)
 > ```
+>
+> **One-line summary:** Text2Cypher turns a question into a Cypher query; feed it a small schema sample, validate labels before running, and let it self-correct empty results.
 
 ### 6.3 RRF — Merging Multiple Sources Without "Scores"
 
@@ -287,6 +365,8 @@ Level 0: the whole graph (1 community)
 >
 > **Analogy:** like an "inside track" vote: only people nominated on many different ballots make the final — even if nobody ranked them first. RRF is a technique in the **hybrid retrieval** problem — combining graph traversal results + vector similarity.
 
+> **One-line summary:** RRF merges ranked lists using only positions (score = Σ 1/(60+rank)), rewarding items that rank decently in several sources.
+
 > 📄 **Example code:** [`examples/06-6-3-rrf-merging-multiple-sources-without-scores.py`](examples/06-6-3-rrf-merging-multiple-sources-without-scores.py)
 
 ---
@@ -295,6 +375,10 @@ Level 0: the whole graph (1 community)
 
 > **📌 Core Concept:**
 > **GraphRAG is not "one formula"** — from Microsoft's original GraphRAG (index + the subsequent connected variants) up to 2025–2026, many different optimization directions have appeared for different problems. The table below is a **map of the most-cited variants**:
+
+This section maps the main GraphRAG variants, so you can pick one by cost and question type instead of by hype. (SOTA = state of the art, the best-performing methods right now.)
+
+How to read this table: each row is one variant. **Variant** = its name, **Core idea** = what it does differently, **Strong when** = its sweet spot, **Weakness/limits** = what it gives up. For instance, LightRAG trades some global quality for 10× speed and lower cost.
 
 | Variant | Core idea | Strong when | Weakness/limits |
 |---|---|---|---|
@@ -313,10 +397,16 @@ Level 0: the whole graph (1 community)
 > - **Complex queries that need to rethink**: `DRIFT`
 >
 > In this learning framework, **knowing the mechanisms (index + retrieve + community summary)** matters most — the variants are just refinements of those three stages.
+>
+> **One-line summary:** All variants share the same three stages (index, retrieve, summarize) — choose by your bottleneck: cost (LightRAG), token budget (HippoRAG2), or global synthesis (original GraphRAG).
 
 ---
 
 ## 8. When to Use GraphRAG?
+
+This section gives a decision guide, including honest evidence for when GraphRAG is NOT worth it.
+
+How to read it: each row is one question type. **Question type** = what the user asks, **Use what?** = the recommended system, **Example** = a real question of that type. For instance, a one-fact question ("what does section 5 say?") → plain RAG, not GraphRAG.
 
 ```
 ┌──────────────────────────┬──────────────┬──────────────────────────────┐
@@ -358,10 +448,14 @@ Does the question have specific entities?
 > - Corpus < 100 docs, answers mostly factoid → **vanilla RAG is enough**.
 > - Need multi-hop, aggregation, themes spanning many docs → **GraphRAG**.
 > - In between: **LightRAG / HippoRAG** (lighter, cheaper text2cypher retriever).
+>
+> **One-line summary:** Build GraphRAG only for multi-hop and corpus-wide questions; single-fact questions and tiny corpora are cheaper with plain RAG.
 
 ---
 
 ## 9. Hands-On Labs
+
+These labs compare GraphRAG against plain RAG on real questions, so you learn where each wins.
 
 ### Lab 1: Compare Vanilla RAG vs GraphRAG
 
@@ -369,11 +463,17 @@ Does the question have specific entities?
 2. Run vanilla RAG (vector top-5) and GraphRAG (local search) on 10 queries
 3. Judge manually: which questions does GraphRAG win? (global queries win clearly)
 
+> **One-line summary:** Run both systems on the same 10 queries and see for yourself that GraphRAG wins on big-picture questions, not fact lookups.
+
 ### Lab 2: Tuning Community Resolution
 
 1. Try `resolution` = 0.5, 1.0, 2.0 in `detect_communities`
 2. Observe the number of communities and global search quality
 3. Find the optimal resolution for your dataset
+
+(`resolution` = the granularity knob for community detection: low → few big groups, high → many small ones.)
+
+> **One-line summary:** Sweep the `resolution` parameter and judge global-answer quality at each setting — the best number is dataset-specific.
 
 ### Lab 3: Build a Codebase GraphRAG
 
@@ -381,9 +481,15 @@ Does the question have specific entities?
 2. Ask: "Changing function X affects which files?" → local search on the code graph
 3. Compare with plain `grep`
 
+(`grep` = a command-line text search that finds lines matching a pattern — fast, but it can't follow "who calls whom" chains.)
+
+> **One-line summary:** Build a graph over code (File → Function → Calls) and use local search for impact questions that `grep` can't trace.
+
 ---
 
 ## References
+
+> **One-line summary:** The sources behind this module — start with the original Microsoft GraphRAG paper (arXiv 2404.16130) and the Neo4j graphrag-python docs.
 
 - Edge et al. — *From Local to Global: A GraphRAG Approach to Query-Focused Summarization* (Microsoft Research, 2024) — https://arxiv.org/abs/2404.16130
 - Microsoft GraphRAG — *GitHub* (https://github.com/microsoft/graphrag) — implementation + config

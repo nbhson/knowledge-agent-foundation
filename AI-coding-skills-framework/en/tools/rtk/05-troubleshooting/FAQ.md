@@ -1,6 +1,6 @@
 # ❓ FAQ — RTK — Troubleshooting (Real Stories, Plain Language)
 
-If a question is unclear, read the section in `../README.md` (named in brackets).
+If a question is unclear, read the section in `../README.md` (named in brackets). Each answer follows the same shape: **What you see** (the symptom), **Why** (the root cause), **What to do** (the fix), **Verify** (how to confirm it worked).
 
 ---
 
@@ -10,11 +10,11 @@ If a question is unclear, read the section in `../README.md` (named in brackets)
 
 **What you see**
 
-You install RTK, run `rtk init -g`, close and reopen your AI coding tool, and the agent's `git status` still prints the full 120-line dump. `rtk gain` reports `Commands run: 0`. Nothing anywhere suggests RTK is active, so you start reinstalling.
+You install RTK, run `rtk init -g` (`-g` = global, for all projects), close and reopen your AI coding tool, and the agent's `git status` still prints the full 120-line dump. `rtk gain` reports `Commands run: 0`. Nothing anywhere suggests RTK is active, so you start reinstalling.
 
 **Why**
 
-The most common cause by far: the tool was not restarted after `rtk init`, so its shell still has the old setup. Two less common causes: on Windows, versions older than **0.37.2** installed a legacy shell hook, which must be migrated to the native binary hook; and a per-project configuration may override the global filter for the directory you are standing in.
+The most common cause by far: the tool was not restarted after `rtk init`, so its shell still has the old setup. (The "hook" is a small piece of configuration that lets RTK intercept commands before they run.) Two less common causes: on Windows, versions older than **0.37.2** installed a legacy shell hook, which must be migrated to the native binary hook; and a per-project configuration may override the global filter for the directory you are standing in.
 
 **What to do**
 
@@ -30,6 +30,8 @@ The most common cause by far: the tool was not restarted after `rtk init`, so it
 **Verify**
 
 `rtk gain --history` lists rewritten commands, `rtk git status` matches the compact format, and the reduction percentage in `rtk gain` is no longer zero. Reinstalling RTK is almost never the fix — a restart plus `rtk init -g` is.
+
+> **One-line summary:** Almost always the fix is "fully restart the tool and re-run `rtk init -g`" — reinstalling rarely changes anything.
 
 ---
 
@@ -61,13 +63,15 @@ Read(path)  Grep(...)     → rtk read / rtk grep
 
 `rtk gain --history` shows `rtk read` and `rtk grep` entries when you ask the agent to explore, and context use per exploration drops by roughly 60–90%.
 
+> **One-line summary:** The hook can only rewrite shell commands — for built-in Read/Grep/Glob you must explicitly tell the agent to use the `rtk` equivalents.
+
 ---
 
 ### Q33. `rtk gain` fails right after `cargo install` — I installed RTK from crates.io. What now? [→ Failure Modes & Mitigations Table]
 
 **What you see**
 
-You run `cargo install rtk`, it succeeds, and then `rtk gain` errors out with a message about an unknown subcommand. Worse, there is a binary on your PATH that answers to a different tool's expectations — `rtk init` writes no hook, and `git status` still prints the raw dump. You installed the wrong package.
+You run `cargo install rtk` (cargo = Rust's package installer; crates.io = its public package store), it succeeds, and then `rtk gain` errors out with a message about an unknown subcommand. Worse, there is a binary on your PATH that answers to a different tool's expectations — `rtk init` writes no hook, and `git status` still prints the raw dump. You installed the wrong package.
 
 **Why**
 
@@ -86,6 +90,8 @@ There is a name collision on crates.io: a different, unrelated project called "R
 **Verify**
 
 `which rtk` resolves to the repository install, `rtk gain` prints a report (for example `Commands run: 342`, `Reduction: 82%`), and `rtk gain --history` is non-empty after a working session.
+
+> **One-line summary:** `cargo install rtk` installs an unrelated namesake — uninstall it, install from the RTK repo instead, then re-run `rtk init -g`.
 
 ---
 

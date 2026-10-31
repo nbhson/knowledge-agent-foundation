@@ -10,7 +10,9 @@ Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
 **Bạn sẽ thấy**
 
-Agent của bạn chạy `git status`, `cargo test`, `ls -la` và mỗi lệnh trả về hàng trăm dòng. Giữa đống đó, dòng lỗi thật chỉ chiếm vài dòng và dễ bị chìm. Repo `rtk-ai/rtk` tự dùng thử công cụ của chính nó trên 16 AI coding tool (Claude Code, Cursor, Gemini CLI, Codex, Cline...) và đo ra:
+Agent của bạn chạy `git status` (báo file nào đã sửa), `cargo test` (chạy test Rust), `ls -la` (liệt kê file) và mỗi lệnh trả về hàng trăm dòng. Giữa đống đó, dòng lỗi thật chỉ chiếm vài dòng và dễ bị chìm. Repo `rtk-ai/rtk` tự dùng thử công cụ của chính nó trên 16 AI coding tool (Claude Code, Cursor, Gemini CLI, Codex, Cline...) và đo ra:
+
+Cách đọc bảng này: cột **Lệnh** là lệnh được đo; cột **Output thô** là số dòng nếu chạy trực tiếp; cột **Output qua RTK** là số dòng khi chạy qua RTK; cột **Giảm** là % cắt bớt. Ví dụ dòng `git push`: 15 dòng tiến trình chỉ còn `ok main` — bớt ~93%.
 
 | Lệnh | Output thô | Output qua RTK | Giảm |
 |---|---|---|---|
@@ -21,7 +23,7 @@ Agent của bạn chạy `git status`, `cargo test`, `ls -la` và mỗi lệnh t
 
 **Vì sao**
 
-RTK (Rust Token Killer) là một CLI proxy viết bằng Rust, chèn vào giữa agent và lệnh shell, cắt tới **90% bash output** trước khi nó chạm vào ngữ cảnh của LLM. Một binary duy nhất, hỗ trợ 100+ lệnh (git, cargo, npm, pytest, docker, kubectl, aws...), overhead dưới 10ms. Nén bằng 4 chiến lược: lọc noise, gom nhóm, cắt bớt phần thừa, gộp dòng lặp.
+RTK (Rust Token Killer) là một CLI proxy (chương trình đứng giữa agent và lệnh shell) viết bằng Rust, chèn vào giữa agent và lệnh shell, cắt tới **90% bash output** trước khi nó chạm vào ngữ cảnh của LLM (mô hình ngôn ngữ). Một binary duy nhất (một file chương trình), hỗ trợ 100+ lệnh (git, cargo, npm, pytest, docker, kubectl, aws...), overhead dưới 10ms (độ trễ thêm vào, không đáng kể). Nén bằng 4 chiến lược: lọc noise (bỏ phần rác), gom nhóm, cắt bớt phần thừa, gộp dòng lặp.
 
 **Làm gì**
 
@@ -34,7 +36,9 @@ RTK (Rust Token Killer) là một CLI proxy viết bằng Rust, chèn vào giữ
 
 **Kiểm tra**
 
-Mở `rtk gain` sau vài chục lệnh và xem bảng token đã tiết kiệm. Thử cùng một lệnh có và không có RTK, đếm dòng output thô bằng `| wc -l` rồi so với bảng ở trên.
+Mở `rtk gain` (lệnh in báo cáo tiết kiệm) sau vài chục lệnh và xem bảng token đã tiết kiệm. Thử cùng một lệnh có và không có RTK, đếm dòng output thô bằng `| wc -l` (đếm số dòng) rồi so với bảng ở trên.
+
+> **Tóm gọn 1 câu:** RTK đứng giữa agent và shell để cắt tới 90% output lệnh — lệnh output càng dài (test, push, log) càng có lãi, đáng cài cho repo lớn.
 
 ---
 
@@ -42,9 +46,11 @@ Mở `rtk gain` sau vài chục lệnh và xem bảng token đã tiết kiệm. 
 
 **Bạn sẽ thấy**
 
-Bạn đọc [HARNESS_ENGINEERING.md](../../HARNESS_ENGINEERING.md) thấy harness gồm **7 components**, tưởng RTK phải là một module như `harness/01-11`. Nhưng tài liệu nói rõ: RTK là **công cụ thực thi cụ thể** (Rust binary), không phải knowledge module — nên nó sống trong nhánh `tools/`, cùng convention với `harness/` và `loop/`.
+Bạn đọc [HARNESS_ENGINEERING.md](../../HARNESS_ENGINEERING.md) thấy harness (bộ khung điều khiển agent) gồm **7 components** (thành phần), tưởng RTK phải là một module như `harness/01-11`. Nhưng tài liệu nói rõ: RTK là **công cụ thực thi cụ thể** (Rust binary — file chương trình chạy được), không phải knowledge module (module kiến thức) — nên nó sống trong nhánh `tools/`, cùng convention (quy ước cấu trúc) với `harness/` và `loop/`.
 
-Về mặt khái niệm thì **CÓ — RTK thuộc Component #3, Context Management** (nhánh Context Optimization / Token Reduction), và liên quan phụ tới hai component khác:
+Về mặt khái niệm thì **CÓ — RTK thuộc Component #3, Context Management** (quản lý ngữ cảnh đưa vào model), dưới nhánh Context Optimization / Token Reduction (tối ưu context / giảm token), và liên quan phụ tới hai component khác:
+
+Cách đọc bảng này: cột **Component** là thành phần của harness; cột **Vai trò** là nhiệm vụ của nó; cột **RTK liên quan?** cho biết mức dính dáng. Ví dụ dòng đầu: Context Management cần AI có đúng thông tin đúng lúc — RTK phục vụ trực tiếp bằng cách nén context.
 
 | Component | Vai trò | RTK liên quan? |
 |---|---|---|
@@ -54,12 +60,12 @@ Về mặt khái niệm thì **CÓ — RTK thuộc Component #3, Context Managem
 
 **Vì sao**
 
-RTK hiện thực hoá lý thuyết đã viết sẵn trong các module của harness: `harness/02-build-context` (nén context ở tầng Immediate Context), `harness/06-decide-tools-mcp` (thiết kế tool proxy), `harness/11-evaluation` (đo token saved). Kiến trúc vẫn là 7 components; `tools/` nay là nơi tập trung các công cụ hiện thực hoá toàn bộ 7 component đó.
+RTK hiện thực hoá lý thuyết đã viết sẵn trong các module của harness: `harness/02-build-context` (nén context ở tầng Immediate Context — tầng context model đọc trực tiếp), `harness/06-decide-tools-mcp` (thiết kế tool proxy — proxy = người đứng giữa thay gọi lệnh), `harness/11-evaluation` (đo token saved). Kiến trúc vẫn là 7 components; `tools/` nay là nơi tập trung các công cụ hiện thực hoá toàn bộ 7 component đó.
 
 **Làm gì**
 
 1. Đọc `harness/02-build-context` trước để biết "Immediate Context (Level 5)" nằm ở tầng nào trong hệ thống context.
-2. Nhớ mapping: `02-build-context` (chính), `06-decide-tools-mcp` (tool proxy), `11-evaluation` (đo).
+2. Nhớ mapping (bảng đối chiếu): `02-build-context` (chính), `06-decide-tools-mcp` (tool proxy), `11-evaluation` (đo).
 3. Đừng tìm RTK trong `harness/01-11` — nó không nằm ở đó, đừng kết luận là thiếu tài liệu.
 4. Khi lập kế hoạch giảm chi phí, đối chiếu với mục tiêu "Giảm Chi Phí 40-60%" trong HARNESS_ENGINEERING.md.
 
@@ -67,13 +73,15 @@ RTK hiện thực hoá lý thuyết đã viết sẵn trong các module của ha
 
 Mở `tools/README.md` để xem nhánh Tools tổng quan, và mở `tools/rtk/README.md` phần mapping — nếu bạn chỉ ra được module harness tương ứng cho RTK thì đã hiểu đúng chỗ nó đứng.
 
+> **Tóm gọn 1 câu:** RTK không phải module kiến thức trong `harness/` mà là công cụ thực thi — nhưng về khái niệm, nó hiện thực hóa Component #3 (Context Management) của harness.
+
 ---
 
 ### Q3. Lần đầu đọc RTK — nên đọc file nào trước, thư mục nào để làm cái gì? [→ Lộ Trình Học, Lộ Trình Đề Xuất]
 
 **Bạn sẽ thấy**
 
-Thư mục `rtk/` có 5 thư mục con: `01-concepts/` (kiến trúc hook, 4 chiến lược nén, tee recovery), `02-setup/` (cài đặt + tích hợp 16 AI tool), `03-patterns/` (4 pattern production), `04-savings/` (đo lường token), `05-troubleshooting/` (lỗi thường gặp). Người mới hay mở thẳng `03-patterns/` rồi hỏng, vì chưa biết hook hoạt động thế nào.
+Thư mục `rtk/` có 5 thư mục con: `01-concepts/` (kiến trúc hook, 4 chiến lược nén, tee recovery), `02-setup/` (cài đặt + tích hợp 16 AI tool), `03-patterns/` (4 pattern production), `04-savings/` (đo lường token), `05-troubleshooting/` (lỗi thường gặp). Người mới hay mở thẳng `03-patterns/` rồi hỏng, vì chưa biết hook (cái chặn tự đổi lệnh thành `rtk ...`) hoạt động thế nào.
 
 Lộ trình đề xuất gồm 6 bước: đọc README → `01-concepts/` → `02-setup/` → bắt đầu với pattern Git Speedup trong `03-patterns/` → đo bằng `rtk gain` ở `04-savings/` → khi có sự cố thì đọc `05-troubleshooting/`.
 
@@ -84,6 +92,8 @@ Mỗi thư mục chứa một file `README.md`, đồng nhất với convention 
 **Làm gì**
 
 1. Chọn đúng file theo việc bạn đang làm, không đọc tuần tự tất cả:
+
+Cách đọc bảng này: cột **Bạn muốn...** là việc bạn cần làm; cột **Đọc** là file/thư mục cần mở. Ví dụ dòng cuối: lệnh bị đổi sai thì mở `05-troubleshooting/`.
 
 | Bạn muốn... | Đọc |
 |---|---|
@@ -99,7 +109,9 @@ Mỗi thư mục chứa một file `README.md`, đồng nhất với convention 
 
 **Kiểm tra**
 
-Bạn trả lời được ba câu thì coi như nắm: hook rewrite xảy ra ở bước nào, tee recovery lưu file ở đâu, và lệnh nào đo được token đã tiết kiệm.
+Bạn trả lời được ba câu thì coi như nắm: hook rewrite xảy ra ở bước nào, tee recovery (cơ chế lưu output đầy đủ ra log khi lệnh fail) lưu file ở đâu, và lệnh nào đo được token đã tiết kiệm.
+
+> **Tóm gọn 1 câu:** Đọc theo thứ tự 6 bước — hiểu hook trước (`01-concepts/`), cài xong (`02-setup/`) rồi mới áp pattern; đừng nhảy thẳng vào pattern như người mới hay làm.
 
 ---
 

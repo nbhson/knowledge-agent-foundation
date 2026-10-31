@@ -12,11 +12,11 @@ Every agent turn the model runs `ls`, `cat`, `git status`, `cargo test` — and 
 
 **Why**
 
-This is the opening problem the whole `tools/` directory exists to solve. Input tokens are the currency of agent reasoning, and the fix is a **CLI** (command-line interface) proxy that rewrites command output before it enters the model's context. That tool is **RTK — Rust Token Killer**, in `tools/rtk/`.
+This is the opening problem the whole `tools/` directory exists to solve. Input tokens are the currency of agent reasoning, and the fix is a **CLI** (command-line interface) proxy that rewrites command output before it enters the model's context (*proxy = a middleman that sits between the agent and the shell and shortens the answers*). That tool is **RTK — Rust Token Killer**, in `tools/rtk/`.
 
 **What to do**
 
-1. Install RTK and wire it into your agent's hook system — that is stage 1 of the six-stage roadmap, because the saving is immediate.
+1. Install RTK and wire it into your agent's hook system (*hook = a trigger the agent runs before/after each command, so RTK can rewrite output automatically*) — that is stage 1 of the six-stage roadmap, because the saving is immediate.
 2. Start with the `git-speedup` pattern in `rtk/03-patterns/`; it is the one the roadmap itself recommends first.
 3. Measure before and after with the tools in `rtk/04-savings/`, rather than trusting the headline number.
 
@@ -26,9 +26,13 @@ This is the opening problem the whole `tools/` directory exists to solve. Input 
 | `git push` | 15 lines | `ok main` (1 line) | ~93% |
 | `cargo test` | 200+ failing | `FAILED: 2/15 tests` | ~90% |
 
+> **How to read this table:** **Command** = what you ran. **Raw output** = how many lines the shell normally returns. **After RTK** = what the model actually receives once RTK compresses it. **Reduction** = the share of lines removed. For example, `cargo test` normally dumps 200+ failing lines; RTK boils it down to `FAILED: 2/15 tests`.
+
 **Verify**
 
 Run the same `ls -la` and `cargo test` before and after installing. If the line counts do not drop, the hook is not attached — RTK integrates through different mechanisms per agent, from a native `PreToolUse` hook to plain instruction files, so check the integration table in the case studies.
+
+> **One-line summary:** RTK compresses bash output before it reaches the model — install it, hook it in, and measure the drop yourself.
 
 ---
 
@@ -55,6 +59,8 @@ After stage 2 you should have a harness that runs end to end: a framework orches
 
 One more thing to know before you plan: every subdirectory follows one convention — an overview `README.md` plus numbered topics — and only `rtk/` is complete today. The rest ship the overview alone.
 
+> **One-line summary:** Start with RTK plus one framework — the six-stage order is by payoff, and automation comes last.
+
 ---
 
 ## Q3. LangChain, AutoGen or CrewAI — do I need all three frameworks? [→ Group 2 — Framework (Building harness orchestration)]
@@ -69,7 +75,7 @@ They are **alternatives**, not layers. The README groups them under one heading 
 
 **What to do**
 
-1. If you think in states, transitions and cycles, use `langchain/` — LangGraph's `StateGraph` models the seven components directly, with a `ToolNode` for tool calls and retrieval-augmented generation (RAG) built in.
+1. If you think in states, transitions and cycles, use `langchain/` — LangGraph's `StateGraph` models the seven components directly, with a `ToolNode` for tool calls and retrieval-augmented generation (RAG) built in (*RAG = the model answers using documents fetched from a store, instead of only its memory*).
 2. If you think in conversations between specialists, use `autogen/` — the `UserProxyAgent` plays the harness role and `GroupChat` orchestrates.
 3. If you think in named roles with a chain of tasks, use `crewai/` — `Agent` / `Task` / `Crew`, with `Process.sequential` or `Process.hierarchical`.
 4. Pick one, write ten lines against it, then commit. Comparing on paper is cheap; comparing on a live harness is not.
@@ -77,6 +83,8 @@ They are **alternatives**, not layers. The README groups them under one heading 
 **Verify**
 
 You should be able to name your process type in one sentence — "sequential", "hierarchical", or "state graph". If you cannot, you have not chosen yet, and building with all three at once is how projects stall.
+
+> **One-line summary:** The three frameworks are rivals, not layers — pick the one whose mental shape (graph, conversation, or roles) matches how you think.
 
 ---
 
@@ -88,18 +96,20 @@ Everything works. The agent runs tools, the framework answers questions, tests p
 
 **Why**
 
-Both layers are invisible while nothing is broken — that is what makes them easy to skip. The security layer (`guardrails/` — Guardrails AI, NeMo, LlamaGuard) is the control layer *before* the agent acts: validators, rails, permissions and rate limits. The quality layer (`evaluation/`, `observability/`) is what blocks regressions: eval suites, cost tracking and latency targets. They sit at stages 4 and 5 of the roadmap, after the parts that feel productive — which is exactly why they get deferred.
+Both layers are invisible while nothing is broken — that is what makes them easy to skip. The security layer (`guardrails/` — Guardrails AI, NeMo, LlamaGuard) is the control layer *before* the agent acts: validators, rails, permissions and rate limits. The quality layer (`evaluation/`, `observability/`) is what blocks regressions (*regression = something that used to work gets worse after a change*): eval suites, cost tracking and latency targets. They sit at stages 4 and 5 of the roadmap, after the parts that feel productive — which is exactly why they get deferred.
 
 **What to do**
 
 1. Add `guardrails/` before you add more tool access, not after an incident — it validates every tool call before execution.
-2. Put one `evaluation/` suite in CI (continuous integration) early, even a small one. PromptFoo is the README's example for blocking regressions; Deepeval and Ragas cover answer quality and retrieval metrics.
+2. Put one `evaluation/` suite in CI (continuous integration) early, even a small one (*CI = automated tests that run on every push*). PromptFoo is the README's example for blocking regressions; Deepeval and Ragas cover answer quality and retrieval metrics.
 3. Add `observability/` at the same time — LangSmith, Helicone, OpenLLMetry or Weights & Biases — so a failing eval tells you whether it was cost or latency.
 4. Budget one day for both layers. They look like overhead until the first incident or the first silent regression, then they are the only reason you can prove what changed.
 
 **Verify**
 
-Break one guardrail on purpose and confirm the tool call is refused. Change one line of a prompt and confirm CI fails on the eval suite. A layer you cannot demonstrate failing is a layer you have not tested.
+Break one guardrail on purpose and confirm the tool call is refused. Change one line of a prompt and confirm CI fails on the eval suite (*eval suite = a fixed set of test questions with expected answers, run automatically*). A layer you cannot demonstrate failing is a layer you have not tested.
+
+> **One-line summary:** Guardrails and evaluation are insurance — invisible until an incident, and the only way to prove what changed.
 
 ---
 
@@ -111,7 +121,7 @@ You are adding `vector-db/` and `mcp-ecosystem/` in the same stage, and both des
 
 **Why**
 
-They solve opposite questions. A vector database (Chroma, Pinecone, Qdrant, Weaviate) stores and retrieves **semantic memory** — text turned into embeddings, then found again by meaning rather than by exact keyword. MCP (Model Context Protocol) is a **protocol**, not a database: it standardizes how an application connects to external tools and data, so a tool server plugs in without custom glue code. The README maps them to different harness components for exactly this reason.
+They solve opposite questions. A vector database (Chroma, Pinecone, Qdrant, Weaviate) stores and retrieves **semantic memory** — text turned into embeddings (*embedding = text converted into a list of numbers that captures its meaning*), then found again by meaning rather than by exact keyword. MCP (Model Context Protocol) is a **protocol**, not a database: it standardizes how an application connects to external tools and data, so a tool server plugs in without custom glue code. The README maps them to different harness components for exactly this reason.
 
 **What to do**
 
@@ -123,6 +133,8 @@ They solve opposite questions. A vector database (Chroma, Pinecone, Qdrant, Weav
 **Verify**
 
 Ask two questions after setup: one semantic lookup that must return stored knowledge, and one MCP tool call that must reach a live external system. If both only work through the same layer, you wired one of them twice.
+
+> **One-line summary:** Vector DB = what the agent knows; MCP = what the agent can do — two different jobs, keep them separate.
 
 ---
 
@@ -146,6 +158,8 @@ It is a map, not a library — and the README says so: this branch holds **knowl
 **Verify**
 
 You can name, for any directory you opened, which harness component it serves — retrieval and memory, context, tools and permissions, workflow, task, multi-agent, automation, or evaluation. A subdirectory you cannot place in that map is one you should not install yet.
+
+> **One-line summary:** These directories are guided maps, not finished libraries — only `rtk/` is complete; read each overview to decide what to install.
 
 ---
 

@@ -1,6 +1,7 @@
 # ❓ FAQ — Evaluation (Câu hỏi thật, dễ hiểu)
 
 Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông. Câu hỏi được nhóm theo tên file nguồn.
+(Evaluation = đánh giá năng lực model/agent bằng bộ bài kiểm tra; benchmark = bộ đề tiêu chuẩn như SWE-bench, HumanEval; token = đơn vị đo văn bản model xử lý.)
 
 ---
 
@@ -15,6 +16,8 @@ Cùng một model, hai con số lệch nhau gần 40 điểm. Bảng so sánh tr
 **Vì sao**
 
 Hai bộ đề đo hai năng lực khác nhau. HumanEval là "viết một hàm đơn lẻ theo đề bài", còn SWE-bench là "đọc mô tả một lỗi thật từ GitHub, tìm đúng file, vá đúng chỗ, và không làm hỏng những test đang xanh" — trên 2.294 lỗi thật.
+
+Cách đọc bảng này: mỗi dòng là một bộ đề; cột **Dạng bài** cho biết bài hỏi gì; cột **Điều khó nhất** là năng lực thực sự được đo. Ví dụ: HumanEval chỉ đòi viết đúng một hàm, còn SWE-bench đòi tìm đúng chỗ vá lỗi trong repo thật.
 
 | Bộ đề | Dạng bài | Điều khó nhất |
 |---|---|---|
@@ -33,6 +36,8 @@ Hai bộ đề đo hai năng lực khác nhau. HumanEval là "viết một hàm 
 **Kiểm tra**
 
 Chạy cùng 10 bài của đội bạn lên cả hai model, so **cả** tỉ lệ pass lẫn token trung bình mỗi bài. Nếu chênh lệch nhỏ hơn 5 điểm, hãy chọn theo giá.
+
+> **Tóm gọn 1 câu:** Hai bộ đề đo hai năng lực khác nhau nên điểm lệch nhau là bình thường — đừng kết luận từ một con số; hãy đo bằng bộ đề giống việc thật của bạn, và cân cả chất lượng lẫn chi phí.
 
 ---
 
@@ -60,6 +65,8 @@ Cải tiến một chỗ thường làm hỏng chỗ khác — đây là đánh 
 
 Cố tình sửa prompt theo hướng xấu. Bộ regression phải báo đỏ và nêu đúng **id bài nào** tụt, bao nhiêu điểm. Chỉ báo "điểm chung giảm" là chưa đủ.
 
+> **Tóm gọn 1 câu:** Cải tiến một chỗ hay làm hỏng chỗ khác — giữ bộ bài cũ cố định (baseline + golden answer), chạy lại toàn bộ sau mỗi lần đổi prompt, và báo đỏ khi có bài tụt quá 10 điểm.
+
 ---
 
 ## Q3. Agent pass hết bài test nhưng phí 30 lần gọi công cụ — có nên phạt không? [→ §15.1 · §2.2]
@@ -76,6 +83,8 @@ Chấm pass/fail chỉ nhìn kết quả cuối. Nó không phân biệt một a
 
 Chấm cả **đường đi**, không chỉ đích đến. Bốn số đo kèm theo:
 
+Cách đọc bảng này: cột **Số đo** là chỉ số về "đường đi" của agent; cột **Cách tính** là công thức (tỉ lệ, càng gần 1 càng tốt trừ dòng cuối); cột **Mục tiêu** là ngưỡng đạt. Ví dụ: nếu tham chiếu cần 12 bước mà agent đi 20 bước thì hiệu quả = 12/20 = 0,6 — dưới mục tiêu 0,7.
+
 | Số đo | Cách tính | Mục tiêu |
 |---|---|---|
 | Hiệu quả bước | bước tham chiếu ÷ bước thật (trần 1.0) | ≥ 0.7 |
@@ -90,6 +99,8 @@ Tổng: `trajectory_score = 0.5·pass + 0.2·hiệu quả + 0.15·độ chính x
 **Kiểm tra**
 
 Chạy lại run 42 bước ở ví dụ trên tài liệu — nó pass nhưng hiệu quả chỉ 12/42 ≈ 0.29, độ chính xác 8/30 ≈ 0.27, nên `trajectory_score` phải dưới 0.65 và bị chặn. Run 14 bước phải vượt cổng.
+
+> **Tóm gọn 1 câu:** Pass/fail chỉ nhìn đích đến, không thấy agent "đi vòng và may mắn" — chấm thêm đường đi bằng 4 chỉ số, gộp thành `trajectory_score`, và dùng ngưỡng 0.65 làm cổng CI.
 
 ---
 
@@ -113,6 +124,8 @@ Nhìn pass% sẽ bảo bạn chọn hàng 74% và không thấy rằng nó đắ
 **Kiểm tra**
 
 Trước khi đổi, chạy cùng một bộ 100 bài trên route cũ và route mới, rồi in ra ba cột: pass%, `$ mỗi bài đạt`, tổng token. Nếu chỉ một trong hai cột đầu đi qua quy tắc, giữ route cũ.
+
+> **Tóm gọn 1 câu:** Đừng tính chi phí trên tổng số bài mà chia cho số bài đạt — thường thì "model nhỏ làm việc dễ, leo thang model lớn khi cần" thắng cả chất lượng lẫn tiền.
 
 ---
 
@@ -138,6 +151,8 @@ Giám khảo cũng là mô hình: nó có tính ngẫu nhiên, có thể **bịa
 
 Chấm mù 100 bài, tính `κ` theo từng chiều. In cả độ lệch do đảo thứ tự. Báo cáo điểm số kèm hai con số này, không báo cáo điểm đơn thuần.
 
+> **Tóm gọn 1 câu:** Giám khảo LLM cũng là model nên có sai số — chỉ dùng nó cho thứ máy khó chấm, ép trả về JSON có cấu trúc, hiệu chuẩn với người thật tới κ ≥ 0.7, và luôn đo thiên kiến vị trí.
+
 ---
 
 ## Q6. Bài benchmark của tôi nằm trong dữ liệu huấn luyện của model — làm sao biết? [→ §15.2 · §10.3]
@@ -161,6 +176,8 @@ Bài benchmark cũ, ai cũng có trong tay, rất dễ nằm trong dữ liệu h
 **Kiểm tra**
 
 Chạy một tập bài **tự viết** cho dự án của bạn, chưa từng công khai. Nếu điểm model giảm mạnh so với bài công khai, đó là dấu hiệu bạn đã đo bài nhớ chứ không phải bài làm.
+
+> **Tóm gọn 1 câu:** Điểm cao bất thường trên đề cũ có thể là "học vẹt" (contamination) — cách ly đề nghi rò rỉ, ghim seed chạy lại 3 lần, ghi hash dữ liệu vào báo cáo, và kiểm chứng bằng đề tự viết chưa công khai.
 
 ---
 
@@ -195,6 +212,8 @@ Harness tối giản = system prompt tối giản
 
 Nếu điểm ở chế độ tối giản **thấp hơn** điểm ở đường đầy đủ, framework của bạn đang giúp agent, đừng vội bỏ. Nếu điểm cao hơn, framework đang làm hỏng năng lực thật — và đó mới là thứ bạn cần sửa.
 
+> **Tóm gọn 1 câu:** Muốn biết model giỏi thật hay framework "che điểm yếu", hãy đo lại ở chế độ tối giản: prompt dưới 100 token, không tầng trung gian, đúng 2 công cụ bash + editor — so hai điểm là ra.
+
 ---
 
 ## Q8. Tự dựng một đường đo điểm tối giản thì cần tối thiểu những gì? [→ §4 Bộ Công Cụ · §5 Benchmark Runner · §6 Metrics · §7 Guardrails]
@@ -218,6 +237,8 @@ Bộ đo tối giản không cần nhiều thứ, nhưng thiếu một mảnh th
 **Kiểm tra**
 
 Cố tình dùng chung thư mục làm việc cho hai bài liên tiếp và xem kết quả bài sau có đổi không. Nếu có, đường đo của bạn đang rò rỉ trạng thái giữa các bài và phải sửa lại từ đầu.
+
+> **Tóm gọn 1 câu:** Đường đo tối giản chỉ cần 4 mảnh: cấu trúc bài gồm 4 trường, vòng lặp có giới hạn, chấm bằng exit code của test khách quan, và 3 luật cách ly — thiếu luật cách ly thì con số là ảo.
 
 ---
 

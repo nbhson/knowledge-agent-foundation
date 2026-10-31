@@ -16,7 +16,7 @@ Traversal không ràng buộc = đi vào mọi nhánh, kể cả nhánh `KNOWS`,
 
 **Làm gì**
 
-1. Chọn kiểu đi trước: muốn biết *tất cả* node cách 1–2 bước thì BFS; muốn biết *có tồn tại* một đường thì DFS nhanh hơn.
+1. Chọn kiểu đi trước: muốn biết *tất cả* node cách 1–2 bước thì BFS (duyệt theo vòng: ghé hết node gần trước); muốn biết *có tồn tại* một đường thì DFS (đi sâu một nhánh tới cùng) nhanh hơn.
 2. Luôn đặt ràng buộc cho đường đi và cho cả node đích.
 3. Graph >1 triệu node thì bật chế độ lấy mẫu: mỗi bước chỉ ghé tối đa 10 node, có thể chọn `random`, `top-confidence` hoặc `pagerank`.
 4. Suy ra `confidence` của đường đi bằng giá trị nhỏ nhất trong các cạnh — đường yếu là đường đáng nghi.
@@ -26,6 +26,8 @@ Traversal không ràng buộc = đi vào mọi nhánh, kể cả nhánh `KNOWS`,
 **Kiểm tra**
 
 Chạy một graph nhỏ 1.000 node / 5.000 cạnh: BFS không ràng buộc thăm hết node, còn bản constrained thăm ít hơn và nhanh hơn nhiều lần; `Dave` phải biến mất khỏi kết quả; mọi đường trả về đều có `hops` và `confidence` kèm theo.
+
+> **Tóm gọn 1 câu:** Chạy không ràng buộc là đi lạc vào mọi nhánh rác — hãy giới hạn loại quan hệ, số bước, số node thăm (sampling), và luôn kiểm tra độ tin cậy của đường đi.
 
 ---
 
@@ -54,6 +56,8 @@ Trong Cypher thì ràng buộc bằng `WHERE all(r in relationships(path) WHERE 
 
 Đường trả về phải không đi qua cạnh dưới ngưỡng 0.7. Với đồ thị mẫu, đường ít bước phải là `['Alice','Bob','Carol']`, còn đường trọng số phải đổi sang nhánh khác nếu nhánh đó có cạnh yếu. In ra `evidence` và kiểm tra từng cặp liền kề có thật trong graph không.
 
+> **Tóm gọn 1 câu:** Đường ít bước chưa chắc đáng tin — gán trọng số cho cạnh (cạnh yếu thì đắt hơn) và tìm đường có tổng trọng số nhỏ nhất, kèm bằng chứng từng cạnh.
+
 ---
 
 ## Q3. Graph không có cạnh nối trực tiếp, làm sao trả lời "ai có ảnh hưởng tới Carol?" mà không bịa? [→ §3 Inference Rules]
@@ -70,7 +74,7 @@ Graph thật luôn **thưa** (sparse): không thể lưu mọi quan hệ dẫn x
 
 1. Khai báo luật dạng "nếu mẫu này xuất hiện thì tạo cạnh này", mỗi luật mang tên, `confidence` và phần mô tả.
 2. Máy quét graph, khớp mẫu, sinh cạnh suy ra kèm `evidence` (chuỗi cạnh gốc) để luôn truy vết được.
-3. Giảm độ tin cậy theo chuỗi: Alice 0.95 × Bob 0.90 = **0.855** bằng phép nhân, hoặc lấy giá trị yếu nhất là **0.90**.
+3. Giảm độ tin cậy theo chuỗi: Alice 0.95 × Bob 0.90 = **0.855** bằng phép nhân (nhân dồn theo từng bước, tin cậy càng đi càng giảm), hoặc lấy giá trị yếu nhất là **0.90**.
 4. Khi trả lời, luôn kèm đường suy luận để người đọc thấy "kết luận này từ cạnh gốc nào".
 
 > 📄 **Code ví dụ:** [`examples/03-q3-graph-khong-co-canh-noi-truc-tiep.py`](examples/03-q3-graph-khong-co-canh-noi-truc-tiep.py)
@@ -78,6 +82,8 @@ Graph thật luôn **thưa** (sparse): không thể lưu mọi quan hệ dẫn x
 **Kiểm tra**
 
 Trên graph 50 node với 5 luật, đếm số cạnh suy ra và đối chiếu tay từng cạnh: có cạnh nào sai logic không, có cạnh "bịa" không. Mỗi cạnh suy ra phải truy ngược lại được chuỗi `evidence`.
+
+> **Tóm gọn 1 câu:** Đừng tự chèn cạnh suy luận vào dữ liệu gốc — viết luật, để máy sinh cạnh suy ra kèm độ tin cậy riêng và bằng chứng truy vết được.
 
 ---
 
@@ -93,7 +99,7 @@ Quan hệ trong đời thực có ngày bắt đầu và ngày kết thúc: nhâ
 
 **Làm gì**
 
-1. Mọi cạnh mang hai thuộc tính `valid_from` và `valid_until`; `valid_until = None` nghĩa là đang còn hiệu lực.
+1. Mọi cạnh mang hai thuộc tính `valid_from` và `valid_until` (ngày bắt đầu và ngày hết hiệu lực); `valid_until = None` nghĩa là đang còn hiệu lực.
 2. Xem như ngày `9999-12-31` cho cạnh chưa hết hạn, rồi lọc theo điều kiện `valid_from <= ngày_hỏi <= valid_until`.
 3. Khi cập nhật quan hệ, **không xoá cạnh cũ**: đóng hạn nó bằng `valid_until` rồi tạo cạnh mới.
 4. Trả lời kèm khoảng thời gian để câu trả lời tự nói "đúng trong giai đoạn này".
@@ -104,13 +110,15 @@ Quan hệ trong đời thực có ngày bắt đầu và ngày kết thúc: nhâ
 
 Tạo 20 cạnh có khoảng hiệu lực khác nhau, hỏi cùng một câu ở hai mốc 2023-06-01 và 2024-06-01: kết quả phải khác nhau và khớp đúng dữ liệu. Sau khi cập nhật, kiểm tra cạnh cũ vẫn còn trong graph với `valid_until` đã đóng.
 
+> **Tóm gọn 1 câu:** Quan hệ có ngày bắt đầu/kết thúc — đừng xoá cạnh cũ, hãy "đóng hạn" nó rồi thêm cạnh mới, để vẫn trả lời được các câu hỏi về quá khứ.
+
 ---
 
 ## Q5. Nên để LLM tự suy luận hết, hay chia nhỏ ra cho code đi? [→ §7 Neuro-Symbolic QA]
 
 **Bạn sẽ thấy**
 
-Bạn giao nguyên câu hỏi cho LLM và bảo nó "tự suy luận trong graph đi". Nó trả lời trôi chảy, nhưng bạn không biết nó dựa vào cạnh nào, và khi graph có vài chục nghìn node thì mỗi câu hỏi tốn hàng chục nghìn token, chậm và đắt. Ngược lại, cách chia Planner / Executor / Reasoner thì đạt micro-F1 trên 0.90 với chi phí tính toán thấp hơn nhiều.
+Bạn giao nguyên câu hỏi cho LLM và bảo nó "tự suy luận trong graph đi". Nó trả lời trôi chảy, nhưng bạn không biết nó dựa vào cạnh nào, và khi graph có vài chục nghìn node thì mỗi câu hỏi tốn hàng chục nghìn token, chậm và đắt. Ngược lại, cách chia Planner / Executor / Reasoner thì đạt micro-F1 trên 0.90 (micro-F1 = thước đo kết hợp "đúng" và "đủ" — 1.0 là hoàn hảo) với chi phí tính toán thấp hơn nhiều.
 
 **Vì sao**
 
@@ -126,6 +134,8 @@ LLM "nhớ" tri thức từ tham số nên hay nhầm lẫn, còn graph là dữ
 **Kiểm tra**
 
 Chạy cùng 50 câu hỏi multi-hop với hai cách; so sánh độ đúng, số token tiêu thụ, và khả năng chỉ ra được chuỗi cạnh dẫn tới đáp án cho từng câu.
+
+> **Tóm gọn 1 câu:** Cho code làm phần chạy (không tốn token), chỉ để LLM lên kế hoạch và tổng hợp — vừa chính xác hơn, vừa rẻ hơn, vừa truy vết được từng bước.
 
 ---
 

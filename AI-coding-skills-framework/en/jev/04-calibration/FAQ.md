@@ -1,6 +1,6 @@
 # ❓ FAQ — Calibration (Real Stories, Plain Language)
 
-If a question is unclear, read the section in `../README.md` (named in brackets).
+If a question is unclear, read the section in `../README.md` (named in brackets). Glossary up front: **calibrated** = stated probabilities match reality (0.8 means right ~80% of the time); **confidence** = how concentrated the answer's distribution is, not whether it is right; **labelled data** = examples where you already know the correct answer; **Noul** = a yes/no question returning P(yes); **escalate** = hand the decision to a human or another system.
 
 ---
 
@@ -29,6 +29,8 @@ So a wrong answer can be very confident, as long as the wrong answer sits *insid
 **Verify**
 
 Take 200 labelled decisions. Bucket them by stated probability and check that the `0.8` bucket really is ~80% correct. If it is 95%, your gate is looser than you think; if it is 60%, raise the bar. Re-run this every time the model version changes.
+
+> **One-line summary:** Confidence says how decisive the model sounded, not whether it was right — only your labelled data can measure correctness.
 
 ---
 

@@ -8,7 +8,7 @@ If a question is unclear, read the section in `../README.md` (named in brackets)
 
 **What you see**
 
-Extraction gave you 5,000 entities and 12,000 relations. You saved them as one 50MB JSON file. Then a real question arrives: *"find all projects Alice's team worked on, up to 3 hops of `REPORTS_TO`/`MANAGES`."* You hand-write a BFS loop, load the whole file into RAM, and spend about **2 seconds per query**. Ask 100 questions in a session and it times out. The same question in Cypher, a property-graph query language, takes **15ms** — one line instead of a loop.
+Extraction gave you 5,000 entities and 12,000 relations. You saved them as one 50MB JSON file. Then a real question arrives: *"find all projects Alice's team worked on, up to 3 hops of `REPORTS_TO`/`MANAGES`."* (hops = steps along the links: Alice → her manager → that manager's team, is 2 hops). You hand-write a BFS loop (BFS = breadth-first search, walking outward level by level from a starting node), load the whole file into RAM, and spend about **2 seconds per query**. Ask 100 questions in a session and it times out. The same question in Cypher, a property-graph query language, takes **15ms** — one line instead of a loop.
 
 **Why**
 
@@ -30,6 +30,8 @@ RETURN j.name, length(path) AS hops   -- 15ms, no BFS loop
 
 Ingest the same dataset into NetworkX, Kuzu, and Neo4j, then run the same `MATCH (a)-[*1..3]->(b)` against all three and compare latency (Lab 3). If the graph DB is not measurably faster at your actual data size, stay in JSON.
 
+> **One-line summary:** JSON is fine until your questions become multi-hop chains; at that point a graph DB with indexes is 100–1000× faster.
+
 ---
 
 ## Q2. Neo4j, Kuzu, FalkorDB, NebulaGraph — which one do I install? [→ §1, §5 Deployment]
@@ -37,6 +39,8 @@ Ingest the same dataset into NetworkX, Kuzu, and Neo4j, then run the same `MATCH
 **What you see**
 
 You want a decision, not a survey. The practical split that matters:
+
+How to read this table: match your situation in the left column to the recommended database, its practical size ceiling, and the query language you'd write. For instance, "Learning / prototyping" → Kuzu or NetworkX, no server needed.
 
 | Situation | Pick | Scale ceiling | Query lang |
 |---|---|---|---|
@@ -47,7 +51,7 @@ You want a decision, not a survey. The practical split that matters:
 
 **Why**
 
-The deciding variable is not features, it is *your* constraint. Deployment type beats everything: `local + small` → embedded Kuzu, zero ops. `managed` → Neo4j Aura or Amazon Neptune. `realtime` latency → an in-memory engine. NebulaGraph exists because Alibaba and Tencent run it at trillions of edges, which you do not. FalkorDB is a graph DB running directly on Redis, storing the graph as sparse matrices via the GraphBLAS library — traversal becomes matrix multiplication.
+The deciding variable is not features, it is *your* constraint. Deployment type beats everything: `local + small` → embedded Kuzu, zero ops. `managed` (the vendor runs the servers for you) → Neo4j Aura or Amazon Neptune. `realtime` latency → an in-memory engine. NebulaGraph exists because Alibaba and Tencent run it at trillions of edges, which you do not. FalkorDB is a graph DB running directly on Redis (the popular in-memory data store), storing the graph as sparse matrices via the GraphBLAS library — traversal becomes matrix multiplication.
 
 **What to do**
 
@@ -60,7 +64,9 @@ The deciding variable is not features, it is *your* constraint. Deployment type 
 
 **Verify**
 
-`docker exec -it <container> cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"` returns a count. Browser opens on `http://localhost:7474`. Healthcheck runs `RETURN 1` every 10s, 5 retries.
+`docker exec -it <container> cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"` (exec = run a command inside the running container; cypher-shell = Neo4j's command-line client) returns a count. Browser opens on `http://localhost:7474`. Healthcheck runs `RETURN 1` every 10s, 5 retries.
+
+> **One-line summary:** Prototype with Kuzu/NetworkX, develop on Neo4j Community in Docker, run production on a managed tier — and learn Cypher, since it carries over everywhere.
 
 ---
 
@@ -90,7 +96,9 @@ An index is the database's table of contents — without one, the engine must sc
 
 **Verify**
 
-Run `PROFILE MATCH (a:Person {name:'Alice'})-[:MANAGES*1..3]->(b:Person) RETURN b` and read the plan: index used, db hits, memory. Lab 2's 10K-node before/after test should show the 80–90% latency drop the benchmark table predicts.
+Run `PROFILE MATCH (a:Person {name:'Alice'})-[:MANAGES*1..3]->(b:Person) RETURN b` and read the plan: index used, db hits, memory. (PROFILE = a Cypher keyword that shows the execution plan — the steps the engine actually took.) Lab 2's 10K-node before/after test should show the 80–90% latency drop the benchmark table predicts.
+
+> **One-line summary:** Slow query = usually a missing index, an unbounded multi-hop pattern, or returning whole nodes — index the property, cap the hops, add LIMIT, confirm with PROFILE.
 
 ---
 
@@ -102,7 +110,7 @@ First run: 5,000 entities land cleanly. You fix a parser bug, re-run the loader,
 
 **Why**
 
-`CREATE` always makes a new node; `MERGE` (match-or-create) is the idempotent form — re-running finds the existing node and updates it instead. The reader's four ACID properties matter here: **Atomicity** means a batch of 1,000 rows commits fully or rolls back, **Isolation** stops two concurrent loads creating the same node twice, **Durability** means a committed batch survives a crash. Delete order is the other trap: in Cypher, edges must go before nodes unless you use `DETACH DELETE`.
+`CREATE` always makes a new node; `MERGE` (match-or-create) is the idempotent form — re-running finds the existing node and updates it instead. The reader's four ACID properties matter here (ACID = the four guarantees a serious database gives you): **Atomicity** means a batch of 1,000 rows commits fully or rolls back, **Isolation** stops two concurrent loads creating the same node twice, **Durability** means a committed batch survives a crash. Delete order is the other trap: in Cypher, edges must go before nodes unless you use `DETACH DELETE`.
 
 **What to do**
 
@@ -122,6 +130,8 @@ SET n.type = row.type, n.updated_at = datetime()
 
 Run the loader three times against the same input; `count(n)` stays at 5,000 and `count(r)` at 12,000. Then run `PROFILE` on a `MERGE` and confirm it reports zero nodes created on the third pass.
 
+> **One-line summary:** Make loading repeatable with `MERGE` + batched `UNWIND` + a unique constraint; delete with `DETACH DELETE` or better, soft-delete.
+
 ---
 
 ## Q5. Do I need a separate vector database for GraphRAG, or can the graph DB handle embeddings? [→ §2.3 Full-Text & Vector Search]
@@ -132,7 +142,7 @@ Your GraphRAG feature needs two things at once: "find people whose bio mentions 
 
 **Why**
 
-The trend in graph databases is one engine with many index types. **FalkorDB** indexes full-text, vector, and range data on the same node, so a query filters by text + vector + time *inside* the database instead of round-tripping to your app. Neo4j combines full-text and vector indexes since 5.x; Kuzu added vector indexes in v1.5. One system also means one transaction, one backup, one consistency story.
+The trend in graph databases is one engine with many index types. **FalkorDB** indexes full-text, vector, and range data on the same node, so a query filters by text + vector + time *inside* the database instead of round-tripping to your app. Neo4j combines full-text and vector indexes since 5.x; Kuzu added vector indexes in v1.5. One system also means one transaction, one backup, one consistency story. (Vector = the number-list representation of meaning; "vector index" = finds items whose meaning is closest.)
 
 **What to do**
 
@@ -146,6 +156,8 @@ The trend in graph databases is one engine with many index types. **FalkorDB** i
 **Verify**
 
 The hybrid query returns `person` + `project` + `score` rows ordered by score. Full-text search via `CALL db.index.fulltext.queryNodes("personNameFTS", "Alice")` returns the same node from a second index. On Kuzu, confirm the extension path: `INSTALL vector; LOAD EXTENSION vector;`.
+
+> **One-line summary:** One graph DB with both a full-text and a vector index replaces the separate vector store — simpler ops, single transaction, hybrid filtering in one query.
 
 ---
 

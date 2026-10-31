@@ -1,6 +1,6 @@
 # ❓ FAQ — Chia Việc Giữa Jev Và Mô Hình Lớn
 
-Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
+Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông. Giải nghĩa nhanh: **mô hình lớn (LLM)** = model sinh văn bản như GPT; **Jev** = model quyết định có kiểu, nhanh và rẻ; **cổng kiểm tra (gate)** = bước chặn/cho qua trước khi hành động.
 
 ---
 
@@ -22,6 +22,8 @@ Cách chia việc đúng là dựa trên **hình dạng kết quả cần có**,
 | Viết email, viết code | Mô hình lớn |
 | Giải thích "tại sao" | Mô hình lớn, dựa trên kết quả Jev |
 
+Cách đọc bảng trên: cột **Việc** là loại công việc; cột **Ai làm** chỉ định model nào nhận việc đó. Ví dụ, hàng "Cổng có/không" nghĩa là: quyết định cho phép hay chặn một hành động thuộc về Jev — vì đó là câu có/không có kiểu, không phải văn bản.
+
 **Làm gì**
 
 1. Áp dụng câu một: **Jev quyết định, mô hình lớn viết, code thực thi.**
@@ -34,6 +36,8 @@ Cách chia việc đúng là dựa trên **hình dạng kết quả cần có**,
 **Kiểm tra**
 
 Đếm số lượt gọi mô hình lớn trước và sau trên 100 tác vụ thật. Mục tiêu là số lượt đó giảm mạnh, chỉ còn ở những chỗ thật sự cần văn bản.
+
+> **Tóm gọn 1 câu:** Chia việc theo hình dạng kết quả: Jev nhận mọi quyết định (chọn/chấm/có-không), mô hình lớn chỉ nhận chỗ cần văn bản — và giải thích cũng là việc của mô hình lớn đọc kết quả Jev.
 
 ---
 
@@ -60,6 +64,8 @@ Agent của bạn đề xuất gọi công cụ xóa dữ liệu. Bạn cho ý t
 
 Đo riêng hai loại lỗi: số lần cho qua mà lẽ ra phải hỏi, và số lần hỏi mà lẽ ra không cần. Cổng chỉ đáng giữ nếu số lần cho qua sai bằng không.
 
+> **Tóm gọn 1 câu:** Được — Jev là cổng kiểm tra nhanh có hiệu chỉnh cho mọi công cụ gây tác dụng phụ, nhưng quyền cho phép cuối cùng vẫn thuộc lớp phân quyền thật.
+
 ---
 
 ## Q3. Công cụ của tôi cần tham số, Jev không tạo được — xử lý sao? [→ §4 Fallback model]
@@ -83,7 +89,9 @@ Trong Pydantic AI, bạn khai agent với `TypeSafeModel` của Jev và một v�
 
 **Kiểm tra**
 
-Đếm trong 200 lượt thật có bao nhiêu lượt bị chuyển sang mô hình lớn, và trong số đó bao nhiêu do công cụ **có tham số**. Nếu tỉ lệ chuyển giao cao, hãy rà lại chữ ký các công cụ để tăng tỉ lệ được Jev xử lý trực tiếp.
+Đếm trong 200 lượt thật có bao nhiêu lượt bị chuyển sang mô hình lớn, và trong số đó bao nhiêu do công cụ **có tham số**. Nếu tỉ lệ chuyển giao cao, hãy rà lại chữ ký các công cụ để tăng tỉ lệ được Jev xử lý trực tiếp. (Chữ ký công cụ (tool signature) = cách khai báo tên và tham số của công cụ; chuyển giao (handoff) = nhường bước cho model khác.)
+
+> **Tóm gọn 1 câu:** Jev không viết được tham số vì không sinh văn bản — bọc `FallbackModel` đứng sau, và thiết kế công cụ càng ít tham số càng tốt để Jev tự xử lý.
 
 ---
 
@@ -108,7 +116,9 @@ Phần lớn trường hợp là do bốn lỗi thiết kế lặp lại. Một:
 
 **Kiểm tra**
 
-Đo tỉ lệ ca có/không trong phần dữ liệu đầu vào (phải bằng 0), và tỉ lệ câu hỏi gộp nhiều tiêu chí (nên tách hết). Hai phép đo này bắt được hai lỗi phổ biến nhất trong vài phút.
+Đo tỉ lệ ca có/không trong phần dữ liệu đầu vào (phải bằng 0), và tỉ lệ câu hỏi gộp nhiều tiêu chí (nên tách hết). Hai phép đo này bắt được hai lỗi phổ biến nhất trong vài phút. (Nhánh lùi (fallback) = đường dự phòng khi độ tự tin thấp — hỏi người, thử state khác, hoặc đổi model.)
+
+> **Tóm gọn 1 câu:** Bốn lỗi thiết kế hay gặp: nhét câu hỏi vào state, tin confidence cao mù quáng, gộp nhiều tiêu chí vào một câu, và bỏ qua phân phối — sửa được cả bốn trong vài phút.
 
 ---
 

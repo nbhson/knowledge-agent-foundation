@@ -22,17 +22,23 @@ Nếu **Harness Engineering** là bản vẽ chỉ cách sắp xếp góc làm v
 
 Trong thư mục này, mình gom lại các món đồ nghề ứng với **từng món trong harness**, rồi xếp thành từng ngăn cho dễ tìm: **Tool** (RTK, Loop CLI), **Framework** (LangChain, AutoGen, CrewAI), **Vector DBs** (chỗ cất memory/RAG), và **MCP Ecosystem** (cách cắm tools vào AI qua MCP) — kèm thêm hai tầng **Security** (đồ bảo hộ guardrails) và **Quality** (đồ đo đạc observability, evaluation).
 
+Giải nghĩa các tên có thể lạ: **RTK (Rust Token Killer)** = công cụ cắt bớt output lệnh bash trước khi vào model; **RAG** = tra cứu tài liệu rồi đưa vào câu trả lời (Retrieval-Augmented Generation); **memory** = trí nhớ dài hạn của agent; **context window** = "vùng nhớ tạm" model đọc được trong một lượt, có giới hạn.
+
 ### Tại Sao Tools Quan Trọng?
 
 > **"Một harness lý thuyết hay mà không có công cụ thực thi thì chỉ là slide."**
 
 #### 3 Lý Do Phải Có Tools Directory
 
+Cách đọc bảng này: mỗi dòng là một lý do, cột "Giải thích" nói cụ thể hơn. Ví dụ, #2 nghĩa là chỉ cài RTK một lần là agent đỡ đốt 40–90% token cho những lệnh bash chạy đi chạy lại.
+
 | # | Lý do | Giải thích |
 |---|-------|------------|
 | 1 | **Harness cần "hiện thực hóa"** | Các module trong `harness/` dạy *cách xây dựng* (context compression, tool design...). Tools như RTK là *thứ có sẵn để dùng ngay*, không phải tự code. |
 | 2 | **Tiết kiệm token tức thì** | Một lần cài RTK có thể giảm 40-90% token cho các lệnh bash lặp lại — đúng mục tiêu "Giảm Chi Phí 40-60%" trong HARNESS_ENGINEERING.md. |
 | 3 | **Tách kiến thức khỏi công cụ** | Giữ `harness/` thuần kiến thức (documentation, labs), `loop/` thuần vòng lặp, và `tools/` cho các binary/CLI/plugins hỗ trợ — mỗi nhánh một vai trò rõ ràng. |
+
+Giải nghĩa: **context compression** = nén ngữ cảnh cho gọn để đỡ tốn token; **binary/CLI** = chương trình chạy được cài vào máy; **plugin** = phần cắm thêm vào phần mềm có sẵn.
 
 ## Tổng Quan (Nhóm Tools)
 
@@ -47,6 +53,8 @@ Nói nôm na, **Tools** là ngăn thứ ba trong tủ đồ, nằm cạnh `harne
 │  tools/        → ❯ Công cụ thực thi (binary/CLI/plugins)           │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+> **Tóm gọn 1 câu:** Tools là ngăn đồ nghề thực thi nằm cạnh hai ngăn lý thuyết (`harness/`) và quy trình (`loop/`) — mỗi món có thư mục riêng kèm hướng dẫn cùng một nếp, mở ngăn nào cũng quen tay.
 
 ## Cấu Trúc Thư Mục Theo 4 Nhóm
 
@@ -133,6 +141,8 @@ tools/
 
 ### Tổng Kết Cây Thư Mục Đầy Đủ
 
+Cây dưới đây liệt kê đủ 9 thư mục con + README tổng quan. Đọc từ trên xuống là thấy đúng thứ tự 4 nhóm + 2 tầng: Tool → Framework → Vector DBs → MCP → Security → Quality.
+
 ```
 tools/
 ├── README.md              ← BẠN ĐANG Ở ĐÂY — tổng quan + lộ trình + references
@@ -179,7 +189,11 @@ tools/
 
 ## Lộ Trình Học
 
+Phần này trả lời hai câu hỏi: "theo nhu cầu thì nên dùng gì" (bảng dưới) và "nên cài theo thứ tự nào" (lộ trình 6 giai đoạn).
+
 ### Theo Nhóm (Stack Theo Nhu Cầu)
+
+Cách đọc bảng này: cột "Nhu cầu" là việc bạn cần giải quyết, cột "Nhóm" là ngăn đồ nghề chứa nó, cột "Công cụ" là thư mục nên mở. Ví dụ, muốn giảm ngay chi phí token bash thì mở `rtk/`.
 
 | Nhu cầu | Nhóm | Công cụ |
 |---------|------|---------|
@@ -217,13 +231,19 @@ Giai đoạn 6 — Tự động hóa:
    loop-cli/ → scaffold loops, loop gate trong CI, worktree isolation
 ```
 
+> **Tóm gọn 1 câu:** Đi theo thứ tự 6 giai đoạn từ rẻ nhất tới tự động nhất: rtk (giảm chi phí ngay) → framework + vector DB → MCP → guardrails → đo lường → loop-cli; mỗi giai đoạn xây trên nền giai đoạn trước.
+
 ---
 
 ## Case Studies Thực Tế
 
+Phần này kể ba chuyện: RTK tự nó là ví dụ tích hợp hay, một stack hoàn chỉnh trông ra sao, và con số RTK tiết kiệm thực tế.
+
 ### 1. RTK — Eat Its Own Dogfood
 
 Chuyện vui là repo `rtk-ai/rtk` tự nó đã là một ví dụ harness engineering sống động: để xài được với **16 AI coding tools**, nó phải biết len lỏi qua đủ kiểu hook/plugin khác nhau:
+
+Cách đọc bảng này: mỗi dòng là một AI tool, cột giữa nói RTK móc vào nó bằng cơ chế nào, cột "Level" là kiểu nén. Ví dụ, với Claude Code, RTK dùng hook "PreToolUse" (chạy trước khi lệnh được thực thi) để ghi đè lệnh thành bản gọn hơn một cách trong suốt.
 
 | AI Tool | Phương thức tích hợp | Level |
 |---------|---------------------|-------|
@@ -233,6 +253,8 @@ Chuyện vui là repo `rtk-ai/rtk` tự nó đã là một ví dụ harness engi
 | Gemini CLI | BeforeTool hook | Transparent rewrite |
 | Codex | AGENTS.md + RTK.md instructions | Instruction-based |
 | Cursor | preToolUse hook (hooks.json) | Transparent rewrite |
+
+Giải nghĩa: **hook** = điểm móc: chạy một đoạn code ngay trước/sau một sự kiện; **Transparent rewrite** = ghi đè lệnh thành bản gọn mà bạn không thấy khác; **Rule-based/Instruction-based** = đổi theo luật/gợi ý viết trong file cấu hình.
 
 ### 2. Stack Hoàn Chỉnh Cho Một Harness Production (Theo Nhóm)
 
@@ -262,9 +284,13 @@ evaluation/    → PromptFoo regression-check trong CI (harness/11)
 loop-cli/      → loop gate + worktree isolation cho automation (harness/10)
 ```
 
+> **Tóm gọn 1 câu:** Một harness production đủ đồ thì có 7 lớp: rtk cắt bớt output, vector DB giữ trí nhớ, framework điều phối, MCP kết nối ngoài, guardrails chặn rủi ro, observability/evaluation đo lường, và loop-cli tự động hoá có kiểm soát.
+
 ### 3. Kết Quả Đo Lường RTK
 
 Và đây là con số đo thực tế khi cho RTK ra tay gọn bớt output — nhìn cột cuối là thấy đáng công cài ngay:
+
+Cách đọc bảng này: cột "Output thô" là số dòng lệnh trả về không qua RTK, cột "Output RTK" là thứ model thực sự đọc, cột "Giảm" là tỷ lệ token được cắt. Ví dụ, `git push` từ 15 dòng còn 1 dòng `ok main` — giảm 93%.
 
 | Command | Output thô | Output RTK | Giảm |
 |---------|-----------|------------|------|
@@ -274,9 +300,13 @@ Và đây là con số đo thực tế khi cho RTK ra tay gọn bớt output —
 | `docker ps` | Nhiều cột | Essential fields only | ~70%+ |
 | `ruff check` | Nhiều dòng | Grouped by rule/file | ~80% |
 
+> **Tóm gọn 1 câu:** Số đo thật cho thấy RTK cắt 70–93% token của output bash tùy lệnh — cài một lần, tiết kiệm cho mọi lượt chạy sau.
+
 ---
 
 ## Tài Liệu Tham Khảo
+
+Phần này gom liên kết tới từng thư mục con và tới các nhánh khác của repo. Cách đọc các bảng: cột "Vai trò" nói tool đó làm gì, cột "Liên kết" là chỗ đọc chi tiết hoặc trang chủ.
 
 ### Theo 4 Nhóm
 
@@ -310,6 +340,8 @@ Và đây là con số đo thực tế khi cho RTK ra tay gọn bớt output —
 
 #### 🛡️ Security & 📊 Quality
 
+Cách đọc bảng này: mỗi dòng là một tầng chất lượng (Security = an toàn, Quality = đo lường), cột "Công cụ" là tên các phần mềm, cột "Vai trò" là việc của tầng đó.
+
 | Tầng | Công cụ | Vai trò | Liên kết |
 |------|---------|---------|----------|
 | 🛡️ Security | **Guardrails** (AI, NeMo, LlamaGuard) | An toàn tool calls | [guardrails/](guardrails/) |
@@ -317,6 +349,8 @@ Và đây là con số đo thực tế khi cho RTK ra tay gọn bớt output —
 | 📊 Quality | **Evaluation** (PromptFoo, Deepeval, Ragas) | Đo chất lượng response | [evaluation/](evaluation/) |
 
 ### Liên Kết Sang Nhánh Khác
+
+Danh sách này nối tools với phần lý thuyết tương ứng trong `harness/` và `loop/`. Ví dụ, muốn hiểu vì sao RTK nằm ở `harness/02` thì đọc module quản lý ngữ cảnh đó.
 
 - [HARNESS_ENGINEERING.md](../HARNESS_ENGINEERING.md) — 7 components của harness
 - [harness/01-retrieve-memory-knowledge](../harness/01-retrieve-memory-knowledge/) — Retrieval (vector-db)
@@ -344,13 +378,21 @@ Ngoài 3 framework đã liệt kê ở Nhóm 2 (LangChain, AutoGen, CrewAI), h�
 | **Google ADK (Agent Development Kit)** | Google | Framework xây agent tương thích Gemini + Vertex AI, hỗ trợ multi-agent | https://google.github.io/adk-docs/ |
 | **A2A Protocol (Agent2Agent)** | Google → Linux Foundation | Protocol chuẩn cho agent-to-agent giao tiếp giữa các framework khác nhau | https://a2a-protocol.org |
 
+Cách đọc bảng này: mỗi dòng là một framework/protocol mới, cột "Đặc điểm" nói nó là gì, cột "Liên kết" là trang chính thức. Ví dụ, MAF là phiên bản kế nhiệm AutoGen của Microsoft.
+
 **Lưu ý quan trọng về AutoGen:** Repo AutoGen đã bị **archive** — Microsoft không còn maintain. Nếu đang dùng AutoGen, hãy lên kế hoạch migrate sang **Microsoft Agent Framework (MAF)**. Xem chi tiết tại [tools/autogen/](autogen/).
 
 ### Cập Nhật Version Các Framework Hiện Có
+
+Danh sách dưới đây là các bản phát hành mới đáng chú ý, mỗi dòng kèm link tới thư mục tài liệu tương ứng:
 
 - **LangChain 1.0** (10/2025): `create_agent` là API chính, LangGraph tích hợp sẵn — xem [tools/langchain/](langchain/)
 - **CrewAI v1.x** (10/2025+): v1.0.0 phát hành 10/2025, hiện tại v1.15.x — xem [tools/crewai/](crewai/)
 - **MCP Spec 2026-07-28**: Streamable HTTP thay SSE, elicitation, sampling, registry — xem [tools/mcp-ecosystem/](mcp-ecosystem/)
 - **Guardrails AI**: validators chuyển sang PyPI chuẩn (7/2026) — xem [tools/guardrails/](guardrails/)
+
+Giải nghĩa: **archive** = repo bị đóng băng, không nhận sửa lỗi hay tính năng mới; **SSE** = cách truyền dữ liệu cũ, đã được thay bằng Streamable HTTP; **elicitation/sampling** = hai cơ chế MCP để server hỏi người dùng / yêu cầu model sinh text; **validators** = các bộ kiểm tra dữ liệu của Guardrails AI; **PyPI** = kho cài gói Python chính thức.
+
+> **Tóm gọn 1 câu:** Từ 2025 hệ sinh thái có thêm MAF (kế nhiệm AutoGen), OpenAI Agents SDK, Google ADK và A2A — nếu đang dùng AutoGen thì cần lên kế hoạch chuyển sang MAF vì repo đã bị đóng băng.
 
 *Bài viết thuộc [AI Coding Skills Framework](../..) — nhánh Tools*

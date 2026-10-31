@@ -63,17 +63,25 @@ Trong AI coding, automation không chỉ là CI/CD pipeline. Nó là mọi việ
 
 **Cách làm**: dựng Automation Pipeline đi từ manual → scripted → triggered → self-healing → predictive, để team có thể **deploy hàng trăm lần mỗi ngày** thay vì mỗi tuần một lần hồi hộp.
 
+Giải thích các mức trong "Cách làm": *manual* = làm tay từng bước; *scripted* = có script — tệp lệnh — chạy lại được; *triggered* = tự chạy khi có sự kiện; *self-healing* = tự phát hiện và tự sửa lỗi; *predictive* = đoán trước được vấn đề.
+
+> **Tóm gọn 1 câu:** Automation = để máy (kèm AI Agent) lo các việc lặp lại như test, build, deploy, giúp team deploy hàng trăm lần mỗi ngày thay vì ngồi làm tay từng lần.
+
 ### Tại Sao Automation Quan Trọng?
 
 > *"Automation không thay thế con người — nó thay thế những việc con người KHÔNG PHẢI làm."*
 
 #### 3 Bằng Chứng Khoa Học
 
+Cách đọc bảng này: mỗi dòng là một nghiên cứu; cột giữa cho biết ai thực hiện (ví dụ GitHub), cột phải cho biết phát hiện chính (ví dụ: kho code có CI/CD thì deploy hỏng ít hơn 60%).
+
 | # | Nghiên Cứu | Phát Hiện Quan Trọng |
 |---|-----------|----------------------|
 | 1 | **GitHub (2025)** | Repositories với CI/CD automation giảm **60% deployment failures** và **44% time-to-merge** |
 | 2 | **DORA Report (2025)** | Top-performing teams automate **95%+ deployments** — deploy hàng trăm lần/ngày thay vì hàng tuần |
 | 3 | **Stripe Engineering (2024)** | Automated code review pipelines phát hiện **38% more bugs** trước khi reaches human reviewers |
+
+Giải thích vài thuật ngữ trong bảng: *deployment failure* = một lần deploy — đưa code lên hệ thống thật — bị hỏng; *time-to-merge* = thời gian từ lúc tạo pull request (PR = đề nghị gộp code) đến khi code được gộp vào nhánh chính; *reaches human reviewers* = đến tay người review (người soát code).
 
 #### Triết lý cốt lõi:
 
@@ -91,6 +99,10 @@ Automation = Repetition → Rule → Script → Self-Healing Pipeline
 **Analogies**: Automation giống dây chuyền sản xuất — ban đầu từng bước làm tay, dần dần conveyor belt tự chạy, robot tự lắp ráp, và cuối cùng nhà máy tự hoạt động 24/7.
 
 **Nếu bỏ qua**: Manual steps = bottlenecks, human errors mỗi lần lặp lại, team dành 40% thời gian cho repetitive tasks thay vì innovation.
+
+Giải thích: *bottleneck* = chỗ nghẽn — khâu chậm nhất chặn cả dòng chảy; *repetitive tasks* = việc lặp đi lặp lại; *innovation* = việc đổi mới, sáng tạo.
+
+> **Tóm gọn 1 câu:** Số liệu nghiên cứu cho thấy tự động hóa giúp deploy ít hỏng hơn, gộp code nhanh hơn và bắt được nhiều bug hơn — còn không tự động hóa thì team chìm trong việc tay chân.
 
 ## Tổng Quan
 
@@ -123,7 +135,13 @@ Nói ngắn gọn: **Automation** trong AI coding là để máy lo những vi�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích sơ đồ trên: đây là dây chuyền automation 4 chặng, đọc từ trái sang phải. *Trigger* = cái công tắc khởi động (git push, lịch cron, sự kiện, hay bấm tay); *Process & Build* = máy xử lý và đóng gói; *Validate & Test* = cửa kiểm tra chất lượng; *Deploy & Ship* = bước đưa code lên hệ thống thật cho người dùng.
+
+> **Tóm gọn 1 câu:** Automation trong AI coding là một dây chuyền 4 chặng — khởi động, xử lý, kiểm tra, đưa lên hệ thống thật — để kết quả lần nào cũng đều như lần nào mà người ít phải can thiệp.
+
 ## Nội Dung
+
+Cách đọc bảng này: mỗi dòng là một mục lớn trong bài; nhấp vào tên ở cột "Chủ đề" để nhảy tới phần đó; cột "Mô tả" giải thích ngắn gọn mục đó nói về gì (ví dụ dòng 2 là CI/CD — đường ống tự động kiểm tra và deploy code).
 
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
@@ -137,6 +155,8 @@ Nói ngắn gọn: **Automation** trong AI coding là để máy lo những vi�
 | 8 | [Workflow Templates](#8-workflow-templates) | Mẫu quy trình tự động |
 | 9 | [Anti-Patterns & Solutions](#9-anti-patterns--solutions) | Các lỗi thường gặp |
 | 10 | [Production Automation](#10-production-automation) | Tự động hóa sản phẩm |
+
+> **Tóm gọn 1 câu:** Bài gồm 10 mục đi theo thứ tự: từ các pattern nền tảng, qua CI/CD, sinh code, test, giám sát, tự chữa lỗi, tới template dùng lại được, các lỗi hay gặp và checklist trước khi lên production.
 
 ---
 
@@ -185,6 +205,10 @@ Bạn cứ đọc bảng phân loại này như đọc sơ đồ một xưởng 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích một vài từ lạ trong sơ đồ: *webhook* = "móc nối" tự gọi pipeline khi có sự kiện từ dịch vụ ngoài; *cron* = trình chạy theo lịch hẹn giờ; *saga* = cách chia một giao dịch lớn thành các bước nhỏ, hỏng bước nào thì lùi lại bước đó; *canary* = thả bản mới cho 1-5% người dùng trước để thử; *blue-green* = giữ 2 môi trường song song (bản cũ xanh dương, bản mới xanh lá) rồi đổi đường dẫn qua; *feature flag* = công tắc bật/tắt tính năng mà không cần deploy lại.
+
+> **Tóm gọn 1 câu:** Bảng chia 16 pattern thành 4 nhóm theo vai trò — ai kích hoạt (Trigger), máy chạy kiểu gì (Process), qua cửa kiểm nào (Quality), xong rồi làm gì (Feedback).
+
 ### 1.2 Automation Framework
 
 Đoạn code dưới đây là một **`AutomationPipeline`** — bạn hình dung nó như anh quản đốc trông cả dây chuyền: cho từng bước chạy nối tiếp nhau, bước nào gắn `gate=True` thì bắt buộc phải đạt mới được đi tiếp, lỗi thì tự thử lại vài lần (có giãn thời gian `backoff` cho đỡ dồn), còn bước gate mà hỏng hẳn thì tự rollback — gỡ lại những gì đã lắp. Muốn thử, bạn chỉ cần tạo pipeline, thêm vài step bằng `add_step()` hay `step()`, gắn hook `before()`/`after()` rồi gọi `execute()` là xong.
@@ -195,6 +219,10 @@ Bạn cứ đọc bảng phân loại này như đọc sơ đồ một xưởng 
 > 📄 **Code ví dụ:** [`examples/01-1-2-automation-framework.py`](examples/01-1-2-automation-framework.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** `AutomationPipeline` là "anh quản đốc" chạy lần lượt các bước; bước gắn `gate=True` phải đạt mới được đi tiếp, lỗi thì thử lại với khoảng chờ tăng dần (`backoff`), còn cửa kiểm hỏng hẳn thì hệ thống tự rollback — hoàn tác về trạng thái trước đó.
+
+> **Tóm gọn 1 câu:** Phần này cho bạn hai thứ: bản đồ 16 pattern để chọn khi thiết kế, và một khung pipeline mẫu (`AutomationPipeline`) để lắp các pattern đó vào code.
 
 ---
 
@@ -253,6 +281,10 @@ Hình dưới bạn đọc từ trên xuống như ba tầng của một dây ch
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích sơ đồ: *Lint Check* = dò lỗi phong cách code (đặt tên biến xấu, thừa khoảng trắng); *Type Check* = kiểm tra kiểu dữ liệu; *Unit Tests* = test từng hàm nhỏ riêng lẻ; *Staging* = môi trường "thử" giống production nhưng khách không nhìn thấy; *E2E Tests* (end-to-end) = test trọn một luồng người dùng từ đầu tới cuối; *Metrics/Alerts/Log* = bộ canh số liệu, hú còi, ghi nhật ký.
+
+> **Tóm gọn 1 câu:** Pipeline đọc từ trên xuống thành 3 tầng — kiểm hàng nhanh (CI), đưa lên môi trường thử rồi mới lên thật (CD), và ngồi canh chừng sau khi lên (monitoring); một bước hỏng là dừng cả dây chuyền.
+
 ### 2.2 GitHub Actions Templates
 
 File YAML dưới đây là một **workflow GitHub Actions làm sẵn** cho dự án Python — bạn copy vào `.github/workflows/ci.yml` là chạy được ngay. Nó chia việc thành 5 chặng: Validate → Test → Build → Security → Deploy, mỗi chặng là một `job` và nối nhau bằng `needs:` — việc sau chờ việc trước xong mới làm. Gặp dòng `if: github.ref == 'refs/heads/main'` thì bạn hiểu là "cửa này chỉ mở trên nhánh `main`", như cổng kho chỉ nhận đúng loại kiện hàng.
@@ -264,6 +296,8 @@ File YAML dưới đây là một **workflow GitHub Actions làm sẵn** cho d�
 
 </details>
 
+> **Tóm gọn 1 câu:** Đây là file workflow GitHub Actions (dịch vụ tự chạy pipeline của GitHub) chia làm 5 chặng — Validate → Test → Build → Security → Deploy — nối nhau bằng `needs:`; chặng Deploy chỉ mở cổng trên nhánh `main`.
+
 ### 2.3 Pipeline Configuration
 
 Class `CIPipelineConfig` trong đoạn code giống một tờ "phiếu gọi món" cho pipeline: bạn tick vào ngôn ngữ nào, cần quality gate nào, có quét bảo mật không, build và deploy ra sao... rồi gọi `to_github_actions()` là máy tự in ra file workflow YAML. Mỗi thuộc tính là một cái công tắc bật/tắt — khai đúng thì khỏi phải viết tay từng dòng YAML.
@@ -274,6 +308,10 @@ Class `CIPipelineConfig` trong đoạn code giống một tờ "phiếu gọi m�
 > 📄 **Code ví dụ:** [`examples/03-2-3-pipeline-configuration.py`](examples/03-2-3-pipeline-configuration.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** `CIPipelineConfig` là tờ "phiếu gọi món": bạn bật/tắt các công tắc (ngôn ngữ, quality gate = cửa kiểm chất lượng, quét bảo mật), và `to_github_actions()` tự sinh file YAML để khỏi viết tay.
+
+> **Tóm gọn 1 câu:** Phần này giải thích CI/CD — đường ống tự động kiểm tra và deploy code mỗi lần code thay đổi — kèm 2 công cụ: file workflow YAML có sẵn và class sinh YAML từ cấu hình.
 
 ---
 
@@ -297,6 +335,12 @@ Class `CodeGenerator` dưới đây như một chiếc máy đúc "nhà tiền c
 > 📄 **Code ví dụ:** [`examples/04-3-1-automated-code-generation.py`](examples/04-3-1-automated-code-generation.py)
 
 </details>
+
+Giải thích các từ trong đoạn trên: *scaffold* = bộ khung project dựng sẵn; *boilerplate* = code mẫu lặp đi lặp lại mà ai cũng phải viết; *CRUD* = 4 thao tác cơ bản với dữ liệu: Create, Read, Update, Delete; *SQLAlchemy/Pydantic/FastAPI/pytest* = các thư viện Python phổ biến lần lượt cho database, kiểm tra dữ liệu, viết API, và viết test.
+
+> **Tóm gọn 1 câu:** `CodeGenerator` là "máy đúc nhà tiền chế": gọi `generate_crud(model_name, fields)` một cái là có đủ bộ code CRUD — nhưng sản phẩm vẫn phải qua khâu con người duyệt trước khi dùng.
+
+> **Tóm gọn 1 câu:** Phần này nói về việc để AI sinh sẵn code nhàm chán (khung project, CRUD, API) để developer chỉ còn tập trung vào phần logic khó — kèm điều kiện bắt buộc là phải có người duyệt.
 
 ---
 
@@ -343,6 +387,10 @@ Hình trên là **kim tự tháp test** quen thuộc: đáy to là unit test —
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích sơ đồ: *coverage* = độ phủ — tỷ lệ code được test chạy qua (80% coverage nghĩa là 80% số dòng code được test chạm tới); *smoke test* = test nhanh các luồng cơ bản nhất ("bật máy xem có nổ không") sau khi deploy.
+
+> **Tóm gọn 1 câu:** Kim tự tháp test: viết nhiều unit test (rẻ, nhanh), vừa vừa integration test (ghép các bộ phận lại), ít E2E test (đắt, chậm) — và muốn merge PR phải đạt cửa >80% coverage.
+
 ### 4.2 Automated Test Runner
 
 `AutomatedTestRunner` giống một thầy giám thị cần mẫn: bạn đăng ký các `TestCase` vào (có chia loại unit/integration/E2E/performance/security, gắn `tags` và `timeout` đàng hoàng), gọi `run()` là thầy tự lọc theo category/tag, cho chạy lần lượt rồi gom điểm trả về báo cáo có `gate_passed`. Muốn thử, bạn cứ tạo vài test giả, `register()` vào rồi in kết quả `run()` ra — nhìn bảng điểm là biết ngay môn nào đậu, môn nào rớt.
@@ -353,6 +401,10 @@ Hình trên là **kim tự tháp test** quen thuộc: đáy to là unit test —
 > 📄 **Code ví dụ:** [`examples/05-4-2-automated-test-runner.py`](examples/05-4-2-automated-test-runner.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** `AutomatedTestRunner` là "thầy giám thị" tự lọc test theo loại và tag, chạy lần lượt rồi trả về báo cáo kèm `gate_passed` — đậu hay rớt qua cửa kiểm.
+
+> **Tóm gọn 1 câu:** Phần này nói về việc để AI tự viết và chạy test: bài học là phân bổ đúng theo kim tự tháp (nhiều unit, ít E2E) và có máy chạy test thay con người ngay trong CI.
 
 ---
 
@@ -403,9 +455,15 @@ Kiến trúc này bạn đọc xuôi theo mũi tên là ra ba tầng: **Data Col
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích sơ đồ: *Prometheus* = công cụ thu số liệu (CPU, số request); *ELK/Loki* = công cụ gom log — nhật ký hệ thống; *Jaeger* = công cụ trace — dõi một request đi qua các dịch vụ nào; *anomaly* = bất thường, lệch hẳn mức bình thường; *PagerDuty* = dịch vụ báo động gọi người trực.
+
+> **Tóm gọn 1 câu:** Hệ giám sát có 3 tầng — thu dữ liệu, xử lý và phát hiện bất thường, rồi hú còi báo động — giống xe hơi: gắn cảm biến trước, có bảng đồng hồ để nhìn, chuông kêu khi có sự cố.
+
 ### 5.2 Monitoring System
 
 `MonitoringSystem` là một hệ giám sát gọn nhẹ, đọc code là hiểu ngay: `record_metric()` để ghi từng điểm số, `add_alert_rule()` để đặt luật (kiểu "CPU > 90% thì báo"), `on_alert()` để gắn người xử lý khi luật bị chạm, `get_metric_stats()` để tính min, max, mean, p95, còn `generate_dashboard()` thì vẽ bảng tổng hợp dạng chữ. Bạn cứ thử record vài metric, thêm một rule "gt 80" rồi chạy — thấy alert tự bắn là hiểu cơ chế. Nói vui thì đây là cuốn sổ khám sức khỏe của hệ thống, mở ra là biết đang khỏe hay sắp phải đi cấp cứu.
+
+Giải thích: *metric* = điểm đo (ví dụ CPU 72%); *p95* = mức mà 95% các giá trị nằm dưới nó (p95 latency 200ms nghĩa là 95% request nhanh hơn 200ms) — nói lên trải nghiệm của người dùng chậm nhất.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -413,6 +471,10 @@ Kiến trúc này bạn đọc xuôi theo mũi tên là ra ba tầng: **Data Col
 > 📄 **Code ví dụ:** [`examples/06-5-2-monitoring-system.py`](examples/06-5-2-monitoring-system.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** `MonitoringSystem` là "cuốn sổ khám sức khỏe" của hệ thống: ghi số liệu, đặt luật báo động, tính thống kê (min/max/p95) — giúp bạn phát hiện "vừa mới hỏng" trước khi thành "sập tiếng rồi".
+
+> **Tóm gọn 1 câu:** Phần này nói về giám sát và báo động: theo dõi liên tục metrics, logs, errors của ứng dụng và tự hú còi khi có bất thường, để cứu được sự cố ngay khi nó vừa chớm.
 
 ---
 
@@ -477,6 +539,10 @@ Năm pattern dưới đây là "bộ kỹ năng tự cứu" của hệ thống, 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích các từ: *health check* = cuộc "gọi thăm" định kỳ xem service còn sống không; *rollback* = hoàn tác về phiên bản trước đó (v1.9) khi bản mới (v2.0) hỏng; *instance* = một bản chạy của service (quán đông thì kê thêm bàn = thêm instance); *exponential backoff* = thử lại với khoảng chờ gấp đôi mỗi lần (1s → 2s → 4s) để đỡ "đấm" service đang yếu; *circuit breaker* = "cầu dao điện": bên kia sập thì ngắt hẳn, thỉnh thoảng gọi thử — gọi là trạng thái `HALF_OPEN` — để biết khi nào khỏe lại.
+
+> **Tóm gọn 1 câu:** Năm pattern tự cứu của hệ thống — tự restart, tự rollback, tự thêm/bớt máy, tự thử lại với khoảng chờ tăng dần, và ngắt mạch khi bên kia sập — mỗi pattern đều ghi rõ khi nào kích hoạt và làm gì.
+
 ### 6.2 Self-Healing Implementation
 
 `SelfHealingSystem` là hiện thân bằng code của mấy pattern trên: bạn đăng ký các `health_checks` để khám sức khỏe định kỳ, hệ thống đếm số lần fail liên tiếp — đủ ngưỡng (mặc định 5 lần) là mở `circuit breaker` và gọi `recovery_handler` đến "cấp cứu". Hàm `allow_request()` thì như người gác cổng, nhìn trạng thái circuit (`CLOSED`/`OPEN`/`HALF_OPEN`) để quyết cho request vào hay không. Muốn thử, bạn đăng ký một check hay vấp lỗi, để nó fail tới ngưỡng rồi ngồi xem hệ thống tự gọi xe cứu thương và hồi phục.
@@ -487,6 +553,10 @@ Năm pattern dưới đây là "bộ kỹ năng tự cứu" của hệ thống, 
 > 📄 **Code ví dụ:** [`examples/07-6-2-self-healing-implementation.py`](examples/07-6-2-self-healing-implementation.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** `SelfHealingSystem` hiện thân bằng code của 5 pattern trên: khám sức khỏe định kỳ, fail đủ ngưỡng (5 lần) thì mở cầu dao và gọi `recovery_handler` "cấp cứu"; `allow_request()` là người gác cổng quyết cho request vào hay không.
+
+> **Tóm gọn 1 câu:** Phần này nói về hệ thống tự chữa lành: tự phát hiện lỗi, tự chẩn đoán và tự khôi phục (restart, rollback, sửa config) — rút thời gian chết từ hàng giờ xuống hàng giây.
 
 ---
 
@@ -511,6 +581,10 @@ Năm pattern dưới đây là "bộ kỹ năng tự cứu" của hệ thống, 
 
 </details>
 
+> **Tóm gọn 1 câu:** `TaskScheduler` là "đồng hồ hẹn giờ trong bếp": đặt lịch bằng `schedule()` (theo interval/daily/weekly), gọi `run_pending()` để đi một vòng xem món nào đến giờ thì chạy — khỏi ai ngồi canh.
+
+> **Tóm gọn 1 câu:** Phần này nói về các việc chạy đúng giờ định sẵn (dọn log, backup database, tạo báo cáo) theo lịch cron/interval — cron = trình chạy theo lịch hẹn giờ; interval = theo chu kỳ đều đặn.
+
 ---
 
 ## 8. Workflow Templates
@@ -533,6 +607,10 @@ Từ điển `WORKFLOW_TEMPLATES` dưới đây dọn sẵn 4 "mâm" quy trình 
 > 📄 **Code ví dụ:** [`examples/09-8-1-common-automation-workflows.py`](examples/09-8-1-common-automation-workflows.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** `WORKFLOW_TEMPLATES` là 4 "mâm" quy trình soạn sẵn (feature, hotfix — vá gấp, dọn dẹp đêm, soi chất lượng PR); mỗi mẫu chỉ là danh sách steps kèm `command` và cờ `gate` — bước gắn `gate: True` mà tạch là cả mâm dừng.
+
+> **Tóm gọn 1 câu:** Phần này đưa sẵn 4 mẫu quy trình tự động dùng lại được cho dự án mới — như bộ mẫu hợp đồng soạn sẵn, chỉ điền vài ô là xong, không phải thiết kế lại từ đầu.
 
 ---
 
@@ -588,6 +666,10 @@ Danh sách 8 mục dưới đây toàn là "bệnh kinh niên" của automation:
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+Giải thích các từ trong sơ đồ: *version control pipeline configs* = đưa file cấu hình pipeline vào git như code thông thường; *secret managers (Vault, GitHub Secrets)* = két sắt chứa mật khẩu/key, code chỉ lấy ra lúc chạy; *blue-green deploy* = giữ 2 môi trường song song để đổi nhanh khi hỏng; *flaky tests* = test lúc đậu lúc rớt không rõ lý do; *quarantine* = cách ly test đó ra khỏi luồng chính để sửa riêng.
+
+> **Tóm gọn 1 câu:** Tám "bệnh kinh niên" của automation — pipeline mỏng manh, lỗi âm thầm, secret nhét vào code, không có đường lui, pipeline lê thê, test flaky, không giám sát, còn sót bước làm tay — mỗi bệnh kèm một toa thuốc.
 
 ---
 
@@ -646,6 +728,10 @@ Checklist này là tờ "khám tổng quát" trước khi cho automation ra ch�
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+Giải thích các mục khó trong checklist: *registry* = kho lưu trữ image (gói đóng gói ứng dụng) để deploy; *throughput* = lượng request xử lý được mỗi giây; *log aggregation* = gom log từ nhiều máy về một nơi; *distributed tracing* = dõi một request đi qua nhiều dịch vụ; *liveness/readiness* = hai kiểu health check — còn sống không (liveness) và sẵn sàng nhận request chưa (readiness); *rate limiting* = chặn bớt request khi quá đông; *graceful degradation* = "suy giảm êm": service không chết hẳn mà chỉ tắt tính năng phụ; *SAST/DAST* = quét bảo mật mã nguồn (SAST) và quét lỗ hổng trên ứng dụng đang chạy (DAST).
+
+> **Tóm gọn 1 câu:** Đây là phiếu "khám tổng quát" 5 nhóm (CI/CD, monitoring, self-healing, lịch định kỳ, bảo mật) trước khi cho automation ra production — ô nào chưa tick thì rủi ro vẫn nằm đó.
 
 ---
 
@@ -706,6 +792,10 @@ Checklist này là tờ "khám tổng quát" trước khi cho automation ra ch�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích một vài từ: *IaC (Infrastructure as Code)* = định nghĩa hạ tầng (server, mạng) bằng code và đưa vào git, thay vì bấm tay trên giao diện web; *chaos testing* = cố tình phá hệ thống để xem cơ chế tự phục hồi có hoạt động không; *runbook* = sổ tay hướng dẫn từng bước xử lý khi cảnh báo vang lên; *severity* = mức độ nghiêm trọng của cảnh báo.
+
+> **Tóm gọn 1 câu:** Mười nguyên tắc vàng: việc lặp thì automate, hỏng thì hỏng sớm (fail fast), luôn có đường lui, cái gì cũng ngó được, pipeline nhanh, cấu hình vào git, test chính automation, báo động ít mà chất, viết runbook, và cải tiến liên tục.
+
 ---
 
 ---
@@ -753,6 +843,10 @@ Hình trên kể chuyện **SWE-agent** — một AI agent nhận GitHub issue r
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích: *GitHub issue* = phiếu ghi lỗi/tính năng trên GitHub; *patch file* = tệp ghi lại các thay đổi code (bản vá); *LSP (Language Server Protocol)* = giao diện chuẩn giúp agent "hiểu" cấu trúc code như một IDE — nhờ vậy tỉ lệ giải được bài tăng từ 12.47% lên 24.07%; *SWE-bench* = bộ đề thi chuẩn cho AI sửa lỗi thật trên GitHub.
+
+> **Tóm gọn 1 câu:** SWE-agent cho thấy agent cần biết *điều hướng* codebase (tự Search rồi tự Edit) chứ không chỉ sinh code — chạy theo vòng lặp Quan sát → Suy nghĩ → Hành động đến khi xong.
+
 ### 11.2 Anthropic's Claude Code Automation
 
 Bức hình trên tóm triết lý automation của Claude Code, nghe ngược đời mà lại hiệu quả: **đừng gồng xây khung sườn phức tạp, cứ tin model** — để model tự quyết đọc file nào, sửa file nào, tự đẻ sub-agent khi cần, bí quá mới nâng cấp công cụ (graceful degradation). Kết quả là một model duy nhất mà đi được hết 200K dòng source code. Bài học ở đây cũng mộc mạc: nhiều khi prompt tốt cộng vòng lặp ngắn lại thắng cả hệ thống phức tạp.
@@ -785,6 +879,10 @@ Bức hình trên tóm triết lý automation của Claude Code, nghe ngược �
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+Giải thích: *MCP (Model Context Protocol)* = giao diện chuẩn nối agent với công cụ bên ngoài (database, trình duyệt...); *sub-agent* = agent nhỏ được agent chính "thuê" làm việc phụ; *prompt engineering* = nghệ thuật viết chỉ dẫn cho model; *graceful degradation* = "suy giảm êm": bí quá mới nâng cấp công cụ, không pháo hoa ngay từ đầu.
+
+> **Tóm gọn 1 câu:** Bài học từ Claude Code: model là 99% giải pháp — đừng xây khung sườn phức tạp, cứ để model tự quyết đọc/sửa gì, bí quá mới nâng cấp công cụ; một model đi được hết 200K dòng code.
 
 ### 11.3 Cursor IDE: AI-Native Development
 
@@ -819,6 +917,10 @@ Bức hình mổ xẻ 3 kiểu automation của Cursor cho dễ chọn: **Tab co
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+Giải thích: *diff preview* = xem trước bản "so sánh thay đổi" trước khi nhận; *one-shot generation* = sinh ra là dùng ngay, ít phải sửa đi sửa lại; *local indexing* = lập chỉ mục code ngay trên máy bạn để tìm nhanh, không chờ mạng; *hybrid approach* = kết hợp: chỉ mục ở máy + AI ở máy chủ.
+
+> **Tóm gọn 1 câu:** Cursor chia 3 kiểu automation: Tab (gợi ý nhanh dưới 100ms), Cmd+K (khoanh vùng code, ra lệnh bằng tiếng người, xem trước diff), Cmd+L (hỏi đáp với cả repo) — và nó đoán "lần sửa tiếp theo" chứ không chỉ từ tiếp theo.
 
 ### 11.4 GitHub Copilot: Enterprise Automation
 
@@ -857,6 +959,10 @@ Hình trên xếp Copilot thành 4 nấc theo độ "tự lo" tăng dần: gợi
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích: *latency* = độ trễ, thời gian phản hồi; *@workspace* = cách gọi để chat được nhìn toàn bộ codebase; *Autofix* = tự vá lỗi bảo mật phát hiện ra; *human-in-the-loop* = con người vẫn duyệt bước cuối trước khi merge.
+
+> **Tóm gọn 1 câu:** Copilot xếp 4 nấc tự động hóa tăng dần — gợi ý dòng, chat trong IDE, tự lo PR, và agent tự sửa nhiều file (Workspaces) — với con người vẫn duyệt cuối; 77% công ty Fortune 100 đã dùng.
+
 ### 11.5 Vercel v0: Full-Stack Automation
 
 Sơ đồ này kể mô hình "nói một câu ra cả app" của Vercel v0: bạn đưa mô tả (text, ảnh, Figma) → máy sinh code (React, SQL, API) → bạn xem trước live qua URL → ưng hay chưa thì chat để sửa tiếp. Điểm ăn tiền là vòng xem-trước-sửa cực nhanh, dựng xong khung app chưa tới 5 phút. Nói theo kiểu quán ăn: bạn gọi món theo thực đơn, được ngó món trước khi ăn, muốn đổi vị thì nói một câu là bếp làm lại ngay.
@@ -887,6 +993,12 @@ Sơ đồ này kể mô hình "nói một câu ra cả app" của Vercel v0: b�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích: *full-stack app* = ứng dụng trọn gói cả giao diện lẫn backend; *Figma* = công cụ thiết kế giao diện (nó có thể dùng ảnh thiết kế làm đầu vào); *streaming preview* = xem trước hiện dần ra trong lúc máy đang sinh code, không phải chờ xong.
+
+> **Tóm gọn 1 câu:** Vercel v0 chứng minh mô hình "nói một câu ra cả app": Prompt → Generate → Preview → Iterate (chat để sửa tiếp), dựng khung app chưa tới 5 phút — như gọi món và được ngó món trước khi ăn.
+
+> **Tóm gọn 1 câu:** Phần này là 5 case study thực tế — SWE-agent, Claude Code, Cursor, Copilot, v0 — cho thấy automation AI đã chạy thật trong sản xuất và rút được bài học từ người đi trước.
+
 ---
 
 ## 12. TypeScript Interfaces cho Automation
@@ -909,6 +1021,12 @@ Sơ đồ này kể mô hình "nói một câu ra cả app" của Vercel v0: b�
 > 📄 **Code ví dụ:** [`examples/10-12-1-core-automation-types.ts`](examples/10-12-1-core-automation-types.ts)
 
 </details>
+
+Giải thích: *interface TypeScript* = bản "hợp đồng dữ liệu" ghi rõ mỗi trường có kiểu gì (chuỗi, số...) — sai kiểu là compiler (trình biên dịch, chương trình dịch code ra máy chạy được) la ngay; *kiểu tĩnh* = kiểm tra kiểu lúc viết code, không phải lúc chạy.
+
+> **Tóm gọn 1 câu:** Bộ interface TypeScript vẽ lại cả hệ automation thành dữ liệu có khuôn — từ `PipelineConfig` tới `GuardrailConfig` — để compiler bắt lỗi cấu hình ngay lúc viết, không phải lúc deploy.
+
+> **Tóm gọn 1 câu:** Phần này nói về việc mô tả hệ automation bằng kiểu dữ liệu có kiểm tra — như bản vẽ kỹ thuật trước khi đổ bê tông: sai lệch bị bắt trên bản vẽ, không phải khi công trình đã đứng.
 
 ---
 
@@ -958,6 +1076,10 @@ Hình trên dịch **5 nguyên tắc SOLID** ra tiếng automation cho dễ soi:
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+Giải thích: *abstraction* = lớp trừu tượng — "hợp đồng chung" (interface `ILogger`) thay vì bám cứng một bản hiện thực cụ thể (`ConsoleLogger`), để sau này đổi bản khác không phải sửa code đang dùng; *hardcoded* = viết cứng vào code, muốn đổi phải sửa code.
+
+> **Tóm gọn 1 câu:** SOLID dịch sang tiếng automation: mỗi step một việc (S), thêm step bằng plugin (O), mọi step cùng một interface (L), interface nhỏ gọn (I), chỉ bám vào abstraction (D) — thấy step nào vừa lint vừa test vừa deploy là biết cần tách.
 
 ### 13.2 Automation Design Principles
 
@@ -1010,6 +1132,12 @@ Danh sách "10 điều răn" này là những luật nằm lòng khi thiết k�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích: *fail fast* = hỏng sớm — chạy check rẻ và nhanh trước (lint), check đắt sau (build), để biết lỗi trong vài giây thay vì vài chục phút; *runbook* = sổ tay hướng dẫn xử lý từng bước khi cảnh báo vang lên; *IaC (Infrastructure as Code)* = định nghĩa hạ tầng (server, mạng) bằng code và đưa vào git.
+
+> **Tóm gọn 1 câu:** "10 điều răn" của thiết kế automation — automate việc lặp, fail fast, luôn có đường lui, ngó được mọi thứ, pipeline nhanh, cấu hình vào git, test chính automation, báo động ít mà chất, viết runbook, cải tiến liên tục.
+
+> **Tóm gọn 1 câu:** Phần này là luật giao thông cho hệ automation: đơn giản, tái sử dụng, giám sát được, an toàn — không thú vị nhưng thiếu nó thì hệ càng lớn càng nhanh sập.
+
 ---
 
 ## 14. Testing Automation Harness
@@ -1032,6 +1160,12 @@ Danh sách "10 điều răn" này là những luật nằm lòng khi thiết k�
 > 📄 **Code ví dụ:** [`examples/11-14-1-testing-automation-systems.py`](examples/11-14-1-testing-automation-systems.py)
 
 </details>
+
+Giải thích: *setup/teardown* = việc chuẩn bị trước và dọn dẹp sau mỗi test; *CHAOS test* = cố tình phá để xem hệ tự phục hồi được không; *INTEGRATION test* = kiểm tra các bộ phận ghép với nhau có chạy được không.
+
+> **Tóm gọn 1 câu:** `AutomationTestHarness` là "phòng thử va đập" cho chính automation: đăng ký test theo từng kiểu (config, step, rollback, circuit breaker, chaos...), gọi `run_all()` và nhận báo cáo kèm `gate_passed`.
+
+> **Tóm gọn 1 câu:** Phần này nói về kiểm chứng automation trước khi chạy thật: "có vẻ chạy" là chưa đủ — phải chứng minh automation chịu được lỗi, như phi công tập trong phòng mô phỏng trước khi bay thật.
 
 ---
 
@@ -1098,6 +1232,10 @@ Phần này mổ sâu **6 bệnh nặng** hay gặp: test lúc đậu lúc rớt
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích: *mock/stub* = "diễn viên đóng thế" thay dịch vụ ngoài (không gọi API thật khi test); *deterministic test data* = dữ liệu test cố định, mỗi lần chạy ra đúng một kết quả; *retry with jitter* = thử lại nhưng cộng thêm độ trễ ngẫu nhiên để các máy không dồn cữ thử cùng lúc; *feature flags* = công tắc bật/tắt tính năng không cần deploy lại; *alert fatigue* = "mệt mỏi vì báo động": cảnh báo quá nhiều khiến ai cũng bỏ qua — như đèn báo lỗi đỏ sáng mãi thì chẳng ai nhìn nữa.
+
+> **Tóm gọn 1 câu:** Sáu bệnh nặng được mổ xẻ theo cấu trúc Problem → Solution — flaky tests, pipeline khổng lồ, lỗi âm thầm, không đường rollback, sót bước tay, và cảnh báo nhiều tới mức chẳng ai đọc — thấy triệu chứng nào thì lấy đúng toa đó.
+
 ### 15.2 DO vs DON'T Summary
 
 Bảng hai cột này là tờ "nên — không nên" gọn nhất của cả module — 15 cặp đối nhau: việc lặp thì automate ↔ việc một lần thì thôi, pipeline phải có người ngó ↔ đừng kiểu "cài xong bỏ đấy"... Bạn in ra rồi dò từng dòng với hệ thống nhà mình; dòng nào đang rơi vào cột ❌ thì đó chính là việc cần sửa tiếp theo. Nhìn nhanh như tờ nội quy dán trong bếp: liếc qua là biết nên làm gì, nên tránh gì.
@@ -1125,6 +1263,12 @@ Bảng hai cột này là tờ "nên — không nên" gọn nhất của cả mo
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+Giải thích: *canary deployment* = thả bản mới cho một nhóm nhỏ người dùng trước; *big bang deployment* = ngược lại — xổ bản mới cho 100% người dùng một lúc, rủi ro cao; *circuit breaker* = cầu dao ngắt mạch để lỗi bên này không lan sang bên kia; *cascade* = lỗi dây chuyền, hỏng từng cái nối tiếp nhau.
+
+> **Tóm gọn 1 câu:** Bảng "nên — không nên" 15 cặp đối nhau, như tờ nội quy dán trong bếp: dòng nào hệ thống bạn đang rơi vào cột ❌ thì đó chính là việc cần sửa tiếp theo.
+
+> **Tóm gọn 1 câu:** Phần này phân tích sâu các lỗi automation nâng cao kèm cách xử lý từng bước — lỗi nhỏ nếu không nhận diện sẽ leo thang thành sự cố hệ thống đắt đỏ.
 
 ---
 
@@ -1185,15 +1329,25 @@ Hình này điểm qua **6 xu hướng automation do AI dẫn dắt**: AI tự v
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+Giải thích: *root cause* = nguyên nhân gốc rễ (cái thật sự gây lỗi, không phải triệu chứng); *canary percentage* = % người dùng được trao bản mới để thử; *IDP (Internal Developer Platform)* = nền tảng nội bộ cho dev tự lấy hạ tầng như tự phục vụ ở quán buffet; *golden path* = "con đường vàng" — quy trình chuẩn khuyên dùng, đã kiểm chứng; *edge* = chạy xử lý gần người dùng (không qua máy chủ tập trung) để nhanh hơn.
+
+> **Tóm gọn 1 câu:** Sáu xu hướng AI dẫn dắt — CI/CD do AI tự viết, tự debug, deploy tiên đoán rủi ro, ra lệnh bằng tiếng người, platform engineering, và automation tại edge — coi như bản tin dự báo: không trúng 100% nhưng đủ để mang áo mưa đúng hôm cần.
+
+> **Tóm gọn 1 câu:** Phần này là bản tin dự báo automation 2024-2026 — agent tự chủ, AI sinh CI/CD, deploy tiên đoán — để bạn chọn hướng xây dựng mà không bị "lỗi thời" trong 2 năm.
+
 ---
 
 ## 17. An Toàn Deploy, Secret & Guard Cho Vòng Lặp Tự Động
 
 Automation mà thiếu an toàn thì lỗi cũng lan đi với tốc độ máy. Section này vá đúng chỗ hổng đó: cổng canary kèm auto-rollback gắn với metric, secret cất trong vault, guard cứng cho vòng lặp tự động, và task định kỳ phải idempotent. Bạn hình dung như chế độ lái tự động của máy bay — nó tự bay được, nhưng vẫn bắt buộc có giới hạn G, trần nhiên liệu và cơ chế tự ngắt khi động cơ có dấu hiệu lạ.
 
+Giải thích vài từ khoá: *metric* = điểm đo hệ thống (tỉ lệ lỗi, độ trễ); *vault* = "két sắt" chứa secret — mật khẩu, key truy cập; *guard* = hàng rào an toàn chặn vòng lặp chạy quá tay; *idempotent* = chạy lại nhiều lần vẫn ra cùng một kết quả như chạy một lần (như bấm nút thang máy 5 lần vẫn chỉ có một thang đến).
+
 > **Ghi chú dedup:** §9 "Common Anti-Patterns" và §15 "Anti-Patterns in Detail" trùng lặp ~70%. Quy ước: giữ §9 làm bảng tóm tắt 1 trang; §15 làm playbook chi tiết. Nội dung dưới đây mang tính chuẩn (normative) và liên kết chéo cả hai thay vì diễn đạt lại.
 
 ### 17.1 An Toàn Deploy — Cổng Canary + Auto-Rollback Gắn Metric
+
+Cách đọc sơ đồ dưới đây: bản mới được thả dần theo 4 nấc — 5% người dùng (giữ 10 phút), 25% (30 phút), 50% (30 phút), rồi mới tới 100%. Ở mỗi nấc phải qua đủ 4 cửa kiểm (promote gate) mới được nấc tiếp; chỉ cần 1 trong các trigger rollback vang lên là dừng ngay và lùi về bản cũ.
 
 ```
 STAGES: 5% (10m) → 25% (30m) → 50% (30m) → 100%
@@ -1207,9 +1361,17 @@ MECHANISM: blue-green or Argo Rollouts; DB migrations always
  backward-compatible (expand → migrate → contract)
 ```
 
+Giải thích các ký hiệu trong sơ đồ: *error_rate_delta < +0.5pp* = tỉ lệ lỗi chỉ được tăng dưới 0.5 điểm phần trăm so với bản cũ (baseline = mốc so sánh); *p95/p99 latency* = thời gian phản hồi mà 95%/99% request nằm dưới; *SLO* = cam kết chất lượng (ví dụ "99% request dưới 500ms"); *Sev0/1* = sự cố mức nghiêm trọng nhất; *expand → migrate → contract* = 3 bước đổi cấu trúc database an toàn: thêm ván mới (expand), dời dữ liệu (migrate), rồi mới tháo ván cũ (contract) — không bao giờ tháo trước khi dời.
+
 Quy tắc: rollback tự động và được diễn tập hằng tháng (game day); mỗi deploy phát ra `deploy_id` nối vào metric/log để trigger đối chiếu được.
 
+Giải thích: *game day* = buổi diễn tập sự cố định kỳ như diễn tập chữa cháy; *deploy_id* = mã số gắn cho mỗi lần deploy để biết log/điểm đo nào thuộc lần nào.
+
+> **Tóm gọn 1 câu:** Deploy an toàn = thả dần theo nấc canary (5% → 25% → 50% → 100%), mỗi nấc phải qua cổng kiểm chỉ số, lệch chỉ số là hệ thống tự lùi về bản cũ — và phải được diễn tập hằng tháng, không chỉ viết ra giấy.
+
 ### 17.2 Quản Lý Secret & Cấu Hình
+
+Cách đọc bảng này: cột trái là "mối quan tâm" — khâu nào của vòng đời secret cần quản; cột phải là tiêu chuẩn phải đạt ở khâu đó.
 
 | Mối Quan Tâm | Tiêu Chuẩn |
 |---|---|
@@ -1219,15 +1381,25 @@ Quy tắc: rollback tự động và được diễn tập hằng tháng (game d
 | Xoay vòng | Tự động 30–90 ngày + ngay khi có sự cố; có phiên bản (`vN`) với cửa sổ hỗ trợ kép |
 | Kiểm tra | Mọi lần đọc đều log (`who/what/when`); che trong log CI bằng masking filter |
 
+Giải thích các từ trong bảng: *cred (credential)* = thông tin đăng nhập (user/password, token); *key prod dài hạn* = chìa khóa của môi trường sản xuất mà agent cầm suốt nhiều ngày — cực nguy hiểm nếu bị lộ; *`${SECRET:arn…}`* = chỗ trống trong cấu hình mà máy deploy (deployer) tự điền giá trị secret vào lúc chạy — AI chỉ thấy chỗ trống, không thấy giá trị; *xoay vòng (rotation)* = thay secret mới định kỳ như đổi khóa cửa; *cửa sổ hỗ trợ kép* = giai đoạn bản secret cũ vẫn còn được chấp nhận song song bản mới, để không đứt dịch vụ khi đổi; *masking filter* = bộ lọc che mật khẩu thành `***` trước khi ghi ra log CI.
+
+> **Tóm gọn 1 câu:** Secret phải nằm trong vault (két sắt) chứ không trong code, theo từng môi trường, agent chỉ cầm cred ngắn hạn, tự đổi định kỳ, và mọi lần đọc đều được ghi log — như quản lý chìa khóa kho báu.
+
 ### 17.3 Guard Vòng Lặp Tự Động — Giới Hạn Lặp / Chi Phí / Latency SLO
 
 Mỗi vòng lặp tự phục hồi / agent mang `LoopBudget { maxIterations=10, maxCostUSD=5, maxLatencyMs=300_000, maxToolCalls=50 }`. Vòng lặp thoát khi gặp điều đầu tiên: thành công, cạn budget, hoặc confidence đi ngang (3 vòng không cải thiện). Khi cạn → đóng băng + mở incident kèm full trace, không bao giờ retry lặng lẽ. Hiển thị bộ đếm trực tiếp (`iteration/cost/latency`) trong log và tóm tắt CI.
+
+Giải thích: `LoopBudget` = "hộp chi tiêu" của vòng lặp — tối đa 10 vòng, 5 USD, 5 phút, 50 lần gọi công cụ; *confidence đi ngang* = model vẫn chần chừ, không tự tin hơn sau 3 vòng; *incident* = hồ sơ sự cố chính thức; *full trace* = toàn bộ nhật ký hành trình để biết nó đã đụng vào gì.
+
+> **Tóm gọn 1 câu:** Mọi vòng lặp tự động phải mang theo "hộp chi tiêu" `LoopBudget` (số vòng, tiền, thời gian, số lần gọi công cụ) — cạn hộp là đóng băng và mở incident, tuyệt đối không retry lặng lẽ.
 
 ### 17.4 Idempotency Task Định Kỳ + Chính Sách Chồng Lấn
 
 - **Idempotency key:** `task_name + window_start` (ví dụ `nightly-e2e#2026-09-28`); handler kiểm tra dedup store trước khi hành động; tác dụng phụ dùng cùng key.
 - **Chồng lấn (Overlap):** `concurrencyPolicy: Forbid` (bỏ qua nếu lần chạy trước còn đang chạy) cho deploy/migration; `Replace` chỉ cho sync đọc rẻ tiền. Đặt `activeDeadlineSeconds` + `startingDeadlineSeconds` để cron kẹt không dồn đống.
 - **Bắt kịp (Catch-up):** `failedJobsHistoryLimit=3`; window bị lỡ chỉ backfill nếu được đánh dấu rõ `backfill: true`.
+
+Giải thích: *idempotency key* = "chữ ký" nhận diện lần chạy (`tên task + khung giờ`) — chạy lại 5 lần vẫn chỉ tác động đúng một lần, như hóa đơn có số luôn chỉ thanh toán một lần; *dedup store* = bảng ghi các key đã xử lý, handler dò trước khi làm để không làm trùng; *concurrencyPolicy: Forbid* = "chạy còn đông thì không vào" — lần mới bị bỏ qua nếu lần cũ chưa xong; *Replace* = hủy bản cũ thay bằng bản mới (chỉ an toàn cho việc đọc nhẹ, vô hại); *backfill* = chạy bù cho khung giờ đã lỡ (đánh dấu `backfill: true` để phân biệt với chạy chính thức); *window* = khung giờ định kỳ (ví dụ "đêm 28/09").
 
 <details>
 <summary>YAML + Python — Canary with Metric Rollback (Click to expand/collapse)</summary>
@@ -1238,6 +1410,8 @@ Mỗi vòng lặp tự phục hồi / agent mang `LoopBudget { maxIterations=10,
 
 </details>
 
+> **Tóm gọn 1 câu:** Task định kỳ phải idempotent — chạy lại không gây tác dụng kép — nhờ key nhận diện, chính sách chồng lấn `Forbid` cho việc nguy hiểm, và chỉ chạy bù (backfill) khi được đánh dấu rõ ràng.
+
 ### 17.5 Checklist
 
 - [ ] Các stage canary + cổng promote được định nghĩa bằng code
@@ -1246,6 +1420,12 @@ Mỗi vòng lặp tự phục hồi / agent mang `LoopBudget { maxIterations=10,
 - [ ] Secret trong vault, theo phạm vi môi trường, tự xoay vòng, che trong log
 - [ ] Budget vòng lặp (lặp/chi phí/latency/số tool-call) được thực thi + khi cạn sẽ mở incident
 - [ ] Idempotency key cho cron + chồng lấn `Forbid` + trần deadline
+
+Giải thích: *định nghĩa bằng code* = cấu hình canary nằm trong repo (git) chứ không bấm tay trên giao diện; *tool-call* = một lần agent dùng công cụ (đọc file, chạy lệnh); *trần deadline* = giới hạn thời gian tối đa cho mỗi lần chạy.
+
+> **Tóm gọn 1 câu:** Checklist 6 ô này là điều kiện để vòng lặp tự động được phép chạy thật: canary bằng code, rollback gắn metric, secret trong vault, hộp chi tiết `LoopBudget`, và task định kỳ idempotent.
+
+> **Tóm gọn 1 câu:** Phần này là "chế độ lái tự động an toàn": deploy thả dần có tự rollback, secret nằm trong két, vòng lặp có giới hạn chi tiêu, và việc định kỳ chạy lại không gây tác dụng kép.
 
 ---
 
@@ -1263,3 +1443,5 @@ Mỗi vòng lặp tự phục hồi / agent mang `LoopBudget { maxIterations=10,
 - [GitHub Copilot](https://docs.github.com/en/copilot)
 - [Vercel v0](https://v0.dev)
 - [Platform Engineering](https://internaldeveloperplatform.org/)
+
+> **Tóm gọn 1 câu:** Danh sách trên là tài liệu gốc của từng công cụ nhắc trong bài (GitHub Actions, Prometheus, SWE-agent, Copilot...) — vào đây đọc tiếp khi muốn đi sâu hơn phần nào.

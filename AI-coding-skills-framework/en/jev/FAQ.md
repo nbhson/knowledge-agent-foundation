@@ -8,17 +8,17 @@ If a question is unclear, read the section in `README.md` (named in brackets).
 
 **What you see**
 
-Your support pipeline gets 4,000 tickets an hour. Each ticket needs three tiny judgments: which team (`billing / infra / bug / other`), is a refund requested (`yes / no`), and severity (`1..5`). Today you send each ticket to a frontier large language model (an expensive, text-generating AI model) and get back a paragraph that starts with *"Based on my analysis, the ticket appears to be..."*, followed by a JSON blob you have to parse, validate, and retry when a quote comes back malformed. Each ticket costs **3–329 seconds**.
+Your support pipeline gets 4,000 tickets an hour. Each ticket needs three tiny judgments: which team (`billing / infra / bug / other`), is a refund requested (`yes / no`), and severity (`1..5`). Today you send each ticket to a frontier large language model (an expensive, text-generating AI model) and get back a paragraph that starts with *"Based on my analysis, the ticket appears to be..."*, followed by a JSON blob you have to parse, validate, and retry when a quote comes back malformed. (JSON blob = a chunk of structured data in text form; malformed = broken syntax, e.g. a stray quote.) Each ticket costs **3–329 seconds**.
 
 **Why**
 
-An LLM is a **System Two-ish tool**: it generates **text for people**. Jev is a **System One model** — a transformer-based decision model that **never generates a single token of text**. You send state (a string, JSON, or an array of text) plus named, typed questions; you get back a `Choice`, a `Score`, or a `Noul` answer, each with a full probability distribution. They are complements, not replacements: *"Jev decides, LLM writes."*
+An LLM is a **System Two-ish tool**: it generates **text for people**. (System Two = slow, deliberate thinking — the psychology term the naming borrows.) Jev is a **System One model** — a transformer-based decision model that **never generates a single token of text**. (Transformer = the standard architecture behind modern AI models; token = a word piece.) You send state (a string, JSON, or an array of text) plus named, typed questions; you get back a `Choice`, a `Score`, or a `Noul` answer, each with a full probability distribution. (State = the input data bundle; Choice = pick one option, Score = a 0–1 rating, Noul = yes/no/unknown; probability distribution = a likelihood for every option, e.g. billing 0.91, infra 0.04.) They are complements, not replacements: *"Jev decides, LLM writes."*
 
 **What to do**
 
 1. Read `01-concepts/` first — it defines System 1 vs System 2 and where the decision layer sits.
-2. Spot your own "tiny decision" steps: classify, rate, gate, route, verify. Those are Jev candidates.
-3. Keep generation with the LLM. Move only the boolean-and-category steps.
+2. Spot your own "tiny decision" steps: classify, rate, gate, route, verify. Those are Jev candidates. (Gate = a yes/no checkpoint before an action runs.)
+3. Keep generation with the LLM. Move only the boolean-and-category steps. (Boolean = true/false.)
 4. Read `06-jev-and-llm/` for the division of labor before you wire anything.
 
 ```
@@ -33,23 +33,25 @@ Your code applies the threshold: high → act, medium → confirm, low → human
 
 Send one ticket and confirm you get typed answers (not prose) in **70–500ms**, with no parsing code. If you still need a JSON parser, you are still using the LLM.
 
+> **One-line summary:** Jev is not a second writer — it is a fast, cheap decision engine for small judgment calls, and it pairs with (not replaces) your LLM.
+
 ---
 
 ## Q2. Is the "40–200× faster, ~400× cheaper" claim real, or is it marketing? [→ Why Jev & System One Models Matter?]
 
 **What you see**
 
-The README quotes TypeSafe (the company that builds Jev): **40–200× faster and ~400× cheaper** than frontier LLMs on System-One-shaped tasks — roughly **two orders of magnitude** better. End-to-end latency is **70–500ms per request**, against **3–329s** for frontier LLMs on the same work. Price is **$0.042 per million input tokens, with output free**. That is roughly 400× cheaper than a typical frontier price point.
+The README quotes TypeSafe (the company that builds Jev): **40–200× faster and ~400× cheaper** than frontier LLMs on System-One-shaped tasks — roughly **two orders of magnitude** better. (Frontier LLM = the biggest, most expensive models; two orders of magnitude = about 100×.) End-to-end latency is **70–500ms per request**, against **3–329s** for frontier LLMs on the same work. Price is **$0.042 per million input tokens, with output free**. That is roughly 400× cheaper than a typical frontier price point.
 
 **Why**
 
-The speed and cost gap is structural, not a tuning trick. The answer space is **closed** — Jev can only return values you defined, so it cannot hallucinate an out-of-schema label, and it does not need to write a paragraph before the answer. On calibration (how truthful a stated confidence is), RLCD — the training method behind the numbers — gives this: **~80% of answers scored 0.8 are actually correct**.
+The speed and cost gap is structural, not a tuning trick. The answer space is **closed** — Jev can only return values you defined, so it cannot hallucinate an out-of-schema label, and it does not need to write a paragraph before the answer. (Closed answer space = a fixed menu of allowed answers; out-of-schema = outside that menu.) On calibration (how truthful a stated confidence is), RLCD — the training method behind the numbers — gives this: **~80% of answers scored 0.8 are actually correct**.
 
 **What to do**
 
-1. Read `04-calibration/` before you trust any confidence number; it explains margin vs probability and confidence bands.
+1. Read `04-calibration/` before you trust any confidence number; it explains margin vs probability and confidence bands. (Margin = how far ahead the top option is; confidence bands = zones like act / confirm / escalate.)
 2. Set your thresholds in **code**, not in the prompt: high confidence auto-acts, medium asks for confirmation, low routes to a human or the LLM.
-3. Benchmark your own three questions before/after — do not quote these numbers to your team as your numbers.
+3. Benchmark your own three questions before/after — do not quote these numbers to your team as your numbers. (Benchmark = measure on your own data.)
 
 | Claim | Source | Number |
 |---|---|---|
@@ -61,17 +63,19 @@ The speed and cost gap is structural, not a tuning trick. The answer space is **
 
 Log `confidence` per answer on real tickets for one week and compare against your own human labels. If 0.8-scored answers are not ~80% correct for your data, your data is not shaped like the training data — see Q5.
 
+> **One-line summary:** The speed and cost claims are structural and vendor-sourced — plausible, but only your own week-long measurement on real tickets makes them *your* numbers.
+
 ---
 
 ## Q3. There are seven folders here. Where do I actually start? [→ Learning Path (Directory Structure)]
 
 **What you see**
 
-`README.md` plus `01-concepts`, `02-primitives`, `03-api`, `04-calibration`, `05-patterns`, `06-jev-and-llm`, `07-limits-and-evaluation`. Seven files, no obvious entry point, and the temptation to read them in a random order or skip to the API docs.
+`README.md` plus `01-concepts`, `02-primitives`, `03-api`, `04-calibration`, `05-patterns`, `06-jev-and-llm`, `07-limits-and-evaluation`. Seven files, no obvious entry point, and the temptation to read them in a random order or skip to the API docs. (API = the interface your code calls.)
 
 **Why**
 
-Each folder answers one question, and the order matters because later folders assume earlier vocabulary. `02-primitives` uses the three primitives (`Choice`, `Score`, `Noul`); `03-api` uses them in a request body; `05-patterns` and `06-jev-and-llm` use the confidence bands from `04-calibration`.
+Each folder answers one question, and the order matters because later folders assume earlier vocabulary. `02-primitives` uses the three primitives (`Choice`, `Score`, `Noul`); `03-api` uses them in a request body; `05-patterns` and `06-jev-and-llm` use the confidence bands from `04-calibration`. (Primitives = the basic building-block question types.)
 
 **What to do**
 
@@ -89,23 +93,25 @@ Follow the recommended path: read `README.md` → `01-concepts` → `02-primitiv
 
 You can name which primitive fits each of your three ticket judgments, and you have one working call returning typed answers before reading `05-patterns`.
 
+> **One-line summary:** Read the folders in order — concepts, primitives, one real API call, calibration, then patterns — because each one reuses the previous folder's vocabulary.
+
 ---
 
 ## Q4. Do I throw out my LLM and run everything on Jev? [→ Overview]
 
 **What you see**
 
-The temptation after reading the pricing table: route *all* model calls to Jev. Then the first real request comes back asking for a written customer reply, and Jev cannot produce it — it never generates text. The model is `jev-1.13.0` (alias `jev-latest`), **text-only**, with a **64k context** limit.
+The temptation after reading the pricing table: route *all* model calls to Jev. Then the first real request comes back asking for a written customer reply, and Jev cannot produce it — it never generates text. The model is `jev-1.13.0` (alias `jev-latest`), **text-only**, with a **64k context** limit. (Alias = a second name pointing to the same model, always the newest version; context = how much text fits in one request.)
 
 **Why**
 
-The split is simple. Generation — prose, code, explanations — belongs to the LLM. Every gate, rubric check, category pick, and routing decision belongs to Jev. The traffic-light analogy holds: the light decides instantly, the tour guide narrates. You do not ask the tour guide whether the light is red.
+The split is simple. Generation — prose, code, explanations — belongs to the LLM. Every gate, rubric check, category pick, and routing decision belongs to Jev. (Rubric check = grading a draft against fixed criteria.) The traffic-light analogy holds: the light decides instantly, the tour guide narrates. You do not ask the tour guide whether the light is red.
 
 **What to do**
 
 1. Keep the LLM for drafting and explanation; call Jev **after** generation to verify, and **before** generation to route.
-2. Build the verified cascade from `06-jev-and-llm/` — high confidence and passing threshold means ship it; low confidence or fail means escalate.
-3. If you already use a framework, use the official integrations instead of hand-rolling: LangChain's `TypeSafeClassifier` (routing middleware and `AutoModeMiddleware`), Pydantic AI's `TypeSafeModel` (one question per output field, tool-call threshold defaults to `0.6`), OpenRouter's `typesafe/jev-1.13`, or Spice AI for calling it from SQL.
+2. Build the verified cascade from `06-jev-and-llm/` — high confidence and passing threshold means ship it; low confidence or fail means escalate. (Verified cascade = draft → Jev checks → pass ships / fail retries with a human as last stop.)
+3. If you already use a framework, use the official integrations instead of hand-rolling: LangChain's `TypeSafeClassifier` (routing middleware and `AutoModeMiddleware`), Pydantic AI's `TypeSafeModel` (one question per output field, tool-call threshold defaults to `0.6`), OpenRouter's `typesafe/jev-1.13`, or Spice AI for calling it from SQL. (Middleware = a component that sits between the LLM and the tools and filters risky calls.)
 
 ```
 LLM drafts → Jev asks "is this in policy?" (Noul) + "which category?" (Choice)
@@ -116,6 +122,8 @@ LLM drafts → Jev asks "is this in policy?" (Noul) + "which category?" (Choice)
 **Verify**
 
 Count how many LLM calls remain per ticket after the change. If the number did not drop, you added Jev without moving any decision out of the LLM.
+
+> **One-line summary:** No — keep the LLM for all writing and move only the small judgment calls (classify, gate, verify) to Jev; the call count dropping is your proof it worked.
 
 ---
 
@@ -131,10 +139,10 @@ You reach for Jev on a task it was never trained for: reading a spreadsheet, cou
 
 **What to do**
 
-1. Read `07-limits-and-evaluation/` before production; it lists the `jev-1.13` limits and error modes.
+1. Read `07-limits-and-evaluation/` before production; it lists the `jev-1.13` limits and error modes. (Error modes = the ways it fails, e.g. `max_tokens_exceeded`.)
 2. Keep every calculation in your own code — count, sum, compare — then let Jev classify or score the result.
-3. If your state is not plain text, reduce it to text first (or do the work elsewhere). Images, audio, and binary input are out of scope.
-4. Test on your own labels before trusting a threshold; if confidence does not match your accuracy, your data is out of distribution.
+3. If your state is not plain text, reduce it to text first (or do the work elsewhere). Images, audio, and binary input are out of scope. (Binary input = non-text files like PDFs or spreadsheets.)
+4. Test on your own labels before trusting a threshold; if confidence does not match your accuracy, your data is out of distribution. (Out of distribution = shaped differently from the data the model was trained on.)
 
 | Task | Jev? |
 |---|---|
@@ -145,7 +153,9 @@ You reach for Jev on a task it was never trained for: reading a spreadsheet, cou
 
 **Verify**
 
-Confirm nothing but text crosses the boundary, that all arithmetic is in your code, and that a deliberately out-of-range input fails loudly instead of returning a plausible wrong number.
+Confirm nothing but text crosses the boundary, that all arithmetic is in your code, and that a deliberately out-of-range input fails loudly instead of returning a plausible wrong number. (Out-of-range = deliberately invalid, e.g. 10,000 options when the cap is 255.)
+
+> **One-line summary:** Never hand Jev math, files, or media — it judges text against a fixed answer menu only; keep computation in code and feed Jev the result to judge.
 
 ---
 

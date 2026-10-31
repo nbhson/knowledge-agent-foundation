@@ -1,6 +1,6 @@
 # ❓ FAQ — Đọc Xác Suất Thật, Đặt Ngưỡng Đúng
 
-Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
+Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông. Giải nghĩa nhanh: **confidence** = độ tự tin (mức tập trung của phân phối, không phải xác suất đúng); **ngưỡng (threshold)** = con số ranh giới, vượt thì tự hành động; **escalate** = chuyển cho người hoặc hệ thống khác xử lý.
 
 ---
 
@@ -27,9 +27,13 @@ Có/không  : chắc chắn = |p − 0.5| × 2               → cao khi p xa 0.
 Cả hai    : đều là biên độ, không phải xác suất đúng
 ```
 
+Cách đọc khối trên: hàng 1 — với câu chọn/chấm điểm, confidence đo phân phối có "nhọn" không; hàng 2 — với câu có/không, độ chắc chắn tính bằng công thức `|p − 0.5| × 2` (p càng xa 0.5 càng chắc); hàng 3 — cả hai đều là **biên độ**, không phải xác suất đúng.
+
 **Kiểm tra**
 
-Trên bộ dữ liệu có nhãn, vẽ đường hiệu chỉnh: chia theo xác suất rồi đo tỉ lệ đúng thực tế từng nhóm. Nếu đường nằm chéo qua điểm 0/0 và 1/1 thì xác suất đang trung thực với độ đúng.
+Trên bộ dữ liệu có nhãn, vẽ đường hiệu chỉnh: chia theo xác suất rồi đo tỉ lệ đúng thực tế từng nhóm. Nếu đường nằm chéo qua điểm 0/0 và 1/1 thì xác suất đang trung thực với độ đúng. (Đường hiệu chỉnh = biểu đồ so xác suất dự đoán với tỉ lệ đúng đo được; 0/0 và 1/1 = điểm gốc và điểm đỉnh của đường chéo chuẩn.)
+
+> **Tóm gọn 1 câu:** Confidence 0.9 chỉ nghĩa là "phân phối rất nhọn", không phải 90% đúng — độ đúng phải đo bằng bộ dữ liệu có nhãn của chính bạn.
 
 ---
 
@@ -57,9 +61,13 @@ Mô hình lớn: "chắc chắn 99%"  → thực tế đúng ~60–70%  (tối �
 Jev        : xác suất 0.8      → thực tế đúng ~80%     (tối ưu theo kết quả)
 ```
 
+Cách đọc khối trên: hai hàng so sánh cách hai loại model được huấn luyện — mô hình lớn được khen vì giọng tự tin (nên tự tin quá), còn Jev được chấm theo kết quả thật (nên số nói ra khớp thực tế). **RLHF** = huấn luyện theo sở thích của con người; **RLVR** = huấn luyện theo kiểm tra đúng/sai; **RLCD** = cách Jev được huấn luyện, tối ưu xác suất khớp kết quả thật.
+
 **Kiểm tra**
 
 Chạy 300 câu hỏi có nhãn từ miền của bạn qua cả Jev lẫn lớp phê duyệt hiện tại, rồi so độ đúng trong nhóm điểm cao. Con số nào gần 80% hơn thì lớp đó đáng tin hơn cho ngưỡng tự động.
+
+> **Tóm gọn 1 câu:** Mô hình lớn tự báo 99% nhưng đo chỉ ra 60–70% vì nó được huấn luyện theo sở thích con người; Jev báo 0.8 thì đúng ~80% vì được huấn luyện theo kết quả thật.
 
 ---
 
@@ -84,7 +92,9 @@ Kiểu có/không **không có** trường độ tự tin riêng, vì với câu
 
 **Kiểm tra**
 
-Viết kiểm thử cho hàm phân loại khu vực với bốn đầu vào cố định: 0.01, 0.45, 0.50 và 0.99. Kết quả mong đợi phải là: chắc không, không biết, không biết, chắc có. Nếu 0.45 rơi vào nhánh "trung bình" thì hàm đang sai.
+Viết kiểm thử cho hàm phân loại khu vực với bốn đầu vào cố định: 0.01, 0.45, 0.50 và 0.99. Kết quả mong đợi phải là: chắc không, không biết, không biết, chắc có. Nếu 0.45 rơi vào nhánh "trung bình" thì hàm đang sai. (Hàm phân loại khu vực = hàm nhận p, trả về "tự xử lý / hỏi xác nhận / chuyển người".)
+
+> **Tóm gọn 1 câu:** Câu có/không không có trường confidence riêng — hãy tự tính `|p − 0.5| × 2`; p gần 0.5 nghĩa là mô hình không biết, không phải "trung bình".
 
 ---
 
@@ -107,11 +117,13 @@ Con số 0.8 là **điểm khởi đầu mang tính gợi ý**, không phải gi
 
 > 📄 **Code ví dụ:** [`examples/02-q4-nguong-nao-la-chuan-dung-0-8.py`](examples/02-q4-nguong-nao-la-chuan-dung-0-8.py)
 
-Một lưu ý quan trọng: ngay cả khi độ tự tin cao, một phân phối **bất thường phẳng** — hai lựa chọn gần bằng nhau — vẫn nên chuyển người. Độ tự tin và biên độ phải được đọc **cùng nhau**, không thay nhau.
+Một lưu ý quan trọng: ngay cả khi độ tự tin cao, một phân phối **bất thường phẳng** — hai lựa chọn gần bằng nhau — vẫn nên chuyển người. Độ tự tin và biên độ phải được đọc **cùng nhau**, không thay nhau. (Biên độ = chênh lệch giữa lựa chọn đứng đầu và lựa chọn nhì; mỏng nghĩa là phân vân thật.)
 
 **Kiểm tra**
 
 Trước mỗi lần đổi ngưỡng, chạy lại báo cáo đo trên bộ kiểm đánh giá và so hai con số: tỉ lệ đúng trong nhóm tự động, và tỉ lệ phần trăm được xử lý tự động. Bạn cần cả hai, không được hy sinh cái này cho cái kia.
+
+> **Tóm gọn 1 câu:** 0.8 chỉ là điểm khởi đầu — hãy đo trên dữ liệu có nhãn của bạn và đặt ngưỡng riêng cho từng câu hỏi theo mức rủi ro.
 
 ---
 
@@ -136,7 +148,9 @@ Nhật ký quyết định chỉ có giá trị khi **nối được xác suất
 
 **Kiểm tra**
 
-Thử một ca giả lập: đọc nhật ký ngẫu nhiên 10 dòng và xác định được mã yêu cầu, ngưỡng đã dùng và hành động đã thực hiện. Nếu phải mở dữ liệu đầu vào mới trả lời được, nhật ký của bạn đang thiếu.
+Thử một ca giả lập: đọc nhật ký ngẫu nhiên 10 dòng và xác định được mã yêu cầu, ngưỡng đã dùng và hành động đã thực hiện. Nếu phải mở dữ liệu đầu vào mới trả lời được, nhật ký của bạn đang thiếu. (Giả lập = dựng tình huống không có dữ liệu thật; băm (hash) = biến dữ liệu thành chuỗi không đọc ngược lại được; che (redact) = xóa/che thông tin nhạy cảm.)
+
+> **Tóm gọn 1 câu:** Ghi đủ xác suất, ngưỡng, phiên bản model và kết quả thật để truy vết — nhưng tuyệt đối không ghi dữ liệu đầu vào thô vì có thể chứa thông tin cá nhân.
 
 ---
 

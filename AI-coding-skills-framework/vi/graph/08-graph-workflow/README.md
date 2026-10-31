@@ -32,15 +32,23 @@ Không có workflow, bạn làm thủ công: chạy script, quên checkpoint, gr
 
 **Graph Workflow** là hệ thống **tự động, có checkpoint, có rollback, có observability** cho mọi thao tác trên graph — giống như CI/CD cho code, nhưng cho knowledge graph.
 
+Giải thích nhanh 4 từ khóa: **checkpoint** = điểm lưu giữa chừng để quay lại khi lỗi (như nút save trong game); **rollback** = hoàn tác về điểm lưu gần nhất; **observability** = nhìn được vào bên trong pipeline (mất bao lâu, lỗi ở đâu); **CI/CD** = quy trình tự động kiểm thử và triển khai code mà dev hay dùng — ở đây áp cho graph.
+
+> **Tóm gọn 1 câu:** Graph Workflow = bộ tự động hóa cho graph: thêm dữ liệu từng phần, có điểm lưu, hoàn tác được và nhìn thấy được lỗi — không phải chạy tay từng script.
+
 ### Tại Sao Graph Workflow Quan Trọng?
 
 > *"A graph without a workflow is a snapshot. A graph with a workflow is a living system."*
+
+Cách đọc bảng này: mỗi dòng là một khảo sát; cột **Phát Hiện** cho biết sự cố hoặc khoản tiết kiệm được đo ra. Ví dụ dòng 1: 68% sự cố graph xuất phát từ việc không có đường cập nhật từng phần.
 
 | # | Nguồn | Phát Hiện |
 |---|-------|-----------|
 | 1 | **Neo4j Production Survey (2024)** | 68% graph incidents do **thiếu incremental pipeline** — rebuild toàn bộ gây downtime |
 | 2 | **Microsoft GraphRAG** | Incremental indexing giảm **90% re-indexing cost** khi thêm documents mới |
 | 3 | **Prefect + Graph Benchmark (2025)** | Workflow với checkpoint giảm **80% recovery time** khi batch ingest lỗi |
+
+> **Tóm gọn 1 câu:** Khảo sát thực tế chỉ ra: thiếu cập nhật từng phần và checkpoint là nguyên nhân chính của sự cố và downtime trên graph production.
 
 ---
 
@@ -70,6 +78,10 @@ Không có workflow, bạn làm thủ công: chạy script, quên checkpoint, gr
                     └─────────────────────────────────┘
 ```
 
+Đọc sơ đồ này thế nào: bên trái là 3 thứ kích hoạt (**New Documents** = tài liệu mới; **Schema Changes** = thay đổi cấu trúc graph, ví dụ thêm loại cạnh; **User Edits** = người dùng sửa tay), bên trong engine là 5 bộ phận xử lý, bên dưới là nơi lưu trữ thật (Neo4j + index vector + cache tóm tắt cộng đồng).
+
+> **Tóm gọn 1 câu:** Mọi thay đổi vào graph đều đi qua một engine duy nhất gồm ETL, cập nhật từng phần, quản lý phiên bản, lịch chạy và giám sát lỗi.
+
 ---
 
 ## Nội Dung
@@ -82,6 +94,10 @@ Không có workflow, bạn làm thủ công: chạy script, quên checkpoint, gr
 | 4 | [Orchestration](#4-orchestration-airflow-prefect-loop) | Schedule, DAG, loop integration |
 | 5 | [Observability](#5-observability--error-recovery) | Logging, metrics, circuit breaker |
 | 6 | [Engine](#6-triển-khai-complete-workflow-engine) | Code workflow engine |
+
+Cách đọc bảng này: 6 chủ đề nên đọc theo thứ tự. Cột **Mô tả** ghi ý chính. Ví dụ dòng 2: *Incremental Updates* = thêm/sửa/xóa dữ liệu mà không phải dựng lại graph từ đầu.
+
+> **Tóm gọn 1 câu:** Nội dung đi theo vòng đời dữ liệu: nạp vào (ETL) → cập nhật từng phần → quản lý phiên bản → lên lịch tự chạy → giám sát lỗi → code hoàn chỉnh.
 
 ---
 
@@ -98,6 +114,8 @@ Không có workflow, bạn làm thủ công: chạy script, quên checkpoint, gr
 > - Transform cần **LLM** (trích xuất tri thức từ text — không phải phép tính)
 > - Load phải **idempotent** (chạy lại 100 lần cũng kết quả như nhau, không nhân đôi dữ liệu)
 > - Bắt buộc **dedup + validation** trước khi ghi — vì LLM trích xuất không bao giờ chính xác 100%
+
+> **Tóm gọn 1 câu:** Graph ETL = đọc tài liệu → LLM trích thực thể/quan hệ → làm sạch và kiểm tra → ghi bằng `MERGE` để chạy lại không nhân đôi.
 
 ```
 ETL thường:  Raw Data → Clean → Transform → Load vào Table
@@ -118,7 +136,11 @@ Khác biệt:
 
 </details>
 
+> **Tóm gọn 1 câu:** ETL cho graph khác ETL bảng tính ở chỗ: bước "transform" cần LLM để trích tri thức, và bước "load" phải ghi kiểu `MERGE` (idempotent) thay vì chèn thẳng.
+
 ### 1.2 Batch vs Streaming
+
+Cách đọc bảng này: 3 chế độ nạp dữ liệu (**Batch** = nạp cả loạt một lần; **Streaming** = nạp ngay khi từng tài liệu đến; **Micro-batch** = nạp mỗi lô nhỏ 10-100 tài liệu). Ví dụ: nạp 10.000 tài liệu lúc đầu → Batch; người dùng upload một file → Streaming; chạy mỗi giờ tài liệu mới → Micro-batch.
 
 ```
 ┌──────────────┬──────────────────────────────────┬──────────────────────────┐
@@ -134,6 +156,8 @@ Khuyến nghị:
   - Daily: micro-batch (documents mới trong ngày)
   - Real-time: streaming (user edit, API webhook)
 ```
+
+> **Tóm gọn 1 câu:** Lần đầu nạp cả kho dùng Batch, mỗi ngày dùng Micro-batch, dữ liệu đến tức thì dùng Streaming — chọn theo tần suất, đừng dùng một chế độ cho mọi trường hợp.
 
 ---
 
@@ -151,6 +175,10 @@ Incremental:
   → Chỉ xử lý doc mới, merge vào graph hiện có
 ```
 
+Đọc phép tính thế nào: mỗi tài liệu tốn 2 lượt gọi LLM (trích thực thể + trích quan hệ), giá $0.005 mỗi 1.000 token. Dựng lại cả 10.000 tài liệu = $100 + 2 giờ; thêm 1 tài liệu mới theo kiểu incremental = $0.01 + 5 giây — chênh **10.000 lần**.
+
+> **Tóm gọn 1 câu:** Incremental = chỉ nạp tài liệu mới và ghép vào graph sẵn có — rẻ hơn dựng lại toàn bộ khoảng 10.000 lần cho mỗi tài liệu mới.
+
 ### 2.2 Incremental Strategies
 
 <details>
@@ -160,12 +188,14 @@ Incremental:
 
 </details>
 
+> **Tóm gọn 1 câu:** Cập nhật từng phần = trích xuất chỉ trên tài liệu mới, hỏi graph "đã có chưa" rồi MERGE — gọn, rẻ, không phá dữ liệu cũ.
+
 ---
 
 ## 3. Versioning & Temporal Graphs
 
 > **📌 Khái Niệm Cơ Bản:**
-> **Grapactory luôn thay đổi** — nhân viên đổi team, dự án bị hủy, hợp đồng hết hạn. Nếu bạn xóa edge cũ, bạn **mất lịch sử + không thể trả lời câu hỏi "hồi Q1/2024 thì thế nào?"**.
+> **Graph luôn thay đổi** — nhân viên đổi team, dự án bị hủy, hợp đồng hết hạn. Nếu bạn xóa edge cũ, bạn **mất lịch sử + không thể trả lời câu hỏi "hồi Q1/2024 thì thế nào?"**.
 >
 > **Giải pháp 2 lớp:**
 > 1. **Temporal Properties** — thêm `valid_from`/`valid_until` cho edge: quan hệ có **thời gian hiệu lực**. Query "ai quản lý TeamA vào 2024-02-01?" → chỉ xét edges active lúc đó.
@@ -175,9 +205,13 @@ Incremental:
 > - Temporal = hợp đồng lao động có ngày bắt đầu/kết thúc — chỉ "còn hiệu lực" trong khoảng đó.
 > - Audit Trail = sổ nhật ký ghi mọi thao tác — tra được ai đã sửa gì. Không bao giờ tẩy xóa, chỉ thêm dòng mới.
 
+> **Tóm gọn 1 câu:** Không xóa cạnh, chỉ đóng hạn cạnh cũ và ghi sổ mọi thay đổi — xong là trả lời được cả quá khứ và hoàn tác được khi sửa nhầm.
+
 ### 3.1 Temporal Properties
 
 > 📄 **Code ví dụ:** [`examples/03-3-1-temporal-properties.py`](examples/03-3-1-temporal-properties.py)
+
+> **Tóm gọn 1 câu:** Temporal properties = mỗi cạnh có `valid_from`/`valid_until`; hỏi "lúc X ai quản lý" thì chỉ xét cạnh còn hiệu lực tại X.
 
 ### 3.2 Audit Trail (Event Sourcing)
 
@@ -185,11 +219,15 @@ Giống như `trajectory-fork-replay` trong harness, graph cũng cần audit tra
 
 > 📄 **Code ví dụ:** [`examples/04-3-2-audit-trail-event-sourcing.py`](examples/04-3-2-audit-trail-event-sourcing.py)
 
+> **Tóm gọn 1 câu:** Audit trail (event sourcing) = ghi mọi thay đổi thành sự kiện kèm ai-làm-khi nào — tra cứu được và quay lui được như replay nhật ký.
+
 ---
 
 ## 4. Orchestration: Airflow, Prefect, Loop
 
 ### 4.1 So Sánh Orchestrators
+
+Cách đọc bảng này: mỗi dòng là một công cụ hẹn giờ/chạy pipeline (**orchestrator** = "chỉ huy" điều phối các bước chạy tự động). Ví dụ: **Airflow** hợp khi có nhiều luồng dữ liệu phụ thuộc nhau vẽ thành DAG (**DAG** = sơ đồ "việc A xong thì việc B mới chạy"); **cron** chỉ hợp script nhỏ chạy máy cá nhân.
 
 ```
 ┌─────────────────┬──────────────────┬──────────────────┬──────────────────────┐
@@ -203,6 +241,8 @@ Giống như `trajectory-fork-replay` trong harness, graph cũng cần audit tra
 └─────────────────┴──────────────────┴──────────────────┴──────────────────────┘
 ```
 
+> **Tóm gọn 1 câu:** Airflow cho DAG lớn, Prefect cho Python hiện đại, GitHub Actions cho chạy khi push code, cron cho script nhỏ — chọn theo quy mô, đừng dùng cron cho mọi thứ.
+
 ### 4.2 Prefect Example
 
 <details>
@@ -211,6 +251,8 @@ Giống như `trajectory-fork-replay` trong harness, graph cũng cần audit tra
 > 📄 **Code ví dụ:** [`examples/05-4-2-prefect-example.py`](examples/05-4-2-prefect-example.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Với Prefect, mỗi bước ETL là một `@task` có lịch chạy và tự thử lại — viết bằng Python thường, không cần cài hệ thống riêng.
 
 ### 4.3 Tích Hợp Với Loop Engineering
 
@@ -228,6 +270,10 @@ Loop: Daily Triage
     5. Nếu lỗi → escalate to human (loop/03-safety pattern)
 ```
 
+Đọc ví dụ thế nào: **Loop** = vòng lặp agent tự chạy theo lịch (xem track Loop Engineering). Mỗi sáng nó quét thư mục `/data/raw_docs/`, đối chiếu với sổ trạng thái `STATE.md` (**STATE.md** = file ghi "đã nạp những file nào"), nạp file mới vào graph, và khi có lỗi thì báo người xử lý (**escalate** = chuyển lên cấp trên/loài người).
+
+> **Tóm gọn 1 câu:** Loop agent tự quét tài liệu mới mỗi ngày, nạp vào graph từng phần, và gặp lỗi thì báo người — graph luôn cập nhật mà không cần ai trực.
+
 ---
 
 ## 5. Observability & Error Recovery
@@ -241,13 +287,19 @@ Loop: Daily Triage
 >
 > **Error Recovery = kế hoạch "khi lỗi thì làm gì":** thử lại (retry), bỏ qua (skip), hay dừng hẳn (fail). **Không bao giờ để pipeline lỗi âm thầm mà vẫn báo "thành công"**.
 
+> **Tóm gọn 1 câu:** Observability = đo được từng bước chạy thế nào (thời gian, số liệu, lỗi); Error Recovery = khai trước khi lỗi thì dừng, bỏ qua hay thử lại — đừng bao giờ lỗi mà vẫn báo thành công.
+
 ### 5.1 Metrics Cho Graph Workflow
 
 > 📄 **Code ví dụ:** [`examples/06-5-1-metrics-cho-graph-workflow.py`](examples/06-5-1-metrics-cho-graph-workflow.py)
 
+> **Tóm gọn 1 câu:** Đo mỗi lần chạy: mất bao lâu, vào/ra bao nhiêu thực thể, gộp trùng bao nhiêu phần trăm, lỗi ở bước nào — không có số là không biết pipeline có khỏe không.
+
 ### 5.2 Error Recovery Patterns
 
 > 📄 **Code ví dụ:** [`examples/07-5-2-error-recovery-patterns.py`](examples/07-5-2-error-recovery-patterns.py)
+
+> **Tóm gọn 1 câu:** Ba pattern xử lý lỗi: retry (thử lại có chờ dài dần), skip (bỏ qua), fail (dừng + rollback) — và circuit breaker để ngừng gọi dịch vụ đang chết.
 
 ---
 
@@ -259,6 +311,8 @@ Loop: Daily Triage
 > 📄 **Code ví dụ:** [`examples/08-6-trien-khai-complete-workflow-engine.py`](examples/08-6-trien-khai-complete-workflow-engine.py)
 
 </details>
+
+> **Tóm gọn 1 câu:** Engine hoàn chỉnh = ghép tất cả: định nghĩa các bước, checkpoint, chính sách lỗi, và báo cáo số liệu cho mỗi lần chạy.
 
 ---
 
@@ -281,6 +335,8 @@ Loop: Daily Triage
 1. Viết 1 GitHub Actions workflow: khi push `data/raw_docs/*.md` → trigger graph ETL
 2. Hoặc: Prefect flow schedule mỗi giờ, kiểm tra `data/` có file mới không
 
+> **Tóm gọn 1 câu:** Ba lab rèn đúng 3 kỹ năng sống còn: chạy ETL có rollback, chứng minh incremental rẻ hơn rebuild, và tự động hóa bằng GitHub Actions hoặc Prefect.
+
 ---
 
 ## Tài Liệu Tham Khảo
@@ -290,11 +346,13 @@ Loop: Daily Triage
 - Neo4j — *Import & ETL Tools* (https://neo4j.com/docs/operations-manual/current/tools/neo4j-admin/)
 - *Data Pipelines with Apache Airflow* — Harenslak & de Ruiter (Manning)
 
+> **Tóm gọn 1 câu:** Đây là tài liệu gốc của từng công cụ trong bài — đọc thêm khi cần cấu hình chi tiết.
+
 ---
 
 ## GraphRAG — Cập nhật 2026
 
-Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query phức tạp (multi-hop) tốt hơn vector-only RAG.
+Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query phức tạp (multi-hop) tốt hơn vector-only RAG. (**Multi-hop** = câu hỏi phải đi qua nhiều bước quan hệ; **RAG** = đưa tài liệu liên quan vào prompt trước khi LLM trả lời.)
 
 **Tin mới 2025-2026:**
 - **LazyGraphRAG** (Microsoft, cuối 2024): defer LLM summarisation tới query time — indexing cost ngang vector RAG, quality ngang full GraphRAG, query cost thấp hơn ~700×. Đã tích hợp Microsoft Discovery (2025) và Azure Local.
@@ -304,6 +362,8 @@ Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query p
 - **Knowledge Graph Market**: 1.48B USD (2025) → 2.04B USD (2026). GraphRAG chuyển từ "enterprise luxury" → production baseline.
 
 Ref: https://microsoft.github.io/graphrag/
+
+> **Tóm gọn 1 câu:** GraphRAG đã từ "xa xỉ của doanh nghiệp lớn" thành chuẩn production — LazyGraphRAG cắt chi phí xuống ngang vector RAG.
 
 ---
 

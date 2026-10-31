@@ -2,26 +2,30 @@
 
 If a question is unclear, read the section in `../README.md` (named in brackets).
 
+> How to read this file: a trajectory = the recorded list of everything an agent actually did, step by step, as events. Each question is a real failure that good event logs would have prevented.
+
 ---
 
 ## Q1. The agent deleted a file and the user complained 40 minutes later — how do I find out why? [→ Opening Story + §1]
 
+This section explains why a chat log cannot answer "what did the agent do", and what an event log can.
+
 **What you see**
 
-A ticket arrives: *"The agent deleted `src/auth/middleware.ts` and the user reported it 40 minutes later. Why?"* With only a chat log you have the model's words, not its actions, plus a partial CI log and a feeling. The post-mortem is a guess.
+A ticket arrives: *"The agent deleted `src/auth/middleware.ts` and the user reported it 40 minutes later. Why?"* With only a chat log you have the model's words, not its actions, plus a partial CI log and a feeling. The post-mortem (the after-incident review) is a guess.
 
-With an event log, one query answers it in eleven seconds:
+With an event log, one query answers it in eleven seconds. How to read it: `seq` = the step number in the run; the name in backticks = the tool used.
 
-- seq 31 `read_file` `src/auth/middleware.ts` → 4.1KB
+- seq 31 `read_file` `src/auth/middleware.ts` → 4.1KB (it read the file)
 - seq 32 `edit_file` (patch applied)
 - seq 33 `write_file` ← **the delete**
 - seq 34 `eval` "tests pass" — and it was true, nothing imported the file any more
 
-The follow-ups then answer themselves. seq 29 `prompt` says the exports were unused. seq 33 records a `git worktree`, so it was reversible. Blast radius was one file, below the `write` threshold — yet 3 other files imported it and the agent never read them.
+The follow-ups then answer themselves. seq 29 `prompt` says the exports were unused. seq 33 records a `git worktree` (a separate copy of the repo to work in), so it was reversible. Blast radius (how much damage one action can cause) was one file, below the `write` threshold — yet 3 other files imported it and the agent never read them.
 
 **Why**
 
-A chat transcript records what the model *said*. A trajectory records what it *did*, timestamped and joined by keys. Without `parentTaskId` and `actor`, "who did this" has no answer at all.
+A chat transcript records what the model *said*. A trajectory records what it *did*, timestamped and joined by keys. Without `parentTaskId` (which task this step belongs to) and `actor` (who acted), "who did this" has no answer at all.
 
 **What to do**
 
@@ -36,15 +40,19 @@ A chat transcript records what the model *said*. A trajectory records what it *d
 
 Take 5 old sessions. For each one, name the exact `seq` that touched a given file without opening the chat log. If you cannot, the join keys are missing.
 
+> **One-line summary:** Chat logs record what the model said, trajectories record what it did — log every action as a paired, numbered event with actor and task id, or debugging stays a guess.
+
 ---
 
 ## Q2. Our bill tripled last month and nobody can explain why — where do I even start? [→ §6.2 + §1.2]
+
+This section explains how per-step cost logging turns an unexplainable invoice into a one-query answer.
 
 **What you see**
 
 Finance asks why. The only answer available is the invoice divided by the number of runs, which explains nothing. Nobody can say whether you sent more tokens or sent the same tokens to a pricier model.
 
-With per-step `model`, `tokens` and `costUsd` on every event, one query gives the answer. In practice it is *"a retry loop on 3% of runs"* or *"compaction stopped firing"* — both fixable in an afternoon. The most common finding: **cost is not in the prompts, it is in the retry loops and the frontier-tier steps nobody needed.** A dashboard built on this query usually finds 15–30% savings in the first week, with no quality change.
+With per-step `model`, `tokens` and `costUsd` on every event, one query gives the answer. In practice it is *"a retry loop on 3% of runs"* or *"compaction stopped firing"* (compaction = shrinking old context to save tokens) — both fixable in an afternoon. The most common finding: **cost is not in the prompts, it is in the retry loops and the frontier-tier steps nobody needed.** A dashboard built on this query usually finds 15–30% savings in the first week, with no quality change.
 
 **Why**
 
@@ -53,8 +61,8 @@ Billing gives you the total, not the step. Without the model name attached to ea
 **What to do**
 
 1. Compute `costUsd` **at emit time**, not when you query. Prices change; a recomputed number stops matching the invoice.
-2. Put `model` and `tokens {in, out, cached}` on every event, and emit `session_start` so cost joins back to a task and a tenant.
-3. Run the loop detector: the same command signature (`argvHash`) repeated 3+ times in one session is a stuck agent, not a hard task.
+2. Put `model` and `tokens {in, out, cached}` on every event, and emit `session_start` so cost joins back to a task and a tenant (tenant = one customer or team on a shared system).
+3. Run the loop detector: the same command signature (`argvHash` — a fingerprint of the command's arguments) repeated 3+ times in one session is a stuck agent, not a hard task.
 4. Sample payloads to save storage, but keep cost counters at 100%.
 
 > 📄 **Example code:** [`examples/02-q2-our-bill-tripled-last-month-and-nobody.sql`](examples/02-q2-our-bill-tripled-last-month-and-nobody.sql)
@@ -63,19 +71,25 @@ Billing gives you the total, not the step. Without the model name attached to ea
 
 Every row in the top 20 must map to a task you recognise by name. The loop detector should return a small number of sessions, and each one must be explainable in a single sentence.
 
+> **One-line summary:** Log model, tokens, and cost on every step at emit time — then "the bill tripled" becomes one query instead of a mystery.
+
 ---
 
 ## Q3. Storage costs more than the model bill, and an analyst leaked a customer email out of a raw query — how do I fix both? [→ §5.1 + §5.2]
 
+This section explains two fixes that go together: tiered retention (keep less as data ages) and redacting secrets at write time.
+
 **What you see**
 
-Trajectory files grow faster than inference does — one run can leave megabytes of command output on disk. At the same time someone runs an ad-hoc query against the raw store and a real customer's email address ends up in a notebook.
+Trajectory files grow faster than inference does — one run can leave megabytes of command output on disk. At the same time someone runs an ad-hoc query (a one-off query written on the spot) against the raw store and a real customer's email address ends up in a notebook.
 
 **Why**
 
 Redaction at read time fails the moment *anything* reads the raw table, and raw tables always get read by ad-hoc queries. Meanwhile the bytes are dominated by large tool outputs, which are the least useful thing you will want six weeks later.
 
 **What to do — retention tiers**
+
+How to read it: each row is a storage tier; column 2 = how old the data is; column 3 = what is still kept at that age. A `ref` = a pointer to the deleted payload, so the record still exists.
 
 | Tier | Age | Contents |
 |---|---|---|
@@ -84,11 +98,13 @@ Redaction at read time fails the moment *anything* reads the raw table, and raw 
 | Cold | 90 days – 1 year | aggregates only: steps, tokens, costUsd, latencyMs |
 | Purged | tenant TTL | deleted, with a stored receipt |
 
+Glosses: aggregates = summary numbers instead of raw content. Tenant TTL = time-to-live per customer — after it, data is deleted.
+
 **What to do — redaction**
 
 1. Redact at write, not at read: `sk-…`, `ghp_…`, `AKIA…`, private keys, emails, card numbers → `[REDACTED]`.
 2. Store the number of hits as a `redactions` field on the event, so a spike is visible.
-3. Keep a `stdoutHash` beside each `ref`, so a cold record is still auditable.
+3. Keep a `stdoutHash` beside each `ref` (a fingerprint of the deleted output), so a cold record is still auditable.
 4. Cap any payload at 64KB; anything larger becomes `{ ref }`.
 
 > 📄 **Example code:** [`examples/03-q3-storage-costs-more-than-the-model-bill.sql`](examples/03-q3-storage-costs-more-than-the-model-bill.sql)
@@ -97,9 +113,13 @@ Redaction at read time fails the moment *anything* reads the raw table, and raw 
 
 Run this assertion quarterly; anything above 0 pages someone. Then check that the monthly storage trend actually drops in the first full month after the 4KB rule ships.
 
+> **One-line summary:** Cut storage with age-based tiers and cut leaks by redacting secrets at write time — read-time redaction always loses to ad-hoc queries.
+
 ---
 
 ## Q4. I replayed a run to reproduce a bug and it emailed the customer a second time — how do I make replay safe? [→ §3.1 + §3.3]
+
+This section explains why replaying a recorded run can repeat real-world side effects, and how idempotency keys prevent that.
 
 **What you see**
 
@@ -107,7 +127,7 @@ You re-execute events `0..N` to reproduce a ticket exactly. A step that charges 
 
 **Why**
 
-Replay re-triggers irreversible effects because steps carry no idempotency key. Teams assume "replay" means "safe rerun". It does not — not every step is even deterministic.
+Replay re-triggers irreversible effects because steps carry no idempotency key (an idempotency key = a unique receipt per action; if the receipt already exists, the action is skipped instead of repeated). Teams assume "replay" means "safe rerun". It does not — not every step is even deterministic (deterministic = same input always gives the same output).
 
 **What to do**
 
@@ -122,9 +142,13 @@ Replay re-triggers irreversible effects because steps carry no idempotency key. 
 
 Replaying a run that contains an email step sends zero emails. Any drift on a `memory_read` step fails CI, so you find out the day it breaks, not during the incident.
 
+> **One-line summary:** Replay is only safe when every irreversible step carries an idempotency key and completed steps are skipped with their recorded result.
+
 ---
 
 ## Q5. The dashboard says 5/5 tasks done, but my cost total is 12% below the invoice — what am I missing? [→ §4.3 + §8.2 + §14]
+
+This section explains three quiet ways dashboards drift from reality, and how to detect each one.
 
 **What you see**
 
@@ -139,8 +163,8 @@ Progress says `5/5`. Invoices do not match. Three different causes hide inside e
 **What to do**
 
 1. Make `parentTaskId` required in the schema for every kind except `session_start` / `session_end`.
-2. Run the orphan query continuously. Non-zero is a page, not a warning.
-3. Build the live UI as a fold over events — one function, one stream, no parallel state.
+2. Run the orphan query continuously. Non-zero is a page (an urgent alert), not a warning.
+3. Build the live UI as a fold over events — one function, one stream, no parallel state (fold = compute the total by processing events one by one from the log).
 4. Keep the counters at 100% even when you drop payloads.
 
 > 📄 **Example code:** [`examples/05-q5-the-dashboard-says-5-5-tasks-done.sql`](examples/05-q5-the-dashboard-says-5-5-tasks-done.sql)
@@ -150,6 +174,8 @@ One more free detector: a `tool_call` with no matching `tool_result` is every st
 **Verify**
 
 The orphan query returns 0 rows for a full week. UI status equals `session_end.tasksDone == tasksTotal` computed from the log. The cost sum matches the invoice within sampling error.
+
+> **One-line summary:** Dashboards drift when events lose their task id or the UI computes its own truth — require `parentTaskId`, derive the UI from the event stream, and never sample the counters.
 
 ---
 

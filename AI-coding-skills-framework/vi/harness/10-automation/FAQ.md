@@ -1,6 +1,7 @@
 # ❓ FAQ — Automation (Câu hỏi thật, dễ hiểu)
 
 Nếu câu hỏi chưa rõ, đọc `README.md` phần được nêu trong ngoặc vuông.
+Mỗi câu trả lời gồm 4 phần: **Bạn sẽ thấy** (triệu chứng), **Vì sao** (gốc rễ), **Làm gì** (cách xử lý), **Kiểm tra** (cách biết đã xử lý đúng).
 
 ---
 
@@ -12,7 +13,7 @@ Job cuối cùng báo `success`, Slack gửi "✅ Deployed" — nhưng vài phú
 
 **Vì sao**
 
-Đây là anti-pattern "silent failure" (lỗi âm thầm): pipeline chỉ kiểm tra code **trước** khi deploy, không kiểm tra **sau**. Một bài test vẫn xanh không có nghĩa dịch vụ đã chạy được — sai cấu hình, thiếu biến môi trường, image sai tag... đều vẫn để test xanh.
+Đây là anti-pattern "silent failure" (lỗi âm thầm): pipeline chỉ kiểm tra code **trước** khi deploy, không kiểm tra **sau**. Một bài test vẫn xanh không có nghĩa dịch vụ đã chạy được — sai cấu hình, thiếu biến môi trường, image sai tag... đều vẫn để test xanh. (Biến môi trường = cấu hình nạp vào lúc chạy, như địa chỉ database; image = gói đóng gói sẵn của ứng dụng; tag = nhãn phiên bản.)
 
 **Làm gì**
 
@@ -26,6 +27,8 @@ Job cuối cùng báo `success`, Slack gửi "✅ Deployed" — nhưng vài phú
 **Kiểm tra**
 
 Cố tình deploy một bản hỏng (ví dụ đổi cổng kết nối sai) và xác nhận pipeline đỏ ở đúng bước kiểm tra sau deploy, không phải đỏ sau khi khách báo lỗi. Nếu vẫn xanh, bạn chưa có kiểm tra sau deploy.
+
+> **Tóm gọn 1 câu:** Test xanh trước deploy không bảo đảm dịch vụ chạy được — phải thêm bước kiểm tra sức khỏe sau deploy (gọi `/health`), chạy E2E trên staging, và deploy canary 10% lưu lượng với điều kiện tự lùi.
 
 ---
 
@@ -53,6 +56,8 @@ Vòng lặp tự phục hồi là một hệ quy trình với vốn hạn mức:
 
 Đặt ngân sách cực thấp (2 vòng) rồi cho một task cố ý không giải được. Kết quả mong đợi: dừng đúng ở vòng 2, mở sự cố, log in ra số vòng / tiền / độ trễ, và **không** có lần gọi thứ ba.
 
+> **Tóm gọn 1 câu:** Vòng lặp tự phục hồi phải có 4 trần (số vòng, tiền, thời gian, số lần gọi tool), dừng khi hết bất kỳ trần nào, hết ngân sách thì mở sự cố chứ không thử lại lặng lẽ.
+
 ---
 
 ## Q3. Secret của tôi bị in ra log khi agent chạy pipeline — xử lý thế nào? [→ §17.2 · §9.1 Anti-pattern 3]
@@ -79,6 +84,8 @@ Secret hay bị dán vào code cấu hình, nằm trong cấu hình riêng trên
 
 Quét toàn bộ log của 30 ngày gần nhất bằng các mẫu hình dạng khoá. Kết quả phải bằng 0. Khác 0 là sự cố dữ liệu, không phải việc dọn dẹp thường lệ.
 
+> **Tóm gọn 1 câu:** Secret chỉ được sống đúng một chỗ — kho quản lý chuyên dụng; cấp dạng token ngắn hạn qua biến môi trường, xoay vòng định kỳ, và quét log phải ra 0 kết quả.
+
 ---
 
 ## Q4. Job chạy định kỳ của tôi bị chạy trùng, deploy đè lên nhau — chặn kiểu gì? [→ §17.4 · §7 Scheduled Tasks]
@@ -93,7 +100,7 @@ Lịch (cron) chỉ nói *khi nào bắt đầu*, không nói *lần chạy trư
 
 **Làm gì**
 
-1. Khoá chống chạy trùng: `idempotency key = tên job + đầu kỳ`, ví dụ `nightly-e2e#2026-09-28`. Handler kiểm tra kho đã-xong trước khi hành động; mọi tác dụng phụ cũng ghi kèm khoá này.
+1. Khoá chống chạy trùng: `idempotency key = tên job + đầu kỳ` (idempotency key = "thẻ nhận dạng" để nhận ra hai lần chạy là cùng một việc; ví dụ `nightly-e2e#2026-09-28` nghĩa là bài test đêm của ngày 28-09), ví dụ `nightly-e2e#2026-09-28`. Handler kiểm tra kho đã-xong trước khi hành động; mọi tác dụng phụ cũng ghi kèm khoá này.
 2. Chính sách chồng lấn: `concurrencyPolicy: Forbid` — nếu lần chạy trước còn đang chạy thì lần này bỏ qua. Chỉ dùng `Replace` cho tác vụ đồng bộ dữ liệu đọc rẻ tiền.
 3. Đặt `activeDeadlineSeconds` và `startingDeadlineSeconds` để job kẹt không dồn đống, bị giết theo hạn và lần sau không gánh quá khứ.
 4. Cho phép bù lỡ (`failedJobsHistoryLimit: 3`) nhưng khoang window bị lỡ chỉ chạy lại nếu được đánh dấu rõ `backfill: true`.
@@ -103,6 +110,8 @@ Lịch (cron) chỉ nói *khi nào bắt đầu*, không nói *lần chạy trư
 **Kiểm tra**
 
 Kích hoạt thủ công cùng một job hai lần trong 5 giây. Lần đầu chạy, lần sau phải trả về `skipped`. Đổi ngày (qua kỳ mới) thì job phải chạy lại bình thường.
+
+> **Tóm gọn 1 câu:** Cron chỉ hẹn giờ, không biết lần trước xong chưa — chặn chạy trùng bằng idempotency key theo kỳ, cấm chồng lấn khi lần trước còn chạy, và đặt hạn chết để job kẹt không dồn đống.
 
 ---
 
@@ -129,6 +138,8 @@ Hai nguyên nhân độc lập cộng lại. Thứ nhất là pipeline quá dài
 **Kiểm tra**
 
 Chạy lại pipeline cũ 10 lần và đo thời gian trung vị. Dưới 10 phút là đạt. Song song, kiểm tra danh sách làn `flaky/` có ngắn lại sau mỗi lần sửa không.
+
+> **Tóm gọn 1 câu:** Pipeline chậm + test flaky giết chết niềm tin vào CI — đặt mốc dưới 10 phút, chạy song song có cache, tách làn riêng cho test flaky cho tới khi sửa xong.
 
 ---
 

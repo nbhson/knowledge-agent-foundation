@@ -1,14 +1,16 @@
 # ❓ FAQ — Build Context (Real Stories, Plain Language)
 
-If a question is unclear, read the section in `../README.md` (named in brackets).
+If a question is unclear, read the section in `../README.md` (named in brackets). Context = everything you put in the model's prompt before it answers.
 
 ---
 
 ## Q1. My search returns 10 good documents, I put all of them in the prompt — and the answer got *worse*. Why? [→ §1.2 Token Budget Allocation / §3.1 Why Compression Is Needed]
 
+This section explains the token budget: why stuffing more in makes answers worse, and how to split the window on purpose.
+
 **What you see**
 
-You built the obvious version: pull `top_k=100` documents from the vector store, glue on the **entire** chat history, and hand the result to the model. The prompt comes out at 100,000+ tokens. The model answers confidently, cites one document you never even retrieved, and ignores the document that actually answered the question. At $0.03 per 1K tokens, that single call costs about **$3**.
+You built the obvious version: pull `top_k=100` documents (keep the 100 best search matches) from the vector store, glue on the **entire** chat history, and hand the result to the model. The prompt comes out at 100,000+ tokens (tokens = the text units the model bills and reads by). The model answers confidently, cites one document you never even retrieved, and ignores the document that actually answered the question. At $0.03 per 1K tokens, that single call costs about **$3**.
 
 The numbers that explain it, straight from the source: 10 documents × 2,000 tokens each = **20,000 tokens** of raw context, against a budget of **8,000**. Twenty thousand does not fit into eight thousand. Something has to be cut, and if you did not choose what gets cut, the model chose by ignoring things.
 
@@ -18,10 +20,10 @@ A context window is a fixed tray with a few slots. Without a written split, the 
 
 **What to do**
 
-1. Reserve output space first. With `total_tokens=128000` and `reserve_output=4000`, only 124,000 remain for input.
+1. Reserve output space first. With `total_tokens=128000` and `reserve_output=4000` (tokens kept aside for the model's reply), only 124,000 remain for input.
 2. Write down a percentage split before you retrieve anything, then enforce it in code.
 3. Set a realistic `top_k` — 10, not 100 — and keep only the last 10 messages.
-4. Compress to a stated ratio instead of truncating blindly. Compression ratio = compressed size ÷ original size; aim for 0.4 here.
+4. Compress to a stated ratio instead of truncating blindly. Compression ratio = compressed size ÷ original size; aim for 0.4 (i.e. keep 40%).
 5. Stop the loop when the budget is spent. Do not "just add one more doc".
 
 > 📄 **Example code:** [`examples/01-q1-my-search-returns-10-good-documents-i.py`](examples/01-q1-my-search-returns-10-good-documents-i.py)
@@ -30,9 +32,13 @@ A context window is a fixed tray with a few slots. Without a written split, the 
 
 Run `budget.report()` and confirm each bar matches your intent. Run the compression step and print `Original: N chars / Compressed: M chars / Ratio`. The ratio should land at 40%, and total input should sit between 40% and 60% of the window. Then check the bill: 100K → 50K tokens should halve the per-query cost from ~$3 to ~$1.5 while accuracy moves from 50–60% up to 75–85%.
 
+> **One-line summary:** Split the token window on purpose (output first, then per-section budgets), keep `top_k` small, and compress to a target ratio — more context in often means worse answers out.
+
 ---
 
 ## Q2. The one document that actually answers the question is in the prompt, and the model still says "not found in the provided documents." [→ §1.4 "Lost in the Middle" Problem]
+
+This section explains where to place the key document so the model actually reads it.
 
 **What you see**
 
@@ -44,7 +50,7 @@ Large language models attend most strongly to the **beginning and the end** of t
 
 **What to do**
 
-1. Stop using retrieval order as prompt order. Re-rank first.
+1. Stop using retrieval order as prompt order. Re-rank first (sort documents by relevance again, with a dedicated step).
 2. Put the single most important document at the **beginning** and the second most important at the **end**.
 3. Fill the middle with lower-value material, where mistakes cost least.
 4. Repeat the key fact at a second strategic position instead of relying on one copy.
@@ -54,15 +60,19 @@ Large language models attend most strongly to the **beginning and the end** of t
 
 **Verify**
 
-Build the same prompt twice — once in retrieval order, once in the edge-loaded order — and ask 20 held-out questions. Record how many times each version cites the correct document. If the middle-loaded version wins, your re-ranking is not actually ranking. You can also move one known-critical document to the very end alone and confirm accuracy jumps before you change anything else.
+Build the same prompt twice — once in retrieval order, once in the edge-loaded order (key documents at the two edges) — and ask 20 held-out questions (questions kept aside for testing). Record how many times each version cites the correct document. If the middle-loaded version wins, your re-ranking is not actually ranking. You can also move one known-critical document to the very end alone and confirm accuracy jumps before you change anything else.
+
+> **One-line summary:** Order documents so the most important ones sit at the start and end of the prompt — the model reads the middle least.
 
 ---
 
 ## Q3. The API bill tripled and nobody knows which change helped. Where do I cut first? [→ §11.2 Cost Optimization Strategies / §11.1 Context Quality Metrics]
 
+This section gives four cost cuts, in order of impact, and how to confirm each one worked.
+
 **What you see**
 
-A support assistant runs ~10,000 queries a day. Each query re-embeds the query, re-searches the vector store, re-summarizes the same 20 documents, and calls the most expensive model available — even when the user only asked a one-line factual question. Your cache hit rate is `0.0%` because nobody built one. Roughly 1,000 wasted extra tokens per query is about **$300 a month** thrown away, and the growth is linear: twice the queries, twice the bill.
+A support assistant runs ~10,000 queries a day. Each query re-embeds the query (recomputes its vector), re-searches the vector store, re-summarizes the same 20 documents, and calls the most expensive model available — even when the user only asked a one-line factual question. Your cache hit rate is `0.0%` (share of queries answered from a saved result) because nobody built one. Roughly 1,000 wasted extra tokens per query is about **$300 a month** thrown away, and the growth is linear: twice the queries, twice the bill.
 
 **Why**
 
@@ -70,9 +80,9 @@ Context is the bulk of a retrieval-augmented generation (RAG) pipeline's cost, a
 
 **What to do**
 
-1. **Cache similar queries** with a 5-minute time-to-live (TTL) — the value is how long an entry stays valid. Target hit rate 40–60%; 80% is achievable on repetitive workloads.
-2. **Compress hard**: summarize conversation history after 10 turns, and use extractive summarization (picking sentences, no model call) for key facts. Target 60–80% size reduction.
-3. **Retrieve in two passes**: cheap embedding model first, then run the expensive reranker on only the top 20.
+1. **Cache similar queries** with a 5-minute time-to-live (TTL — the value is how long an entry stays valid). Target hit rate 40–60%; 80% is achievable on repetitive workloads.
+2. **Compress hard**: summarize conversation history after 10 turns, and use extractive summarization (picking existing sentences, no model call) for key facts. Target 60–80% size reduction.
+3. **Retrieve in two passes**: cheap embedding model first, then run the expensive reranker (a model that re-sorts results by true relevance) on only the top 20.
 4. **Route by tier**: simple questions to `gemma3:12b` (free locally via Ollama), complex questions to `claude-3.5`.
 
 > 📄 **Example code:** [`examples/03-q3-the-api-bill-tripled-and-nobody-knows.py`](examples/03-q3-the-api-bill-tripled-and-nobody-knows.py)
@@ -81,9 +91,13 @@ Context is the bulk of a retrieval-augmented generation (RAG) pipeline's cost, a
 
 Read the metrics report every week, not just average latency — P95 (the 95th percentile, meaning 95% of requests are faster than this) is where users actually feel pain. Confirm cache hit rate climbs above 40% and compression ratio stays at or below 0.4. Call `health_check()`: a hit rate of exactly `0.0%` returns status `cold_start`, which tells you the cache is wired up but never used.
 
+> **One-line summary:** Cache, compress, two-pass retrieval, and model routing together cut 60–80% of context cost — measure cache hit rate and compression ratio weekly to confirm.
+
 ---
 
 ## Q4. At message 25 the chatbot forgets what we were talking about — "and the validity period?" means nothing to it. [→ §8.4 Multi-turn Context Management / §3.4 SmartContextManager]
+
+This section explains how to keep long conversations coherent without blowing the token budget.
 
 **What you see**
 
@@ -91,11 +105,11 @@ You are 25 messages into a conversation about health insurance. The user asks "s
 
 **Why**
 
-A long conversation does not fit a finite window, and a naive truncation throws away the *beginning* of the conversation — which is exactly where the topic was named. The reference implementation in the source (Claude Code's leaked context manager) compresses instead of truncating: when messages exceed 20, everything older than the last 10 becomes a summary, and decisions are kept separately.
+A long conversation does not fit a finite window, and a naive truncation (just cutting the oldest messages) throws away the *beginning* of the conversation — which is exactly where the topic was named. The reference implementation in the source (Claude Code's leaked context manager) compresses instead of truncating: when messages exceed 20, everything older than the last 10 becomes a summary, and decisions are kept separately.
 
 **What to do**
 
-1. Keep the last 10 messages verbatim — that is recent context.
+1. Keep the last 10 messages verbatim (word-for-word) — that is recent context.
 2. Compress messages 1–20 into one summary once you pass the threshold (`summary_threshold=20`).
 3. Extract **key facts** — decisions, figures, preferences — into their own small block and put them first, because they are both cheap and the most important.
 4. Layer by priority: system → task → domain → history → immediate. When full, delete from the bottom up. Never delete the system layer.
@@ -107,13 +121,17 @@ A long conversation does not fit a finite window, and a naive truncation throws 
 
 Run a 40-message scripted conversation. Assert that after each turn the built context contains the extracted key facts, contains the last 10 messages verbatim, and stays inside `max_tokens`. Then test the real sentence: ask "what is the validity period?" without naming the topic. If the model cannot answer, the key-facts block is missing something.
 
+> **One-line summary:** Compress old messages into a summary, keep a small "key facts" block at the top, and keep the last 10 messages verbatim — then the topic survives long conversations.
+
 ---
 
 ## Q5. I only found out my context was broken after paying for the model call. Can I check it first? [→ §10. Context Validation & Testing]
 
+This section explains how to validate the context before it costs money, and how to wire that into CI.
+
 **What you see**
 
-Your code builds a context, then calls the model. No checks. Once you scale up you hit two failure modes: an `OVERFLOW` error returned by the API after the request is already billed, and worse — a request that succeeds with 12 documents where 8 are irrelevant, so you get a confident, wrong answer and pay for both the input tokens and the output tokens.
+Your code builds a context, then calls the model. No checks. Once you scale up you hit two failure modes: an `OVERFLOW` error returned by the API (the prompt exceeded the window size) after the request is already billed, and worse — a request that succeeds with 12 documents where 8 are irrelevant, so you get a confident, wrong answer and pay for both the input tokens and the output tokens.
 
 **Why**
 
@@ -124,14 +142,16 @@ Validation was never a separate step, so every defect surfaced downstream, where
 1. Validate the context *before* the model call, every time. Never trust it without checking.
 2. Fail hard on `OVERFLOW` (token count above 128,000) and warn on `NEAR_OVERFLOW` (above 90% of budget).
 3. Require the mandatory sections — `["system", "query"]` — and error on a missing one.
-4. Warn when any document scores below `min_relevance_score = 0.5`, and when data is older than `max_context_age_hours = 24`.
-5. Auto-fix instead of failing: overflow triggers hierarchical summarization, a missing system section gets a default header.
+4. Warn when any document scores below `min_relevance_score = 0.5` (its relevance to the question), and when data is older than `max_context_age_hours = 24`.
+5. Auto-fix instead of failing: overflow triggers hierarchical summarization (compress in layers), a missing system section gets a default header.
 
 > 📄 **Example code:** [`examples/05-q5-i-only-found-out-my-context-was.py`](examples/05-q5-i-only-found-out-my-context-was.py)
 
 **Verify**
 
-Put it in continuous integration / continuous delivery (CI/CD) so it runs on every code change. Keep these five assertions green: `test_context_fits_budget`, `test_context_includes_relevant_docs`, `test_context_budget_allocation` (usage between 10% and 90%), `test_context_with_large_query`, and `test_cache_hit`. Add one alert for sustained usage above 80% of budget — that is the early warning before the `OVERFLOW` error starts.
+Put it in continuous integration / continuous delivery (CI/CD — the pipeline that runs checks on every code change) so it runs on every commit. Keep these five assertions green: `test_context_fits_budget`, `test_context_includes_relevant_docs`, `test_context_budget_allocation` (usage between 10% and 90%), `test_context_with_large_query`, and `test_cache_hit`. Add one alert for sustained usage above 80% of budget — that is the early warning before the `OVERFLOW` error starts.
+
+> **One-line summary:** Validate the context before every model call and keep the five checks green in CI — catching overflow and junk documents before the call is free, catching them after is billed.
 
 ---
 

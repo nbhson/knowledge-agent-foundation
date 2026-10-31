@@ -22,13 +22,17 @@ You have a Knowledge Graph with 10,000 nodes. The user asks: *"Find the person m
 
 - **Graph traversal**: find the person with the same number of neighbors? That is not quite enough — Alice manages 5 people, Bob also manages 5 people, but they work with completely different teams.
 - **Text embedding**: embed Alice's `description` and compare? You ignore the whole graph structure.
-- **Graph embedding**: each node becomes a vector **based on its position in the graph** → `cosine(alice_vec, bob_vec)` is high if they have similar roles/structures.
+- **Graph embedding**: each node becomes a vector **based on its position in the graph** → `cosine(alice_vec, bob_vec)` is high if they have similar roles/structures. (cosine similarity = a score for "how much do these two vectors point the same way", from 0 to 1; 1 = identical direction.)
 
 **Graph Embeddings turn the shape of the graph into vectors — so you can use fast search while still keeping the relationship info.**
+
+> **One-line summary:** This section shows why walking the graph or reading text alone is not enough — graph embeddings turn graph position into vectors, so "who is similar to Alice" becomes a fast vector lookup.
 
 ### Why Do Graph Embeddings Matter?
 
 > *"The graph tells you WHO is connected. Embeddings tell you WHO IS SIMILAR without being directly connected."*
+
+How to read this table: each row is one published study. **#** = row number, **Source** = who published the finding, **Finding** = the measured result in plain words. For instance, row 1 says adding graph embeddings cut link-prediction errors noticeably.
 
 | # | Source | Finding |
 |---|-------|-----------|
@@ -36,9 +40,15 @@ You have a Knowledge Graph with 10,000 nodes. The user asks: *"Find the person m
 | 2 | **Microsoft GraphRAG (2024)** | Combining text embeddings + graph embeddings boosts **retrieval precision by 18%** |
 | 3 | **OGB Benchmark (2024)** | GraphSAGE embeddings + ANN search are **50× faster** than pure traversal for k-NN queries on 1M nodes |
 
+(link prediction = guessing a missing edge, e.g. "Alice will join project X"; OGB = Open Graph Benchmark, a public test set for graph models; ANN = Approximate Nearest Neighbor, fast "find the closest vectors" search; k-NN = "find the k closest items".)
+
+> **One-line summary:** Published benchmarks agree: graph embeddings make prediction more accurate and similarity search much faster on large graphs.
+
 ---
 
 ## Overview
+
+This diagram shows the big picture: one knowledge graph feeds two kinds of embeddings, and you can mix them.
 
 ```
 Knowledge Graph
@@ -53,9 +63,15 @@ Knowledge Graph
            The best of both worlds
 ```
 
+(The last line: the final score blends the text score and the graph score, with α = a mixing weight between 0 and 1 that you pick — α = 0.5 gives them equal say. Vector DB = a database built for nearest-vector search.)
+
+> **One-line summary:** Text embeddings capture what a node says; graph embeddings capture where it sits; hybrid search blends both scores.
+
 ---
 
 ## Contents
+
+How to read this table: each row is one section of this file. **#** = order, **Topic** = the clickable section title, **Description** = what that section teaches you. For instance, row 2 covers random-walk methods like Node2Vec.
 
 | # | Topic | Description |
 |---|--------|-------|
@@ -64,6 +80,8 @@ Knowledge Graph
 | 3 | [GNN Embeddings](#3-gnn-based-embeddings-graphsage-gat) | GraphSAGE, GAT |
 | 4 | [KG Embeddings](#4-knowledge-graph-embeddings-transe-rotate) | TransE, RotatE for KG completion, TKGE, Graph Transformers |
 | 5 | [Hybrid Search](#5-hybrid-search-vector--graph) | Combining vector + graph (RRF, weighted) |
+
+> **One-line summary:** The file moves from the definition, through four families of methods, to hybrid search that combines them.
 
 ---
 
@@ -79,6 +97,8 @@ Knowledge Graph
 **Analogies to understand it:**
 - **Graph = city map**: graph embedding = GPS coordinates (latitude, longitude) — each city (node) has coordinates, and cities close on the map have close coordinates
 - **Graph embedding = photo portrait**: each node is "photographed" as a vector — clearly showing which features matter (position, role, community)
+
+> **One-line summary:** A graph embedding is a list of numbers per node, arranged so "close in the graph" or "same role" means "close in the vector space".
 
 ### 1.1 Intuition
 
@@ -98,6 +118,8 @@ Small distance in vector space = Similar role/structure in the graph
 
 **Why is this harder than regular text embedding?** Text embedding only needs to understand **content** (Alice = "CTO" "manages"). Graph embedding needs to understand **position in the structure** too (Alice sits in a "central" position connecting many other nodes).
 
+> **One-line summary:** The goal is a function that maps each node to a vector; it is harder than text embedding because it must encode structure, not just content.
+
 ### 1.2 Classification
 
 ```
@@ -111,9 +133,15 @@ Small distance in vector space = Similar role/structure in the graph
 └──────────────────────┴──────────────────────┴───────────────────────────────┘
 ```
 
+How to read it: each row is one method family. **Type** = the method name, **Needs Training?** = what data you train it on (Unsupervised = no labels; Supervised = needs labeled examples; KG triples = needs (node, relation, node) facts), **Best For** = the task it fits. For instance, Node2Vec needs no labels and suits clustering.
+
+> **One-line summary:** There are four method families — random-walk, GNN-based, KG-specific, and hybrid — and the right one depends on your task and training data.
+
 ---
 
 ## 2. Shallow Embeddings: Node2Vec, DeepWalk
+
+This section explains the "random walk" family: what it is, how it works, and when to pick it.
 
 > **📌 Core Concept:**
 > **Random Walk** = walking randomly through a graph — each step picks a random neighbor to move to.
@@ -147,6 +175,8 @@ Step 2: Treat each walk as a "sentence", each node as a "word"
 Result: Nodes that often "appear together on random paths" → close vectors
 ```
 
+> **One-line summary:** DeepWalk treats random walks as sentences and nodes as words, then lets Word2Vec place frequently co-occurring nodes close together.
+
 ### 2.2 Node2Vec — Biased Random Walks (added control)
 
 > **What's new compared to DeepWalk:** adds two parameters `p` and `q` to **control the direction** of the walk — instead of walking purely at random, you decide whether to "go far" or "stay close".
@@ -160,7 +190,11 @@ Result: Nodes that often "appear together on random paths" → close vectors
 
 </details>
 
+> **One-line summary:** Node2Vec is DeepWalk plus two knobs (p, q) that bias walks toward breadth-first or depth-first behavior, giving you control over what "similar" means.
+
 ### 2.3 When to Use Node2Vec?
+
+How to read this table: each row is one situation you might be in. **Situation** = your case, **Use it?** = ✅ yes or ❌ no, **Reason** = why. For instance, row 2 says: if your graph keeps growing with new nodes, skip Node2Vec.
 
 | Situation | Use it? | Reason |
 |-----------|-------|-------|
@@ -169,9 +203,15 @@ Result: Nodes that often "appear together on random paths" → close vectors
 | Need edge features / node features | ❌ | Node2Vec only uses structure — use GNNs |
 | Clustering / community detection | ✅ | Embeddings reflect community structure well |
 
+(inductive = works on nodes it never saw during training; the opposite, transductive = only works on the exact nodes it was trained on.)
+
+> **One-line summary:** Use Node2Vec for small, fixed graphs and clustering; switch to a GNN when you have new nodes or node/edge features.
+
 ---
 
 ## 3. GNN-Based Embeddings: GraphSAGE, GAT
+
+This section covers the GNN family: models that compute embeddings from neighbors with a learned function, so new nodes need no retraining.
 
 > **📌 Core Concept:**
 > **Problem:** Node2Vec has to **retrain everything** when a new node appears (because each node has its own vector).
@@ -208,6 +248,10 @@ K layers = K rounds of "asking friends" — the final node knows information K h
   Layer 3: knows friends of friends of friends (3 hops)
 ```
 
+> **One-line summary:** GraphSAGE learns one "combine your friends' information" function, so any node — even a brand-new one — gets an embedding by just running that function.
+
+(hop = one step along an edge; "2 hops away" = a friend of a friend.)
+
 > 📄 **Example code:** [`examples/03-3-1-graphsage-inductive-node-embeddings.py`](examples/03-3-1-graphsage-inductive-node-embeddings.py)
 
 ### 3.2 GAT — Graph Attention Networks
@@ -233,6 +277,8 @@ Concrete example:
   ATTENTION (GAT):       Bob contributes 83% + Dave contributes 17%  ← learned "MANAGES matters more than KNOWS"
 ```
 
+> **One-line summary:** GAT upgrades the plain average into learned weights, so each node decides which of its neighbors should count more.
+
 <details>
 <summary>Python Code — GraphSAGE with PyG (Click to view)</summary>
 
@@ -241,6 +287,8 @@ Concrete example:
 </details>
 
 ### 3.3 Comparison
+
+How to read it: each row compares the three methods on one property. For instance, "Inductive?" asks whether the method can embed a node it never saw in training.
 
 ```
 ┌─────────────────┬──────────────────┬──────────────────┬──────────────────────┐
@@ -255,9 +303,15 @@ Concrete example:
 └─────────────────┴──────────────────┴──────────────────┴──────────────────────┘
 ```
 
+(O(E) = work grows with the number of edges E, not the number of node pairs — that is why it scales. O(walks × len) = work grows with how many walks you run and how long each is.)
+
+> **One-line summary:** Node2Vec suits small fixed graphs and clustering; GraphSAGE handles new nodes; GAT adds learned neighbor importance at a small extra cost.
+
 ---
 
 ## 4. Knowledge Graph Embeddings: TransE, RotatE
+
+This section covers embeddings that learn nodes AND relations together, built to predict missing links in a knowledge graph.
 
 > **📌 Core Concept:**
 > **KG Embedding** differs from Node2Vec/GNN in that it learns **nodes AND relations together** — the goal is **link prediction**: predicting missing relations.
@@ -267,6 +321,8 @@ Concrete example:
 > - **RotatE = rotation**: a relation is an "angle" — rotate Alice's vector by that angle to get Phoenix's vector. Makes sense for symmetric relations like "married" (rotate 180°).
 
 KG embeddings learn **both nodes and relations** together — to do **link prediction**: `(Alice, WORKS_ON, ?)` → predict which project.
+
+> **One-line summary:** Unlike the earlier methods, KG embeddings give relations their own vectors, so you can score and predict missing triples like (Alice, WORKS_ON, ?).
 
 ### 4.1 TransE — Translation Principle
 
@@ -292,6 +348,8 @@ Score: ||h + r - t|| → low = correct triple, high = wrong
 
 **Everyday example:** you have a formula "city + direction = destination". `Hanoi + North = ThaiNguyen` (correct), `Hanoi + North = SaiGon` (wrong — the vector is too far). TransE learns these vectors from data to predict a plausible destination for a new relation.
 
+> **One-line summary:** TransE treats each relation as a direction: head vector + relation vector should land on the tail vector, so wrong triples score badly.
+
 ### 4.2 RotatE — Rotation in Complex Space
 
 > **Idea:** instead of a relation being a "translation", RotatE treats a relation as a **rotation** in the complex plane. Each relation is a rotation angle: rotate vector `h` by that angle → lands near `t`.
@@ -307,6 +365,8 @@ Advantage: models symmetry, inversion, composition
 ```
 
 **Everyday example:** the "married" relation is like a **180° turn**: A turns half a circle to reach B, and B turns half a circle to reach A (symmetric). TransE can't handle this well (because `A + r = B` doesn't imply `B + r = A`), but RotatE can.
+
+> **One-line summary:** RotatE treats relations as rotations in complex space, which lets it model symmetric and reversible relations that TransE cannot.
 
 <details>
 <summary>Python Code — TransE Training Loop (Click to view)</summary>
@@ -333,6 +393,8 @@ Advantage: models symmetry, inversion, composition
 >
 > **When do you need this?** Only when your graph has a time column and the questions depend on the moment (recommendations, service logs, news, work history). If the graph isn't temporal, don't add the complexity.
 
+> **One-line summary:** TKGE adds a timestamp to every triple, so you can ask "was this still true at date X?" — only worth it if your questions depend on time.
+
 ### 4.4 Graph Transformers (GTs) — The Next Generation
 
 > **📌 Core Concept:**
@@ -344,9 +406,13 @@ Advantage: models symmetry, inversion, composition
 >
 > **When to (not yet) use it:** medium-sized graphs, graphs where long paths matter, need SOTA accuracy → pick GTs. Graphs of millions of nodes → message-passing GNNs still scale more easily. These are computational details belonging to Module 07 — in this module you just need to know this **"new-generation" family of embeddings exists**.
 
+> **One-line summary:** Graph Transformers let every node look at every other node at once — more accurate on long-range patterns, but memory-hungry on big graphs.
+
 ---
 
 ## 5. Hybrid Search: Vector + Graph
+
+This section explains how to combine text-embedding scores and graph-embedding scores into one ranking.
 
 Graph embeddings don't replace text embeddings — they **complement** each other.
 
@@ -359,7 +425,13 @@ Graph embeddings don't replace text embeddings — they **complement** each othe
 
 </details>
 
+> **One-line summary:** Fusion means merging two ranked lists (text-based and graph-based) into one — either by a weighted average of scores or by RRF, which rewards items that rank well in both lists.
+
+(RRF = Reciprocal Rank Fusion — a formula that merges ranked lists using only positions, not raw scores.)
+
 ### 5.2 When to Use Hybrid?
+
+How to read it: each row is a type of question. **Query type** = what the user asks, **Best α** = the weight to give the text score (α = 1 means text only, α = 0 means graph only), **Strategy** = the plain-language description. For instance, "find this exact passage" → rely mostly on text (α = 0.8).
 
 ```
 Query type                        │ Best α  │ Strategy
@@ -370,9 +442,13 @@ Global summary (synthesis)         │ 0.2     │ Graph communities
 Hybrid (default)                  │ 0.5-0.6 │ Balanced
 ```
 
+> **One-line summary:** Pick the text/graph mix by question type: exact facts lean on text, multi-hop and summary questions lean on the graph.
+
 ---
 
 ## 6. Hands-On Labs
+
+These labs let you practice the methods above on small graphs, so the ideas become concrete.
 
 ### Lab 1: Node2Vec from Scratch
 
@@ -380,11 +456,17 @@ Hybrid (default)                  │ 0.5-0.6 │ Balanced
 2. Run `deepwalk_embeddings()` with `num_walks=10, walk_length=20`
 3. Visualize the embeddings with t-SNE, observe the clustering
 
+(t-SNE = a plotting technique that squeezes high-dimensional vectors onto a 2D chart so you can see clusters.)
+
+> **One-line summary:** Build a small graph, run random walks, and see the clusters appear when you plot the vectors.
+
 ### Lab 2: Compare Node2Vec vs GraphSAGE
 
 1. On the same graph, create embeddings with both methods
 2. Measure link prediction accuracy: mask 20% of edges, predict them back
 3. Compare accuracy and runtime
+
+> **One-line summary:** On the same graph, check whether the GNN's extra power beats Node2Vec's simplicity — measure, don't assume.
 
 ### Lab 3: Hybrid Search Benchmark
 
@@ -392,9 +474,15 @@ Hybrid (default)                  │ 0.5-0.6 │ Balanced
 2. Run 3 modes: text-only (α=1.0), graph-only (α=0.0), hybrid (α=0.6)
 3. Measure precision@5 for each query type
 
+(precision@5 = of the top 5 results returned, how many are actually correct.)
+
+> **One-line summary:** Benchmark text-only, graph-only, and hybrid search on two question types to see where the blend actually wins.
+
 ---
 
 ## References
+
+> **One-line summary:** The original papers behind every method in this module — start with Node2Vec (2016) and GraphSAGE (2017) if you read only two.
 
 - Grover & Leskovec — *Node2Vec: Scalable Feature Learning for Networks* (KDD 2016)
 - Hamilton et al. — *Inductive Representation Learning on Large Graphs (GraphSAGE)* (NeurIPS 2017)
@@ -418,6 +506,8 @@ Microsoft GraphRAG (2024-2025): uses knowledge graphs to enhance RAG. Complex (m
 - **Knowledge Graph Market**: $1.48B (2025) → $2.04B (2026). GraphRAG shifting from "enterprise luxury" → production baseline.
 
 Ref: https://microsoft.github.io/graphrag/
+
+> **One-line summary:** The graph-RAG field is moving fast toward cheaper, incremental indexing — and graph embeddings are part of that retrieval stack.
 
 ---
 

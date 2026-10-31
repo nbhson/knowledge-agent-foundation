@@ -14,6 +14,8 @@ Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
 Bảng tổng hợp 7 pattern, mỗi dòng có 3 con số: chu kỳ chạy, mức khởi đầu, chi phí token.
 
+Cách đọc bảng: mỗi dòng là một pattern (một kiểu loop). Cột `Cadence` = chu kỳ chạy (`1d` = mỗi ngày một lần, `2h` = mỗi 2 giờ, `5–15m` = mỗi 5–15 phút); cột `Level` = mức quyền khởi đầu; cột `Token cost` = mức tốn token.
+
 | Pattern | Cadence | Level | Token cost |
 |---|---|---|---|
 | Daily Triage | 1d–2h | L1 report | Low |
@@ -38,7 +40,9 @@ Mỗi pattern giải quyết đúng một loại đau khác nhau. Bật sai loop
 
 **Kiểm tra**
 
-Sau 1 tuần, mở `STATE.md` phải thấy mục `High Priority` và `Watch List` có nội dung thật; câu hỏi "lúc này cái gì đang cháy?" phải trả lời được trong 1 lần đọc, không phải mở 4 tab Slack/GitHub. Chạy `npx @cobusgreyling/loop audit . --suggest` xem nó còn ý kiến gì chưa xử lý.
+Sau 1 tuần, mở `STATE.md` phải thấy mục `High Priority` và `Watch List` có nội dung thật; câu hỏi "lúc này cái gì đang cháy?" phải trả lời được trong 1 lần đọc, không phải mở 4 tab Slack/GitHub. Chạy `npx @cobusgreyling/loop audit . --suggest` — audit = lệnh tự soát cấu hình của bạn và gợi ý chỗ chưa ổn — xem nó còn ý kiến gì chưa xử lý.
+
+> **Tóm gọn 1 câu:** Sáng thứ hai chọn loop theo đúng "cái đang đau" (Morning chaos → Daily Triage + Issue Triage), chạy report-only một tuần trước, và chưa bao giờ nhảy thẳng L3.
 
 ---
 
@@ -47,6 +51,8 @@ Sau 1 tuần, mở `STATE.md` phải thấy mục `High Priority` và `Watch Lis
 **Bạn sẽ thấy**
 
 Bảng "Cost-aware Picks" liệt kê tình huống nên chọn gì và **nên tránh gì cho tới khi có budget**. Với khoản nhỏ, các loop chạy 5 phút một lần là cái tên đầu tiên bị gạch.
+
+Cách đọc bảng: cột `Nên chọn` là pattern nên bật ngay trong tình huống đó; cột `Nên tránh` là pattern tốn token quá nhiều so với ngân sách — bỏ qua cho tới khi có tiền.
 
 | Tình huống | Nên chọn | Nên tránh |
 |---|---|---|
@@ -72,6 +78,8 @@ Chi phí không nằm ở số lần chạy mà ở việc loop có tự sửa h
 
 Đọc lại con số "Tokens/run" của từng pattern và cộng lại theo chu kỳ bạn định đặt. Nếu tổng vượt trần 100k/ngày thì phải hoặc giãn chu kỳ, hoặc hạ một loop xuống L1 — không được giữ nguyên số tiền rồi chỉ hy vọng loop "nhiều khi chạy không thấy gì".
 
+> **Tóm gọn 1 câu:** Với trần 100k/ngày: giữ Daily Triage ở L1, nhịp 1 ngày; muốn CI Sweeper thì bắt buộc giãn chu kỳ lên ≥15 phút và bật thoát sớm.
+
 ---
 
 ### Q3. Tôi bật cả CI Sweeper và PR Babysitter, hai cái cùng sửa một nhánh thì sao? [→ Overlap Rules]
@@ -79,6 +87,8 @@ Chi phí không nằm ở số lần chạy mà ở việc loop có tự sửa h
 **Bạn sẽ thấy**
 
 Hai loop mở hai worktree trên cùng một nhánh, đẩy hai commit sửa cùng một dòng, rồi bạn phải tự ghép tay. Hoặc tệ hơn: Dependency Sweeper nâng version giữa lúc CI Sweeper đang sửa test → CI đỏ vì lý do hoàn toàn khác.
+
+Cách đọc bảng: mỗi dòng là một cặp loop hay cùng đụng nhau; cột `Luật phải tuân` nói rõ ai được làm gì và khi nào phải nhường.
 
 | Cặp loop | Luật phải tuân |
 |---|---|
@@ -101,6 +111,8 @@ Các pattern được thiết kế để chạy **cùng nhau**, không phải đ
 **Kiểm tra**
 
 Đếm số worktree mở cùng lúc: mỗi nhánh chỉ nên có một chủ. Xem lịch chạy có chồng nhau giữa CI Sweeper (15m) và PR Babysitter (10–15m) trên cùng một nhánh không; nếu có thì dời lịch hoặc tắt bớt một cái.
+
+> **Tóm gọn 1 câu:** Hai loop cùng ghi một nhánh thì "ai thắng" phụ thuộc thứ tự chạy, tức ngẫu nhiên — hãy gán mỗi loại việc một chủ duy nhất và đặt lịch lệch nhau.
 
 ---
 
@@ -126,6 +138,8 @@ Mỗi loop thêm một lớp trạng thái, một bộ skill và một lịch ch
 **Kiểm tra**
 
 Sau một tuần, đo bằng đúng ba câu hỏi trong README: bao lâu từ lúc "có thứ gì hỏng" đến lúc người ta biết; có bao nhiêu buổi sáng `STATE.md` khớp với những gì bạn tự tìm được; số tin nhắn kiểu "cái gì đang cháy?" có giảm không. Nếu cả ba đều tệ thì loop chưa đáng tin — dừng, sửa cấu hình, đừng bật thêm loop thứ hai.
+
+> **Tóm gọn 1 câu:** Người mới chỉ nên chạy đúng một pattern — Daily Triage ở L1 — trong một tuần; thêm loop thứ hai chỉ khi cái đầu đã cho kết quả thật và đáng tin.
 
 ---
 
@@ -162,6 +176,8 @@ Last run: 2026-06-09 08:15 UTC
 
 Đếm số mục trong `High Priority` sau mỗi tuần: phải là con số nhỏ, vài chục là nhiều. Mỗi mục ở đó phải trả lời được "lần chạy gần nhất loop đã làm gì với nó?" mà không cần đọc log.
 
+> **Tóm gọn 1 câu:** State phình vì mục đã xong không bị xoá — prune (dọn) mục đã merge/đóng sau mỗi lần chạy để loop đọc ít context thừa và bạn thấy nổi việc hôm nay.
+
 ---
 
 ### Q6. Sau khi bật auto-fix, loop sửa nhầm thứ không quan trọng — chặn thế nào? [→ Verification Strategy]
@@ -185,6 +201,8 @@ Pattern này chia 3 giai đoạn. Ở giai đoạn 1 chỉ có báo cáo, ngư�
 **Kiểm tra**
 
 Mỗi lần chạy ở giai đoạn 2+ phải thấy **hai** dấu vết riêng biệt: một bản sửa, một kết luận kiểm tra. Thiếu một trong hai nghĩa là chuỗi bị cắt. Ngoài ra loop phải báo riêng những mục nó **không** tự quyết được.
+
+> **Tóm gọn 1 câu:** Chặn sửa sai bằng report-only trước, rồi luôn đi đủ chuỗi worktree → implementer → verifier: người viết không bao giờ tự đánh dấu done.
 
 ---
 
@@ -212,6 +230,8 @@ Triage chỉ bắt được những gì **nằm trong cửa sổ nó đọc** �
 
 Cố tình làm đỏ `main` lúc 3h sáng, rồi xem lần chạy kế tiếp có ghi nó vào `High Priority` không. Lặp lại thử ở giờ thường để chắc chắn đường sự kiện cũng hoạt động, không chỉ đường lịch.
 
+> **Tóm gọn 1 câu:** Triage chỉ thấy việc nằm trong cửa sổ 24 giờ nó đọc — bật chạy theo sự kiện và tách hai lịch trong ngày để không còn khe đêm nào bị bỏ sót.
+
 ---
 
 ### Q8. Một ngày Daily Triage tốn bao nhiêu token, và chạy 2 giờ một lần có chịu nổi không? [→ Cost Profile]
@@ -219,6 +239,8 @@ Cố tình làm đỏ `main` lúc 3h sáng, rồi xem lần chạy kế tiếp c
 **Bạn sẽ thấy**
 
 Bảng chi phí có 3 dòng, mỗi lần chạy lặp lại tốn khoảng 50k token ở mức L1 — chạy 12 lần một ngày là 600k, vượt xa trần 100k khuyến nghị.
+
+Cách đọc bảng: đây là chi phí của **một lần chạy** Daily Triage theo tình huống — "không có việc" nghĩa là quét xong không thấy gì để làm.
 
 | Tình huống | Token mỗi lần chạy |
 |---|---|
@@ -244,6 +266,8 @@ Cadence và mức quyền là hai thứ nhân với nhau trong chi phí. Chính 
 **Kiểm tra**
 
 Sau 7 ngày, lấy tổng token thực tế chia cho số lần chạy thật. Nếu bình quân vượt ~50k mà lý do không phải "không có việc", hãy xem lại xem có vô tình bật bước sửa không.
+
+> **Tóm gọn 1 câu:** Chi phí = giá một lần chạy × số lần chạy; chạy 2 giờ một lần chỉ chịu nổi nếu giữ nguyên L1 (~5k cho lần rỗng, 50k cho lần đầy).
 
 ---
 
@@ -276,6 +300,8 @@ Có những issue **không đủ dữ liệu để kiểm chứng kết quả**:
 
 Đọc lại các mục `[Mơ hồ]`: mỗi mục phải có câu hỏi đã hỏi thật trong issue, và ngày người báo lại. Mục nào đứng yên quá 3 ngày thì đưa sang hàng chờ người xử lý.
 
+> **Tóm gọn 1 câu:** Issue mơ hồ thì loop hỏi thêm ngay trong issue hoặc chuyển người (escalate) — tuyệt đối không tự điền chỗ trống bằng phỏng đoán.
+
 ---
 
 ### Q10. Issue trùng nhau chồng lên nhau và issue cũ đã không ai đụng tới — xử lý sao? [→ State / Classify]
@@ -290,16 +316,20 @@ Phân loại `duplicate` và `stale` chính là hai nhãn để loop cắt tải
 
 **Làm gì**
 
+Cách đọc các bước: mục tiêu là mỗi issue ra khỏi lần chạy đều có **một nhãn** (bug / feature / câu hỏi / trùng / cũ — đây là năm nhãn được nhắc tới ở trên) và **bằng chứng** kèm theo.
+
 1. Với mỗi issue mới/cập nhật trong 24 giờ: gắn một nhãn trong năm nhãn trên.
 2. Ghi **bằng chứng** cho mỗi kết luận: link issue và lý do phân loại. Không có bằng chứng thì coi như chưa phân loại.
 3. Ưu tiên theo mức độ nghiêm trọng, và giới hạn số issue xử lý trong một lần chạy.
-3. Đưa issue ồn (Dependabot, câu hỏi lặp) vào khu vực bỏ qua để lần sau khỏi đọc lại.
+4. Đưa issue ồn (Dependabot, câu hỏi lặp) vào khu vực bỏ qua để lần sau khỏi đọc lại.
 
 > 📄 **Code ví dụ:** [`examples/07-q10-issue-trung-nhau-chong-len-nhau-va.sh`](examples/07-q10-issue-trung-nhau-chong-len-nhau-va.sh)
 
 **Kiểm tra**
 
 Đo tỷ lệ phân loại đúng: phần lớn mục không bị phải làm lại ở lần chạy sau. Thêm một mốc thời gian: từ lúc issue mới xuất hiện tới lúc nó có nhãn + hành động đề xuất phải tính được bằng giờ, không phải bằng ngày.
+
+> **Tóm gọn 1 câu:** Nhãn `duplicate`/`stale` cộng với bằng chứng rõ ràng chính là cách loop cắt tải cho con người và giữ danh sách issue nhỏ, không phình mỗi ngày.
 
 ---
 
@@ -323,6 +353,8 @@ Vì một phân loại sai sẽ thành một sửa sai, mà lúc đó bạn ph�
 
 Chạy thử một tuần rồi kiểm tra: `git log` không có commit nào do loop tạo, nhưng `issue-triage-state.md` lại có mục `Needs Human` có nội dung thật. Trong state phải tồn tại cả mục "chờ người" — nếu mục đó luôn rỗng thì loop đang âm thầm tự quyết, sai thiết kế.
 
+> **Tóm gọn 1 câu:** Pattern này được thiết kế để chỉ phân loại và gợi ý (L1 propose-only), không bao giờ sửa code — việc thực thi thuộc về loop chuyên trách phía sau trong chuỗi.
+
 ---
 
 ## ci-sweeper.md
@@ -330,6 +362,8 @@ Chạy thử một tuần rồi kiểm tra: `git log` không có commit nào do 
 ### Q12. Bật CI Sweeper 5 phút một lần, hoá đơn token nhảy dựng đứng — làm sao? [→ Cost Profile]
 
 **Bạn sẽ thấy**
+
+Cách đọc bảng: chi phí **một lần chạy** CI Sweeper theo tình huống — lưu ý dòng đầu là bắt buộc: CI xanh thì dừng ngay, không được chạy tiếp.
 
 | Tình huống | Token mỗi lần chạy |
 |---|---|
@@ -345,7 +379,7 @@ Chu kỳ 15 phút là 96 lần chạy mỗi ngày. Nếu mỗi lần đều đi 
 
 **Làm gì**
 
-1. CI đang đỏ thì kéo chu kỳ lên **15 phút trở lý**; 5 phút chỉ dành cho lúc đang giao hàng.
+1. CI đang đỏ thì kéo chu kỳ lên **15 phút trở lên**; 5 phút chỉ dành cho lúc đang giao hàng.
 2. Thay vòng quét định kỳ, dùng GitHub Action bắn sự kiện `workflow_run` khi có job fail — nhanh hơn polling (hỏi thăm định kỳ).
 3. Về đêm không ai trông thì giãn còn 30–60 phút.
 4. Tạm dừng loop khi vượt số failure xử lý được trong một lần chạy, rồi gộp bản sửa thành đợt.
@@ -355,6 +389,8 @@ Chu kỳ 15 phút là 96 lần chạy mỗi ngày. Nếu mỗi lần đều đi 
 **Kiểm tra**
 
 Đo tỉ lệ lần chạy rỗng: ở lúc CI xanh phải gần 5k. Đặt cảnh báo khi vượt 1 triệu token/ngày. Đo cả thời gian trung bình từ lúc CI đỏ tới bản sửa đầu tiên — đó mới là chỉ số cho biết loop có đáng tiền không.
+
+> **Tóm gọn 1 câu:** CI Sweeper 5 phút/lần là pattern đắt nhất nhóm — luôn bật thoát sớm (CI xanh = dừng ngay), giãn chu kỳ khi không cần dồn dập, và có trần token/ngày.
 
 ---
 
@@ -387,6 +423,8 @@ Quy tắc nhận diện rất cụ thể và rất dễ kiểm tra: **nếu cùn
 
 So sánh hash commit giữa lần đỏ đầu và lần xanh sau: nếu không đổi, loop phải ghi "flake". Trong 7 ngày, không được có vụ nào đề xuất sửa cho một job đã tự xanh mà không đổi code.
 
+> **Tóm gọn 1 câu:** Test đỏ rồi xanh lại khi code không đổi = flake — đưa vào Watch và không auto-fix, vì sửa bừa còn tệ hơn để yên.
+
 ---
 
 ### Q14. Loop đã thử sửa 3 lần vẫn đỏ — có nên thử lần thứ 4? [→ loop-guard / Human Handoff]
@@ -410,6 +448,8 @@ Trong state: `Attempts: 3/3`. Lần chạy kế tiếp loop lại đề xuất c
 
 Mở `loop-ledger.json`: số lần thử cho mỗi job phải không vượt trần, và mọi job chạm trần đều phải xuất hiện trong danh sách chờ người xử lý kèm link. Tỷ lệ cùng job fail lại trong 48 giờ phải giảm dần — đó là bằng chứng cầu dao đang hoạt động.
 
+> **Tóm gọn 1 câu:** 3 lần thử không xong thì cầu dao (loop-guard) ngắt và chuyển người kèm tóm tắt — đừng để loop tự động thử lần thứ 4 đốt thêm 200k.
+
 ---
 
 ### Q15. CI xanh rồi mà không ai tin, và loop sửa nhầm cả nhánh chính — xử lý thế nào? [→ Verification Strategy / Failure Modes]
@@ -432,6 +472,11 @@ Verifier ở đây **bắt buộc** chạy test trong worktree trước khi duy�
 **Kiểm tra**
 
 Mỗi PR do loop tạo phải có phần kết luận của verifier nêu rõ kết quả chạy test. Tỷ lệ "sửa xong không cần người can thiệp" chỉ nên tính cho các ca đơn giản — nếu con số này cao bất thường, nhiều khả năng verifier chưa thật sự kiểm tra gì.
+
+> **Tóm gọn 1 câu:** Verifier bắt buộc chạy test trong worktree trước khi duyệt, implementer chỉ được đề xuất không được merge, và branch allowlist chặn loop sửa nhầm nhánh khác.
+
+---
+
 ## dependency-sweeper.md
 
 ### Q16. Bot báo hàng chục lỗ hổng bảo mật mỗi ngày mà không ai đụng tới — tự xử lý phần dễ được không? [→ § How the Loop Runs (Typical Cycle)]
@@ -457,6 +502,8 @@ Cái này cố tình chia làm hai phần: Dependabot (bot của GitHub) chỉ *
 **Kiểm tra**
 
 Đo ba thứ: thời gian từ lúc cảnh báo lỗ hổng xuất hiện đến lúc bản vá được merge; tỉ lệ cảnh báo được xử lý xong mà không cần người (chỉ tính loại rủi ro thấp); và số lần bản vá làm hỏng build — mục tiêu là 0.
+
+> **Tóm gọn 1 câu:** Dependabot phát hiện, sweeper vá và kiểm chứng — chỉ cho loop tự vá loại an toàn (rủi ro thấp, chỉ đổi số phiên bản), và luôn mở PR cho người merge.
 
 ---
 
@@ -487,6 +534,8 @@ Nâng phiên bản lớn (major) gần như luôn kèm thay đổi phá vỡ (br
 
 Chạy thử với một cảnh báo major giả lập: kết quả phải là dòng "waiting human decision", không có PR nào mở ra, và state phải ghi lại việc này.
 
+> **Tóm gọn 1 câu:** Nâng phiên bản lớn (major) luôn chờ người quyết — loop chỉ tự vá loại "chỉ đổi số phiên bản" và né toàn bộ gói nằm trong denylist.
+
 ---
 
 ### Q18. Loop chạy lúc 3h sáng rồi bị tắt — lần sau nó làm lại từ đầu hay nhớ việc đã làm? [→ § State]
@@ -516,6 +565,8 @@ Mỗi lần chạy là một lần đọc cảnh báo từ đầu. Không có fi
 
 Chạy loop 2 lần liên tiếp khi còn PR chưa merge: lần hai phải bỏ qua việc cũ, số PR mới mở phải bằng 0.
 
+> **Tóm gọn 1 câu:** File state là bộ nhớ của loop — không có nó thì lần chạy sau không phân biệt "chưa làm" với "đang chờ merge" và mở trùng PR cho cùng một bản vá.
+
 ---
 
 ### Q19. Chạy 6 giờ một lần thì tốn bao nhiêu, và lúc CI đang đỏ thì có nên cho chạy không? [→ § Cost Profile]
@@ -541,6 +592,8 @@ Phần tốn tiền nằm ở bước kiểm chứng: `npm ci && npm test` cài 
 **Kiểm tra**
 
 Sau một tuần chạy, xem báo cáo chi phí. Vượt 500k/ngày là dấu hiệu nhịp chạy quá dày hoặc có PR chưa merge bị vá lại.
+
+> **Tóm gọn 1 câu:** Phần đắt nhất là bước `npm ci && npm test` — giữ trần 500k/ngày, và khi CI trên main đang đỏ thì tạm dừng loop cho tới khi xanh.
 
 ---
 
@@ -574,6 +627,8 @@ Một PR tự nó không kêu to. Không ai nhắc thì nó nằm đó tới khi
 
 Theo dõi thời gian trung bình từ lúc PR bị bỏ rơi tới lúc có người review. Và kiểm tra không có ngày nào hai lời nhắc cho cùng một PR.
 
+> **Tóm gọn 1 câu:** Nhắc PR quá hạn (stale), tối đa một lời nhắc mỗi ngày, nhắc đúng người duyệt chứ không nhắc tác giả — nhắc sai cách là spam và cả nhóm sẽ tắt thông báo.
+
 ---
 
 ### Q21. Nó có tự sửa lỗi CI đỏ giùm không — rồi có tự merge không? [→ § Verification Strategy]
@@ -603,6 +658,8 @@ CI đỏ → phân loại → worktree → đề xuất sửa → verifier chạ
 
 Đo tỉ lệ PR CI đỏ được dọn xong mà không cần người (chỉ tính lỗi nhỏ), và xác nhận không có PR nào của loop được merge tự động.
 
+> **Tóm gọn 1 câu:** Loop có thể đề xuất bản vá cho test đỏ, nhưng nút merge luôn thuộc về người — một bản vá "xanh nhưng sai ý nghĩa" phải bị chặn trước nhánh chính.
+
 ---
 
 ### Q22. PR bị conflict hoặc cần rebase — loop có tự giải quyết không, ai chọn khi hai bên đều hợp lý? [→ § Human Handoff Points]
@@ -631,6 +688,8 @@ Conflict là chỗ duy nhất máy không có tiêu chí đúng/sai rõ ràng: h
 
 Bài kiểm tra phải xác nhận một PR đang conflict không bao giờ bị tự merge, và mọi lần chuyển người đều kèm số lần thử trong state.
 
+> **Tóm gọn 1 câu:** Conflict là chỗ máy không có đáp án đúng — hai bên đều hợp lý và chọn sai có mất tiền thật, nên luôn dừng và chuyển người quyết.
+
 ---
 
 ### Q23. Chạy 5 phút một lần mà có nhiều PR — cháy token không, có bị hai loop đụng nhau không? [→ § Failure Modes & Mitigations]
@@ -655,6 +714,8 @@ Tổng chi phí ngày tăng vọt dù phần lớn thời gian loop không làm 
 **Kiểm tra**
 
 Cho chạy 1 giờ ở mức chỉ xem (L1) khi không có việc gì — token phải ở mức gần no-op. Thử cho hai loop cùng chạy trên một PR và xác nhận chỉ một bên được ghi trạng thái.
+
+> **Tóm gọn 1 câu:** 5 phút/lần là đắt nhất nhóm — bật early exit, giới hạn số PR mỗi lần chạy, khoá worktree, và trần 2M token/ngày.
 
 ---
 
@@ -688,6 +749,8 @@ Thông tin release nằm rải rác ở hàng chục PR, mỗi người nhớ m�
 
 So số PR đã merge kể từ tag với số mục trong draft. Lệch là thiếu mục, phải bổ sung trước khi phát hành.
 
+> **Tóm gọn 1 câu:** Loop gom toàn bộ PR đã merge từ tag gần nhất, nhóm theo 5 loại, ghi vào `RELEASE_NOTES_DRAFT.md` — nhưng chỉ đến đó, chưa publish.
+
 ---
 
 ### Q25. Nó có tự đăng release notes lên trang release và tự tăng số phiên bản không? [→ § Verification Strategy]
@@ -716,6 +779,8 @@ PR đã merge + commit → nhóm breaking/feature/fix/docs/deps
 
 Mọi mục trong draft phải có số PR/issue đi kèm. Chạy loop không cấp quyền phát hành phải không tạo ra release nào trên GitHub.
 
+> **Tóm gọn 1 câu:** Loop chỉ soạn draft; chọn bậc phiên bản (major/minor/patch) và bấm phát hành là hai việc không hoàn tác được, luôn thuộc về người.
+
 ---
 
 ### Q26. Bật loop này 24/7 có tốn không, có an toàn khi chạy cùng loop khác không? [→ § Cost Profile]
@@ -740,6 +805,8 @@ Vì nó gần như chỉ đọc và không tự xuất bản, đây là người
 **Kiểm tra**
 
 Sau một chu kỳ release, đếm số mục trong draft phải sửa tay. Càng nhiều càng cho thấy quy ước phân loại của dự án bạn chưa viết rõ.
+
+> **Tóm gọn 1 câu:** Gần như chỉ đọc và không tự xuất bản — đây là pattern rẻ nhất nhóm (trần 50k/ngày), an toàn khi chạy song song với mọi loop khác.
 
 ---
 
@@ -774,6 +841,8 @@ Việc dọn sau merge không ai nhận, vì nó không thuộc PR nào. Để l
 
 Số TODO/FIXME mới mỗi ngày phải giảm dần; và đo tỉ lệ PR dọn dẹp được merge mà không phải sửa lại.
 
+> **Tóm gọn 1 câu:** Việc dọn sau merge không thuộc PR nào nên không ai nhận — loop nhận: lập backlog việc dọn, tự làm cái rõ ràng, chuyển người cái mơ hồ.
+
 ---
 
 ### Q28. Nó có xoá nhầm code của tôi không — có được refactor và đổi hành vi không? [→ § Verification Strategy]
@@ -804,6 +873,8 @@ TODO/FIXME mới · code chết · nhánh tồn đọng sau merge
 
 Mỗi PR của loop phải có diff nhỏ và chạy đủ test. Có bất kỳ thay đổi hành vi nào thì phải bị chặn và chuyển người.
 
+> **Tóm gọn 1 câu:** PR dọn dẹp chỉ được là sửa nhỏ — đụng tới hành vi, refactor, hay code không chắc còn dùng thì dừng lại chờ người quyết.
+
 ---
 
 ### Q29. Chạy lúc 9 giờ sáng được không — có đụng vào lúc đang release không? [→ § Scheduling]
@@ -829,6 +900,8 @@ Dọn dẹp là việc không gấp, nhưng lại đụng vào file đang đư�
 
 Xem nhật ký các lần chạy phải nằm trong khung off-peak; khi PR Babysitter đang chạy thì loop dọn dẹp phải tự dừng.
 
+> **Tóm gọn 1 câu:** Việc dọn dẹp không gấp nhưng dễ đụng file người khác đang sửa — chỉ chạy giờ thấp điểm, không song song với PR Babysitter, và đang release thì dừng.
+
 ---
 
 ### Q30. Chạy 6 giờ một lần thì tốn bao nhiêu, và làm sao biết nó có ích? [→ § Cost Profile]
@@ -853,6 +926,8 @@ Lần không có gì dọn tốn khoảng 5k token; lần thực sự dọn (qu�
 **Kiểm tra**
 
 Nếu đường biểu đồ TODO/FIXME đi xuống sau 2 tuần thì loop đang ăn mừng đúng. Nếu đi ngang mà vẫn tốn ~100k mỗi lần thì nó đang đề xuất việc bạn không merge.
+
+> **Tóm gọn 1 câu:** Pattern này rẻ (trần 200k/ngày) nhưng lợi ích tích luỹ — đo số TODO/FIXME giảm dần để biết nó có ích, đừng tắt vì tưởng vô dụng.
 
 ---
 

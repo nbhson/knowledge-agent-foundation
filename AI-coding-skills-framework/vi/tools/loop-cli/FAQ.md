@@ -2,6 +2,8 @@
 
 Câu hỏi nào khó hiểu thì đọc `README.md` phần trong ngoặc vuông.
 
+*(Loop CLI = bộ lệnh dòng lệnh dựng và điều hành vòng lặp agent: init khung, chấm điểm, chặn sai, đo tiền.)*
+
 ---
 
 ## Q1. Lần đầu cài thì dùng lệnh nào trước? [→ Front Door — `loop init / doctor / status`]
@@ -12,7 +14,7 @@ Bạn vừa viết xong một hệ thống xử lý tác vụ tự động (harn
 
 **Vì sao**
 
-Vì lệnh đầu tiên là `loop init` — nó tạo sẵn toàn bộ khung. Cụ thể là: các thư mục kỹ năng (skills), file `STATE.md`, file `LOOP.md`, các file ngân sách. Sau đó in ra điểm sẵn sàng của vòng lặp và gợi ý lệnh vòng lặp đầu tiên nên chạy.
+Vì lệnh đầu tiên là `loop init` — nó tạo sẵn toàn bộ khung (scaffold = bộ khung dựng sẵn). Cụ thể là: các thư mục kỹ năng (skills), file `STATE.md`, file `LOOP.md`, các file ngân sách. Sau đó in ra điểm sẵn sàng của vòng lặp và gợi ý lệnh vòng lặp đầu tiên nên chạy.
 
 **Làm gì**
 
@@ -28,9 +30,13 @@ Vì lệnh đầu tiên là `loop init` — nó tạo sẵn toàn bộ khung. C�
 
 Sau khi chạy `loop init`, thư mục phải có file `STATE.md` và `LOOP.md`. Nếu không, lệnh chạy sai thư mục đích.
 
+> **Tóm gọn 1 câu:** Chạy `loop init` trước để tạo khung, `loop doctor` ngay sau để nhận 3 việc cần làm, và `loop status` bất cứ lúc nào để xem tình trạng.
+
 ---
 
 ## Q2. Điểm "Loop Readiness" dùng để làm gì? [→ `loop audit` — Loop Readiness Score]
+
+*(Loop Readiness = điểm sẵn sàng: đo vòng lặp của bạn đã đủ kỷ luật chưa, thang L0 (trống) đến L3 (đầy đủ).)*
 
 **Bạn sẽ thấy**
 
@@ -55,6 +61,8 @@ Vì điểm này đo xem vòng lặp của bạn đã đủ nguyên tắc chưa,
 
 Cố tình xoá `loop-run-log.md` rồi chạy lại. Điểm phải tụt và phải nhắc tới đúng file đó — nếu không, phần quản trị chưa thực sự được chấm.
 
+> **Tóm gọn 1 câu:** Điểm readiness đo vòng lặp đã có kỷ luật chưa — điểm thấp nghĩa là thiếu đường lui, nhật ký, ngân sách; chớ sửa điểm, hãy bổ sung cái còn thiếu.
+
 ---
 
 ## Q3. Agent không đọc file an toàn thì sao? [→ `loop gate` — Cưỡng Chế Cơ Học]
@@ -65,7 +73,7 @@ Bạn có một file cấu hình an toàn liệt kê những đường dẫn age
 
 **Vì sao**
 
-Vì đó là lời hứa bằng văn bản, không phải ràng buộc kỹ thuật. Agent có thể đọc, có thể quên, có thể bỏ qua. Lệnh `loop gate` kiểm tra bằng cơ chế: nó đọc danh sách cấm và danh sách cho phép từ file cấu hình `gate.yaml`, rồi quyết định bằng mã. Không phụ thuộc vào việc agent có chịu đọc file hay không.
+Vì đó là lời hứa bằng văn bản, không phải ràng buộc kỹ thuật. Agent có thể đọc, có thể quên, có thể bỏ qua. Lệnh `loop gate` kiểm tra bằng cơ chế (cưỡng chế cơ học = chặn bằng code, không phụ thuộc ý thức agent): nó đọc danh sách cấm và danh sách cho phép từ file cấu hình `gate.yaml`, rồi quyết định bằng mã. Không phụ thuộc vào việc agent có chịu đọc file hay không.
 
 Khác biệt này là toàn bộ ý nghĩa của cổng chặn. Vòng lặp không có cổng chặn thì chỉ là một lời đề nghị.
 
@@ -80,7 +88,9 @@ Khác biệt này là toàn bộ ý nghĩa của cổng chặn. Vòng lặp khô
 
 **Kiểm tra**
 
-Chạy cổng chặn với một đường dẫn nằm trong danh sách cấm. Mã thoát phải là 2 và CI phải đỏ. Nếu mã thoát là 0 thì cấu hình chưa được nạp.
+Chạy cổng chặn với một đường dẫn nằm trong danh sách cấm. Mã thoát phải là 2 và CI phải đỏ (mã thoát = exit code, số lệnh trả về khi chạy xong: khác 0 là có vấn đề). Nếu mã thoát là 0 thì cấu hình chưa được nạp.
+
+> **Tóm gọn 1 câu:** Đừng tin agent tự đọc luật — `loop gate` chặn bằng code dựa trên gate.yaml: mã thoát 2 là cần leo thang, 0 là cho đi tiếp.
 
 ---
 
@@ -88,7 +98,7 @@ Chạy cổng chặn với một đường dẫn nằm trong danh sách cấm. M
 
 **Bạn sẽ thấy**
 
-Ba người cùng chạy vòng lặp trong một kho mã. Tất cả đều ghi thẳng vào nhánh chính. Kết quả: lịch sử commit lộn xộn, có phần không ai biết do ai sinh ra, không sửa được.
+Ba người cùng chạy vòng lặp trong một kho mã (repo). Tất cả đều ghi thẳng vào nhánh chính. Kết quả: lịch sử commit lộn xộn, có phần không ai biết do ai sinh ra, không sửa được.
 
 **Vì sao**
 
@@ -110,9 +120,13 @@ Với phần nhiều agent, công cụ còn yêu cầu các lần chạy phải 
 
 Chạy hai vòng lặp cùng lúc trên cùng một nhánh. Lệnh khoá phải khiến vòng lặp thứ hai bị chặn, và nhánh chính phải không nhận commit trực tiếp nào.
 
+> **Tóm gọn 1 câu:** Cách ly từng lần chạy: mỗi attempt một worktree riêng, khoá nhánh khỏi ghi chồng, bắt thay đổi thành file vá để duyệt trước khi gộp.
+
 ---
 
 ## Q5. Biết trước vòng lặp này tốn bao nhiêu tiền không? [→ `loop cost` — Ước Lượng Token]
+
+*(token = đơn vị chữ AI tiêu thụ, căn cứ tính tiền; ước lượng = đoán trước dựa trên cấu hình.)*
 
 **Bạn sẽ thấy**
 
@@ -120,7 +134,7 @@ Bạn định hẹn một vòng lặp chạy mỗi 15 phút. Một tuần sau ho
 
 **Vì sao**
 
-Vì ước lượng từ trải nghiệm gần đúng nhưng không đủ — lệnh `loop cost` ước lượng mức tiêu token **trước khi** bạn hẹn lịch. Nó nhận ba đầu vào: mẫu vòng lặp, tần suất chạy, và mức độ (L2).
+Vì ước lượng từ trải nghiệm gần đúng nhưng không đủ — lệnh `loop cost` ước lượng mức tiêu token **trước khi** bạn hẹn lịch. Nó nhận ba đầu vào: mẫu vòng lặp, tần suất chạy, và mức độ (L2 — mức kỷ luật của vòng lặp, thang L0–L3).
 
 Cách so sánh: tạo khung thủ công mất khoảng 30 phút mỗi dự án; `loop init` xong dưới 1 phút.
 
@@ -136,6 +150,8 @@ Cách so sánh: tạo khung thủ công mất khoảng 30 phút mỗi dự án; 
 **Kiểm tra**
 
 Chạy lệnh ước lượng hai lần với hai tần suất khác nhau, ví dụ 15 phút và 15 giờ: con số phải thay đổi theo đúng tỉ lệ. Nếu y hệt nhau thì lệnh đang bỏ qua tần suất.
+
+> **Tóm gọn 1 câu:** Có — chạy `loop cost` với mẫu, tần suất, mức độ trước khi hẹn lịch; so ước lượng với hoá đơn thật sau một tuần để phát hiện vòng lặp chạy khác dự kiến.
 
 ---
 

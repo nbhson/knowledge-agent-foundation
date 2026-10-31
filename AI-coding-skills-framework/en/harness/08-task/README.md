@@ -38,15 +38,19 @@
 >
 ---
 
+This section explains how an AI agent organizes its work: sorting jobs, ranking them, splitting big ones up, and tracking progress. It matters because an agent without a plan does the right work in the wrong order — or never finishes at all.
+
 ### Opening Story
 
-Imagine you just started as the **front-desk manager of a busy neighborhood clinic**. The doors open and in they come: someone clutching their stomach in pain, someone here for a routine checkup, a kid waiting for a quick vaccination. If you **skip triage** and ask the emergency case to wait behind the routine exam — well, you can feel how quickly that morning turns into a **mess**.
+Imagine you just started as the **front-desk manager of a busy neighborhood clinic**. The doors open and in they come: someone clutching their stomach in pain, someone here for a routine checkup, a kid waiting for a quick vaccination. If you **skip triage** (triage = the quick first sorting that decides who gets seen first) and ask the emergency case to wait behind the routine exam — well, you can feel how quickly that morning turns into a **mess**.
 
 **AI Agents face the same problem without Task Management.**
 
-Now swap the clinic for an AI agent, and the patients for a big request like *"Refactor the auth module, add tests, update docs, then deploy."* The agent hears **everything in one breath** — but where should it begin? What matters most? What can happen side by side? Without a plan, you get jumbled work, skipped steps, or worst of all — **shipping code nobody ever tested**.
+Now swap the clinic for an AI agent, and the patients for a big request like *"Refactor the auth module, add tests, update docs, then deploy."* (Refactor = restructure code without changing what it does; auth module = the code that handles login and passwords.) The agent hears **everything in one breath** — but where should it begin? What matters most? What can happen side by side? Without a plan, you get jumbled work, skipped steps, or worst of all — **shipping code nobody ever tested**.
 
 **The friendly fix**: Structured Task Management — think of it as the clinic's calm triage nurse. It sorts, ranks, breaks down, and keeps an eye on every job, so the agent always does **the right thing, at the right time, in the right order**.
+
+> **One-line summary:** Without a sorting-and-tracking system, an agent juggles one giant request badly; task management is the triage nurse that keeps work in the right order.
 
 ### Why Is Task Management Important?
 
@@ -54,21 +58,29 @@ Now swap the clinic for an AI agent, and the patients for a big request like *"R
 
 #### 3 Scientific Evidence
 
+How to read this table: each row is one research finding. Column 1 is the row number; column 2 names who did the research (Anthropic, OpenAI, Microsoft Research — all AI labs/companies); column 3 states what they measured. For example, row 1 says: splitting big coding jobs into smaller ones cut finish time by 40%.
+
 | # | Research | Key Finding |
 |---|-----------|----------------------|
 | 1 | **Anthropic (2025)** | Task decomposition reduces **40% completion time** and **55% error rate** on complex coding tasks |
 | 2 | **OpenAI (2025)** | Structured task tracking improves **35% accuracy** in multi-step reasoning compared to unstructured approaches |
 | 3 | **Microsoft Research (2024)** | Task prioritization frameworks reduce **30% resource waste** in AI-assisted development workflows |
 
+(Task decomposition = splitting one big job into small pieces. Multi-step reasoning = solving a problem that needs many linked steps. Prioritization = deciding what to do first.)
+
 #### Core philosophy:
+
+This line is the whole workflow in seven steps. Each arrow means "do this, then that."
 
 ```
 Task = Analyze → Classify → Prioritize → Decompose → Execute → Track → Report
 ```
 
-**Analogy**: Task management is like running a hospital — triage patients (classify), prioritize emergencies (prioritize), prescribe treatment (plan), monitor the cure (track), and discharge (complete).
+**Analogy**: Task management is like running a hospital — triage patients (classify = sort by type), prioritize emergencies (prioritize = treat the worst first), prescribe treatment (plan = decide what to do), monitor the cure (track = keep watching progress), and discharge (complete = close the job when done).
 
-**If skipped**: The agent gets overwhelmed by too many tasks, delivers in the wrong order, wastes compute resources, and frustrates the user.
+**If skipped**: The agent gets overwhelmed by too many tasks, delivers in the wrong order, wastes compute resources, and frustrates the user. (Compute resources = the AI processing power and tokens — the "words" the model reads and writes — you pay for.)
+
+> **One-line summary:** Research shows structured task handling cuts time, errors, and waste — so the agent follows one pipeline: analyze, classify, prioritize, decompose, execute, track, report.
 
 ## Overview
 
@@ -81,6 +93,8 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 > **Why it matters:** Without task management, the agent easily gets overloaded, works in the wrong order, and wastes resources.
 
 **Task Management** in AI coding is just the habit of **sorting, slicing, ranking, and watching** your coding chores. Done well, it helps your agent focus on the right job, skip the overwhelm, and deliver work you can trust.
+
+How to read the diagram below: it is the pipeline every request flows through. A request enters, gets parsed and classified, then waits in a task queue (queue = a waiting line); a plan is made and work assigned, the work runs while being tracked, and finally it is checked and closed.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -105,6 +119,8 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** Task management is a six-stage conveyor belt: request in, classified, queued, planned, executed, then validated and closed.
+
 ## Contents
 
 > ## 📌 Basic Concept
@@ -114,6 +130,8 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 > **Analogy:** Like a metro line map — looking ahead you know which stations there are and where to get off for your destination.
 >
 > **Why it matters:** Each topic solves a part of the same problem, so grasping the whole makes it easier to know what to learn.
+
+How to read this table: each row is one chapter of this module. Column 1 is the order number; column 2 links to the chapter; column 3 says in one line what that chapter covers. For instance, row 2, "Task Decomposition," is about cutting one big job into small doable pieces.
 
 | # | Topic | Description |
 |---|--------|-------|
@@ -128,8 +146,9 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 | 9 | [Real-World Workflows](#9-real-world-workflows) | Real-world processes |
 | 10 | [Token Budget Management](#10-token-budget-management) | Manage token budget |
 
----
+> **One-line summary:** The module has 10 chapters that walk from recognizing a task, to organizing it, to budgeting the resources it needs.
 
+---
 ## 1. Task Classification
 
 > ## 📌 Basic Concept
@@ -142,7 +161,7 @@ Task = Analyze → Classify → Prioritize → Decompose → Execute → Track �
 
 ### 1.1 Coding Task Classification
 
-Think of the picture below as the clinic's department directory with 5 friendly wings — writing new code, changing code, studying code, writing docs, and testing. Start at the top, follow the little branch that sounds like your job, and you will land exactly where your task belongs.
+Think of the picture below as the clinic's department directory with 5 friendly wings — writing new code, changing code, studying code, writing docs, and testing. Start at the top, follow the little branch that sounds like your job, and you will land exactly where your task belongs. For example, "make me a login page" lands under Code Generation → New Feature.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -181,6 +200,10 @@ Think of the picture below as the clinic's department directory with 5 friendly 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(Plain words: Boilerplate = ready-made starter code you copy and fill in; Migration = moving code from one language, framework, or platform to another; Profiling = measuring where a program is slow; E2E = end-to-end, a test that runs the whole app like a real user would; Test fixtures = the sample data tests need to run.)
+
+> **One-line summary:** Every coding job falls into one of 5 families (create, modify, analyze, document, test) — knowing the family tells the agent how to approach it.
+
 ### 1.2 Task Classification Engine
 
 Here is the little receptionist brain that does the sorting: you hand it a plain-English request, it listens for clue words (spot "fix" or "bug" and it thinks, "ah, MODIFICATION"), guesses how big the job is, and hands you back a tidy Task card. Go ahead and try it with any sentence — it is fun to watch the agent "get" what you mean.
@@ -192,9 +215,11 @@ Here is the little receptionist brain that does the sorting: you hand it a plain
 
 </details>
 
+> **One-line summary:** A small classifier reads your request, matches clue words to a task type, and returns a labeled Task card.
+
 ### 1.3 Decision Tree: Choosing Task Handling Strategy
 
-Think of the flowchart below as the receptionist's cheat sheet. A new task walks in: if the request is fuzzy, ask a kind clarifying question first; if it is tiny (under ~500 tokens), just do it on the spot; if it is big, split it into bite-size pieces and then pick your style — one-by-one, side-by-side, or test-first (TDD). Just follow the arrows down and you will see which door each task walks through.
+Think of the flowchart below as the receptionist's cheat sheet. A new task walks in: if the request is fuzzy, ask a kind clarifying question first; if it is tiny (under ~500 tokens — tokens = the chunks of text the model reads, roughly a word or two each), just do it on the spot; if it is big, split it into bite-size pieces and then pick your style — one-by-one (sequential), side-by-side (parallel fan-out), or test-first (TDD = Test-Driven Development, write the test before the code). Just follow the arrows down and you will see which door each task walks through.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -224,6 +249,8 @@ Think of the flowchart below as the receptionist's cheat sheet. A new task walks
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+> **One-line summary:** Three questions decide the strategy: is the request clear, is it under ~500 tokens, and if it must be split — run pieces in order, in parallel, or test-first.
 
 ---
 
@@ -301,6 +328,10 @@ The sketch below lays out 6 everyday ways to slice a big cake into servable piec
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(Plain words: Sequential = step after step, each waiting for the last; Parallel = pieces run at the same time because they don't touch each other; Hierarchical = a big epic splits into features, features into sub-tasks, like a family tree; Map-reduce = "map" processes each item separately, "reduce" merges the results — like grading 100 exams in parallel then summing the scores; Spike = a short, strictly-timed research burst (timebox = a fixed time limit) to pick an approach before committing; Vertical slice = build one thin but complete feature through all layers — database, API, UI, test — so something works end to end.)
+
+> **One-line summary:** There are 6 ways to split a big job — in sequence, in parallel, as a tree, map-reduce, research-first, or thin vertical slices — pick by how independent the pieces are.
+
 ### 2.2 Task Decomposer
 
 Here is the friendly kitchen helper that does the slicing for you: hand the TaskDecomposer your big Task, and it picks a slicing style (by feature, by layer, by file, test-first, thin vertical slice, or quick research spike). Out comes a neat to-do list of SubTasks — in order, with dependencies, token guesses, and a little "how do I know I am done?" note on each. Not sure which style fits? It happily suggests one based on your task's shape and size.
@@ -312,8 +343,9 @@ Here is the friendly kitchen helper that does the slicing for you: hand the Task
 
 </details>
 
----
+> **One-line summary:** The TaskDecomposer takes one big Task and returns an ordered list of sub-tasks, each with dependencies, token estimates, and done-criteria.
 
+---
 ## 3. Priority & Scheduling
 
 > ## 📌 Basic Concept
@@ -326,7 +358,7 @@ Here is the friendly kitchen helper that does the slicing for you: hand the Task
 
 ### 3.1 Priority Model
 
-Here is how the clinic decides who goes first — with a classic Eisenhower-style scorecard. Every task gets marks for urgency, importance, and effort, plus a little gold star if it is a quick win or if many other jobs are waiting on it. The TaskScheduler then lines everyone up into calm, orderly batches that respect your token budget for the session.
+Here is how the clinic decides who goes first — with a classic Eisenhower-style scorecard (Eisenhower = a decision method that sorts everything by "urgent?" and "important?"). Every task gets marks for urgency, importance, and effort, plus a little gold star if it is a quick win or if many other jobs are waiting on it. The TaskScheduler then lines everyone up into calm, orderly batches that respect your token budget for the session.
 
 In plain coffee-chat terms: urgent-and-important jumps to the front, big-but-patient waits its turn, and tiny easy wins get fast-tracked just to clear the desk and build momentum.
 
@@ -336,6 +368,9 @@ In plain coffee-chat terms: urgent-and-important jumps to the front, big-but-pat
 > 📄 **Example code:** [`examples/03-3-1-priority-model.py`](examples/03-3-1-priority-model.py)
 
 </details>
+
+> **One-line summary:** Tasks get a score from urgency, importance, effort, and blockers; the scheduler runs them in batches that fit the token budget.
+
 ---
 
 ## 4. Task State Management
@@ -390,6 +425,10 @@ In everyday ward-talk: a newborn task waits in the lobby (PENDING), sees the doc
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(Plain words: state = the current condition of a task, like "waiting" or "running." A task can only move along the arrows — for example, a task can't jump from TESTING straight to DONE; it must pass REVIEW first. A BLOCKED task goes back to PENDING to retry later.)
+
+> **One-line summary:** A task walks through a fixed set of states — waiting, planning, working, testing, review, done — with detours for blocked, failed, or cancelled.
+
 ### 4.2 Task State Manager
 
 Here is the ward's trusty logbook keeper: TaskStateManager writes down every move each task makes, only allows legal moves (no sneaky shortcuts), and notes start times, try counts, and the last oopsie — while ringing a little bell (events) so the rest of the team can react. Try an illegal hop like TESTING → PENDING and it kindly but firmly says "nope" — just like a good hospital rule.
@@ -400,6 +439,8 @@ Here is the ward's trusty logbook keeper: TaskStateManager writes down every mov
 > 📄 **Example code:** [`examples/04-4-2-task-state-manager.py`](examples/04-4-2-task-state-manager.py)
 
 </details>
+
+> **One-line summary:** The TaskStateManager enforces the legal state moves, logs every transition, and fires events so other parts of the system can react.
 
 ---
 
@@ -415,7 +456,7 @@ Here is the ward's trusty logbook keeper: TaskStateManager writes down every mov
 
 ### 5.1 Task Dependency Graph
 
-Here is a small traffic manager built on a DAG (just a fancy word for "a map with no roundabouts"). Reading it is easy: "A → B" simply means "please finish A before starting B." This helper spots traffic jams (cycles), works out who goes first (topological sort), and groups independent jobs so they can cruise side by side.
+Here is a small traffic manager built on a DAG (just a fancy word for "a map with no roundabouts" — a Directed Acyclic Graph: arrows have one direction, and you can never loop back). Reading it is easy: "A → B" simply means "please finish A before starting B." This helper spots traffic jams (cycles = two or more tasks waiting on each other in a loop), works out who goes first (topological sort = the ordering that respects all the arrows), and groups independent jobs so they can cruise side by side.
 
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
@@ -424,8 +465,9 @@ Here is a small traffic manager built on a DAG (just a fancy word for "a map wit
 
 </details>
 
----
+> **One-line summary:** A dependency graph records who must finish before whom; it gives a safe running order and flags circular waits before they deadlock the agent.
 
+---
 ## 6. Task Templates
 
 > ## 📌 Basic Concept
@@ -447,6 +489,8 @@ Think of the snippet below as a box of well-loved recipe cards: one card each fo
 
 </details>
 
+> **One-line summary:** Seven pre-written recipe cards cover the common job types, so a familiar task starts from a proven checklist instead of a blank page.
+
 ---
 
 ## 7. Estimation Techniques
@@ -461,7 +505,7 @@ Think of the snippet below as a box of well-loved recipe cards: one card each fo
 
 ### 7.1 Token Estimation Model
 
-Think of the table below as the menu prices at your favorite café: find your task type (bug fix, new feature, migration…), peek at the complexity, and the Estimated Tokens column tells you roughly what the bill looks like. The footer adds handy rules of thumb (a line of code sips about 5–10 tokens) plus a sample budget for a 128K context window.
+Think of the table below as the menu prices at your favorite café: find your task type (bug fix, new feature, migration…), peek at the complexity, and the Estimated Tokens column tells you roughly what the bill looks like. The footer adds handy rules of thumb (a line of code sips about 5–10 tokens) plus a sample budget for a 128K context window (128K = about 128,000 tokens, the model's total short-term memory for one session).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -497,6 +541,10 @@ Think of the table below as the menu prices at your favorite café: find your ta
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(How to read the middle block: it divides the 128K window into five shares — System prompt = the standing instructions (~5K), Project context = repo files loaded for reference (~30K), Task context = the files this specific task needs (~20K), Working memory = everything produced during the run (~50K), Reserve = ~23K kept empty as a safety buffer. LOC = lines of code. PR = pull request, a proposed change up for review.)
+
+> **One-line summary:** Token cost is predictable from task type and size — a small bug fix costs a few thousand tokens, a migration up to 20K, and a 128K window should be pre-split into five shares with a reserve.
+
 ### 7.2 Effort Estimation Algorithm
 
 Meet your friendly cost estimator: EffortEstimator glances at your Task, picks a starting price (BASE_TOKENS) from its size, adjusts it for the kind of work (writing docs costs less than brand-new code, for example), adds a small fee per file touched — and out pops a token guess, a rough time estimate (about 100 tokens a minute), plus a tidy batch summary.
@@ -507,6 +555,9 @@ Meet your friendly cost estimator: EffortEstimator glances at your Task, picks a
 > 📄 **Example code:** [`examples/07-7-2-effort-estimation-algorithm.py`](examples/07-7-2-effort-estimation-algorithm.py)
 
 </details>
+
+> **One-line summary:** The estimator starts from a base price per task size, adjusts for task type and file count, and outputs a token and time forecast.
+
 ---
 
 ## 8. Anti-Patterns & Solutions
@@ -562,6 +613,10 @@ Think of the poster below as the clinic's "watch out for these 8 common colds" c
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(Plain words: acceptance criteria = the checklist that proves a task is done right; context drift = the agent slowly "forgets" the original goal as the conversation gets long; timebox = give the task a fixed time limit; overhead = the extra cost of managing many tiny pieces.)
+
+> **One-line summary:** Eight recurring mistakes — from monster tasks to ignored token budgets — each with a one-line fix you can apply before execution.
+
 ### 8.2 Anti-Pattern Detector
 
 Think of this as the checkup machine at the clinic door: AntiPatternDetector gives your Task a quick once-over — too big? too vague? missing a cost guess? tangled in too many dependencies? — and hands you a gentle report with severity levels and "here is how to feel better" tips. Run it before you start, like washing your hands.
@@ -573,8 +628,9 @@ Think of this as the checkup machine at the clinic door: AntiPatternDetector giv
 
 </details>
 
----
+> **One-line summary:** A pre-flight checker scans each task for the 8 anti-patterns and reports how serious each issue is, with suggested fixes.
 
+---
 ## 9. Real-World Workflows
 
 > ## 📌 Basic Concept
@@ -632,6 +688,10 @@ The diagram below describes the new-feature process in 4 phases: UNDERSTAND → 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(Plain words: spec = the written requirements; linter = a tool like flake8/ruff that flags style and simple errors; type checker = a tool like mypy that checks variables hold the right data types; regression = old behavior breaking again after a change.)
+
+> **One-line summary:** Build features in 4 fixed phases — understand, plan, implement, verify — so nothing ships untested or half-understood.
+
 ### 9.2 Debug Investigation Workflow
 
 The diagram below is the bug investigation and fixing process with 5 steps: REPRODUCE → INVESTIGATE → HYPOTHESIZE → FIX → PREVENT. The key point is stopping to verify the hypothesis before rushing to fix — avoiding blindly patching until the bug disappears.
@@ -683,6 +743,10 @@ The diagram below is the bug investigation and fixing process with 5 steps: REPR
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+(Plain words: stack trace = the list of function calls printed when the program crashes — read it bottom-up to find where it broke; git log --oneline -20 = shows the last 20 commits, one line each — recent changes are a prime suspect; regression test = a test that would have caught this bug, added so it never comes back silently.)
+
+> **One-line summary:** Fix bugs in 5 steps — reproduce, investigate, hypothesize, fix minimally, prevent — never patch blindly without a verified hypothesis.
 
 ### 9.3 Refactoring Workflow
 
@@ -741,8 +805,11 @@ The diagram below is a safe refactoring process in 5 steps: characterize the cur
 └──────────────────────────────────────────────────────────────────┘
 ```
 
----
+(Plain words: characterization tests = tests that capture how the code behaves today, even if today's behavior is buggy — so you notice if restructuring changes it; code smell = a sign something is designed poorly, like a God object (one class doing everyone's job) or feature envy (a method obsessed with another class's data); Extract Method = pull a chunk of code into its own named function; dead code = code that can never run; polymorphism = letting different classes answer the same call their own way, replacing long if/else chains.)
 
+> **One-line summary:** Refactor in 5 small safe steps with tests after every one — and never mix refactoring with adding new features.
+
+---
 ## 10. Token Budget Management
 
 > ## 📌 Basic Concept
@@ -787,11 +854,15 @@ The diagram below shows the token budget of a 128K context window split into 4 b
 │                                                                  │
 │  ⚠️ When budget < 20% remaining:                                │
 │     1. Summarize older context                                   │
-│     2. Remove non-essential files from context                  │
+│     2. Remove non-essential files from context                   │
 │     3. Complete current sub-task, then start fresh               │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+(Plain words: System Prompt = the fixed instructions always sent to the model; Project Context = reference material from the repo; Task Context = files specific to the current job; Working Memory = everything produced while working — it only grows; Reserve = ~23K deliberately kept empty so the model always has room to answer. Fixed = never changes; dynamic = adjusted as you go; growing = keeps expanding during the session.)
+
+> **One-line summary:** Pre-divide the 128K window into five labeled shares with a ~23K reserve, and when under 20% remains, summarize and clean immediately.
 
 ### 10.2 Token Budget Manager
 
@@ -804,11 +875,13 @@ This is the budget management code: TokenBudgetManager holds the total limit, al
 
 </details>
 
+> **One-line summary:** The TokenBudgetManager is the treasurer: it hands out tokens per task, refuses over-budget requests, and calls for cleanup when the wallet runs low.
+
 ---
 
 ## 11. Harness Integration (TS)
 
-Links tasks to the execution spine: every `TaskNode` carries `trajectoryId`, `idempotencyKey`, `permissions`, `budget`. The engine emits events the workflow/observability layers consume.
+This section explains how tasks plug into the execution engine (the "harness" = the runtime that actually runs the agent's tools). Every `TaskNode` (one task object) carries four key fields: `trajectoryId` (a trace ID that links all logs of this task's run together), `idempotencyKey` (a unique key so a retried task doesn't run twice — like a one-time ticket), `permissions` (which tools and files this task may touch), and `budget` (its token allowance). The engine emits events that the workflow and observability layers consume.
 
 <details>
 <summary>TypeScript Code — Task Engine (Click to expand/collapse)</summary>
@@ -817,27 +890,41 @@ Links tasks to the execution spine: every `TaskNode` carries `trajectoryId`, `id
 
 </details>
 
-Rules: `elevated` tasks require approval; `trajectoryId` joins prompt/tool/workflow logs; `idempotencyKey` dedupes retries.
+Rules: `elevated` tasks require approval (elevated = high-risk actions like writing or deleting files — a human must approve first); `trajectoryId` joins prompt/tool/workflow logs; `idempotencyKey` dedupes retries (dedupe = block duplicate runs).
+
+> **One-line summary:** Every task carries its trace ID, retry-safe key, permissions, and budget — and high-risk "elevated" work stops for human approval.
 
 ## 12. Execution Semantics
 
-Per-task: `timeoutMs` (default 60s, abort + mark `failed:timeout`), `maxRetries` with exponential backoff + jitter (retry only idempotent or checkpointed tasks), `cancel()` sets `cancelled` and aborts signal — children depending on it become `blocked`. Failure pipeline: `failed → classify(transient|perm|budget) → transient: retry | perm: park + emit task.failed | budget: compact + re-estimate → continue DAG`. Never auto-retry non-idempotent writes.
+This section defines what happens when a task actually runs — including failure. Per-task settings: `timeoutMs` (a time limit; default 60 seconds — on timeout the run aborts and the task is marked `failed:timeout`), `maxRetries` (how many times to try again, with exponential backoff + jitter = wait progressively longer between tries, plus a small random offset so many retries don't fire at once) — and only retry tasks that are idempotent (safe to run twice) or checkpointed (save progress so a rerun resumes). `cancel()` sets `cancelled` and aborts the signal — child tasks depending on it become `blocked`.
+
+Failure pipeline: `failed → classify(transient|perm|budget) → transient: retry | perm: park + emit task.failed | budget: compact + re-estimate → continue DAG`. In plain words: when a task fails, first classify the failure — transient (a temporary glitch, e.g. network) gets a retry; perm (permanent, e.g. bad code) is parked and reported as `task.failed`; budget (out of tokens) triggers compaction (summarize/trim context) and re-estimation — then the rest of the DAG continues. Never auto-retry non-idempotent writes (a write that would duplicate itself if run twice, like creating a database record).
+
+> **One-line summary:** Every run has a timeout, capped retries with growing waits, and a failure triage: temporary glitches retry, permanent errors park, budget shortfalls compress and re-plan.
 
 ## 13. Concurrency
 
-Scheduler: topological batches (ready = deps all `done`), semaphore cap (4–8) + token-budget gate (skip batch if `sum(budgetTokens) > remaining`). `race([primary, fallback])` for latency-sensitive reads; `join(all)` for fan-in merges. Resource limits: max tasks/run (e.g. 50), max tokens/session, per-task queue depth 1. Deadlock guard: fail if a batch makes no progress in 2 rounds (missing dep/cycle).
+This section is about running many tasks at once without tripping over each other. The scheduler works in topological batches (a batch = a group of tasks whose dependencies are all done; "ready" means every dependency is `done`). It caps parallel work with a semaphore (a counter limiting how many tasks run at once — here 4–8) and a token-budget gate (skip the batch if the sum of its budgets exceeds the tokens remaining). `race([primary, fallback])` means: run a slow primary read and a fast fallback at the same time, keep whichever answers first; `join(all)` means: wait until all parallel branches finish, then merge. Resource limits: max 50 tasks per run, max tokens per session, and a per-task queue depth of 1 (each task may have at most one queued follow-up). Deadlock guard: if a batch makes no progress for 2 rounds, fail it — that signals a missing dependency or a cycle.
+
+> **One-line summary:** Parallel work runs in dependency-sorted batches, capped by a 4–8 semaphore and remaining tokens — with a watchdog that kills stalled batches.
 
 ## 14. Case Studies
 
-1. **Auth refactor (12 files, 4 layers):** classified MODIFICATION/COMPLEX → layer decomposition (db→svc→api→ui→test). Batch 1 (db) blocked svc/api; budget gate deferred UI docs to session 2. One `write_file:elevated` paused on approval with diff preview; idempotency key prevented double migration on retry after timeout. Result: 1 retry, 0 double-writes.
-2. **Flaky E2E triage (30 tests):** map-reduce — 30 parallel `run_tests` shards (sem=6) with 90s timeouts each, `race(unit-shard, cached-baseline)` to skip green paths. 3 transient failures retried via idempotency cache; 1 perm failure parked as `failed` without blocking the merge report. Join aggregated pass/fail + trajectory links.
+This section shows the ideas above applied to two real projects.
+
+1. **Auth refactor (12 files, 4 layers):** classified MODIFICATION/COMPLEX → layer decomposition (db→svc→api→ui→test — split by architecture layer, database first, tests last). Batch 1 (db) blocked svc/api (they waited on it); the budget gate deferred UI docs to session 2 (not enough tokens left). One `write_file:elevated` paused on approval with diff preview (diff preview = showing the exact lines to be changed before a human approves); idempotency key prevented double migration on retry after timeout (double migration = running the same database change twice, which corrupts data). Result: 1 retry, 0 double-writes.
+2. **Flaky E2E triage (30 tests):** map-reduce pattern — 30 parallel `run_tests` shards (shards = slices of the test suite run separately; sem=6 means at most 6 at once) with 90s timeouts each, `race(unit-shard, cached-baseline)` to skip green paths (green = already passing, so the cached result answers faster). 3 transient failures retried via idempotency cache; 1 perm failure parked as `failed` without blocking the merge report. Join aggregated pass/fail + trajectory links (aggregated = merged into one summary).
+
+> **One-line summary:** Two real runs prove the machinery: an auth refactor survived a timeout with zero duplicate writes, and 30 flaky tests were triaged in parallel without blocking the report.
 
 ## 15. Hands-On Lab
 
-**Exercise (30 min):** implement `schedule + execute` for 6 tasks (A→B, A→C, B+D→E, C→F) with budgets `[2k,3k,3k,5k,2k,2k]`, session cap 10k, `D: elevated`, `E: timeout 5s`.
-1. Write topological batches; show which batch pauses for approval and which defers on budget.
+**Exercise (30 min):** implement `schedule + execute` for 6 tasks (A→B, A→C, B+D→E, C→F — read "A→B" as "B waits for A") with budgets `[2k,3k,3k,5k,2k,2k]` (each task's token allowance in thousands), session cap 10k (the whole session may spend at most 10,000 tokens), `D: elevated` (task D is high-risk and needs approval), `E: timeout 5s`.
+1. Write topological batches; show which batch pauses for approval and which defers on budget (defers = pushed to a later session because tokens ran out).
 2. Inject failure: E times out once — apply idempotency-key retry, log `trajectoryId` + `transition` events.
-3. Add `race()` for C (cache vs live) and `join()` for E/F. Deliverable: batch table + event log + 1 paragraph on what moved to session 2 and why.
+3. Add `race()` for C (cache vs live — run against cached data and live data, keep the faster) and `join()` for E/F (wait for both, then merge). Deliverable: batch table + event log + 1 paragraph on what moved to session 2 and why.
+
+> **One-line summary:** A 30-minute drill: schedule 6 interdependent tasks under a 10k token cap, handle one timeout with a safe retry, and document what got deferred.
 
 ---
 
@@ -907,6 +994,10 @@ Scheduler: topological batches (ready = deps all `done`), semaphore cap (4–8) 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(Plain words: state machine = the fixed set of allowed state moves from section 4; DAG = the dependency map from section 5; context overflow = exceeding the model's 128K window and losing information; session breaks = planned pauses when the token wallet runs dry.)
+
+> **One-line summary:** 12 habits make agent task management reliable — keep tasks small and single-purpose, track state and tokens, plan dependencies, and verify before you call it done.
+
 ---
 
 ## References
@@ -919,9 +1010,16 @@ Scheduler: topological batches (ready = deps all `done`), semaphore cap (4–8) 
 >
 > **Why it matters:** When you need more complete technical detail, this gives you trustworthy places to look.
 
-- [LangGraph State Management](https://langchain-ai.github.io/langgraph/)
-- [CrewAI Task Management](https://docs.crewai.com/)
-- [Eisenhower Matrix](https://www.mindtools.com/pages/article/newHTE_H.htm)
-- [Martin Fowler - Refactoring](https://refactoring.com/)
-- [Google Engineering Practices](https://google.github.io/eng-practices/review/)
-- [Token Estimation - tiktoken](https://github.com/openai/tiktoken)
+- [LangGraph State Management](https://langchain-ai.github.io/langgraph/) — a framework for building stateful AI agent workflows
+- [CrewAI Task Management](https://docs.crewai.com/) — a framework for running multi-agent teams with assigned tasks
+- [Eisenhower Matrix](https://www.mindtools.com/pages/article/newHTE_H.htm) — the urgent-vs-important prioritization method
+- [Martin Fowler - Refactoring](https://refactoring.com/) — the classic book on restructuring code safely
+- [Google Engineering Practices](https://google.github.io/eng-practices/review/) — Google's official code review guide
+- [Token Estimation - tiktoken](https://github.com/openai/tiktoken) — OpenAI's library for counting tokens in text
+
+> **One-line summary:** For deeper detail, go straight to the frameworks, books, and guides this module was built on.
+
+
+
+
+

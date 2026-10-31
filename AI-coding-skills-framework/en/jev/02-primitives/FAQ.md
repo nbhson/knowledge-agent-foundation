@@ -1,6 +1,6 @@
 # ❓ FAQ — The Three Primitives: Choice, Score, Noul (Real Stories, Plain Language)
 
-If a question is unclear, read the section in `../README.md` (named in brackets).
+If a question is unclear, read the section in `../README.md` (named in brackets). Glossary up front: **Choice** = pick one option from a list you define; **Score** = rate on an ordered scale; **Noul** = a yes/no question returning P(yes); **confidence** = how concentrated the answer's probability distribution is; **state** = the material being judged.
 
 ---
 
@@ -31,6 +31,8 @@ The reply still looks fine — `probabilities` come back `{"billing": 0.91, "inf
 
 Send the same ticket twice — once with framing in the state, once with a clean state and a real question. Compare the probability spread and the confidence. The clean version should be more peaked and more stable across repeats.
 
+> **One-line summary:** Keep the state as pure evidence — a question hidden inside the state quietly corrupts calibration and accuracy.
+
 ---
 
 ## Q2. Choice returned `confidence: 0.87` and the answer was still wrong — my code was supposed to make that impossible [→ §2.1 Contract, §2.5 Pros / Cons]
@@ -55,7 +57,7 @@ The distribution is peaked — one option clearly ahead — and yet `billing` wa
 
 1. Stop reading confidence as truth; read it as "how peaked was this". Gate on the band, not on the value.
 2. Set three bands and pick thresholds from your own calibration data, not from a hunch.
-3. Watch `P(other)` as a health signal: a spike means your option list no longer matches reality (taxonomy rot), not that the model got lazy.
+3. Watch `P(other)` as a health signal: a spike means your option list no longer matches reality (taxonomy rot = your label list drifting out of date), not that the model got lazy.
 4. Route the low band to a human or to a language model instead of forcing a pick.
 
 > 📄 **Example code:** [`examples/01-q2-choice-returned-confidence-0-87-and-the.py`](examples/01-q2-choice-returned-confidence-0-87-and-the.py)
@@ -63,6 +65,8 @@ The distribution is peaked — one option clearly ahead — and yet `billing` wa
 **Verify**
 
 Pull the last 200 misrouted tickets and check which band they landed in. If most were in the auto-act band, your threshold is too low — not the model. If answers at `0.8` are correct only ~60% of the time, move the line.
+
+> **One-line summary:** Confidence measures how decisive the answer looked, never whether it was right — gate on bands and verify with your own labelled data.
 
 ---
 
@@ -95,7 +99,9 @@ Your first instinct is that a level you never defined leaked out. Before this, t
 
 **Verify**
 
-Move the threshold from `2.5` to `2.0` and confirm you only changed your code. Then check the per-level probabilities for bimodality — `{1: 0.45, 2: 0.05, 3: 0.50}` means "one or three, nothing in between", and a single score hides that doubt.
+Move the threshold from `2.5` to `2.0` and confirm you only changed your code. Then check the per-level probabilities for bimodality (two peaks — e.g. mass on level 1 and level 3 with nothing between, meaning the model is torn between two answers). `{1: 0.45, 2: 0.05, 3: 0.50}` means "one or three, nothing in between", and a single score hides that doubt.
+
+> **One-line summary:** A 2.70 on a 1–3 scale is not a bug — it is a probability-weighted reading between levels, and it is more useful than an adjective.
 
 ---
 
@@ -107,7 +113,7 @@ The gate question is `"Does this tool call touch production data?"`. The answer 
 
 **Why**
 
-A value near `0.5` means the evidence pulls both ways — genuinely balanced, not "medium yes". Certainty is intrinsic: `confidence = |p − 0.5| × 2`, so there is no separate confidence field to misread.
+A value near `0.5` means the evidence pulls both ways — genuinely balanced, not "medium yes". Certainty is intrinsic (baked into the answer itself): `confidence = |p − 0.5| × 2`, so there is no separate confidence field to misread.
 
 **What to do**
 
@@ -119,7 +125,9 @@ A value near `0.5` means the evidence pulls both ways — genuinely balanced, no
 
 **Verify**
 
-Histogram `p_yes` per gate over a week of real traffic. A healthy gate is strongly bimodal with a thin middle; a fat middle means your `criteria` is vague. Then confirm that answers at `0.8` are right about 80% of the time.
+Histogram `p_yes` per gate over a week of real traffic. A healthy gate is strongly bimodal (two clusters — many answers near 0, many near 1, few in the middle) with a thin middle; a fat middle means your `criteria` is vague. Then confirm that answers at `0.8` are right about 80% of the time.
+
+> **One-line summary:** P(yes) ≈ 0.5 means "the evidence is balanced", not "weak yes" — treat the middle band as its own branch that goes to a human.
 
 ---
 
@@ -137,7 +145,7 @@ Jev evaluates every question in a single parallel pass, so latency barely moves 
 
 1. Put all six questions in one `questions` map and send one request.
 2. Key every answer by its question name so you can inspect confidence per question.
-3. For a list of candidates, fan out one Noul per item instead of looping over calls.
+3. For a list of candidates, fan out one Noul per item (one yes/no question per item, all in the same request) instead of looping over calls.
 4. With nested models, fields become namespaced questions (`outer.inner`) in the same pass — depth costs structure, not round-trips.
 
 > 📄 **Example code:** [`examples/04-q5-six-decisions-per-ticket-and-my-latency.py`](examples/04-q5-six-decisions-per-ticket-and-my-latency.py)
@@ -145,6 +153,8 @@ Jev evaluates every question in a single parallel pass, so latency barely moves 
 **Verify**
 
 Time one call with 1 question against one call with 6. If the second is not meaningfully slower, the serial habit is safe to drop. Also check your bill: adding questions should move input cost, never add a second charge.
+
+> **One-line summary:** Send all questions in one request — Jev evaluates them in parallel in a single pass, so extra questions cost tokens, not time.
 
 ---
 

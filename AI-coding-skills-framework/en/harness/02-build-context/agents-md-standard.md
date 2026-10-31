@@ -6,6 +6,8 @@
 
 ## Picture this
 
+This section explains what `AGENTS.md` is: a rules file that every coding agent reads automatically when it enters your repo.
+
 You hire a new assistant for your repo. Instead of repeating every time
 "build with what, test with what, never touch what", you stick a **house-rules
 sheet on the door**: short, clear, everyone reads it on entry.
@@ -22,7 +24,11 @@ sheet on the door**: short, clear, everyone reads it on entry.
   Change the build command but forget the sheet, and the agent fails right away.
 - What you type directly in chat always wins over any file. Files are just defaults.
 
+> **One-line summary:** `AGENTS.md` is the house-rules sheet agents read on entry — plain Markdown, versioned with the code, and chat instructions always override it.
+
 ## A starter template to copy
+
+This section gives a minimal skeleton you can paste and fill in. `pnpm` is a package manager (like npm); the commands below install, run, build, and test.
 
 ```markdown
 # AGENTS.md — project-name
@@ -35,7 +41,13 @@ sheet on the door**: short, clear, everyone reads it on entry.
 The `Boundaries` section matters most: list what the agent must never do alone
 (e.g. `NEVER... without asking`).
 
+> **One-line summary:** Copy the template, and spend most of your effort on the `Boundaries` section — the "never do this alone" list.
+
 ## Don't cram everything in — split it up
+
+This section explains which file to put what in, so the rules sheet stays short.
+
+How to read it: column 1 is the file type; column 2 compares it to something familiar; column 3 says when the agent reads it. For instance, `SKILL.md` is a per-job procedure manual that loads only when the job description matches.
 
 | File | Like | Read when? |
 |---|---|---|
@@ -47,17 +59,26 @@ The `Boundaries` section matters most: list what the agent must never do alone
 
 Two practical tips:
 
-1. Run `ln -s AGENTS.md CLAUDE.md` so Claude Code and friends share one source.
+1. Run `ln -s AGENTS.md CLAUDE.md` (creates a symlink — a second file name pointing at the same file) so Claude Code and friends share one source.
 2. For Copilot, custom agents join the shared instructions with
    `include-custom-instructions: true`. Don't copy the same text verbatim into
-   both `copilot-instructions.md` and `CLAUDE.md` — it wastes tokens and drifts.
+   both `copilot-instructions.md` and `CLAUDE.md` — it wastes tokens and drifts
+   (the copies slowly disagree, and nobody knows which is right).
+
+> **One-line summary:** Keep the rules sheet short and move job-specific detail into skills, prompts, and sub-agent files — each with its own trigger.
 
 ## Maintenance: treat an expired sheet as a bug
+
+This section is the upkeep rule: the file must change with the code it describes.
 
 Every build/test change, stack change, or folder reshuffle — open `AGENTS.md` and fix it.
 An outdated rules sheet is worse than none, because the agent fails very confidently.
 
+> **One-line summary:** Every time the build, stack, or folder layout changes, update `AGENTS.md` in the same change — a stale sheet causes confident failures.
+
 ## October 2026 Update — Precedence & Monorepo Example
+
+This section adds two things: which rules file wins when several exist, and a full monorepo skeleton (a monorepo = one repository holding many packages).
 
 > Adds a precedence table across per-tool "rules sheets", plus a complete
 > `AGENTS.md` skeleton for monorepos you can copy in one go.
@@ -68,6 +89,8 @@ An outdated rules sheet is worse than none, because the agent fails very confide
 Foundation under the Linux Foundation). `CLAUDE.md`, `GEMINI.md` and
 `copilot-instructions.md` are **per-tool variants** — same substance, different
 file names, each looked up by its own tool:
+
+How to read it: column 1 is the file; column 2 is its role; column 3 says what belongs in it. For instance, `CLAUDE.md` should only summarize or link back to `AGENTS.md`, not hold its own copy of the rules.
 
 | File | Role | Should contain |
 |------|------|----------------|
@@ -82,6 +105,8 @@ the same content verbatim into both creates two sources of truth — they will
 drift, and once they do, nobody knows which one is correct.
 
 ### 2. Example: `AGENTS.md` Skeleton for a Monorepo
+
+This skeleton is copy-paste ready. Read the tree first: `apps/` holds deployable apps, `packages/` shared libraries, `scripts/` operations scripts.
 
 ```markdown
 # AGENTS.md — acme-monorepo
@@ -123,6 +148,10 @@ acme-monorepo/
 └── scripts/AGENTS.md
 ```
 
+How to read the tree: the root file holds global rules; each sub-folder file adds or overrides rules for that package only.
+
+> **One-line summary:** One rulebook (`AGENTS.md`) + per-package files that override locally — never two full copies of the same rules.
+
 ### 3. Two Rules, Restated
 
 1. **"Nearest file wins"** with nesting: an agent editing `apps/web/src/x.ts`
@@ -133,6 +162,8 @@ acme-monorepo/
    layout and forget to update `AGENTS.md`, and the agent fails *very
    confidently* — see [Maintenance](#maintenance-treat-an-expired-sheet-as-a-bug)
    above. Change this file via PR, in the same PR as the code it describes.
+
+> **One-line summary:** Nearest file wins, and a stale `AGENTS.md` is a bug — update it in the same PR as the change it describes.
 
 ### 4. Links
 

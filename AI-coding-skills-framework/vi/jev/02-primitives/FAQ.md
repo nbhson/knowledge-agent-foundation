@@ -2,6 +2,8 @@
 
 Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
+> **Tài liệu này nói về gì:** Jev nhận câu hỏi theo ba kiểu (Choice = chọn 1, Score = chấm điểm theo thang, Noul = có/không). File này dạy cách chọn đúng kiểu và đọc đúng kết quả trả về.
+
 ---
 
 ## Q1. Tôi cần phân loại ticket và cấp độ ưu tiên — dùng Choice, Score hay Noul? [→ §6.1 Bảng quyết định]
@@ -13,6 +15,8 @@ Bạn thiết kế một màn hình phân loại yêu cầu hỗ trợ và khôn
 **Vì sao**
 
 Có ba kiểu câu hỏi và mỗi kiểu trả về một hình dạng khác nhau:
+
+Cách đọc bảng này: cột **Kiểu** là tên primitive (primitive = kiểu câu hỏi cơ bản); cột **Bạn định nghĩa trước** là thứ bạn khai báo khi tạo câu hỏi; cột **Nhận về** là kết quả Jev trả. Ví dụ, Choice với 4 giá trị trả về 1 giá trị được chọn kèm xác suất của cả 4 giá trị.
 
 | Kiểu | Bạn định nghĩa trước | Nhận về |
 |---|---|---|
@@ -37,6 +41,8 @@ Khi phân loại văn bản do người dùng viết, hãy luôn kèm giá trị
 
 Nhìn tỉ lệ xác suất của `"other"` trong 200 ticket thật. Trên 10% là dấu hiệu bộ nhãn chưa bao phủ.
 
+> **Tóm gọn 1 câu:** Chọn kiểu theo hình dạng đáp án — một trong danh sách đã đóng thì dùng Choice, có thứ tự/mức độ thì dùng Score, có/không thì dùng Noul — và đặt cả ba câu trong một lượt gọi cho chạy song song.
+
 ---
 
 ## Q2. Tôi khai 4 mức nhưng Jev trả về điểm 3.4 — lỗi hay đúng? [→ §3.1 Cách hoạt động]
@@ -47,7 +53,7 @@ Bạn khai bốn mức `p0, p1, p2, p3` và Jev trả về `score: 3.4` kèm ph�
 
 **Vì sao**
 
-Score trả về **giá trị kỳ vọng** của phân phối trên thang, không phải mức được chấm điểm. Khi phân phối dồn một bên, điểm gần đúng số nguyên; khi phân phối nằm giữa hai mức, điểm nằm giữa. Trong ví dụ trên: 51% cho mức 3 và 43% cho mức 4 kéo điểm lên 3.4 — đó là thông tin quý giá, vì nó nói khách đang ở **đúng ranh giới** giữa p2 và p3, mức mà ngưỡng cố định không phân biệt được.
+Score trả về **giá trị kỳ vọng** của phân phối trên thang (giá trị kỳ vọng = trung bình có tính trọng số xác suất, nên có thể ra số lẻ), không phải mức được chấm điểm. Khi phân phối dồn một bên, điểm gần đúng số nguyên; khi phân phối nằm giữa hai mức, điểm nằm giữa. Trong ví dụ trên: 51% cho mức 3 và 43% cho mức 4 kéo điểm lên 3.4 — đó là thông tin quý giá, vì nó nói khách đang ở **đúng ranh giới** giữa p2 và p3, mức mà ngưỡng cố định không phân biệt được.
 
 **Làm gì**
 
@@ -63,6 +69,8 @@ Cẩn thận một điểm khác: mô tả mỗi mức phải **sắc**. Nếu b
 **Kiểm tra**
 
 Thử 20 mẫu ở giữa hai mức và xem điểm có nhảy đúng khoảng giữa không. Nếu điểm luôn trùng số nguyên, mô tả mức của bạn đang chồng lấn.
+
+> **Tóm gọn 1 câu:** Điểm 3.4 không phải lỗi — đó là giá trị kỳ vọng của phân phối, nói bạn đang đứng giữa hai mức; hãy so ngưỡng trên số thập phân và đừng làm tròn mù quáng.
 
 ---
 
@@ -89,9 +97,13 @@ Với câu hỏi có/không, mô hình **không có trường độ tự tin ri�
 
 Cố tình dựng 20 mẫu câu hỏi thật sự mơ hồ (ví dụ văn bản trống, hai nội dung trái chiều) và xác nhận `p` của chúng dồn quanh 0.5. Nếu `p` không bao giờ gần 0.5, mô hình đang "quá tự tin" với câu hỏi đó và ngưỡng của bạn chưa có ý nghĩa.
 
+> **Tóm gọn 1 câu:** 0.45 nghĩa là "gần như không biết" chứ không phải "trung bình" — đo mức chắc chắn bằng `|p − 0.5| × 2`, thấp dưới 0.2 thì đưa sang người hoặc LLM.
+
 ---
 
 ## Q4. Tôi thêm mười câu hỏi vào một lượt gọi — có bị chậm hơn không? [→ §5 Đánh giá song song]
+
+Phần này về lever hiệu năng lớn nhất của Jev: chấm song song mọi câu hỏi trong một lượt.
 
 **Bạn sẽ thấy**
 
@@ -114,9 +126,13 @@ Bạn cần mười quyết định cho mỗi ticket: phân loại, độc hại
 
 Đo độ trễ khi gửi 1 câu, 5 câu và 20 câu trên cùng một trạng thái. Nếu con số thứ ba lớn hơn thứ nhất gấp đôi, nghĩa là bạn đang gọi tuần tự chứ không gom.
 
+> **Tóm gọn 1 câu:** Thêm câu hỏi vào một lượt gọi gần như không tăng độ trễ (chấm song song trong một lượt qua) — chỉ tăng tiền theo token đầu vào, nên hãy gom mọi quyết định của một bước vào một request.
+
 ---
 
 ## Q5. Tôi nhét câu "nếu khó hãy chọn other" vào phần dữ liệu — sai không? [→ §6.2 Đâu là câu hỏi, đâu là framing]
+
+Phần này về cách bày dữ liệu đúng chỗ: câu hỏi nằm ở đâu, hướng dẫn chung nằm ở đâu, và phần dữ liệu phải giữ sạch.
 
 **Bạn sẽ thấy**
 
@@ -140,6 +156,8 @@ Quy tắc rút gọn: **đặt câu hỏi lên kiểu, đặt khung vào chỉ d
 **Kiểm tra**
 
 Chạy 50 mẫu có sẵn với hai biến thể: một bản có hướng dẫn nhét trong dữ liệu, một bản sạch. So độ tự tin trung bình của hai bản — bản sạch phải cao hơn rõ rệt.
+
+> **Tóm gọn 1 câu:** Phần dữ liệu (state) là "hồ sơ vụ án" phải giữ sạch — đặt câu hỏi lên trường `description`, đặt khung đánh giá vào phần instructions, không nhét hướng dẫn kiểu prompt vào giữa dữ liệu.
 
 ---
 

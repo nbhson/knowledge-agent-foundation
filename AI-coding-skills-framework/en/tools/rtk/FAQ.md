@@ -1,6 +1,6 @@
 # ❓ FAQ — RTK (Real Stories, Plain Language)
 
-If a question is unclear, read the section in the named file (named in brackets).
+If a question is unclear, read the section in the named file (named in brackets). Each answer follows the same shape: **What you see** (the symptom), **Why** (the root cause), **What to do** (the fix), **Verify** (how to confirm it worked).
 
 ---
 
@@ -14,7 +14,7 @@ The harness already has tools, memory and context, yet the agent reads a failed 
 
 **Why**
 
-Bash output is the quiet context glutton. Every shell call pours hundreds of lines into the model's immediate context, and the longer the pile, the more likely the one useful line is missed. RTK (Rust Token Killer) is a command-line proxy written in Rust that sits between the agent and the shell, cutting up to **90%** of that output. One binary, 100+ supported commands, less than 10ms of added delay.
+Bash output is the quiet context glutton. Every shell call pours hundreds of lines into the model's immediate context, and the longer the pile, the more likely the one useful line is missed. RTK (Rust Token Killer) is a command-line proxy written in Rust (a small program that sits between the agent and the shell) that cuts up to **90%** of that output. One binary, 100+ supported commands, less than 10ms of added delay.
 
 **What to do**
 
@@ -27,6 +27,8 @@ Bash output is the quiet context glutton. Every shell call pours hundreds of lin
 **Verify**
 
 Run the same command with and without RTK and count lines. Expect roughly: `ls -la` 45 → 12 lines (~73%), `git push` 15 lines → `ok main` (~93%), failing `cargo test` 200+ → ~20 lines (~90%).
+
+> **One-line summary:** Yes — hundreds of lines of shell output bury the one error line; RTK cuts up to 90% of that noise before it reaches the model.
 
 ---
 
@@ -50,6 +52,8 @@ The harness has 7 components. RTK belongs directly to **Component #3, Context Ma
 
 Your roadmap has one line for `harness/02-build-context` and one line for `tools/rtk/`; no new numbered harness module appears.
 
+> **One-line summary:** RTK is not an extra theory module — it is the working tool that implements the harness's "limit tool output" idea.
+
 ---
 
 ### Q3. Does this really cut my token bill, or does it just print a prettier table? [→ Why RTK Matters?]
@@ -68,6 +72,8 @@ Input tokens are the currency of agent reasoning, and bash noise is pure waste i
 2. Quote the measured reductions per command, not a single global number.
 3. State the scope honestly: bash output reduction, not total bill reduction.
 
+How to read this table: each row is one command, its raw output, its RTK output, and the saving. For instance, `git push` drops from 15 lines to a single `ok main`.
+
 | Command | Raw | RTK | Reduction |
 |---|---|---|---|
 | `ls -la` | 45 lines | 12 lines | ~73% |
@@ -78,6 +84,8 @@ Input tokens are the currency of agent reasoning, and bash noise is pure waste i
 **Verify**
 
 `rtk gain` opens the dashboard and shows non-zero saved tokens; the numbers in your write-up match a fresh run, not a copied table.
+
+> **One-line summary:** It is a real, measurable cut — 70-90% off each command's output — just quote it as "bash output reduction", not "whole bill reduction".
 
 ---
 
@@ -101,6 +109,8 @@ The directory layout is the intended order, not an accident. Each folder answers
 **Verify**
 
 You can run `rtk git status` through your AI tool and you know which folder to open next without guessing.
+
+> **One-line summary:** The folder numbers are the reading order — concepts → setup → patterns → savings → troubleshooting.
 
 ---
 

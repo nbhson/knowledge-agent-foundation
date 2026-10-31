@@ -59,11 +59,15 @@ LLMs are very good at "talking" — but when facing a complex task like *"roll o
 
 **The solution**: Structured Planning — let the agent **think before it acts**, while still **getting to work in a reasonable time**.
 
+> **One-line summary:** Plan first, then split the big job into small clear steps — that is what turns an AI from a fast talker into a builder that doesn't leave crooked walls.
+
 ### Why Are Plan & Task Decomposition Important?
 
 > *"A goal without a plan is just a wish. And an AI without task-decomposition capability is just a chatbot."*
 
 #### 3 Scientific Proofs
+
+How to read it: each row is one study. The middle column names who did the research; the right column states the measured effect. For instance, row 1 says structured planning lifts the success rate from 32% to 78%.
 
 | # | Research | Key Finding |
 |---|-----------|----------------------|
@@ -90,7 +94,9 @@ Plan & Decompose = Analyze → Prioritize → Sequence → Execute → Validate
 
 **Analogies**: Planning & decomposing is like GPS navigation — it doesn't just tell you the destination (goal), it also analyzes the route (decompose), picks the optimal path (prioritize), estimates the travel time (estimate), and reroutes when there is traffic (replan). Without GPS, you could drive all day and never arrive.
 
-**If you skip it**: The agent tries to do everything at once → context overload, hallucination when there is no clear structure, inconsistent code, and in the end 3-5x the tokens compared to a planned approach.
+**If you skip it**: The agent tries to do everything at once → context overload, hallucination when there is no clear structure, inconsistent code, and in the end 3-5x the tokens compared to a planned approach. (Tokens = the text "fuel" the model reads and writes; more tokens = more money and slower output.)
+
+> **One-line summary:** Planning is the control brain of an agent: it sets the order of work, cuts token waste, and keeps the agent on track — skip it and you pay 3-5x in tokens and retries.
 
 ## Overview
 
@@ -138,6 +144,10 @@ In a Harness Engineering system, Planning & Decomposition is the **"control brai
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(Guardrails = safety checks that block risky actions; Memory = stored past results the agent can reuse; Permissions = the list of actions the agent is allowed to take.)
+
+> **One-line summary:** The pipeline is always the same — analyze the job, split it up, run the steps, then validate and re-plan — and the harness's tools, memory, and guardrails plug into each stage.
+
 ## Why Are Planning & Decomposition Important?
 
 > 📌 **Basic Concept**
@@ -160,6 +170,8 @@ LLMs are very good at "talking", but when facing a complex task like **"roll out
 
 **The solution**: Structured Planning — a system with a clear framework that lets the agent **think before it acts**, while still **getting to work in a reasonable time**.
 
+> **One-line summary:** An LLM left alone either rushes into code or overthinks forever; a structured plan fixes both by making it think first, then start on time.
+
 ### Research Evidence
 
 #### LangChain (2025): "ReAct vs Plan-and-Execute"
@@ -175,6 +187,10 @@ Why: plan first → know which tools are needed → fewer false starts → fewer
 #### Devin AI & OpenHands (2025)
 > Top coding agents all use **hierarchical decomposition**: Task → Epic → Story → Sub-task. Completion speed **2.8x** compared to a flat task list.
 
+(Glossary for the above: Plan-and-Execute = write the full step list first, then run it; ReAct = think → act → look at the result, one step at a time. Hierarchical decomposition = split like a company org chart: big goal (Task) → phase (Epic) → feature (Story) → single action (Sub-task). SWE-bench = a public benchmark of real GitHub bug-fixing tasks used to score coding agents.)
+
+> **One-line summary:** Studies agree: plan first, split into 3-7 item chunks, and layer the split — agents that do this retry less, spend fewer tokens, and finish much faster.
+
 ### Cost-Benefit Analysis
 
 | Cost / Value | Without Planning | With Planning + Decomposition |
@@ -185,7 +201,11 @@ Why: plan first → know which tools are needed → fewer false starts → fewer
 | **Time to Complete** | Unpredictable, usually slow | Predictable, typically faster |
 | **User Trust** | Low, because results are surprising | High, because there is visibility into the plan |
 
-**ROI**: invest 15-30 seconds up front in planning → save 5-15 minutes of retries. The ratio is **1:20**.
+How to read it: each row is one cost or benefit. Compare the "Without Planning" column against the "With Planning" column. For instance, row 1: with a plan, only 10-15% of tasks need to be redone, versus 40-60% without one.
+
+**ROI**: invest 15-30 seconds up front in planning → save 5-15 minutes of retries. The ratio is **1:20**. (ROI = return on investment: what you put in versus what you get back.)
+
+> **One-line summary:** A few seconds of planning buys a 20-to-1 return in saved retries, tokens, and waiting time.
 
 ### Illustrative Analogies
 
@@ -203,6 +223,10 @@ Why: plan first → know which tools are needed → fewer false starts → fewer
 - **No planning** = the developer codes immediately without a spec → feature creep, bugs
 - **With planning** = sprint planning → user stories → tasks → code
 - **Decomposition** = epic → feature → story → sub-task → code
+
+(Spec = the written list of what to build. Sprint planning = a short team meeting that picks the work for the next work cycle. Epic → story → sub-task = big theme → user-facing feature → single action.)
+
+> **One-line summary:** Three everyday pictures, one message: measure and slice the work before you build, cook, or code.
 
 ### Evolutionary Context
 
@@ -231,6 +255,10 @@ Why: plan first → know which tools are needed → fewer false starts → fewer
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(How to read the box: each era is a stage in how agents learned to plan, top to bottom. ReAct = react step by step with no overall map; CoT = think in one straight line before acting; Plan-and-Execute = write the full plan, then run it; the 2026+ stage adds branching, priorities, and re-planning when a step fails.)
+
+> **One-line summary:** Planning has evolved from "no map at all" to plans that re-draw themselves when reality changes.
+
 ### If You Skip Planning...
 
 **1. Infinite Loops**
@@ -253,6 +281,10 @@ Why: plan first → know which tools are needed → fewer false starts → fewer
 - Sub-task 1 is wrong → sub-tasks 2-5 are all wrong too → the whole thing must be redone
 - No validation checkpoints between sub-tasks
 
+(Checkpoint = a saved snapshot of progress, like a game save point, so you can roll back instead of starting over.)
+
+> **One-line summary:** Without planning you get loops, scope creep, wrong tools, forgotten steps, and errors that cascade — all five are cheap to prevent and expensive to fix.
+
 ### Best Practices (And Why)
 
 | Rule | Reason |
@@ -263,6 +295,12 @@ Why: plan first → know which tools are needed → fewer false starts → fewer
 | Assess dependencies before executing | Task A must complete before Task B → execute sequentially |
 | Limit plan depth to 4 levels or fewer | Going too deep easily loses the overall context |
 | Re-plan when a sub-task fails | Instead of blindly retrying, analyze the root cause and adjust the plan |
+
+How to read it: the left column is the rule to follow; the right column explains why the rule exists. For instance, "set a termination condition" means writing down in advance what "done" looks like, so the agent knows when to stop.
+
+(Context window = how much text the model can hold in mind at once, like a small desk.)
+
+> **One-line summary:** Six rules, one theme: slice small, define "done", check early, respect order, stay shallow, and re-plan instead of blindly retrying.
 
 ---
 
@@ -291,6 +329,10 @@ Why: plan first → know which tools are needed → fewer false starts → fewer
 | 11 | [Advanced Patterns](#11-advanced-patterns) | Hierarchical, Self-reflective |
 | 12 | [Tools & Frameworks](#12-tools-&-frameworks) | LangGraph, AutoGen, CrewAI |
 | 13 | [The Future](#13-the-future) | Trends for 2026-2028 |
+
+How to read it: each row is one chapter. Click the topic name to jump there. For instance, row 7 covers how four real products (SWE-agent, Anthropic, Claude Code, Cursor) plan in production.
+
+> **One-line summary:** This module has 13 chapters, from "how to slice a task" to "where planning is heading" — read them in order the first time.
 
 ---
 
@@ -381,6 +423,10 @@ This section shows **the different ways to cut a task into parts**: run them seq
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+(How to read the six boxes: T1, T2... are numbered subtasks; the arrows show the order of work. Sequential = one after another, each feeding the next. Parallel = several run at once, then merge. Conditional = a question Q picks path A or B. Hierarchical = a parent task breaks into children, like Sub1 breaking into Sub1a. Iterative = implement → evaluate → repeat until it passes. DAG = a network where tasks share multiple parents and no loops are allowed — e.g. T5 starts only after both T3 and T6 finish.)
+
+> **One-line summary:** There are six standard ways to slice a task — pick by shape: strictly ordered, independent, conditional, nested, repeated, or dependency-woven.
+
 ### 1.2 Implementation
 
 The code below is a complete Python implementation of the patterns from section 1.1: the `Task` class defines "one piece of work" (type, status, dependencies, retries...), and the `TaskPlanner` class is the "work-splitting brain" that uses the LLM to analyze a big task into subtasks, detect dependencies, and estimate complexity. You can open it and read in order: the `Task` declaration first, then the `decompose()` and `estimate_complexity()` methods.
@@ -393,6 +439,8 @@ The code below is a complete Python implementation of the patterns from section 
 > 📄 **Example code:** [`examples/01-1-2-implementation.py`](examples/01-1-2-implementation.py)
 
 </details>
+
+> **One-line summary:** One Python file shows both halves: the `Task` object ("one piece of work" with status and dependencies) and the `TaskPlanner` ("the brain" that asks the LLM to cut a big task into such pieces).
 
 ### 1.3 Comparing the Patterns
 
@@ -412,6 +460,10 @@ The table below is a "scorecard" comparing the 6 patterns on 4 criteria: speed, 
 │ DAG              │ ⭐⭐⭐    │ ⭐⭐⭐⭐⭐  │ Medium         │ Dependencies │
 └──────────────────┴──────────┴──────────┴────────────────┴──────────────┘
 ```
+
+How to read it: each row is one pattern; the stars rate it (5 = best, 1 = worst) on speed and quality, then the token cost, then the situation it fits. For instance, Iterative scores worst on speed (it loops) but best on quality — use it when correctness matters more than time.
+
+> **One-line summary:** Fast and cheap (Sequential/Parallel) versus slow and thorough (Hierarchical/Iterative) — DAG is the balanced choice when tasks depend on each other.
 
 ---
 ## 2. Planning Algorithms
@@ -438,6 +490,8 @@ This approach is exactly like writing a "to-do list" before you start working: t
 
 </details>
 
+> **One-line summary:** Plan-and-Solve = write the full to-do list first, run it step by step, check each result, and re-plan on failure instead of repeating the same mistake.
+
 ### 2.2 Tree of Thoughts (ToT)
 
 Instead of reasoning along a single straight line like Plan-and-Solve, ToT **branches into many lines of thought at once**, scores each branch, then focuses on the most promising one. The code below uses BFS (breadth-first traversal) with pruning to avoid branch explosion: each level keeps only the top-k best branches.
@@ -451,6 +505,8 @@ Instead of reasoning along a single straight line like Plan-and-Solve, ToT **bra
 
 </details>
 
+> **One-line summary:** ToT = try several lines of thought at once, score them, and prune (cut) the weak branches — more thorough than a single straight line, but it costs more tokens.
+
 ### 2.3 ReWOO (Reasoning Without Observation)
 
 The core idea is to **separate thinking from tool execution into two distinct phases**: the AI makes the entire plan up front (which tool to use for which step, what query to run), executes everything in one pass, and only then uses the results to synthesize the answer. The advantage is fewer LLM calls, so it is cheaper; the downside is that it is less adaptive when a step fails partway through. The code in `ReWOOPlanner` illustrates exactly that plan-all → execute → synthesize cycle.
@@ -463,6 +519,8 @@ The core idea is to **separate thinking from tool execution into two distinct ph
 > 📄 **Example code:** [`examples/04-2-3-rewoo-reasoning-without-observation.py`](examples/04-2-3-rewoo-reasoning-without-observation.py)
 
 </details>
+
+> **One-line summary:** ReWOO = plan everything up front, run all tool calls in one pass, then synthesize the answer — cheap on LLM calls, but fragile if a middle step fails.
 
 ---
 
@@ -526,6 +584,10 @@ This is a map describing **the 6 most common agent organization styles**, from s
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+How to read the six boxes: each numbered block is one workflow style. ReAct = one worker who thinks and acts in turns. Plan-and-Execute = plan everything, then run the list. Reflective = act, review your own work, improve, repeat. Multi-Agent = a planner hands pieces to specialist agents (coder, researcher, reviewer). LangGraph-style = a state machine — boxes joined by arrows, with a Router deciding which box runs next. Hierarchical = a supervisor splits work among sub-agents, some in parallel, then merges the results.
+
+> **One-line summary:** Six org charts for agents, from "one worker improvising" to "a supervisor directing parallel specialists" — pick the simplest one that fits the job.
+
 ### 3.2 Agent Implementation
 
 The code below implements the two workflow types described above: the `SimpleAgent` class is a standalone agent that runs the Think → Act → Observe loop with guardrails (validating the tool before and after each call), and the `MultiAgent` class is a multi-agent system of specialized agents coordinated by one coordinator — it splits the work, collects results, evaluates them, and then synthesizes. Click to open and see each method in the corresponding order.
@@ -538,6 +600,8 @@ The code below implements the two workflow types described above: the `SimpleAge
 > 📄 **Example code:** [`examples/05-3-2-agent-implementation.py`](examples/05-3-2-agent-implementation.py)
 
 </details>
+
+> **One-line summary:** Two ready patterns in code: `SimpleAgent` (one agent, Think → Act → Observe loop, with safety checks on every tool call) and `MultiAgent` (a coordinator that splits work, gathers results, and merges them).
 
 ---
 ## 4. State Management
@@ -559,6 +623,8 @@ The code below is the `AgentState` class — a complete state manager: it stores
 
 </details>
 
+> **One-line summary:** `AgentState` is the game-save system for the agent: it keeps a version history, saves checkpoints, rolls back after errors, and packs the current state into text the LLM can read.
+
 ---
 
 ## 5. ReAct Pattern
@@ -579,6 +645,8 @@ The code below is the `ReActAgent` class — a prototype implementation of the T
 > 📄 **Example code:** [`examples/07-5-react-pattern.py`](examples/07-5-react-pattern.py)
 
 </details>
+
+> **One-line summary:** ReAct = the agent's inner voice: think what to do next, call the tool, read what came back, repeat — with a `max_steps` cap so it can never loop forever.
 
 ---
 
@@ -605,6 +673,8 @@ This section describes **the interface that declares the Harness structure**: it
 > 📄 **Example code:** [`examples/08-6-1-typescript-interface-harness-architecture.ts`](examples/08-6-1-typescript-interface-harness-architecture.ts)
 
 </details>
+
+> **One-line summary:** The `interface` is the contract ("a planner must be able to decompose, re-plan, and estimate complexity"), and `HarnessPlanner` is the class that signs it — while guardrails watch, memory informs, and feedback corrects.
 
 ---
 ## 7. Real-World Case Studies
@@ -643,6 +713,8 @@ This section describes **the interface that declares the Harness structure**: it
 
 **Lesson**: **"Plan before you act — mapping the codebase cuts wasted exploration time"**
 
+> **One-line summary:** SWE-agent first draws a map of the codebase, then plans — success rate jumped from 12.5% to 20.5% while using 30% fewer tokens.
+
 ---
 
 ### 7.2. Anthropic Multi-Agent Architecture
@@ -664,6 +736,8 @@ This section describes **the interface that declares the Harness structure**: it
 - Better code quality thanks to the evaluation loop
 
 **Lesson**: **"Decompose → Parallelize → Evaluate — the 3-step formula"**
+
+> **One-line summary:** Anthropic splits the job among three cooperating agents (plan, build, review) and runs pieces in parallel — about 80% more successes than a single agent.
 
 ---
 
@@ -687,6 +761,8 @@ This section describes **the interface that declares the Harness structure**: it
 
 </details>
 
+> **One-line summary:** Claude Code plans in layers (Task → Epic → Story) and re-plans dynamically when reality changes — a leaked design doc confirmed this architecture.
+
 ---
 
 ### 7.4. Cursor IDE — Context-Aware Planning
@@ -709,6 +785,10 @@ Context: Cursor has to plan code fixes **based on the developer's current contex
 | **Re-plan on failure** | - | ✅ Evaluation loop | ✅ Dynamic replan | - |
 | **Parallel execution** | - | ✅ Group steps | ✅ Sub-agents | - |
 | **Use memory** | - | - | ✅ Past patterns | ✅ Recent edits |
+
+How to read it: each column is one product; each row is one lesson; a ✅ means that product applies the lesson (the words next to it say how), and "-" means it does not. For instance, SWE-agent limits scope by capping search results at 50, and Cursor uses your recent edits as memory.
+
+> **One-line summary:** All four products plan before acting and cap their scope; re-planning and parallel execution are what separate the multi-agent ones from the single-agent ones.
 
 ---
 
@@ -747,6 +827,10 @@ Think of SOLID as five house rules that keep your planner tidy as it grows:
 - The planner talks to the general Task idea, not one fixed implementation
 - That way you can swap splitting styles easily
 
+(Glossary: Single Responsibility = one module, one job. Open/Closed = add new features without editing the old core. Liskov Substitution = any planner can stand in for another of the same type. Interface Segregation = small, focused contracts instead of one giant one. Dependency Inversion = depend on an abstract idea (the `Task`), not a concrete class.)
+
+> **One-line summary:** SOLID keeps the planner easy to change: each part has one job, new ideas plug in without breaking the core, and parts can swap places.
+
 ### 8.2 The 10 Commandments of Task Planning
 
 These are the 10 "commandments" that pack the whole module's experience into short, memorable lines. Each line has the rule in English (the standard term) plus a plain-language explanation. Read them in order and cross-check against the examples above — most of the mistakes agents make violate one of these.
@@ -783,6 +867,10 @@ These are the 10 "commandments" that pack the whole module's experience into sho
     → Learn from old plans, to improve new ones
 ```
 
+How to read the list: each item has the rule in capitals (the standard term) plus the plain-language meaning after the arrow. For instance, rule 3 means: before starting, agree on a token limit per task, like a credit card limit per purchase.
+
+> **One-line summary:** Ten short rules covering the whole lifecycle: split first, respect order, cap tokens, save checkpoints, check every step, and learn from failures.
+
 ---
 
 ## 9. Best Practices
@@ -809,6 +897,8 @@ Good habits that keep planning smooth and safe:
 - **Check each step's result right away**: catch problems early (fail fast)
 - **Run independent tasks at the same time**: it saves a lot of waiting
 
+> **One-line summary:** DO: slice in layers, map dependencies (a DAG = a task-order chart with no loops), set timeouts, checkpoint, re-plan on failure, and fail fast.
+
 ### 9.2 DON'T ❌
 
 Common traps that burn time and tokens — steer around them:
@@ -822,6 +912,8 @@ Common traps that burn time and tokens — steer around them:
 - **Don't hand out oversized token budgets**: they invite waste
 - **Don't send one lone agent at a giant task**: a team (multi-agent) fits better
 
+> **One-line summary:** DON'T: bite off the whole task, ignore failures, over-slice, skip state updates, hardcode order, or skip checking results — each trap burns time and tokens.
+
 ### 9.3 Token Budget Management
 
 Each task should have a clear token "spending limit", like a credit card limit. The code below is the `TokenBudgetManager` class: it allocates the budget to each task (`allocate`), records the tokens used (`report`), checks whether there is enough budget left to keep going (`canContinue`), and exports a final performance report (`getReport`).
@@ -832,6 +924,8 @@ Each task should have a clear token "spending limit", like a credit card limit. 
 > 📄 **Example code:** [`examples/14-9-3-token-budget-management.ts`](examples/14-9-3-token-budget-management.ts)
 
 </details>
+
+> **One-line summary:** Give every task a token "credit limit": `TokenBudgetManager` hands out the budget, records spending, stops the agent when it runs dry, and prints the final bill.
 
 ---
 
@@ -853,6 +947,8 @@ The code below is a sample test suite for `TaskPlanner`, `TokenBudgetManager`, a
 > 📄 **Example code:** [`examples/15-10-testing-planning-systems.py`](examples/15-10-testing-planning-systems.py)
 
 </details>
+
+> **One-line summary:** Unit tests (small automated checks, one behavior each) catch planner bugs — decomposition, depth limits, retries, rollback — before they reach production.
 
 ---
 ## 11. Advanced Patterns
@@ -879,6 +975,8 @@ HTN extends the decomposition idea from section 1 by using ready-made **"decompo
 
 </details>
 
+> **One-line summary:** HTN = a cabinet of splitting recipes: each task type has a pre-defined way to break it down, applied level by level until only directly executable actions remain.
+
 ### 11.2 Self-Reflective Planning
 
 The idea: the agent makes a plan, then **scores the quality of that plan itself** (completeness, feasibility, risks); if the score is low, it fixes the plan based on its own suggestions and repeats for a few rounds. The `SelfReflectivePlanner` class below implements exactly that Plan → Reflect → Improve loop, while also keeping a history of plans to learn from real outcomes.
@@ -891,6 +989,8 @@ The idea: the agent makes a plan, then **scores the quality of that plan itself*
 > 📄 **Example code:** [`examples/17-11-2-self-reflective-planning.py`](examples/17-11-2-self-reflective-planning.py)
 
 </details>
+
+> **One-line summary:** The agent grades its own plan (complete? feasible? risky?), fixes what scored low, and keeps a history so future plans learn from past outcomes.
 
 ---
 
@@ -918,6 +1018,8 @@ LangGraph lets you describe a workflow as a **state machine** via a graph: each 
 
 </details>
 
+> **One-line summary:** LangGraph = draw your workflow as a graph of stages (nodes) and paths (edges); the sample loop goes analyze → plan → validate → execute, branching to replan if validation fails.
+
 ### 12.2 CrewAI (Multi-Agent Planning)
 
 CrewAI organizes agents as a **crew**: you define each role (Agent) with its own goal and tools, assign the tasks, and then let them cooperate to finish the work. The code below creates three typical roles: Planner (plans), Executor (executes), and Reviewer (reviews).
@@ -931,6 +1033,8 @@ CrewAI organizes agents as a **crew**: you define each role (Agent) with its own
 
 </details>
 
+> **One-line summary:** CrewAI = build a small "company" of role-defined agents (Planner, Executor, Reviewer), give each a goal and tools, and let them cooperate.
+
 ### 12.3 AutoGen (Microsoft)
 
 Microsoft's AutoGen lets agents **converse with each other** to coordinate — each agent is a "mind" that can send messages to other agents. The sample code below defines a planner that lays out the plan, an executor that carries it out, and a user proxy that stands in for the real human to sign off on the final result.
@@ -943,6 +1047,8 @@ Microsoft's AutoGen lets agents **converse with each other** to coordinate — e
 > 📄 **Example code:** [`examples/20-12-3-autogen-microsoft.py`](examples/20-12-3-autogen-microsoft.py)
 
 </details>
+
+> **One-line summary:** AutoGen = agents that talk to each other in a group chat: a planner proposes, an executor does the work, and a user proxy (a stand-in for the human) signs off.
 
 ---
 
@@ -984,6 +1090,10 @@ Microsoft's AutoGen lets agents **converse with each other** to coordinate — e
 - Real-time plan visualization
 - Interactive plan editing
 
+(Glossary: self-planning = the agent writes its own plan; predictive planning = flag likely failures before running; visual planning = edit the plan like a diagram, by dragging boxes.)
+
+> **One-line summary:** Expect plans that write, predict, and fix themselves — and interfaces where you edit the plan visually instead of reading text.
+
 ### 13.2 Advice
 
 ```
@@ -1003,11 +1113,17 @@ Microsoft's AutoGen lets agents **converse with each other** to coordinate — e
    → Track tokens, time, success rate
 ```
 
+How to read the list: rule 1 means grow the difficulty in order — master the simple layouts (Sequential, Parallel, Conditional) before the hard ones (Hierarchical). Rule 5 means: if you don't measure cost and success, you can't improve.
+
+> **One-line summary:** Start simple, add complexity gradually, validate every step, learn from failures, and measure everything.
+
 ---
 
 ## 14. Production Supplement: Replanning, Approval Gates, Idempotency & Explosion Guards
 
 > Makes §1–§13 plans safe to run autonomously.
+
+This section answers one question: **how do you let a plan run without a human babysitting every step, without risking damage?** Four tools do the job: re-planning (change course on failure), approval gates (a human signs off before risky steps), idempotency (re-runs never double-apply changes), and explosion guards (hard limits so the plan cannot grow without bound).
 
 ### 14.1 Definitions
 
@@ -1017,6 +1133,10 @@ Microsoft's AutoGen lets agents **converse with each other** to coordinate — e
 | Approval gate | Human-in-loop checkpoint before irreversible/high-blast-radius subtasks |
 | Idempotency key | Stable `plan_id:subtask_id:input_hash` so retries never double-apply side effects |
 | Explosion guard | Hard ceiling on depth, fan-out, and ToT branches × cost to bound runaway planning |
+
+How to read it: the left column is the safety mechanism; the right column says what it does. In plain words: **Dynamic replanning** = the agent decides on the spot whether to retry, make a new plan, or call a human. **Approval gate** = a human must approve before steps that cannot be undone (high "blast radius" = how much the step can damage if it goes wrong). **Idempotency key** = a unique ID for each step built from plan + subtask + input, so a retry reuses the old result instead of charging a card twice. **Explosion guard** = hard caps (plan depth, number of branches, total cost) so the plan cannot snowball.
+
+> **One-line summary:** Four safety mechanisms with plain meanings: decide-on-failure, ask-a-human-before-risky-steps, never-double-apply, and never-grow-unbounded.
 
 ### 14.2 Dynamic Replanning Decision Table
 
@@ -1029,9 +1149,15 @@ Microsoft's AutoGen lets agents **converse with each other** to coordinate — e
 | Budget >80% spent or ToT cost ceiling hit | — | — (freeze) | ✅ with summary |
 | Conflicting sub-results / policy violation | — | — | ✅ |
 
-Policy: log `attempt, error_class, decision, reason` every transition; cap auto-retries at 3, auto-replans at 2, then must escalate.
+How to read it: each row is one kind of problem (the "Signal"); the three action columns ask "what should the agent do?" — ✅ marks the right action. For instance, row 1: a one-off timeout (429 = "too many requests" error) on the first or second try → just retry. Row 4: anything irreversible like a deploy or payment → stop and ask a human.
+
+Policy: log `attempt, error_class, decision, reason` every transition; cap auto-retries at 3, auto-replans at 2, then must escalate. (In plain words: every time the agent changes course, write down what happened and why; after 3 retries or 2 re-plans, it must hand the problem to a human.)
+
+> **One-line summary:** One table decides every failure: retry small hiccups, re-plan when the approach itself is wrong, and escalate to a human for anything risky or stuck.
 
 ### 14.3 Human-in-Loop Approval Gates
+
+An approval gate = a checkpoint where the agent must stop and get a human's OK before running a risky step — like a security door that only opens with a badge. This section splits the work in two: **this module (the planner) tags risky subtasks**; **[`15-approval-gates`](../15-approval-gates/README.md) runs the actual gate**.
 
 **The planner's half of the gate.** The risk tier is assigned *here*, at plan time — a subtask
 tagged `risk ∈ {high, irreversible}` is a candidate for a gate, and the tag is what
@@ -1056,9 +1182,19 @@ gate that either hangs or fires unattended.
 All approvals are audit-logged `(who, when, diff_hash)` and written to the trajectory store
 (`13-trajectory-observability` §6), so "the human never saw it" is a checkable claim.
 
+(Glossary for the terms above: **blast radius** = the list of things a step could damage, e.g. which database tables or servers it touches; **policy registry** = the official record of what each subtask is allowed to touch, so you look it up instead of guessing; **dry-run** = rehearse the step without applying it; **rollback cmd** = the command that undoes the step if it goes wrong; **timeout-deny (fail closed)** = if a human doesn't answer in time, the step stays blocked — silence means "no"; **two-person rule** = a second person must also approve; **audit-logged `(who, when, diff_hash)`** = every approval is recorded with who approved, when, and a fingerprint of exactly what was approved; **trajectory store** = the permanent log of everything the agent did.)
+
+> **One-line summary:** The planner tags risky subtasks and lists exactly what they touch; the approval-gate module then makes a human approve them — with evidence, a timeout, and a permanent audit record.
+
 ### 14.4 Subtask Idempotency + Partial Failure
 
+**Idempotency** = running the same step twice changes nothing the second time — like a light switch: flipping it "on" twice still leaves the light on, unlike pressing "pay" twice, which charges twice.
+
 Key: `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. Executor checks result-store first; on crash, replay returns cached result. Partial failure: mark DAG nodes `ok/failed/skipped`; continue independent branches, skip dependents of failed nodes, return `partial:true + completed[] + failed[]`. Compensate completed side-effects on abort via registered `rollback()` per subtask.
+
+In plain words: every subtask gets a **unique key** built from its plan ID, subtask ID, and a hash (a fingerprint) of its inputs. Before running, the executor checks the result store — if this key already has a saved result (e.g. after a crash and restart), it reuses it instead of doing the work twice. When only part of the plan fails, each task in the DAG is marked `ok`, `failed`, or `skipped`; branches that don't depend on the failure keep going, branches that do are skipped, and the agent reports back exactly what finished and what didn't (`partial:true + completed[] + failed[]`). If the whole run is aborted, each finished step with side effects (changes made outside the agent, like writing a file or charging money) is undone using its pre-registered `rollback()` — an "undo button" written for that step in advance.
+
+> **One-line summary:** Give every subtask a unique key so retries reuse results instead of repeating side effects; on partial failure, keep what's healthy, skip what depends on the failure, and undo finished work cleanly on abort.
 
 ### 14.5 Explosion Guards (Depth / Fan-out / ToT Cost)
 
@@ -1066,12 +1202,16 @@ Key: `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. Executor checks resul
 - ToT: `MAX_BRANCHES=3, MAX_ROLLOUTS=9`; each rollout has token/time budget; prune branches with score <0.3 after 2 steps.
 - Global cost ceiling: `MAX_TOKENS_PER_PLAN` (e.g. 100k) + `MAX_TOOL_CALLS=50`; at 80% emit warning subtask, at 100% freeze and escalate with `best-so-far` summary.
 
+(Glossary: **depth** = how many levels a split can nest, like folders inside folders — capped at 4. **Fan-out** = how many subtasks one split may create — capped at 5. **ToT branches/rollouts** = how many lines of thought Tree of Thoughts may open at once and total tries per step. **Prune** = cut branches that score below 0.3 after 2 steps. **Rollout** = one trial run down a branch. **Atomic task** = returned as one unsplittable step instead of recursing deeper. At 80% of the global budget the agent adds a warning; at 100% it freezes and hands a human the best result so far.)
+
 <details>
 <summary>Python Code — Idempotent Subtask + Replan Decision (Click to expand/collapse)</summary>
 
 > 📄 **Example code:** [`examples/21-14-5-explosion-guards-depth-fan-out-tot.py`](examples/21-14-5-explosion-guards-depth-fan-out-tot.py)
 
 </details>
+
+> **One-line summary:** Hard caps on nesting (depth ≤ 4), branching (fan-out ≤ 5, ToT ≤ 3 branches), and total cost (tokens/tool calls) keep a plan from exploding — at the limit it freezes and calls a human.
 
 ### 14.6 Checklist
 
@@ -1083,6 +1223,10 @@ Key: `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. Executor checks resul
 | 4 | Idempotency key on every side-effecting subtask; cache results for replay |
 | 5 | Track partial DAG status; compensate on abort; return `partial` explicitly |
 | 6 | Enforce `depth ≤4, fan-out ≤5, ToT branches ≤3`, global token/tool ceiling with 80% warning |
+
+How to read it: the left column is a step number; the right column is one rule to verify before you ship an autonomous planner. For instance, rule 3 says every irreversible subtask (a deploy, a delete, a payment) must pass through a gate that shows the diff (exact changes), a dry-run, and the undo command.
+
+> **One-line summary:** Six checks before you trust a plan to run itself: classify failures, cap retries, gate irreversible steps, make re-runs safe, handle partial failures, and enforce the caps.
 
 ---
 
@@ -1097,6 +1241,8 @@ Key: `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. Executor checks resul
 > **Why it matters:** Because all the numbers and models in this module come from these studies — checking the original sources keeps you confident when you present them.
 
 ### Papers & Research
+
+Each entry is one research paper: the title describes the idea, the second line names the authors and year, and the URL (arxiv.org = the open repository where researchers publish papers) goes to the original text.
 
 1. **ReAct: Synergizing Reasoning and Acting in Language Models**
    - Yao et al., 2022
@@ -1118,12 +1264,16 @@ Key: `f"{plan_id}:{subtask_id}:{sha1(canonical_inputs)}"`. Executor checks resul
    - Xu et al., 2023
    - https://arxiv.org/abs/2305.18323
 
+> **One-line summary:** These five papers are the source of ReAct, ToT, Plan-and-Solve, SWE-agent, and ReWOO — the five algorithms this module teaches.
+
 ### Frameworks
 
 1. **LangGraph** - https://langchain-ai.github.io/langgraph/
 2. **CrewAI** - https://www.crewai.com
 3. **AutoGen** - https://microsoft.github.io/autogen/
 4. **LangChain** - https://langchain.com
+
+> **One-line summary:** Four open-source frameworks (free, community-built libraries) that implement what this module teaches — start with LangGraph if you are building a planner.
 
 ---
 

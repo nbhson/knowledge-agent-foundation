@@ -2,6 +2,8 @@
 
 Nếu câu hỏi nào khó hiểu thì đọc `../README.md` phần trong ngoặc vuông.
 
+Giải nghĩa nhanh: **CrewAI** = framework nhiều agent của Python, tổ chức theo vai trò như một đội nhân viên; **Agent** = một vai trong đội, có role/goal/backstory; **Task** = một nhiệm vụ có mô tả và kết quả mong đợi; **Crew** = cả đội agent cùng làm; **process** = cách xếp thứ tự làm việc (tuần tự hay có quản lý); **token** = đơn vị tính chữ model đọc/ghi, cũng là đơn vị tính tiền.
+
 ---
 
 ## Q1. AutoGen với CrewAI — tôi nên chọn cái nào? [→ Câu Chuyện Mở Đầu]
@@ -20,6 +22,8 @@ Khác biệt nằm ở cách chúng nghĩ về một agent đơn vị. AutoGen l
 | Danh sách vai trò + nhiệm vụ rõ ràng, chạy theo pipeline | CrewAI |
 | Một agent duy nhất, không cần khung nào | Không cần framework nào |
 
+Cách đọc bảng này: cột "Bạn đang cần" mô tả bài toán của bạn, cột "Chọn" là câu trả lời. Ví dụ, nếu việc của bạn có sẵn danh sách vai và nhiệm vụ rõ ràng thì CrewAI viết ra sẽ giống bảng công việc — rất tự nhiên.
+
 **Làm gì**
 
 1. Trả lời: "tôi có sẵn danh sách vai trò và nhiệm vụ không?" Có → CrewAI. Không → AutoGen.
@@ -30,6 +34,8 @@ Khác biệt nằm ở cách chúng nghĩ về một agent đơn vị. AutoGen l
 **Kiểm tra**
 
 Chạy cùng một task nhỏ (ví dụ "viết và review một hàm") trên cả hai. So số token dùng, số lần phải sửa tay, và độ dài code cấu hình để chạy được. Framework nào ít code hơn mà vẫn ra kết quả tốt hơn thì giữ lại, không cần lý thuyết.
+
+> **Tóm gọn 1 câu:** AutoGen lấy cuộc trò chuyện làm đơn vị, CrewAI lấy vai trò làm đơn vị — có sẵn danh sách vai và nhiệm vụ thì chọn CrewAI, muốn agent thảo luận tự do thì chọn AutoGen, và chọn một thôi.
 
 ---
 
@@ -57,6 +63,8 @@ Bạn có ba agent và ba nhiệm vụ. Chạy `sequential` thì thứ tự cố
 
 Chạy một task có lỗi thật (reviewer chắc chắn phải báo lỗi). Với `sequential`, hãy xác nhận kết quả vẫn là sản phẩm chưa sửa — đó là giới hạn của đường ống, không phải bug. Chuyển sang `hierarchical` và xác nhận luồng có quay lại coder.
 
+> **Tóm gọn 1 câu:** `sequential` là đường ống một chiều không quay lui, `hierarchical` thêm manager tự giao việc lại khi có lỗi — bắt đầu bằng sequential cho đơn giản, chỉ thêm manager (và tốn thêm token của nó) khi thật sự cần quyết định động.
+
 ---
 
 ## Q3. Viết `expected_output` như nào để agent không ra kết quả rác? [→ Tổng Quan, Case Studies 1]
@@ -79,6 +87,8 @@ Agent làm xong việc nhưng trả về một đoạn văn dài, đúng nhưng 
 **Kiểm tra**
 
 Đưa ba bản trả về từ ba lần chạy cùng một task. Nếu cả ba đều khớp mẫu `expected_output` mà không cần bạn sửa tay, thì mô tả đã đủ cụ thể. Còn nếu phải tay chỉnh, sửa `expected_output` chứ đừng sửa lời nhắc đi sửa output.
+
+> **Tóm gọn 1 câu:** `expected_output` là hợp đồng để agent tự biết mình xong chưa — viết thành mẫu cụ thể kiểm được (số mục, một dòng mỗi mục, không kèm giải thích), không viết kiểu cảm tính như "kế hoạch chi tiết".
 
 ---
 
@@ -107,6 +117,10 @@ CrewAI đặt cờ `human_input` trên từng `Task`, nên quyền hỏi gắn t
 
 Chạy một crew có cả nhiệm vụ nhạy cảm lẫn nhiệm vụ thường. Xác nhận crew chỉ dừng đúng một lần, đúng nhiệm vụ nhạy cảm, và bằng chứng sau khi chạy khớp với những gì bạn vừa duyệt.
 
+Giải nghĩa: **MCP** = chuẩn kết nối AI với công cụ ngoài; **autoApprove** = danh sách thao tác được duyệt tự động — để rỗng nghĩa là "không tự duyệt gì cả" cho tới khi bạn xem lại.
+
+> **Tóm gọn 1 câu:** CrewAI gắn cờ `human_input` vào từng Task, nên chỉ cần bật ở đúng nhiệm vụ nhạy cảm (deploy, ghi dữ liệu thật, gửi thông báo) — crew dừng đúng một lần và để lại bằng chứng đã duyệt để tra lại.
+
 ---
 
 ## Q5. Crew chạy xong nhưng kết quả không như ý — lỗi ở vai hay ở nhiệm vụ? [→ Quan Hệ Với Harness]
@@ -126,6 +140,8 @@ Vì trong CrewAI có ba tầng độc lập nhau và mỗi tầm hỏng theo cá
 | Nó không làm đúng thứ tự | `process` của `Crew` |
 | Nó thiếu khả năng hành động | danh sách tools của Agent |
 
+Cách đọc bảng này: cột trái là triệu chứng bạn thấy, cột phải là đúng chỗ cần sửa. Ví dụ, agent làm sai hình dạng kết quả (ra đoạn văn thay vì danh sách) thì sửa `expected_output`, đừng đụng vào `process`.
+
 **Làm gì**
 
 1. Đọc lại `goal` của từng agent. Nếu hai agent có `goal` gần như giống nhau, hội thoại sẽ thành nói cho vui và không ai dẫn đầu.
@@ -136,6 +152,8 @@ Vì trong CrewAI có ba tầng độc lập nhau và mỗi tầm hỏng theo cá
 **Kiểm tra**
 
 Chạy lại từng nhiệm vụ **một mình**, không cả crew, và so kết quả với bản chạy đầy đủ. Nếu chạy đơn vẫn sai thì lỗi nằm ở role hoặc expected_output. Nếu chạy đơn đúng mà chạy cả crew sai thì lỗi nằm ở `process` hoặc ở output được truyền sang nhiệm vụ sau.
+
+> **Tóm gọn 1 câu:** CrewAI có ba tầng độc lập — Agent (ai làm, nghĩ thế nào), Task (làm gì, kết quả ra hình gì), Crew (làm theo thứ tự nào) — sửa nhầm tầng là mất thời gian nhất; chạy từng nhiệm vụ một mình để tìm đúng tầng hỏng.
 
 ---
 

@@ -1,6 +1,6 @@
 # ❓ FAQ — GNN / Graph Neural Networks (Real Stories, Plain Language)
 
-If a question is unclear, read the section in `../README.md` (named in brackets).
+If a question is unclear, read the section in `../README.md` (named in brackets). Each answer has four parts: **What you see** (the symptom), **Why** (the cause), **What to do** (the fix), and **Verify** (how to confirm the fix worked).
 
 ---
 
@@ -8,7 +8,7 @@ If a question is unclear, read the section in `../README.md` (named in brackets)
 
 **What you see**
 
-You built a rule engine (module 06) and it answers `(Alice, WORKS_ON, ?)` just fine. Then the graph grows to hundreds of relation types and every new pair needs another hand-written `if`. The benchmarks are not subtle about the payoff: on the OGB benchmark a GNN beats an MLP — a network that reads each node's features and nothing else — by **15–25% accuracy** on node classification. On FB15k-237, R-GCN plus a scoring function reaches **MRR 0.35** where TransE gets 0.29. MRR is the average reciprocal rank of the correct answer, so 0.35 means the right entity usually lands in the top 3.
+You built a rule engine (module 06) and it answers `(Alice, WORKS_ON, ?)` just fine. Then the graph grows to hundreds of relation types and every new pair needs another hand-written `if`. The benchmarks are not subtle about the payoff: on the OGB benchmark (Open Graph Benchmark, a public test set for graph models) a GNN beats an MLP — a plain neural network that reads each node's features and nothing else — by **15–25% accuracy** on node classification. On FB15k-237, R-GCN plus a scoring function reaches **MRR 0.35** where TransE gets 0.29. MRR (Mean Reciprocal Rank) is the average reciprocal rank of the correct answer, so 0.35 means the right entity usually lands in the top 3.
 
 **Why**
 
@@ -31,6 +31,8 @@ assert gcn_acc > mlp_acc, "graph is not paying for itself"
 
 Run Lab 1 on `nx.karate_club_graph()` with 4 labeled nodes and compare against the MLP. If the gap is inside the noise, say so honestly — your graph is not adding information beyond node features.
 
+> **One-line summary:** A GNN earns its keep only when the graph shape carries signal — prove it by beating a feature-only MLP baseline; otherwise keep your rules.
+
 ---
 
 ## Q2. I stacked more layers and accuracy got WORSE — what did I break? [→ §6.1 / §6.2]
@@ -41,7 +43,7 @@ A 2-layer GCN gets 82% on Karate Club. You go to 4 layers: 76%. You go to 10: ev
 
 **Why**
 
-**Over-smoothing** is convergence: after many rounds of averaging, all embeddings drift toward the same value, so node A and node Z become indistinguishable — like the telephone game. **Over-squashing** is a bottleneck: a densely connected region blocks the path, so two nodes 20 hops apart still cannot exchange information through 10 layers. Separately, standard message passing is **no stronger than the WL test** (Weisfeiler-Lehman, 1968) — some structurally different graphs get identical embeddings no matter how deep you go.
+**Over-smoothing** is convergence: after many rounds of averaging, all embeddings drift toward the same value, so node A and node Z become indistinguishable — like the telephone game (each person whispers the message on; after many whispers, everyone hears the same blur). **Over-squashing** is a bottleneck: a densely connected region blocks the path, so two nodes 20 hops apart still cannot exchange information through 10 layers. Separately, standard message passing is **no stronger than the WL test** (Weisfeiler-Lehman, a 1968 graph-comparison algorithm) — some structurally different graphs get identical embeddings no matter how deep you go.
 
 **What to do**
 
@@ -60,6 +62,8 @@ x = conv(x, edge_index).relu()
 
 Sweep depth 1 → 10 at a fixed seed and plot accuracy: it should peak early and then decline. If accuracy only ever improves, you are probably leaking test edges into the encoder — see Q5.
 
+> **One-line summary:** Deep GNNs average nodes into sameness (over-smoothing) and squeeze long paths through bottlenecks (over-squashing) — stop at 2–3 layers unless you add fixes.
+
 ---
 
 ## Q3. GCN ran out of memory on my real graph (40GB RAM) — which variant now? [→ §3.3]
@@ -70,13 +74,17 @@ The from-scratch `GCNLayer` takes `adj` as a `(N, N)` tensor and computes `agg =
 
 **Why**
 
-GCN is **transductive**: it needs the full adjacency up front and averages every neighbor uniformly. GraphSAGE instead *learns the aggregator function*, so a new node is embedded immediately by running that formula on its own neighbors. GAT adds learned attention weights on top of the edge-based cost.
+GCN is **transductive** (only works on the exact nodes it was trained on): it needs the full adjacency up front and averages every neighbor uniformly. GraphSAGE instead *learns the aggregator function*, so a new node is embedded immediately by running that formula on its own neighbors. GAT adds learned attention weights on top of the edge-based cost.
+
+How to read this table: each column is one model variant. **New nodes** = can it embed a node that appears after training, **Cost** = how memory/time grows (N = node count, E = edge count), **Neighbor weights** = can it tell important neighbors from unimportant ones. For instance, only GAT gives neighbors different weights.
 
 | | GCN | GraphSAGE | GAT |
 |---|---|---|---|
 | New nodes | needs retrain | embed on arrival | embed on arrival |
 | Cost | O(N²) dense | O(E) + sampling | O(E × heads) |
 | Neighbor weights | none (uniform) | none | yes |
+
+(heads = the number of parallel attention "viewpoints" in GAT.)
 
 **What to do**
 
@@ -95,6 +103,8 @@ conv2 = SAGEConv(hid_c, out_c, num_neighbors=[10, 10])
 
 Peak memory must stay roughly flat as N grows 10×. Then confirm a brand-new node gets an embedding **without retraining** — that is the entire point of the inductive variant.
 
+> **One-line summary:** Dense (N×N) matrices and transductive GCN are the memory trap — switch to GraphSAGE with neighbor sampling over an edge list, and GAT only when neighbor importance differs.
+
 ---
 
 ## Q4. Should I throw away my relation types and treat every edge the same? [→ §5.1 / §5.2 / §7]
@@ -105,7 +115,7 @@ Your graph has `Person --WORKS_ON--> Project`, `Person --REPORTS_TO--> Person`, 
 
 **Why**
 
-GCN and GraphSAGE assume a single node type and a single edge type. Homogeneous treatment throws away relation semantics — which, in a knowledge graph, is most of the signal you have.
+GCN and GraphSAGE assume a single node type and a single edge type. Homogeneous treatment (flattening everything into one type) throws away relation semantics — which, in a knowledge graph, is most of the signal you have.
 
 **What to do**
 
@@ -123,6 +133,8 @@ h = conv(x, edge_index, edge_type)
 **Verify**
 
 Train R-GCN + DistMult on the mini KG (20 entities, 3 relations, 50 triples), then ask `(Alice, WORKS_ON, ?)` and check the rank of the correct entity. Compare against the flattened homogeneous version — if MRR does not improve, your relation types are carrying no signal and the extra machinery is not worth it.
+
+> **One-line summary:** Never flatten a knowledge graph into one edge type — keep `edge_type` and use relation-aware models (R-GCN, HAN/HGT, TGN) so relation meaning survives.
 
 ---
 
@@ -150,7 +162,9 @@ neg = negative_sampling(data.train_edge_index, num_neg_samples=100)
 
 **Verify**
 
-Measure AUC on the masked edges (Lab 2 hides 20% of edges of a 100-node graph) and sweep the negative ratio 1:1 vs 1:5. If train AUC is 1.0 while test AUC is 0.5, you have leakage — not a capacity problem.
+Measure AUC on the masked edges (Lab 2 hides 20% of edges of a 100-node graph) and sweep the negative ratio 1:1 vs 1:5. If train AUC is 1.0 while test AUC is 0.5, you have leakage — not a capacity problem. (AUC = a 0-to-1 score for a classifier; 0.5 = coin-flip guessing, 1.0 = perfect.)
+
+> **One-line summary:** Loss 0.0 with garbage predictions means data leakage, not a good model — hold out edges before training and sample hard negatives.
 
 ---
 

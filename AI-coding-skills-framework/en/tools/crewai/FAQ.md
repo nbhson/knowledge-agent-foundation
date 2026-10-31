@@ -12,7 +12,7 @@ You build a `Reviewer` agent and it returns a rewritten, working login endpoint 
 
 **Why**
 
-Because `Task` is not enforced as a contract; it is **a string handed to a model**. A `Task` has only three fields: `description`, `expected_output`, and which agent runs it. The agent has its own `role`, `goal`, `backstory`, and `tools`, and tools are what actually decide what is possible. If the Reviewer has no tools, it cannot edit files no matter how the task is worded — but if you copy-pasted the same `tools=[code_editor]` onto every agent, the role text is only a suggestion and the tool is a fact.
+Because `Task` is not enforced as a contract; it is **a string handed to a model**. A `Task` has only three fields: `description`, `expected_output`, and which agent runs it. The agent has its own `role`, `goal`, `backstory`, and `tools`, and tools are what actually decide what is possible (*tools = the functions an agent is allowed to call, like a code editor or a search*). If the Reviewer has no tools, it cannot edit files no matter how the task is worded — but if you copy-pasted the same `tools=[code_editor]` onto every agent, the role text is only a suggestion and the tool is a fact.
 
 **What to do**
 
@@ -27,6 +27,8 @@ Because `Task` is not enforced as a contract; it is **a string handed to a model
 
 Print the `expected_output` of every task and check that no two tasks share the same string. Then remove one agent's tools and confirm it can no longer produce the neighbouring role's output.
 
+> **One-line summary:** Roles are suggestions, tools are facts — give each agent only the tools its role needs and make `expected_output` mechanically checkable.
+
 ---
 
 ## Q2. `Process.sequential` or `Process.hierarchical` — which one should I ship? [→ Process: Sequential vs Hierarchical]
@@ -37,12 +39,14 @@ You build a three-agent crew with `Process.sequential` for "Implement login API 
 
 **Why**
 
-The process is your **execution order policy**, and each option buys you one thing and costs you one thing.
+The process is your **execution order policy** (*policy = the rule that decides who runs what, when*), and each option buys you one thing and costs you one thing.
 
 | Option | You get | You pay |
 |---|---|---|
 | `Process.sequential` | fixed, replayable order | no re-planning mid-run |
 | `Process.hierarchical` | a manager re-assigns work | one more model per decision, no fixed order |
+
+> **How to read this table:** **Option** = the setting. **You get** = the guarantee it gives you — for example, sequential always runs task 1, then 2, then 3, so two runs produce the same trace. **You pay** = the price — hierarchical inserts a manager model call before every re-assignment, and the order may differ each run.
 
 Sequential maps to `harness/07-workflow` (a pipeline); hierarchical maps to `harness/09-multi-agent` (an orchestrator over workers). Neither is "more powerful" — they are different guarantees. Sequential gives you a trace you can diff between runs. Hierarchical gives you recovery when the plan has to change.
 
@@ -57,6 +61,8 @@ Sequential maps to `harness/07-workflow` (a pipeline); hierarchical maps to `har
 **Verify**
 
 Run the crew twice on the same input and compare the order of executed tasks. Sequential must produce an identical order both times. If the orders differ, you are on hierarchical and your evaluation should account for that.
+
+> **One-line summary:** Sequential for predictable, replayable runs; hierarchical only when the plan genuinely changes mid-run — and you pay per decision.
 
 ---
 
@@ -74,7 +80,7 @@ They run it. The crew plans, writes code, reviews, and then deploys in one go wi
 
 **Why**
 
-Because `human_input` is **per task, and defaults to off**. A crew is a list of tasks; a task runs when its turn comes. If the task that needs a human says nothing about a human, the crew assumes there is none. This is the opposite of AutoGen's `human_input_mode`, where you set the human policy once on the agent — in CrewAI the gate lives on the task, so a new task added without the flag silently removes your approval step.
+Because `human_input` is **per task, and defaults to off**. A crew is a list of tasks; a task runs when its turn comes. If the task that needs a human says nothing about a human, the crew assumes there is none. This is the opposite of AutoGen's `human_input_mode`, where you set the human policy once on the agent — in CrewAI the gate (*gate = an approval checkpoint, like a signature before a transfer*) lives on the task, so a new task added without the flag silently removes your approval step.
 
 **What to do**
 
@@ -90,6 +96,8 @@ Because `human_input` is **per task, and defaults to off**. A crew is a list of 
 
 Run the crew with an empty `mcpServers`-free sandbox and confirm it blocks on the deploy task and prints the commit before doing anything. If it completes end to end with no pause, the flag is missing.
 
+> **One-line summary:** In CrewAI the approval gate is per task and off by default — every destructive task needs `human_input=True` or it just runs.
+
 ---
 
 ## Q4. Why does adding one more agent double my token bill? [→ Why CrewAI Matters?]
@@ -100,7 +108,7 @@ A two-agent, three-task crew costs a manageable amount per run. You add a fourth
 
 **Why**
 
-Because in CrewAI cost scales with **agents × tasks**, not with tasks alone. Every task in a crew runs through an agent that carries a full `role` + `goal` + `backstory` persona, and that persona is sent on every model call that agent makes. An extra agent also tends to bring extra tasks with it (plan, do, review, security-review), and each new task is another full model call plus the whole preceding task's output in its context. Your roadmap lists "Token usage + cost per crew run" under `04-savings` for exactly this reason.
+Because in CrewAI cost scales with **agents × tasks**, not with tasks alone. Every task in a crew runs through an agent that carries a full `role` + `goal` + `backstory` persona (*persona = the standing character description resent to the model on every call*), and that persona is sent on every model call that agent makes. An extra agent also tends to bring extra tasks with it (plan, do, review, security-review), and each new task is another full model call plus the whole preceding task's output in its context. Your roadmap lists "Token usage + cost per crew run" under `04-savings` for exactly this reason.
 
 **What to do**
 
@@ -113,6 +121,8 @@ Because in CrewAI cost scales with **agents × tasks**, not with tasks alone. Ev
 **Verify**
 
 Record input and output tokens per task for one run. Every task should show a cost close to its predecessor. If one task costs 5× its neighbours, it is carrying a large context payload from earlier tasks and is the place to cut.
+
+> **One-line summary:** CrewAI cost ≈ agents × tasks, because each persona is resent on every call — trim backstories and merge roles before adding agents.
 
 ---
 
@@ -130,12 +140,14 @@ Because an `Agent`, a `Task`, and a `Crew` define **shape**, not shared history.
 
 1. Put every decision in `expected_output`, not in the task description alone. A decision that is not an output is not passed on.
 2. Write task outputs as data, not prose. A file path, a command, a version number — anything a later agent can read rather than interpret.
-3. When an agent needs to remember across **separate crew runs**, wire an explicit store in; the crew does not create one.
+3. When an agent needs to remember across **separate crew runs**, wire an explicit store in (*a store = a database or file you connect yourself; the crew creates none*); the crew does not create one.
 4. Keep the number of hand-offs small. Every hand-off is a place to lose context.
 
 **Verify**
 
 Run the crew, then ask the final agent one question only answerable from the first task's output. If it cannot answer, the hand-off dropped it and `expected_output` needs to be more concrete.
+
+> **One-line summary:** CrewAI has no shared memory — a decision only survives if it travels inside a task's `expected_output`, as data.
 
 ---
 

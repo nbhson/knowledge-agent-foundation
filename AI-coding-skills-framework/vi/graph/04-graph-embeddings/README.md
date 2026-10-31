@@ -26,9 +26,15 @@ Bạn có Knowledge Graph với 10,000 nodes. User hỏi: *"Tìm người giốn
 
 **Graph Embeddings biến cấu trúc đồ thị thành vector — để vừa dùng được ANN search, vừa giữ được thông tin quan hệ.**
 
+> **Tóm gọn 1 câu:** Graph embedding = "chụp ảnh" mỗi node thành dãy số, sao cho hai node giống nhau về vai trò/cấu trúc thì hai bức ảnh giống nhau — và dãy số thì máy so sánh được cực nhanh.
+
 ### Tại Sao Graph Embeddings Quan Trọng?
 
 > *"Graph tells you WHO is connected. Embeddings tell you WHO IS SIMILAR without being directly connected."*
+>
+> (Dịch: graph cho biết AI nối với AI; embedding cho biết AI GIỐNG AI dù không nối trực tiếp.)
+
+> **Cách đọc bảng này:** mỗi dòng là 1 nghiên cứu/benchmark; cột "Phát Hiện" nói nó đo được điều gì. Ví dụ, dòng 1: dùng graph embeddings giúp đoán quan hệ còn thiếu chính xác hơn 22%.
 
 | # | Nguồn | Phát Hiện |
 |---|-------|-----------|
@@ -39,6 +45,8 @@ Bạn có Knowledge Graph với 10,000 nodes. User hỏi: *"Tìm người giốn
 ---
 
 ## Tổng Quan
+
+Phần này chỉ ra 3 đường đi: biến chữ thành vector, biến vị trí trong graph thành vector, rồi pha cả hai lại thành 1 điểm số.
 
 ```
 Knowledge Graph
@@ -57,6 +65,8 @@ Knowledge Graph
 
 ## Nội Dung
 
+> **Cách đọc bảng này:** cột "Chủ đề" là mục con bên dưới; cột "Mô tả" tóm tắt mục đó gồm những gì. Ví dụ, dòng 4 nói: phần KG Embeddings dạy TransE, RotatE và cách đoán quan hệ còn thiếu.
+
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
 | 1 | [Graph Embeddings Là Gì?](#1-graph-embeddings-là-gì) | Định nghĩa, intuition, phân loại |
@@ -74,7 +84,7 @@ Knowledge Graph
 > 1. Nodes **gần nhau trong graph** → vector gần nhau (distance nhỏ)
 > 2. Nodes **có vai trò giống nhau** → vector gần nhau (dù không kề nhau)
 >
-> **Tại sao cần?** Vì vector vừa **so sánh được bằng cosine similarity**, vừa **lưu vào vector DB** để search nhanh bằng ANN. Graph structure → vector space → dùng được cho RAG, clustering, classification.
+> **Tại sao cần?** Vì vector vừa **so sánh được bằng cosine similarity** (cosine = đo hai vector "cùng hướng" bao nhiêu — 1 là giống hệt, 0 là không liên quan), vừa **lưu vào vector DB** để search nhanh bằng ANN (ANN = Approximate Nearest Neighbor — tìm "gần giống nhất" mà không phải so từng cặp, đổi chút độ chính xác lấy tốc độ). Graph structure → vector space → dùng được cho RAG, clustering, classification.
 
 **Analogies để hiểu:**
 - **Đồ thị = Bản đồ thành phố**: Graph embedding = GPS coordinates (vĩ độ, kinh độ) — mỗi thành phố (node) có tọa độ, thành phố gần nhau trong bản đồ sẽ có tọa độ gần nhau
@@ -99,6 +109,8 @@ Khoảng cách gần trong vector space = Vai trò/cấu trúc giống nhau tron
 **Tại sao điều này khó hơn text embedding thông thường?** Text embedding chỉ cần hiểu **nội dung** (Alice = "CTO" "quản lý"). Graph embedding cần hiểu cả **vị trí trong cấu trúc** (Alice nằm ở vị trí "trung tâm" kết nối nhiều nodes khác).
 
 ### 1.2 Phân Loại
+
+> **Cách đọc bảng này:** 4 họ phương pháp, chia theo "cần training kiểu gì" và "dùng vào việc gì". Ví dụ, Node2Vec không cần nhãn, hợp tìm node giống nhau; TransE/RotatE hợp đoán quan hệ còn thiếu trong knowledge graph.
 
 ```
 ┌──────────────────────┬──────────────────────┬───────────────────────────────┐
@@ -162,12 +174,16 @@ Kết quả: Node nào hay "xuất hiện cùng nhau trên các con đường ng
 
 ### 2.3 Khi Nào Dùng Node2Vec?
 
+> **Cách đọc bảng này:** cột "Dùng?" là dấu ✅ (nên dùng) hoặc ❌ (kém hợp); cột "Lý do" giải thích. Ví dụ, dòng 2: node mới thêm liên tục thì Node2Vec phải học lại toàn bộ — nên chuyển sang GraphSAGE.
+
 | Tình huống | Dùng? | Lý do |
 |-----------|-------|-------|
 | Graph nhỏ-medium (<100K nodes) | ✅ | Nhanh, không cần GPU, unsupervised |
 | Cần inductive (thêm node mới) | ❌ | Phải retrain toàn bộ — dùng GraphSAGE thay thế |
 | Cần edge features / node features | ❌ | Node2Vec chỉ dùng cấu trúc — dùng GNN |
 | Clustering / community detection | ✅ | Embeddings phản ánh community structure tốt |
+
+> **Tóm gọn 1 câu:** Node2Vec = đi bộ ngẫu nhiên rồi học như học từ: rẻ, không cần GPU, nhưng node mới là phải học lại — chỉ hợp graph nhỏ và ít thay đổi.
 
 ---
 
@@ -242,6 +258,8 @@ Ví dụ trực quan:
 
 ### 3.3 So Sánh
 
+> **Cách đọc bảng này:** so sánh 3 mô hình theo từng tiêu chí. Ví dụ, dòng "Inductive?": Node2Vec không xử lý được node mới (❌), GraphSAGE và GAT xử lý được (✅). Dòng "Attention?": chỉ GAT tự học "nghe ai nhiều hơn".
+
 ```
 ┌─────────────────┬──────────────────┬──────────────────┬──────────────────────┐
 │ Thuộc tính      │ Node2Vec         │ GraphSAGE        │ GAT                  │
@@ -254,6 +272,8 @@ Ví dụ trực quan:
 │ Best for        │ Clustering, viz  │ Classification   │ Heterogeneous, ranked│
 └─────────────────┴──────────────────┴──────────────────┴──────────────────────┘
 ```
+
+> **Tóm gọn 1 câu:** GNN học hàm gộp thông tin từ bạn bè nên thêm node không phải học lại; GAT còn tự học "nghe ai nhiều hơn" thay vì lấy trung bình đều.
 
 ---
 
@@ -294,7 +314,7 @@ Score: ||h + r - t|| → thấp = triple đúng, cao = sai
 
 ### 4.2 RotatE — Rotation in Complex Space
 
-> **Ý tưởng:** Thay vì relation = "dịch chuyển", RotatE xem relation = **phép quay** trên mặt phẳng phức. Mỗi relation là 1 góc quay: quay vector `h` một góc = góc của relation → ra gần `t`.
+> **Ý tưởng:** Thay vì relation = "dịch chuyển", RotatE xem relation = **phép quay** trên mặt phẳng phức (số phức = số có phần "ảnh" i; dùng nó cho phép biểu diễn quay một cách tự nhiên). Mỗi relation là 1 góc quay: quay vector `h` một góc = góc của relation → ra gần `t`.
 
 ```
 RotatE: h ◦ r ≈ t  (◦ = element-wise rotation in complex space)
@@ -344,6 +364,8 @@ r là vector phức với |r_i| = 1 (đơn vị) → quay h để gần t
 >
 > **Khi nào nên (hoặc chưa nên) dùng:** graph cỡ vừa, có đường đi dài quan trọng và cần độ chính xác cao nhất → hãy chọn GT. Graph tới hàng triệu nodes → GNN truyền tin thông thường (message-passing) vẫn dễ mở rộng hơn. Phần tính toán chi tiết thuộc về Module 07 — ở module này bạn chỉ cần biết **đang có thêm họ embedding "thế hệ mới"** này.
 
+> **Tóm gọn 1 câu:** TransE coi quan hệ là phép dịch, RotatE là phép quay; graph có yếu tố thời gian thì dùng TKGE — còn Graph Transformer nhìn xa hơn GNN nhưng tốn bộ nhớ theo bình phương số node.
+
 ---
 
 ## 5. Hybrid Search: Vector + Graph
@@ -361,6 +383,8 @@ Graph embeddings không thay thế text embeddings — chúng **bổ sung** cho 
 
 ### 5.2 Khi Nào Dùng Hybrid?
 
+> **Cách đọc bảng này:** mỗi dòng là 1 loại câu hỏi; "Best α" là trọng số nên đặt (α càng nhỏ càng nghiêng về graph); "Strategy" là hướng đi. Ví dụ, câu hỏi tìm 1 đoạn cụ thể → α = 0.8, nghe text là chính.
+
 ```
 Query type                        │ Best α  │ Strategy
 ──────────────────────────────────┼─────────┼──────────────────────────
@@ -369,6 +393,8 @@ Multi-hop (nối nhiều thực thể)    │ 0.3     │ Graph-heavy
 Global summary (tổng hợp)         │ 0.2     │ Graph communities
 Hybrid (default)                  │ 0.5-0.6 │ Cân bằng
 ```
+
+> **Tóm gọn 1 câu:** Text vector bắt "nói gì", graph vector bắt "đứng ở đâu" — pha hai điểm theo trọng số α: câu hỏi chi tiết nghiêng về text, câu hỏi tổng hợp nghiêng về graph.
 
 ---
 
@@ -390,11 +416,15 @@ Hybrid (default)                  │ 0.5-0.6 │ Cân bằng
 
 1. Tạo 50 queries: 25 factoid + 25 multi-hop
 2. Chạy 3 modes: text-only (α=1.0), graph-only (α=0.0), hybrid (α=0.6)
-3. Đo precision@5 cho từng loại query
+3. Đo precision@5 cho từng loại query (precision@5 = trong 5 kết quả đầu, bao nhiêu phần trăm là đúng)
+
+> **Tóm gọn 1 câu:** Lab 1 cho bạn thấy embedding "nhìn" ra sao, Lab 2 cho biết đổi mô hình thế nào khi node mới xuất hiện, Lab 3 đo xem hybrid có đáng giá không.
 
 ---
 
 ## Tài Liệu Tham Khảo
+
+> Bài báo gốc của từng mô hình; cần hiểu sâu kỹ thuật nào thì đọc bài đó, không cần đọc hết.
 
 - Grover & Leskovec — *Node2Vec: Scalable Feature Learning for Networks* (KDD 2016)
 - Hamilton et al. — *Inductive Representation Learning on Large Graphs (GraphSAGE)* (NeurIPS 2017)
@@ -408,16 +438,20 @@ Hybrid (default)                  │ 0.5-0.6 │ Cân bằng
 
 ## GraphRAG — Cập nhật 2026
 
+> **Đang nói về gì:** GraphRAG = RAG có trợ giúp của đồ thị (RAG = đưa tài liệu liên quan vào prompt cho LLM trả lời). **Multi-hop** = câu hỏi cần nối 2+ bước quan hệ; **vector-only RAG** = chỉ tìm theo "giống về nghĩa", không nhìn cấu trúc.
+
 Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query phức tạp (multi-hop) tốt hơn vector-only RAG.
 
 **Tin mới 2025-2026:**
-- **LazyGraphRAG** (Microsoft, cuối 2024): defer LLM summarisation tới query time — indexing cost ngang vector RAG, quality ngang full GraphRAG, query cost thấp hơn ~700×. Đã tích hợp Microsoft Discovery (2025) và Azure Local.
-- **LightRAG** (HKUDS, EMNLP 2025): dual-layer graph + vector, incremental update thay vì re-index toàn bộ.
+- **LazyGraphRAG** (Microsoft, cuối 2024): defer LLM summarisation tới query time — "defer" = trì hoãn bước tóm tắt đắt tiền đến khi có người hỏi, thay vì tóm trước mọi thứ — indexing cost ngang vector RAG, quality ngang full GraphRAG, query cost thấp hơn ~700×. Đã tích hợp Microsoft Discovery (2025) và Azure Local.
+- **LightRAG** (HKUDS, EMNLP 2025): dual-layer graph + vector, incremental update (thêm tài liệu mới chỉ cập nhật phần thay đổi) thay vì re-index toàn bộ.
 - **GraphRAG-Bench** (Microsoft, 06/2025): multi-hop + global queries GraphRAG thắng; single-hop factoid vanilla RAG thắng.
 - **Gartner (2026)**: GraphRAG trong "Top Trends in D&A for 2026" cho complex cases mà high-accuracy RAG thất bại.
 - **Knowledge Graph Market**: 1.48B USD (2025) → 2.04B USD (2026). GraphRAG chuyển từ "enterprise luxury" → production baseline.
 
 Ref: https://microsoft.github.io/graphrag/
+
+> **Tóm gọn 1 câu:** Từ 2025-2026, GraphRAG đã rẻ và phổ biến hơn nhiều — chọn đúng biến thể giúp trả các câu hỏi nhiều bước mà vector RAG bó tay.
 
 ---
 

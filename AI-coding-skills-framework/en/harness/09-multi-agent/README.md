@@ -75,6 +75,8 @@ One AI agent is like one talented friend who says "I can do it all!" — and for
 
 **The friendly fix**: a Multi-Agent crew — each agent becomes a **specialist in just one craft**, they chat through a shared walkie-talkie protocol, and they double-check each other like good teammates, so quality stays high.
 
+> **One-line summary:** One agent doing everything burns out on big jobs — a crew of specialists that talks and double-checks each other keeps quality high.
+
 ### Why Is Multi-Agent Important?
 
 > *"A single agent is like one person doing everything — capable but slow, easily overloaded, and without checks & balances."*
@@ -96,6 +98,8 @@ Multi-Agent = Specialization + Communication + Coordination + Checks & Balances
 Each agent = **a specialist in one domain**. Like a multi-specialty hospital — the general practitioner (Orchestrator), the cardiologist (Backend Agent), the surgeon (Frontend Agent), the pharmacist (Testing Agent). They don't do everything — they do their own part **best in class**.
 
 **If you skip it**: the single agent overloads, there is no peer review, wrong code is produced without anyone catching it, and the context window is wasted by having to hold knowledge for every domain.
+
+> **One-line summary:** The evidence is consistent: role-specialized teams solve more tasks (68% vs 41%), raise code quality, and cut hallucination — the alternative is one overloaded, unchecked agent.
 
 ## Overview
 
@@ -137,6 +141,8 @@ Each agent = **a specialist in one domain**. Like a multi-specialty hospital —
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** Multi-agent = a small team of AI specialists that plans, builds, tests, and double-checks each other's work on jobs too big for one agent.
+
 ## Contents
 
 | # | Topic | Description |
@@ -153,6 +159,9 @@ Each agent = **a specialist in one domain**. Like a multi-specialty hospital —
 | 10 | [Anti-Patterns & Solutions](#10-anti-patterns--solutions) | Common mistakes |
 | 11 | [Production Deployment](#11-production-deployment) | Real-world deployment |
 
+
+> **One-line summary:** This map lists the 11 topics in reading order — roles first, then plumbing (communication, memory, conflicts), then operations (debugging, cost, deployment).
+
 ---
 
 ## 1. Agent Roles
@@ -162,6 +171,8 @@ Each agent = **a specialist in one domain**. Like a multi-specialty hospital —
 > - **Concept:** Agent Roles are the way expertise is divided up — each agent (orchestrator, coder, reviewer, tester...) owns a single responsibility and a set of skills so they can cooperate on complex work.
 > - **Analogy/comparison:** Like a soccer team: the goalkeeper specializes in catching the ball, the striker in scoring goals. Clear roles keep the whole team in sync.
 > - **Why it matters:** Without clearly assigned roles, agents duplicate each other's work, drop the ball, and no one is fully accountable.
+
+> **One-line summary:** Give each agent exactly one job (planner, coder, tester...) so work doesn't overlap and someone is always accountable.
 
 ### 1.1 Agent Role Taxonomy
 
@@ -197,6 +208,8 @@ Think of the picture below as the team's bulletin board with everyone's name tag
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** The taxonomy is the team org chart: 4 layers — Coordination steers, Execution builds, Quality checks, Support fixes — so "who does what" is never a guess.
+
 ### 1.2 Detailed Agent Definitions
 
 The big code card below is basically a stack of employee badges: each role gets its **own pep-talk instructions** (system prompt), a **cap on how many clones can run at once**, a rough **token appetite**, and the **toolbox** it may touch. Yes, it looks long — but just read each badge as "who is this, and what may they touch?" That clarity keeps everyone happily inside their own lane.
@@ -208,6 +221,9 @@ The big code card below is basically a stack of employee badges: each role gets 
 
 </details>
 
+
+> **One-line summary:** Each role is an employee badge: its own instructions (system prompt), a max-instance cap, a token budget, and a fixed toolbox — read it as "who is this, and what may they touch?"
+
 ---
 
 ## 2. Communication Patterns
@@ -217,6 +233,8 @@ The big code card below is basically a stack of employee badges: each role gets 
 > - **Concept:** Communication Patterns are the information-exchange structures between agents — sequential passing, parallel fan-out, via a message bus... — plus a standard message protocol so data is transmitted reliably and stays in sync.
 > - **Analogy/comparison:** Like a company: a few people pass documents down an assembly line (pipeline), or everyone reads from the same shared notice board (blackboard).
 > - **Why it matters:** If agents don't communicate to a standard ⟶ information gets lost, agents work on stale data and produce wrong results.
+
+> **One-line summary:** Agents exchange messages through fixed structures and a standard format, so information arrives complete instead of getting lost or stale.
 
 ### 2.1 Communication Patterns Overview
 
@@ -293,6 +311,8 @@ Think of this section as six ways friends can keep in touch: passing notes down 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** Six ways to wire agents together — pipeline, fan-out, blackboard, request-reply, hierarchy, pub/sub — each with a ✓ upside and a ✗ trade-off; pick the one that fits the job.
+
 ### 2.2 Message Protocol
 
 Think of the snippet below as designing the perfect inter-office envelope: every letter carries **who sent it, who should read it, what kind of news it is** (new job, job done, quick question…), plus the **letter itself** (payload), a timestamp, a priority sticker, and an expiry date. The `MessageRouter` is our cheerful post office — it collects, sorts into pigeonholes, and shouts across the room when everyone needs to hear. Without a shared envelope, it would be like one friend handwriting cursive while the other only reads spreadsheets — lost in translation.
@@ -304,6 +324,9 @@ Think of the snippet below as designing the perfect inter-office envelope: every
 
 </details>
 
+
+> **One-line summary:** Every message uses one shared envelope — sender, receiver, type, payload, priority, expiry — plus a router that sorts and broadcasts, so agents never misread each other.
+
 ---
 
 ## 3. Orchestration Strategies
@@ -313,6 +336,8 @@ Think of the snippet below as designing the perfect inter-office envelope: every
 > - **Concept:** Orchestration Strategies are the way a multi-agent workflow is organized — running sequentially, in parallel, in a manager/worker hierarchy, or by discussion until a decision is reached — deciding which agent starts, how they coordinate, and how results are synthesized.
 > - **Analogy/comparison:** Like a film director: shoot scenes one at a time in sequence (sequential), let multiple crews shoot in parallel (parallel), or have the on-set manager delegate the work (hierarchical).
 > - **Why it matters:** Picking the wrong strategy ⟶ the whole system runs slowly, burns tokens, or produces inconsistent results.
+
+> **One-line summary:** Choose how work flows (sequential, parallel, hierarchy, debate); the wrong choice makes the system slow, expensive, or inconsistent.
 
 ### 3.1 Strategy Comparison
 
@@ -347,6 +372,8 @@ A table comparing 6 orchestration strategies, with columns for **when to use** a
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** Match the strategy to the shape of your task: dependent steps get a pipeline, independent steps get fan-out, contested decisions get debate.
+
 ### 3.2 Orchestrator Implementation
 
 Meet the team's kind project manager in code form: it **lines up your to-do list by who-waits-for-whom**, **walks each chore to the right specialist**, **gives it another try when it stumbles**, and keeps an eye on the token piggy bank. The little `_resolve_execution_order` helper is the auto-scheduler scribbling "you first, you next" on the whiteboard. In short: schedule, delegate, check off, repeat.
@@ -358,6 +385,9 @@ Meet the team's kind project manager in code form: it **lines up your to-do list
 
 </details>
 
+
+> **One-line summary:** The orchestrator is the project manager in code: it sorts the to-do list by dependencies, delegates to the right specialist, retries failures, and watches the token budget.
+
 ---
 
 ## 4. Shared Memory
@@ -367,6 +397,8 @@ Meet the team's kind project manager in code form: it **lines up your to-do list
 > - **Concept:** Shared Memory is a centralized data store that many agents read/write together — project context, task queue, finalized decisions — so agents can share understanding without retransmitting all the information.
 > - **Analogy/comparison:** Like the whiteboard in a meeting room: everyone can see it and add to it, instead of each person keeping a private notebook and reading it aloud to the others.
 > - **Why it matters:** Without shared memory, each agent "remembers things differently" ⟶ they work on stale context and the results are inconsistent.
+
+> **One-line summary:** Shared memory is one common whiteboard (project context, task queue, decisions) so all agents work from the same facts instead of private guesses.
 
 ### 4.1 Memory Architecture
 
@@ -402,6 +434,8 @@ Picture two cozy memory corners: the big **Global Memory** whiteboard in the mid
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** Two memory tiers: a Global Memory board everyone shares, plus each agent's private journal — pin shared facts on the board, keep scratch work in the drawer.
+
 ### 4.2 Shared Memory Manager
 
 This snippet builds that shared whiteboard with bumpers on: many hands can reach for it at once, but a gentle `Lock` makes sure nobody scribbles over anyone mid-sentence. Alongside the board it keeps a treasure chest of **artifacts** (files, test results) and a diary of "who changed what." Think bank vault: one person inside at a time, every visit written in the ledger.
@@ -413,6 +447,9 @@ This snippet builds that shared whiteboard with bumpers on: many hands can reach
 
 </details>
 
+
+> **One-line summary:** The memory manager adds a Lock (only one writer at a time), stores artifacts like files and test results, and keeps a change log — like a vault with a ledger.
+
 ---
 
 ## 5. Conflict Resolution
@@ -422,6 +459,8 @@ This snippet builds that shared whiteboard with bumpers on: many hands can reach
 > - **Concept:** Conflict Resolution is the mechanism for handling disagreements between agents — two agents editing the same file, opposing viewpoints, resource contention — by classifying the conflict and applying a controlled reconciliation strategy.
 > - **Analogy/comparison:** Like two coworkers editing the same report: the risk of overwriting each other. With rules about "who locks the file, who gets the final call", neither person's work gets broken.
 > - **Why it matters:** Without a conflict resolution mechanism, agents can overwrite and "break" each other's results.
+
+> **One-line summary:** Conflict resolution is the rulebook for when agents collide — same file, opposing plans, shared tools — so one agent's work never silently destroys another's.
 
 ### 5.1 Conflict Types & Resolution
 
@@ -469,6 +508,8 @@ Think of the chart below as the team's traffic-light handbook for its 5 classic 
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** Five classic conflicts (code, approach, resource, state, output), each with a ready-made fix — spot the type, apply the matching lane.
+
 ### 5.2 Conflict Resolution Manager
 
 Think of this snippet as the team's friendly referee with a whistle: it hands out file locks ("one writer at a time, please!"), scores competing ideas when two agents disagree, and writes every call in the match log. The `_score_approach` helper is the scorecard — the clearer the reasoning (a good "because…", an honest "trade-off…", a proud "we tested…"), the more points it earns. May the clearest argument win!
@@ -480,6 +521,9 @@ Think of this snippet as the team's friendly referee with a whistle: it hands ou
 
 </details>
 
+
+> **One-line summary:** The manager is the referee: it hands out file locks, scores competing proposals on reasoning quality, and logs every ruling.
+
 ---
 
 ## 6. Agent Selection Guide
@@ -489,6 +533,8 @@ Think of this snippet as the team's friendly referee with a whistle: it hands ou
 > - **Concept:** The Agent Selection Guide is a set of criteria for deciding when to use multi-agent and when a single agent is enough, based on task complexity, token cost, and specialization requirements.
 > - **Analogy/comparison:** Like choosing transportation: walk for short distances (single-agent), hire a team only for far-and-many jobs (multi-agent). Driving 100 meters just to save effort is a pointless expense.
 > - **Why it matters:** Using multi-agent for a simple task only wastes tokens and adds slowness — the guide helps you avoid over-engineering.
+
+> **One-line summary:** Use multi-agent only when a single agent truly can't cope — spinning up a team for a simple task wastes tokens and adds latency.
 
 ### 6.1 When to Use Multi-Agent
 
@@ -540,6 +586,9 @@ Treat the flowchart below like a "which exit should I take?" road-trip quiz. Sta
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+
+> **One-line summary:** A yes/no quiz that ends at the right architecture, plus the token toll for each route — quality may rise 20–40%, but so does cost.
+
 ---
 
 ## 7. Real-World Implementations
@@ -549,6 +598,8 @@ Treat the flowchart below like a "which exit should I take?" road-trip quiz. Sta
 > - **Concept:** Real-World Implementations are multi-agent examples applied in production — a code review pipeline, a feature development team, a debug squad — showing how roles are assigned and communication flows set up concretely.
 > - **Analogy/comparison:** Like watching a software company's actual workflow: who reviews, who writes code, who tests — instead of just reading dry theory.
 > - **Why it matters:** Real examples give you a battle-tested design to "copy" and adapt, so you don't have to fumble your way from scratch.
+
+> **One-line summary:** Three copyable blueprints — review pipeline, feature team, debug squad — each showing who does what and in what order.
 
 ### 7.1 Code Review Pipeline
 
@@ -561,6 +612,8 @@ This snippet sets up the review line just like a real software team does: gather
 
 </details>
 
+> **One-line summary:** A review assembly line (collect diffs → analyze → security → performance → summary) where `depends_on` tags whisper "wait for me first" — like required approvals on a merge request.
+
 ### 7.2 Feature Development Team
 
 Welcome to the feature dream team, organized **family-style** with a lead at the top: the Architect sketches the blueprints first → two Coders build different rooms at the same time → the Tester checks every door and window → the Reviewer does the final walkthrough. Notice the cute detail: `implement-core` and `implement-api` both wait for `design`, but not for each other — so they happily hammer away side by side. Just like real builders: the electrician and the plumber work in parallel, but both wait for the same blueprint.
@@ -571,6 +624,8 @@ Welcome to the feature dream team, organized **family-style** with a lead at the
 > 📄 **Example code:** [`examples/07-7-2-feature-development-team.py`](examples/07-7-2-feature-development-team.py)
 
 </details>
+
+> **One-line summary:** A lead-plus-crew setup: design first, then two coders build in parallel (they wait on the design, not each other), then test and final review.
 
 ### 7.3 Debug Squad
 
@@ -583,6 +638,9 @@ Think of this snippet as speed-dialing your 4-person rescue squad in order: the 
 
 </details>
 
+
+> **One-line summary:** A strict 4-step chain — find the bug, patch it, verify nothing broke, approve — enforced by `depends_on` so nobody runs ahead.
+
 ---
 
 ## 8. Debugging Multi-Agent Systems
@@ -592,6 +650,8 @@ Think of this snippet as speed-dialing your 4-person rescue squad in order: the 
 > - **Concept:** Debugging Multi-Agent Systems is the process of tracing fault causes in a system of interacting agents — communication errors, out-of-sync state, conflicting results — using logging, tracing, and isolating individual components.
 > - **Analogy/comparison:** Like finding a leak in a multi-story building: you must inspect each pipe (message log), each floor (agent state), and each timer (timeline) instead of just guessing.
 > - **Why it matters:** Multi-agent faults rarely sit inside one agent — they usually live "between" agents, so dedicated tracing tools are needed.
+
+> **One-line summary:** In multi-agent, faults usually live "between" agents, not inside one — so you debug by tracing messages, states, and timelines.
 
 ### 8.1 Debug Strategy
 
@@ -639,6 +699,8 @@ Keep this diagram taped to the garage wall like a mechanic's cheat sheet. For ea
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** A mechanic's cheat sheet: match your symptom (silent agent, wrong routing, infinite loop, clashing outputs, sloppy work) and walk its check-then-fix list.
+
 ### 8.2 Debug Logger
 
 This code is the "replay the game footage" toolkit for multi-agent: `trace_message_flow` replays every message between agents over time, `inspect_agent_state` shows what a single agent currently knows, and `generate_timeline` reconstructs the sequence of events. When the system misbehaves, this is where you see "who said what, did what, when". The metaphor: like checking the security camera to find out who bumped into whom.
@@ -650,6 +712,9 @@ This code is the "replay the game footage" toolkit for multi-agent: `trace_messa
 
 </details>
 
+
+> **One-line summary:** The replay-the-footage toolkit: trace every message, inspect what one agent knows, rebuild the timeline — the security camera for agent misbehavior.
+
 ---
 
 ## 9. Performance Optimization
@@ -659,6 +724,8 @@ This code is the "replay the game footage" toolkit for multi-agent: `trace_messa
 > - **Concept:** Performance Optimization is the set of techniques that reduce latency and cost for a multi-agent system — more parallelism, fewer redundant messages, caching, token estimation — so the system responds faster and costs less.
 > - **Analogy/comparison:** Like optimizing a factory: cut unnecessary middle stages, let independent production lines run in parallel instead of one after another.
 > - **Why it matters:** Multi-agent already costs 2-5× the tokens — without optimization, operating costs climb very quickly.
+
+> **One-line summary:** Multi-agent already costs 2–5× tokens, so optimize (parallelism, less chatter, caching) or operating costs climb fast.
 
 ### 9.1 Optimization Strategies
 
@@ -701,6 +768,8 @@ A list of 5 optimization strategies for multi-agent systems: reduce tokens, maxi
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** Five practical tricks: send summaries not full context, parallelize independent work, batch messages, keep the team small, and cache what's reused.
+
 ### 9.2 Cost Estimation
 
 A "token budget" estimation table for multi-agent: cost = cost per agent × number of agents × communication cost. It prices out each role (orchestrator ~2K, coder ~5K tokens...), adds the "post office fee" (messages, handoffs, conflicts), then gives you typical scenarios. The metaphor: like estimating a project's cost — once you know the price of each line item, you can predict the total spend.
@@ -740,6 +809,9 @@ A "token budget" estimation table for multi-agent: cost = cost per agent × numb
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+
+> **One-line summary:** Budget formula: cost = base cost per role × number of agents + communication overhead (messages, handoffs, conflicts) — price each line item, then predict the total.
+
 ---
 
 ## 10. Anti-Patterns & Solutions
@@ -749,6 +821,8 @@ A "token budget" estimation table for multi-agent: cost = cost per agent × numb
 > - **Concept:** Anti-Patterns & Solutions is a collection of common design mistakes in multi-agent systems — overlapping roles, agents that "chat" too much, single points of dependency — together with how to avoid and fix them.
 > - **Analogy/comparison:** Like a distilled "don'ts" list from experience: knowing the traps other people fall into means you won't repeat them.
 > - **Why it matters:** Most multi-agent systems fail because of these anti-patterns, not because the model is weak.
+
+> **One-line summary:** Multi-agent systems fail from design mistakes, not weak models — knowing the 8 traps means you don't step in them.
 
 ### 10.1 Common Anti-Patterns
 
@@ -793,6 +867,9 @@ A list of 8 "traps" that almost everyone who builds multi-agent systems has step
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+
+> **One-line summary:** Eight traps (over-engineering, chatty agents, single point of failure, unclear roles, no conflict handling, token bomb, endless negotiation, lost context), each with a fix on the "→ SOLUTION" line.
+
 ---
 
 ## 11. Production Deployment
@@ -802,6 +879,8 @@ A list of 8 "traps" that almost everyone who builds multi-agent systems has step
 > - **Concept:** Production Deployment is the process of putting a multi-agent system into real operation — ensuring readiness, monitoring, security, and scalability — with a checklist to run before going live.
 > - **Analogy/comparison:** Like putting a building into use: before opening, you must check the electrical and water systems, fire alarms, and who does what when something fails — you can't just hand over the keys and start living there.
 > - **Why it matters:** A system that works fine in the lab can fall over the moment it hits production without monitoring and failure-handling procedures.
+
+> **One-line summary:** Going live needs pre-flight checks — roles, routing, budgets, error handling — because lab-perfect systems still fall over in production.
 
 ### 11.1 Deployment Checklist
 
@@ -836,6 +915,9 @@ This checklist splits into 3 phases before a multi-agent system goes to producti
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+
+> **One-line summary:** Three phases — prepare (roles, budgets, retries), monitor (tokens, latency, conflicts), optimize weekly — any unchecked box means "not ready yet".
 
 ---
 
@@ -897,6 +979,9 @@ This checklist splits into 3 phases before a multi-agent system goes to producti
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+
+> **One-line summary:** Ten veteran habits: start simple, one job per agent, structured messages, validated handoffs, defensive design, tracked costs, full logs, testing at every level.
+
 ---
 
 ## 12. Case Studies — Real-World Multi-Agent Architectures
@@ -906,6 +991,8 @@ This checklist splits into 3 phases before a multi-agent system goes to producti
 > - **Concept:** Case Studies are analyses of the multi-agent architectures of famous real systems — Claude Code, Devin, OpenHands — to extract lessons on role design, workflows, and how to pick an architecture.
 > - **Analogy/comparison:** Like studying the tactical diagrams of top football teams before building your own lineup.
 > - **Why it matters:** Learning from systems that already run in production means you don't have to "reinvent the wheel".
+
+> **One-line summary:** Study shipped systems (Claude Code, Devin, OpenHands) so you copy battle-tested designs instead of reinventing the wheel.
 
 ### 12.1 Claude Code — Anthropic's Multi-Agent Architecture
 
@@ -955,6 +1042,8 @@ Claude Code uses a complex multi-agent pattern with planner, coder, and reviewer
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** Claude Code runs several agents on the SAME model with different system prompts — different instructions produce different behaviors.
+
 ### 12.2 Devin — Autonomous Software Engineering Agent
 
 Devin (Cognition AI) uses a multi-agent pattern with specialized modules:
@@ -988,6 +1077,8 @@ Devin (Cognition AI) uses a multi-agent pattern with specialized modules:
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** Devin is one central LLM brain (planning, reasoning, reflection) driving tools (editor, browser, terminal) inside a full sandbox VM.
+
 ### 12.3 OpenHands (OpenDevin) — Open-Source Multi-Agent
 
 This code simulates the OpenHands/Devin-style architecture: a **central brain (LLM)** decides actions in a **observe → decide → act → observe again** loop (visible in `run_agent_loop`), living in a safe **sandbox** and automatically retrying on errors. How to read it: focus on the `run_agent_loop` function — that is the heart of the whole pattern. The metaphor: like a chess player who looks at the board between moves, evaluating the result before each next move.
@@ -999,6 +1090,9 @@ This code simulates the OpenHands/Devin-style architecture: a **central brain (L
 
 </details>
 
+
+> **One-line summary:** The heart is the observe → decide → act loop (`run_agent_loop`): like a chess player who re-checks the board before every move.
+
 ---
 
 ## 13. Advanced Multi-Agent Patterns
@@ -1008,6 +1102,8 @@ This code simulates the OpenHands/Devin-style architecture: a **central brain (L
 > - **Concept:** Advanced Multi-Agent Patterns are refined architectural patterns — MapReduce, Debate, Critique-Revision, Ensemble — that use multiple agents in parallel to push quality far beyond what a single agent can achieve.
 > - **Analogy/comparison:** Like organizing a competition round: give several people the same job and pick the best entry (ensemble), or have them critique each other before settling on an approach (debate).
 > - **Why it matters:** This is the family of patterns that reduces hallucination and increases reliability when quality is the top priority.
+
+> **One-line summary:** These patterns (MapReduce, Debate, Critique-Revision, Ensemble) spend extra agents to buy quality — less hallucination, more reliability.
 
 ### 13.1 MapReduce Pattern for Code Generation
 
@@ -1020,6 +1116,8 @@ MapReduce is the "divide and conquer" pattern: **MAP** splits a big task into in
 
 </details>
 
+> **One-line summary:** Divide and conquer: MAP splits a big task into independent sub-tasks run in parallel, REDUCE merges the results — works only if the parts truly don't depend on each other.
+
 ### 13.2 Debate Pattern — Multi-Agent Discussion
 
 The debate pattern lets multiple agents "argue" their way to a more reliable decision: round 1 each agent states its position, round 2 they rebut the opponents, round 3 they wrap up, and then a **judge agent** scores who was most persuasive. How to read it: `_judge_decision` scores based on the number of arguments and content length — a simple simulation of the principle that "a good argument wins". The metaphor: like a review committee before approving a loan — listen to all sides, then decide.
@@ -1030,6 +1128,8 @@ The debate pattern lets multiple agents "argue" their way to a more reliable dec
 > 📄 **Example code:** [`examples/12-13-2-debate-pattern-multi-agent-discussion.py`](examples/12-13-2-debate-pattern-multi-agent-discussion.py)
 
 </details>
+
+> **One-line summary:** Agents argue in rounds (position → rebuttal → wrap-up), then a judge agent scores the most persuasive case — like a loan committee before approval.
 
 ### 13.3 Critique-Revision Pattern
 
@@ -1042,6 +1142,8 @@ This pattern simulates the exact "write - grade - fix" loop: the **Writer** writ
 
 </details>
 
+> **One-line summary:** A write–grade–fix loop: the Writer drafts, the Critic grades, the Writer revises — repeat until quality passes the threshold or rounds run out.
+
 ### 13.4 Ensemble Pattern — Multiple Agents, Best Output
 
 The ensemble pattern runs **multiple agents on the same task at the same time**, each producing its own result; a judge scores them all and picks the best output. It is like "ensembles" in machine learning — combining many different opinions to reduce risk. How to read it: note `_generate_recommendation` — if the agents agree (low variance), the result is trustworthy; if they strongly disagree, a closer review is needed. The metaphor: like drafting several versions before finalizing the last one — take the one done best.
@@ -1053,6 +1155,9 @@ The ensemble pattern runs **multiple agents on the same task at the same time**,
 
 </details>
 
+
+> **One-line summary:** Run several agents on the same task at once, score all outputs, keep the best — agreement means trustworthy, strong disagreement means review it.
+
 ---
 
 ## 14. Multi-Agent Testing Strategies
@@ -1062,6 +1167,8 @@ The ensemble pattern runs **multiple agents on the same task at the same time**,
 > - **Concept:** Multi-Agent Testing Strategies are the methods for verifying a multi-agent system — routing tests, message tests, per-agent tests, interaction tests, chaos tests — to make sure the system behaves correctly and stays stable.
 > - **Analogy/comparison:** Like testing a production line: test each machine (agent), test the whole line, even deliberately break one machine to see if the system stops.
 > - **Why it matters:** Multi-agent systems often have "no individual fault but a systemic fault" — you need to test at several different levels.
+
+> **One-line summary:** Test at several levels — routing, messages, individual agents, interactions, chaos — because systems can pass unit tests and still fail as a whole.
 
 ### 14.1 Testing Multi-Agent Systems
 
@@ -1098,6 +1205,8 @@ This triangle shows that multi-agent testing happens at **many levels**, bottom-
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** The testing pyramid: routing at the base, then messages, agents, integration, and chaos tests on top — build the foundation before adding the roof.
+
 ### 14.2 Test Implementation
 
 This code comes with ready-made example tests: `test_routing_accuracy` checks whether tasks land on the correct agent, `test_agent_failure_recovery` "kills" one agent to see if the system keeps running, `test_token_budget_enforcement` checks the token limit, `test_conflict_resolution` checks file locking and reconciliation. How to use it: you can extend this very test suite for your own system. The metaphor: like the driving-test questions before you're allowed on the road — if any item FAILs, you're not ready yet.
@@ -1109,6 +1218,9 @@ This code comes with ready-made example tests: `test_routing_accuracy` checks wh
 
 </details>
 
+
+> **One-line summary:** Ready-made tests you can extend: routing accuracy, kill-an-agent recovery, token budget enforcement, conflict resolution — FAIL on any item means not ready for the road.
+
 ---
 
 ## 15. Cost-Benefit Analysis
@@ -1118,6 +1230,8 @@ This code comes with ready-made example tests: `test_routing_accuracy` checks wh
 > - **Concept:** Cost-Benefit Analysis is a comparison between the extra token cost of multi-agent and the quality improvement, so you know when multi-agent is actually worth it versus single-agent.
 > - **Analogy/comparison:** Like weighing whether to hire a specialist team: it costs more, but if product quality improves enough, it's still a profit.
 > - **Why it matters:** Multi-agent isn't always better — this analysis helps you spend money where it pays off.
+
+> **One-line summary:** Compare the extra token cost against the quality gain per task type, and spend money only where multi-agent pays off.
 
 ### 15.1 When Multi-Agent Is Worth It
 
@@ -1150,6 +1264,8 @@ A "worth it or not" decision table per task type: comparing single vs multi fit,
 └────────────────────────────────────────────────────────────────────┘
 ```
 
+> **One-line summary:** The verdict table: tasks where quality jumps a lot (+35–45%) while cost only doubles (review, security, debugging) are the good multi-agent bets; simple fixes and docs stay single-agent.
+
 ### 15.2 Token Cost Comparison
 
 This code writes a Python ROI calculator for multi-agent: each `CostEstimate` holds the single vs multi token counts plus the quality improvement percentage, from which it automatically computes `cost_ratio`, `roi`, and issues a `RECOMMEND` / `CONSIDER` / `AVOID` recommendation. How to run it: the final `print()` section prints a comparison table for each task type. The metaphor: like a pocket calculator for spending decisions — put in the numbers and it tells you right away whether it's a good idea.
@@ -1161,11 +1277,16 @@ This code writes a Python ROI calculator for multi-agent: each `CostEstimate` ho
 
 </details>
 
+
+> **One-line summary:** A pocket ROI calculator: feed in single vs multi token counts plus quality gain, and it prints RECOMMEND / CONSIDER / AVOID per task type.
+
 ---
 
 ## 16. Fault Tolerance, Messaging & Isolation
 
 At production scale agents crash, hang, double-write, and leak secrets. This section adds the missing hardening: failure detection + reassignment, explicit messaging guarantees, memory consistency rules, and per-agent sandboxing. Analogy: like a kitchen crew — if a chef collapses someone takes over his ticket (reassignment), orders have sequence numbers (ordering), only one chef plates a dish (write conflicts), and cleaners can't enter the safe (secret containment).
+
+> **One-line summary:** At production scale agents crash, hang, double-write, and leak secrets — this section adds the hardening: failure detection, messaging guarantees, memory rules, and per-agent sandboxing.
 
 ### 16.1 Fault Tolerance — Crash / Timeout / Hang Detection
 
@@ -1184,7 +1305,11 @@ QUORUM (judges/voters): 2f+1 agents tolerate f faults; require majority (e.g. 2/
 
 Rules: every task has `lease_id + deadline + max_attempts`; supervisor is stateless + backed by queue (Redis/BullMQ); prefer idempotent workers so reassignment is safe to retry.
 
+> **One-line summary:** Agents send heartbeats; a missing heartbeat means crash, a stalled log means hang — the supervisor freezes the task lease, requeues it, and escalates after 3 attempts.
+
 ### 16.2 Messaging Guarantees — Ordering, Delivery, Payload Caps
+
+How to read it: **Guarantee** = what the message channel promises; **Default choice** = the standard mechanism used; **Rule** = what to implement. For instance, "Delivery: at-least-once" means a message may arrive twice, so every handler must deduplicate on `msg_id`.
 
 | Guarantee | Default choice | Rule |
 |---|---|---|
@@ -1194,12 +1319,16 @@ Rules: every task has `lease_id + deadline + max_attempts`; supervisor is statel
 | Payload caps | 64 KB headers + 512 KB body; larger → artifact ref (path + hash) | Drop + log oversized messages |
 | Timeouts | Request/reply 30s default; streaming progress 5s heartbeat | Missing reply → retry with backoff, then reassign (§16.1) |
 
+> **One-line summary:** Every channel promises four things: ordered messages (per-task FIFO), duplicate-proof delivery (`msg_id`), size caps (bigger payloads go to files), and timeouts with retry.
+
 ### 16.3 Memory Consistency — Shared vs Private, Write Conflicts
 
 - **Private by default:** each agent has scratchpad; only publishes diffs/facts to shared blackboard.
 - **Shared via versioned keys:** `blackboard.write(key, value, expectedVersion)` — CAS semantics; on version mismatch re-read + merge, never blind-overwrite.
 - **Single-writer per artifact:** orchestrator assigns file/section ownership (e.g. only `coder` writes `auth.ts`); reviewers emit comments, not edits.
 - **Per-agent isolation:** namespace keys `agent_id/task_id/*`; cross-agent reads go through allow-listed projections (no raw prompt/secret bleed).
+
+> **One-line summary:** Keep scratch work private, publish only diffs; versioned keys prevent blind overwrites, and one named writer per file stops clobbering.
 
 ### 16.4 Per-Agent Sandboxing + Secret Containment
 
@@ -1229,6 +1358,8 @@ two things that are specific to *a team* of agents rather than to a single run:
 
 </details>
 
+> **One-line summary:** Each role gets the least tools it needs (reviewer = read-only), secrets are short-lived per-agent leases, and egress is deny-by-default — so a leak traces to exactly one lease.
+
 ### 16.5 Checklist + Real-World Example
 
 **Checklist:** [ ] heartbeat + deadline + stall detector wired [ ] fencing token on requeue [ ] max_attempts + escalate path [ ] per-task FIFO + `msg_id` dedup [ ] payload caps + artifact refs [ ] CAS writes + single-writer ownership [ ] per-role tool allow-list + scoped short-lived secrets + redaction.
@@ -1237,9 +1368,14 @@ two things that are specific to *a team* of agents rather than to a single run:
 
 **File Reference**: For the full sub-agent spec (lifecycle, spawn contract, roles, budget, testing), see [`SUBAGENT.md`](SUBAGENT.md)
 
+
+> **One-line summary:** A hardening checklist plus a real pattern: Claude Code kills stalled subagents, bumps the lease, respawns, and uses 2-of-3 reviewer votes so one crash never blocks merge.
+
 ---
 
 ## References
+
+> **One-line summary:** Curated links — frameworks to build with, papers behind the ideas, systems running in production, and classic architecture patterns.
 
 ### Frameworks
 - [LangGraph Multi-Agent](https://langchain-ai.github.io/langgraph/concepts/multi_agent/) — LangChain multi-agent orchestration
@@ -1248,6 +1384,8 @@ two things that are specific to *a team* of agents rather than to a single run:
 - [OpenHands](https://github.com/All-Hands-AI/OpenHands) — Open-source AI coding agent (formerly OpenDevin)
 - [Swarm by OpenAI](https://github.com/openai/swarm) — Lightweight multi-agent orchestration
 
+> **One-line summary:** Off-the-shelf orchestration frameworks: LangGraph, CrewAI, AutoGen, OpenHands, Swarm — pick one instead of building routing from scratch.
+
 ### Research & Papers
 - [Multi-Agent Systems - MIT](https://ocw.mit.edu/courses/6-825-techniques-in-artificial-intelligence-sma-5504-fall-2002/) — MIT course on MAS
 - [Blackboard Architecture Pattern](https://wwwPatterns.com/catalog/patterns/view/Blackboard) — Classic coordination pattern
@@ -1255,16 +1393,22 @@ two things that are specific to *a team* of agents rather than to a single run:
 - [ReAct: Synergizing Reasoning and Acting](https://arxiv.org/abs/2210.03629) — Reasoning + Action in LLMs
 - [Toolformer: Language Models Can Teach Themselves to Use Tools](https://arxiv.org/abs/2302.04761) — Tool use in language models
 
+> **One-line summary:** The theory behind the practice: MIT's MAS course, the blackboard pattern, the actor model, ReAct, and Toolformer.
+
 ### Production Systems
 - [Devin by Cognition AI](https://www.cognition.ai/) — Autonomous software engineer
 - [Claude Code by Anthropic](https://docs.anthropic.com/en/docs/claude-code) — CLI coding agent
 - [GitHub Copilot Workspace](https://githubnext.com/projects/copilot-workspace) — Multi-agent dev environment
 - [Cursor Agent Mode](https://cursor.sh/) — AI-first code editor with agent capabilities
 
+> **One-line summary:** Systems you can actually use today: Devin, Claude Code, Copilot Workspace, Cursor Agent Mode.
+
 ### Architecture Patterns
 - [Saga Pattern](https://microservices.io/patterns/data/saga.html) — Distributed transactions
 - [CQRS Pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/cQRS) — Command Query Responsibility Segregation
 - [Event Sourcing](https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing) — State via events
+
+> **One-line summary:** Battle-tested distributed-systems patterns (Saga, CQRS, Event Sourcing) that map neatly onto multi-agent coordination.
 
 ## 17. October 2026 Update — Multi-Agent Production Research (Anthropic, A2A)
 
@@ -1274,9 +1418,13 @@ two things that are specific to *a team* of agents rather than to a single run:
 > - **Analogy:** Anthropic Research is like a film studio with a director (LeadResearcher) and many parallel film crews (subagents); A2A is like a "shared labor contract" that lets companies (different frameworks) hire work from each other without opening their internal books.
 > - **Why it matters:** This is real production data (not lab benchmarks) — it tells you exactly how expensive multi-agent is (15× tokens), how effective it is (+90.2%), and when you should NOT use it.
 
+> **One-line summary:** Real production data, not lab benchmarks: multi-agent can win +90.2% quality but costs ~15× tokens — plus the A2A standard for agent-to-agent handshakes.
+
 ### 17.1 Production results (Anthropic Research, 06/2025)
 
 Anthropic's "How we built our multi-agent research system" report is one of the few sources with **real production numbers** (not synthetic benchmarks). The figures below directly answer "is multi-agent worth it?" — and just as important: "when should you NOT use it?".
+
+How to read it: **Metric** = what was measured; **Value** = the production number; **Meaning** = why it matters to you. For instance, "Token usage: 80% of variance" means how many tokens you spend predicts success better than anything else.
 
 | Metric | Value | Meaning |
 |---|---|---|
@@ -1286,6 +1434,8 @@ Anthropic's "How we built our multi-agent research system" report is one of the 
 | Token economics | Chat 1× · Single agent ≈ 4× · Multi-agent ≈ **15×** | Multi-agent costs ~4× more than a single agent — it must be worth it |
 
 **When to use / not use multi-agent:**
+
+How to read it: **✓ Good fit** = tasks where multi-agent pays off; **✗ Poor fit** = tasks where it wastes money. For instance, coding runs mostly sequentially, so extra agents just add cost without speed.
 
 | ✓ Good fit | ✗ Poor fit |
 |---|---|
@@ -1299,22 +1449,26 @@ Anthropic's "How we built our multi-agent research system" report is one of the 
 ```
 LeadResearcher (Opus)
    │
-   ├─ 1. Phân tích query, LƯU PLAN vào Memory (bền vững, không mất khi context dài)
+   ├─ 1. Analyze the query, SAVE THE PLAN to Memory (durable — it survives a long context)
    │
-   ├─ 2. Spawn subagents — mỗi subagent nhận 4 thứ:
+   ├─ 2. Spawn subagents — each subagent receives 4 things:
    │       objective + output format + tool guidance + task boundaries
    │
-   ├─ 3. Subagents dùng interleaved thinking SAU MỖI tool result
-   │      (không chỉ "nghĩ rồi làm" một lần đầu)
+   ├─ 3. Subagents use interleaved thinking AFTER EVERY tool result
+   │      (not just "think then act" once at the start)
    │
-   ├─ 4. Lead synthesize kết quả từ các subagent
+   ├─ 4. Lead synthesizes results from the subagents
    │
-   └─ 5. CitationAgent xử lý citations riêng (tách khỏi luồng nghiên cứu)
+   └─ 5. CitationAgent handles citations separately (split from the research flow)
 ```
+
+> **One-line summary:** Anthropic's numbers: +90.2% over single-agent, token usage explains 80% of variance, multi-agent ≈ 15× token cost — great for parallel research, poor for coding and real-time tasks.
 
 ### 17.2 A2A Protocol (Linux Foundation, 2026)
 
 A2A (Agent-to-Agent Protocol) is an open standard for **agent talking to agent** — it complements MCP (agent talking to tools), it does not compete with it.
+
+How to read it: this table compares two standards. **MCP** = agent-to-tool (your agent calls APIs and data); **A2A** = agent-to-agent (your agent hands a whole job to another agent). They are complements, not competitors.
 
 | | MCP | A2A |
 |---|---|---|
@@ -1335,6 +1489,8 @@ A2A (Agent-to-Agent Protocol) is an open standard for **agent talking to agent**
 - ❌ A sub-agent protocol (sub-agents within one system use native primitives / MCP — no A2A needed)
 - ❌ A replacement for MCP (the two solve two different problems)
 
+> **One-line summary:** A2A is the open standard for agent-talking-to-agent (MCP covers agent-to-tool); it lets agents from different frameworks delegate work without exposing internals.
+
 ### 17.3 8 prompting principles for multi-agent
 
 Drawn from Anthropic's own production Research system — 8 rules that keep the orchestrator's command of subagents from descending into chaos:
@@ -1342,6 +1498,8 @@ Drawn from Anthropic's own production Research system — 8 rules that keep the 
 1. **Think like your agents** — simulate each step in your head to surface real failure modes (not the ones you imagine, but the ones a real subagent will hit).
 2. **Teach the orchestrator how to delegate** — every subtask needs all 4 components: `objective` + `output format` + `tool guidance` + `task boundaries`. Vague instructions → subagents duplicate work or miss coverage.
 3. **Scale effort to query complexity** — not every query needs 10 subagents:
+
+   How to read it: **Query type** = how hard the question is; **Appropriate effort** = how many subagents and tool calls are justified. For instance, a simple fact-finding query needs just 1 agent with 3–10 tool calls.
 
    | Query type | Appropriate effort |
    |---|---|
@@ -1355,15 +1513,21 @@ Drawn from Anthropic's own production Research system — 8 rules that keep the 
 7. **Guide thinking** — extended thinking for the lead, interleaved thinking after each tool result for subagents.
 8. **Parallel tool calling** — 3–5 subagents in parallel + 3+ tools in parallel per subagent → up to **90% research time reduction**.
 
+> **One-line summary:** Eight rules from Anthropic's own system — delegate with all 4 components, scale effort to query complexity, start wide then narrow, and parallelize tool calls (up to 90% time saved).
+
 ### 17.4 Sub-agent output via filesystem
 
 Reduces the **"game of telephone"** effect (information getting distorted through multiple hand-offs): instead of the subagent copying its full output through the conversation history, the subagent **writes results to a filesystem/artifact store**, then returns **lightweight references** (path + hash). The orchestrator reads files when it needs detail — it doesn't have to keep full output in its own context.
 
 > Analogy: instead of each employee reading a 50-page report aloud in the meeting, they send a file link — anyone who needs the details opens it themselves.
 
+> **One-line summary:** Subagents write results to files and return lightweight references (path + hash) — killing the "game of telephone" where details distort through repeated hand-offs.
+
 ### 17.5 Sync vs Async
 
 Anthropic runs subagents **synchronously** — simple, easy to debug, but with a bottleneck: the lead **cannot steer a subagent mid-run** (it must wait for the subagent to finish before responding). Async allows higher parallelism but trades for complexity in result coordination, state consistency, and error propagation.
+
+How to read it: **Mode** = how subagents run; **Pros** = what you gain; **Cons** = what you pay for it. For instance, "Sync" means the lead waits for each subagent to finish — simple, but it cannot redirect one mid-run.
 
 | Mode | Pros | Cons |
 |---|---|---|
@@ -1380,3 +1544,5 @@ Anthropic runs subagents **synchronously** — simple, easy to debug, but with a
 </details>
 
 > Cross-link: see also [AGENT_SYSTEM_ARCHITECTURE.md](../../AGENT_SYSTEM_ARCHITECTURE.md) — Section 3.5 (Orchestration) and 4.2/4.4 (production patterns).
+
+> **One-line summary:** Anthropic picks synchronous subagents — simpler and easier to debug — at the price of not steering a subagent mid-run; async buys parallelism but complicates coordination.

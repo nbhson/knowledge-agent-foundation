@@ -23,15 +23,21 @@ Bạn có 1,000 báo cáo tài chính. Bạn hỏi:
 
 > *"Thị trường AI năm 2024 có xu hướng gì nổi bật?"*
 
-**Vanilla RAG**: chunk 1,000 báo cáo → embed → tìm top-5 chunks giống câu hỏi nhất → đưa vào LLM. Kết quả: 5 đoạn văn rời rạc về "AI trend" nhưng **thiếu bức tranh tổng thể** — mỗi chunk chỉ nói về 1 khía cạnh.
+**Vanilla RAG**: chunk 1,000 báo cáo (chunk = cắt tài liệu thành đoạn nhỏ) → embed (biến đoạn thành vector) → tìm top-5 chunks giống câu hỏi nhất → đưa vào LLM. Kết quả: 5 đoạn văn rời rạc về "AI trend" nhưng **thiếu bức tranh tổng thể** — mỗi chunk chỉ nói về 1 khía cạnh.
 
 **GraphRAG**: trước khi có câu hỏi, đã trích KG + phát hiện communities (ví dụ: community "AI Investment" gồm 200 entities, community "AI Regulation" gồm 150 entities) + tóm tắt từng community bằng LLM. Khi hỏi, **map-reduce trên community summaries** → trả lời toàn diện với **comprehensiveness + diversity** cao hơn 30-40% (Microsoft, 2024).
 
 **GraphRAG không thay thế RAG. GraphRAG giúp RAG thông minh hơn nhờ khai thác cấu trúc đồ thị.**
 
+> **Tóm gọn 1 câu:** RAG thường lấy 5 đoạn văn rời rạc; GraphRAG tóm tắt trước từng chủ đề rồi gộp lại — nên câu hỏi tổng quan được trả lời đầy đủ hơn.
+
 ### Tại Sao GraphRAG Quan Trọng?
 
 > *"Vanilla RAG answers WHERE. GraphRAG answers WHY and HOW, with evidence paths."*
+>
+> (Dịch: RAG thường trả lời "ở đâu"; GraphRAG trả lời "vì sao" và "như thế nào", kèm đường dẫn bằng chứng.)
+
+> **Cách đọc bảng này:** mỗi dòng là 1 nghiên cứu; cột "Phát Hiện" nói nó đo được điều gì. Ví dụ, dòng 1: với câu hỏi tổng hợp nhiều tài liệu, người chấm là LLM và GraphRAG thắng 70%.
 
 | # | Nghiên Cứu | Phát Hiện |
 |---|-----------|-----------|
@@ -42,6 +48,8 @@ Bạn có 1,000 báo cáo tài chính. Bạn hỏi:
 ---
 
 ## Tổng Quan
+
+Sơ đồ gồm 2 nửa: nửa trên là khâu dựng chỉ mục (chạy 1 lần, offline), nửa dưới là khâu trả lời câu hỏi (chạy mỗi lần người dùng hỏi).
 
 ```
                     ┌─────────────────────────────────┐
@@ -67,6 +75,8 @@ User Query ────────►│  Local Search  vs  Global Search  │
 
 ## Nội Dung
 
+> **Cách đọc bảng này:** cột "Chủ đề" là mục con bên dưới; cột "Mô tả" tóm tắt mục đó gồm những gì. Ví dụ, dòng 3 nói: phần Local vs Global dạy 2 chế độ truy vấn của GraphRAG.
+
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
 | 1 | [Vanilla vs GraphRAG](#1-vanilla-rag-vs-graphrag) | So sánh chi tiết, trade-offs |
@@ -82,6 +92,8 @@ User Query ────────►│  Local Search  vs  Global Search  │
 ---
 
 ## 1. Vanilla RAG vs GraphRAG
+
+> **Cách đọc bảng này:** so sánh 2 cách theo từng khía cạnh; "Vanilla RAG" = RAG thường; "❌/✅" là yếu/mạnh. Ví dụ, dòng "Global Q&A": hỏi tổng hợp cả kho thì RAG thường yếu, GraphRAG mạnh.
 
 ```
 ┌──────────────────┬──────────────────────────────────┬──────────────────────────────────┐
@@ -102,6 +114,8 @@ User Query ────────►│  Local Search  vs  Global Search  │
 **Chi phí indexing GraphRAG** đắt hơn (tốn LLM calls để extract + summarize), nhưng là **one-time offline cost**. Query cost tương đương hoặc thấp hơn nhờ context ngắn gọn hơn.
 
 > 📄 **Code ví dụ:** [`examples/01-1-vanilla-rag-vs-graphrag.py`](examples/01-1-vanilla-rag-vs-graphrag.py)
+
+> **Tóm gọn 1 câu:** GraphRAG đắt hơn ở bước dựng chỉ mục, nhưng đổi lại câu trả lời có cấu trúc, có bằng chứng, và xử lý được câu hỏi tổng hợp cả kho.
 
 ---
 
@@ -134,7 +148,7 @@ Xem chi tiết: [`02-knowledge-graph`](../02-knowledge-graph/) — dùng gleanin
 ### Bước 5: Retrieval (Local vs Global)
 
 > **Khái niệm:** Truy vấn được chia thành 2 loại:
-> - **Local Search** (hỏi chi tiết về 1 thực thể): tìm node→ expand neighbors theo BFS → lấy embeddings + context của nodes liên quan
+> - **Local Search** (hỏi chi tiết về 1 thực thể): tìm node→ expand neighbors theo BFS (BFS = duyệt theo vòng: ghé hết node gần trước, rồi mới đi xa) → lấy embeddings + context của nodes liên quan
 > - **Global Search** (hỏi tổng quan, so sánh, xu hướng): map- reduce trên **community summaries** — mỗi summary cho LLM, rồi gộp kết quả
 >
 > **Analogies:** Local = tra cứu hồ sơ 1 người (đọc bạn bè, team, dự án). Global = đọc báo cáo tổng hợp cả công ty (đọc từng phòng ban rồi gộp lại). Chi tiết ở §3.
@@ -147,11 +161,15 @@ Xem chi tiết: [`02-knowledge-graph`](../02-knowledge-graph/) — dùng gleanin
 
 Toàn bộ pipeline được triển khai chi tiết ở §5.
 
+> **Tóm gọn 1 câu:** 6 bước: cắt tài liệu → trích thực thể/quan hệ → chia cụm → tóm tắt cụm → tìm theo 2 kiểu → LLM trả lời kèm bằng chứng.
+
 ---
 
 ## 3. Local Search vs Global Search
 
 Đây là **phân biệt cốt lõi** của GraphRAG mà vanilla RAG không có:
+
+> **Cách đọc bảng này:** so sánh 2 chế độ tìm kiếm theo từng dòng. Ví dụ, dòng "Câu hỏi mẫu": hỏi "ai phê duyệt hợp đồng Phoenix?" → Local; hỏi "xu hướng AI 2024?" → Global.
 
 ```
 ┌──────────────────┬──────────────────────────────────┬──────────────────────────────────┐
@@ -195,13 +213,15 @@ Query: "Xu hướng AI 2024 là gì?"
 5. Mỗi claim có citation về community nguồn
 ```
 
+> **Tóm gọn 1 câu:** Local = bám vào thực thể trong câu hỏi rồi mở rộng quanh nó; Global = hỏi từng tóm tắt cụm rồi gộp — chọn kiểu theo câu hỏi có thực thể cụ thể hay không.
+
 ---
 
 ## 4. Community Summarization
 
 ### 4.1 Community Detection (Leiden Algorithm)
 
-Leiden là thuật toán phát hiện community tốt nhất hiện tại (cải tiến Louvain):
+Leiden là thuật toán phát hiện community tốt nhất hiện tại — cải tiến của Louvain (thuật toán chia cụm kinh điển: gom các node nối chặt với nhau thành một nhóm):
 
 > 📄 **Code ví dụ:** [`examples/03-4-1-community-detection-leiden-algorithm.py`](examples/03-4-1-community-detection-leiden-algorithm.py)
 
@@ -225,6 +245,8 @@ Level 0: Toàn bộ graph (1 community)
               └── Level 3: Entities + Relations (leaves)
 ```
 
+> **Tóm gọn 1 câu:** Leiden chia graph thành nhóm theo chủ đề, LLM tóm tắt từng nhóm, rồi xếp tầng — tầng to cho câu tổng quan, tầng nhỏ cho câu chi tiết.
+
 ---
 
 ## 5. Triển Khai GraphRAG Với Python
@@ -244,6 +266,8 @@ Level 0: Toàn bộ graph (1 community)
 > **Retriever** ở đây nghĩa như "cái máy rút" — phần quyết định **lấy cái gì** từ graph/vector để đưa vào LLM. Không phải chỉ có "Local/Global". Trong thực tế có **catalog nhiều loại retriever**, mỗi loại hợp 1 dạng câu hỏi.
 
 ### 6.1 Catalog Retriever Types
+
+> **Cách đọc bảng này:** mỗi dòng là 1 loại "máy rút" dữ liệu; cột giữa nói cách nó lấy dữ liệu, cột "Ví dụ câu hỏi hợp" là dạng câu nó xử lý tốt. Ví dụ, Text2Cypher hợp câu hỏi cần tính toán như "ai quản lý dự án nhiều nhất?".
 
 | Retriever | Cách hoạt động | Ví dụ câu hỏi hợp | Neo4j tương ứng |
 |---|---|---|---|
@@ -289,12 +313,16 @@ Level 0: Toàn bộ graph (1 community)
 
 > 📄 **Code ví dụ:** [`examples/06-6-3-rrf-hop-nhat-nhieu-nguon-khong.py`](examples/06-6-3-rrf-hop-nhat-nhieu-nguon-khong.py)
 
+> **Tóm gọn 1 câu:** Chọn retriever theo dạng câu hỏi, và khi gộp nhiều nguồn dùng RRF — cộng theo thứ hạng nên không cần chuẩn hoá điểm số.
+
 ---
 
 ## 7. GraphRAG Variants (SOTA)
 
 > **📌 Khái Niệm Cơ Bản:**
 > **GraphRAG không chỉ là "1 công thức"** — từ GraphRAG gốc của Microsoft (index + các biến thể nối tiếp trước) tới 2025-2026 đã có nhiều hướng tối ưu khác nhau cho các bài toán khác nhau. Bảng dưới đây là **bản đồ những biến thể được nhắc nhiều nhất**:
+
+> **Cách đọc bảng này:** mỗi dòng là 1 biến thể; cột "Ý tưởng cốt lõi" nói nó khác bản gốc chỗ nào, cột "Mạnh khi" chỉ tình huống nên dùng. Ví dụ, LightRAG rẻ hơn ~10 lần, hợp khi cần bao phủ rộng mà ít ngân sách.
 
 | Variant | Ý tưởng cốt lõi | Mạnh khi | Yếu/giới hạn |
 |---|---|---|---|
@@ -317,6 +345,8 @@ Level 0: Toàn bộ graph (1 community)
 ---
 
 ## 8. Khi Nào Dùng GraphRAG?
+
+> **Cách đọc bảng này:** mỗi dòng là 1 dạng câu hỏi, cột "Dùng gì?" là công cụ nên chọn. Ví dụ, câu hỏi 1 bước như "Điều 5 nói gì?" → RAG thường; câu hỏi tổng hợp cả kho → Global GraphRAG.
 
 ```
 ┌──────────────────────────┬──────────────┬──────────────────────────────┐
@@ -359,6 +389,8 @@ Câu hỏi có entities cụ thể?
 > - Cần multi-hop, aggregation, chủ đề xuyên nhiều docs → **GraphRAG**.
 > - Đứng giữa: **LightRAG / HippoRAG** (nhẹ hơn, retriever text2cypher rẻ hơn).
 
+> **Tóm gọn 1 câu:** Chọn theo câu hỏi: factoid 1 bước → RAG thường; nhiều bước → Local GraphRAG; tổng hợp cả kho → Global GraphRAG; chưa chắc → LightRAG/HippoRAG.
+
 ---
 
 ## 9. Labs Thực Hành
@@ -379,11 +411,15 @@ Câu hỏi có entities cụ thể?
 
 1. Parse 1 repo nhỏ (50 files) → tạo code graph (File → Function → Calls)
 2. Hỏi: "Thay đổi hàm X ảnh hưởng đến những file nào?" → local search trên code graph
-3. So sánh với `grep` thuần
+3. So sánh với `grep` thuần (grep = công cụ tìm chuỗi ký tự trong file, rất nhanh nhưng không hiểu quan hệ)
+
+> **Tóm gọn 1 câu:** Lab 1 cho biết GraphRAG thắng ở đâu, Lab 2 chỉnh độ mịn của chia cụm, Lab 3 cho thấy code graph trả lời câu "sửa hàm X ảnh hưởng gì" mà grep không làm nổi.
 
 ---
 
 ## Tài Liệu Tham Khảo
+
+> Tài liệu chính thức + bài báo gốc; cần gì tra nấy, không cần đọc hết.
 
 - Edge et al. — *From Local to Global: A GraphRAG Approach to Query-Focused Summarization* (Microsoft Research, 2024) — https://arxiv.org/abs/2404.16130
 - Microsoft GraphRAG — *GitHub* (https://github.com/microsoft/graphrag) — implementation + config

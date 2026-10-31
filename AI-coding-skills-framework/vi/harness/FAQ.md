@@ -2,6 +2,8 @@
 
 Nếu câu hỏi chưa rõ, đọc phần được nêu trong ngoặc vuông.
 
+> **Tài liệu này nói về gì:** đây là FAQ (Frequently Asked Questions = các câu hỏi hay gặp) cho toàn bộ 15 module của harness. Trả lời các câu kiểu "harness là gì", "bắt đầu từ đâu", "run hỏng thì tra ở đâu".
+
 ---
 
 ## Q1. Harness là cái gì vậy? Tôi gọi LLM một lần là xong, cần gì 15 module? [→ §1, §3]
@@ -25,6 +27,8 @@ Vì `prompt → completion` chỉ là một lần gọi đơn lẻ. **Harness l�
 
 Thử một yêu cầu cần 5 bước trở lên (sửa code rồi chạy test). Nếu hệ thống hỏi "tiếp theo bạn muốn tôi làm gì", bạn đang có chatbot chứ chưa có harness.
 
+> **Tóm gọn 1 câu:** Harness là tất cả những gì bao quanh lần gọi LLM — lấy dữ liệu, dựng ngữ cảnh, chia kế hoạch, chọn công cụ, chạy, kiểm chứng — để một yêu cầu nhiều bước chạy được tới nơi tới chốn thay vì chỉ chat một lượt.
+
 ---
 
 ## Q2. Có phải xây đủ 15 module không, và bắt đầu từ đâu? [→ §5 Đọc thư mục này thế nào]
@@ -47,6 +51,8 @@ Vì 15 module **không phải 15 bước nối tiếp**. `01–11` là các stag
 
 Bản tối thiểu 5 module phải trả lời được 5 câu: nhiệm vụ này cần gì, chạy ở đâu, gọi công cụ nào, chạy xong thì tin gì, và làm sao biết nó đúng. Trả lời không đủ 5 câu thì chưa xong.
 
+> **Tóm gọn 1 câu:** Không cần đủ 15 module để bắt đầu — bản tối thiểu là `02 + 05 + 06 + 07 + 11`, và không bao giờ bỏ module đánh giá (11) vì không đo thì không biết mình có tiến bộ không.
+
 ---
 
 ## Q3. Run báo "thành công" nhưng kết quả sai, không ai biết nó hỏng ở bước nào — làm sao? [→ §3 Lifecycle, §4 Ba contract dùng chung]
@@ -61,7 +67,7 @@ Vì nếu không ghi lại từng bước, bạn chỉ còn prompt đầu vào v
 
 **Làm gì**
 
-1. **Mọi bước đều phát ra sự kiện**, và sự kiện là nguồn sự thật duy nhất. Trường tối thiểu: `id`, `sessionId`, `parentTaskId`, `ts`, `kind` (`prompt` / `tool_call` / `tool_result` / `plan` / `eval` / `memory_write` / `approval`), `payload`.
+1. **Mọi bước đều phát ra sự kiện**, và sự kiện là nguồn sự thật duy nhất (sự kiện = dòng log có cấu trúc ghi lại một bước agent vừa làm). Trường tối thiểu: `id`, `sessionId`, `parentTaskId`, `ts`, `kind` (`prompt` / `tool_call` / `tool_result` / `plan` / `eval` / `memory_write` / `approval`), `payload`.
 2. Từ một run hỏng, **dựng lại đúng nó** thay vì chạy lại: fork (rẽ nhánh) từ đúng điểm, giữ nguyên một `sessionId`.
 3. Đi theo thứ tự khi debug: đọc lại sự kiện để khoanh vùng stage hỏng, rồi mới sửa stage đó. Ba nghi phạm theo thứ tự: `02` (ngữ cảnh sai?), `06` (sai công cụ?), `11` (sai tiêu chí chấm?).
 4. Dùng **ba hợp đồng chung** làm mốc nối khi tra cứu: sự kiện trajectory; ngữ cảnh đã dựng (có `budget: { limit, used }` để thấy ngữ cảnh có bị ép không); và node việc (có `idempotencyKey` để biết bước nào đã chạy rồi).
@@ -69,6 +75,8 @@ Vì nếu không ghi lại từng bước, bạn chỉ còn prompt đầu vào v
 **Kiểm tra**
 
 Một run bất kỳ phải dựng lại được từ log: đúng prompt nào, đúng lời gọi công cụ nào, đúng kết quả nào, bao nhiêu token. Run nào không dựng lại được thì chưa đạt.
+
+> **Tóm gọn 1 câu:** Ghi sự kiện có cấu trúc cho mọi bước, rồi debug bằng cách tra log để tìm stage hỏng (context sai ở 02, tool sai ở 06, tiêu chí chấm sai ở 11) — thay vì đoán mò bằng cách đổi prompt.
 
 ---
 
@@ -93,6 +101,8 @@ Vì RAG **kết thúc đúng ở lần gọi LLM đầu tiên**. Từ đó trở
 
 Đưa một yêu cầu cần thao tác (sửa file rồi chạy test) vào hệ thống. Nếu nó trả lời bằng văn bản thay vì làm, bạn mới dừng ở RAG.
 
+> **Tóm gọn 1 câu:** RAG dừng ngay ở lần gọi LLM đầu tiên; phía sau cần nốt phần harness (kế hoạch, công cụ, chạy, chấm, ghi nhớ) để mô hình từ chỗ chỉ *nói* thành chỗ *làm* được.
+
 ---
 
 ## Q5. Module nào hay bị bỏ qua, coi là phụ? [→ §2 Bản đồ, §7 Gap đã biết]
@@ -116,6 +126,8 @@ Vì `12–15` không nằm trên đường chính của sơ đồ nên trông nh
 
 Lập một checklist 15 dòng, đánh dấu cái nào bạn thực sự có và cái nào mới chỉ có tên. Bốn module `12–15` còn trống là tín hiệu sớm của ba loại sự cố nặng nhất.
 
+> **Tóm gọn 1 câu:** Đừng coi 4 module bao ngoài 12–15 (sandbox, quan sát, nén ngữ cảnh, cổng duyệt) là phụ — chúng là trần kỹ thuật, đôi mắt, điều kiện sống, và phanh của hệ thống.
+
 ---
 
 ## Q6. Khi agent làm sai, làm sao biết là do harness hay do model? [→ §3, §4]
@@ -133,6 +145,8 @@ Vì nếu không đo riêng từng tầng, mọi lỗi đều bị quy về "mod
 1. Chạy lại **cùng một yêu cầu, cùng prompt giống hệt, cùng model, 3 lần**. Nếu model đáp 3 kiểu khác nhau thì đây là bài toán mô hình — và nó đòi `11` đo được.
 2. Nếu **mọi run** đều dính cùng một kiểu lỗi, đó là lỗi harness. Sáu dấu hiệu thường gặp:
 
+Cách đọc bảng này: cột trái là triệu chứng bạn quan sát được; cột phải là module đáng nghi nhất. Ví dụ, run chết ở lượt ~40 với báo lỗi ngữ cảnh đầy → nghi module 14 (nén ngữ cảnh).
+
 | Dấu hiệu bạn thấy | Module đáng nghi |
 |---|---|
 | Chết ở lượt ~40, báo ngữ cảnh đầy | `14` |
@@ -148,6 +162,8 @@ Vì nếu không đo riêng từng tầng, mọi lỗi đều bị quy về "mod
 **Kiểm tra**
 
 Bộ hồi quy chạy đêm trên bản ghi thật. Khi có một fail cụ thể, tra bản ghi đó và chỉ ra được stage hỏng trong vòng 15 phút. Không làm được thì `13` chưa xong.
+
+> **Tóm gọn 1 câu:** Muốn tách lỗi harness khỏi lỗi model: chạy lại cùng prompt 3 lần (đáp lệch nhau = lỗi model), còn cùng một kiểu lỗi lặp lại = lỗi harness — tra bảng dấu hiệu ở trên để tìm module.
 
 ---
 

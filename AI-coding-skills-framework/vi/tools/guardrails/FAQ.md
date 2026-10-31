@@ -2,13 +2,17 @@
 
 Câu hỏi nào khó hiểu thì đọc `README.md` phần trong ngoặc vuông.
 
+*(guardrails = thanh chắn an toàn: lớp kiểm tra đứng trước mỗi hành động của agent để chặn việc làm sai.)*
+
 ---
 
 ## Q1. Guardrails AI, NeMo, LlamaGuard — nên chọn cái nào? [→ Tổng Quan Các Guardrails]
 
 **Bạn sẽ thấy**
 
-Ba thư viện này nằm ở ba chỗ khác nhau trong đường đi của một lệnh gọi công cụ (tool call), không phải ba bản thay thế của nhau:
+Ba thư viện này nằm ở ba chỗ khác nhau trong đường đi của một lệnh gọi công cụ (tool call = agent ra lệnh cho một công cụ, ví dụ ghi file hay chạy lệnh), không phải ba bản thay thế của nhau:
+
+*Cách đọc bảng này: cột "Chặn ở bước nào" cho biết thư viện đứng canh ở vị trí nào, cột "Chặn cái gì" cho biết nó soi thứ gì. Ví dụ, Guardrails AI soi từng tham số của tool call, còn LlamaGuard soi toàn bộ nội dung câu hỏi/câu trả lời.*
 
 | Thư viện | Nhà phát hành | Chặn ở bước nào | Chặn cái gì |
 |---|---|---|---|
@@ -16,7 +20,7 @@ Ba thư viện này nằm ở ba chỗ khác nhau trong đường đi của mộ
 | NeMo Guardrails | NVIDIA | luồng hội thoại (rails) | hành vi toàn cuộc thoại |
 | LlamaGuard | Meta | nội dung prompt / câu trả lời | nội dung nguy hiểm |
 
-Ví dụ agent hiểu sai prompt và gọi `write_file` với path `/etc/passwd`. Guardrails AI chặn được ngay ở tham số. Nhưng nếu người dùng hỏi "mật khẩu hệ thống là gì?" thì không tham số nào sai — lúc đó mới cần NeMo (dạng rails chặn cả luồng) hoặc LlamaGuard (phân loại nội dung).
+Ví dụ agent hiểu sai prompt và gọi `write_file` với path `/etc/passwd` (path = đường dẫn file; `/etc/passwd` là file hệ thống nhạy cảm của Linux). Guardrails AI chặn được ngay ở tham số. Nhưng nếu người dùng hỏi "mật khẩu hệ thống là gì?" thì không tham số nào sai — lúc đó mới cần NeMo (dạng rails chặn cả luồng) hoặc LlamaGuard (phân loại nội dung).
 
 **Vì sao**
 
@@ -33,7 +37,9 @@ Vì ba thứ này bảo vệ ba lớp khác nhau. Guardrails AI là bộ quy t�
 
 **Kiểm tra**
 
-Chạy thử `guard.validate` với một đường dẫn chứa `..` và một đường dẫn bình thường — kết quả phải lệch nhau. Với LlamaGuard, gọi một prompt chứa nội dung bị cấm và xem có trả về `unsafe` không.
+Chạy thử `guard.validate` với một đường dẫn chứa `..` và một đường dẫn bình thường — kết quả phải lệch nhau (`..` trong đường dẫn nghĩa là "lùi lên thư mục cha", thường là dấu hiệu truy cập ngoài vùng cho phép). Với LlamaGuard, gọi một prompt chứa nội dung bị cấm và xem có trả về `unsafe` không.
+
+> **Tóm gọn 1 câu:** Ba thư viện chặn ba lớp khác nhau — bắt đầu bằng Guardrails AI (rẻ, chặn tham số), thêm permission/rate-limit, chỉ thêm NeMo/LlamaGuard cho luồng và nội dung nhạy cảm.
 
 ---
 
@@ -49,12 +55,12 @@ Không có guardrail thì lệnh đầu đã chạy rồi — `/etc/hosts` bị 
 
 **Vì sao**
 
-Vì mô hình sinh ra text, nó không có khái niệm "tác dụng phụ không mong muốn". Nó sẽ vô tình sinh `/etc/hosts` y như sinh `src/main.py` — cả hai đều là chuỗi ký tự hợp lệ với mặt quy ước. Do đó guardrail phải là **allowlist đường dẫn**: chỉ nhận `src/`, `tests/`, `./`; mọi thứ khác là từ chối.
+Vì mô hình sinh ra text, nó không có khái niệm "tác dụng phụ không mong muốn". Nó sẽ vô tình sinh `/etc/hosts` y như sinh `src/main.py` — cả hai đều là chuỗi ký tự hợp lệ với mặt quy ước. Do đó guardrail phải là **allowlist đường dẫn** (allowlist = danh sách trắng: chỉ những gì có trong danh sách mới được phép; ngược lại là denylist = danh sách đen): chỉ nhận `src/`, `tests/`, `./`; mọi thứ khác là từ chối.
 
 **Làm gì**
 
-1. Chặn theo allowlist, không chặn theo danh sách đen (denylist). Danh sách đen luôn có lỗ hổng.
-2. Kiểm tra tham số ở từng công cụ, với schema khai sẵn: `path` phải là chuỗi khớp `^[a-zA-Z0-9_./-]+$`.
+1. Chặn theo allowlist, không chặn theo danh sách đen (denylist). Danh sách đen luôn có lỗ hổng — bạn không thể liệt kê hết mọi đường dẫn nguy hiểm.
+2. Kiểm tra tham số ở từng công cụ, với schema khai sẵn (schema = bản mô tả cứng nhắc "tham số này phải dạng gì"): `path` phải là chuỗi khớp `^[a-zA-Z0-9_./-]+$` (chuỗi đó là regex — công thức nhận diện ký tự được phép).
 3. Với danh sách đen, phải chuẩn hoá đường dẫn trước: giải mã ký tự → gộp dấu chấm → đổi thành đường dẫn thật → mới so sánh.
 4. Chạy kiểm tra này ngay trước lúc ghi, không phải lúc sinh prompt.
 5. Kiểm tra luôn đầu ra của công cụ trước khi trả về ngữ cảnh — dữ liệu bên ngoài cũng cần đi qua đây.
@@ -63,7 +69,9 @@ Vì mô hình sinh ra text, nó không có khái niệm "tác dụng phụ khôn
 
 **Kiểm tra**
 
-Đưa 5 đường dẫn vào: `src/main.py` (cho qua), `/etc/hosts` (chặn), `../../secrets` (chặn), `src/main.py; rm -rf /` (chặn vì có dấu `;` và khoảng trắng), đường dẫn mã hoá kiểu `%2e%2e%2f` (chặn sau khi giải mã). Cả 5 phải ra đúng kết quả mong muốn.
+Đưa 5 đường dẫn vào: `src/main.py` (cho qua), `/etc/hosts` (chặn), `../../secrets` (chặn), `src/main.py; rm -rf /` (chặn vì có dấu `;` và khoảng trắng — `rm -rf /` là lệnh xóa sạch toàn bộ ổ đĩa, gắn kèm sau `;` là kiểu "chèn lệnh"), đường dẫn mã hoá kiểu `%2e%2e%2f` (chặn sau khi giải mã — `%2e` chính là dấu chấm viết mã hoá). Cả 5 phải ra đúng kết quả mong muốn.
+
+> **Tóm gọn 1 câu:** Chặn bằng allowlist đường dẫn ngay trước lúc thực thi — chỉ cho phép ghi vào các thư mục có trong danh sách trắng, mọi đường dẫn lạ hoặc giấu mã hoá đều từ chối.
 
 ---
 
@@ -79,7 +87,7 @@ Rồi trước lúc chạy có một cổng kiểm tra: nếu `requires_permissi
 
 **Vì sao**
 
-Vì chúng chặn hai thứ khác nhau. `requires_permission` là câu hỏi **"lệnh này có được phép không"** — trả lời là có hay không, cần người quyết. `rate_limit_per_minute` là câu hỏi **"lệnh này có quá nhiều không"** — nó không có ý nghĩa an toàn, chỉ chặn lặp lại vô tình. Ca thật: agent gọi `send_notification` 100 lần trong một lượt. Không lệnh nào nguy hiểm, nhưng người dùng bị spam 100 tin.
+Vì chúng chặn hai thứ khác nhau. `requires_permission` là câu hỏi **"lệnh này có được phép không"** — trả lời là có hay không, cần người quyết. `rate_limit_per_minute` là câu hỏi **"lệnh này có quá nhiều không"** — nó không có ý nghĩa an toàn, chỉ chặn lặp lại vô tình (rate limit = giới hạn tần suất, ví dụ tối đa 60 lần mỗi phút). Ca thật: agent gọi `send_notification` 100 lần trong một lượt. Không lệnh nào nguy hiểm, nhưng người dùng bị spam 100 tin.
 
 Mức độ cần thiết: `elevated` là bắt buộc cho mọi thao tác ghi/xoá/chạy code. Rate limit là tùy chọn nhưng rẻ, nên bật luôn — chi phí một lần kiểm tra số đếm gần như bằng không.
 
@@ -94,7 +102,9 @@ Mức độ cần thiết: `elevated` là bắt buộc cho mọi thao tác ghi/x
 
 **Kiểm tra**
 
-Gọi một công cụ `elevated` mà không có người duyệt — phải bị từ chối. Gọi công cụ tần suất thấp 11 lần trong một phút — lần 11 phải bị chặn. Cả hai thao tác phải ghi lại vào nhật ký kiểm toán.
+Gọi một công cụ `elevated` mà không có người duyệt — phải bị từ chối. Gọi công cụ tần suất thấp 11 lần trong một phút — lần 11 phải bị chặn. Cả hai thao tác phải ghi lại vào nhật ký kiểm toán (nhật ký kiểm toán = audit log, bản ghi "ai làm gì, lúc nào" để truy vết sau).
+
+> **Tóm gọn 1 câu:** `requires_permission` chặn lệnh *không được phép* (cần người duyệt), rate limit chặn lệnh *lặp quá nhiều* (chặn máy, không cần người) — cái trước bắt buộc, cái sau rẻ nên bật luôn.
 
 ---
 
@@ -112,7 +122,7 @@ Nguyên tắc: **kiểm tra rẻ trước, kiểm tra đắt sau**. Một chuỗ
 
 **Làm gì**
 
-1. Lớp 1 — quy tắc văn bản: chạy cho 100% lệnh gọi, phải dưới vài mili giây.
+1. Lớp 1 — quy tắc văn bản: chạy cho 100% lệnh gọi, phải dưới vài mili giây (mili giây = một phần nghìn giây).
 2. Lớp 2 — kiểm tra quyền và tần suất: tra bảng, gần như miễn phí.
 3. Lớp 3 — mô hình phân loại nội dung: chỉ chạy khi lớp 1 và 2 không kết luận được, hoặc chỉ trên đầu vào người dùng chứ không trên mỗi tool call.
 4. Ghi số lần bị chặn theo từng loại. Tỉ lệ chặn quá cao ở lớp rẻ là dấu hiệu luật viết sai, phải sửa luật chứ không phải tắt luật.
@@ -121,6 +131,8 @@ Nguyên tắc: **kiểm tra rẻ trước, kiểm tra đắt sau**. Một chuỗ
 **Kiểm tra**
 
 Chạy cùng một kịch bản loop có và không có guardrail, so thời gian tổng và số token. Tăng thêm dưới vài phần trăm là chấp nhận được; tăng gấp đôi thì đang gọi mô hình ở sai chỗ — chuyển nó xuống sau lớp quy tắc.
+
+> **Tóm gọn 1 câu:** Không chậm đáng kể nếu xếp đúng thứ tự: quy tắc rẻ chạy 100% lượt gọi, model phân loại đắt tiền chỉ gọi khi thật sự cần.
 
 ---
 
@@ -136,14 +148,16 @@ Vì thư mục này là **danh mục sản phẩm**, không phải nơi quy đ�
 
 **Làm gì**
 
-1. Phân bổ rõ ba chỗ: chính sách cấp quyền và cách ly thuộc `harness/15-approval-gates`; cơ chế cách ly thuộc `harness/12-sandbox-execution`; còn ở đây chỉ chọn thư viện kiểm tra.
+1. Phân bổ rõ ba chỗ: chính sách cấp quyền và cách ly thuộc `harness/15-approval-gates` (cổng duyệt của người — approval gate = trạm phải được gật đầu trước khi chạy); cơ chế cách ly thuộc `harness/12-sandbox-execution` (sandbox = môi trường biệt lập, hỏng cũng không lan ra ngoài); còn ở đây chỉ chọn thư viện kiểm tra.
 2. `elevated` không phải khái niệm của thư viện — nó là khái niệm của harness, ánh xạ sang phân quyền theo vai trò ở `harness/06`.
-3. Timeout phải chặn theo kiểu fail-closed: không có phản hồi từ cổng duyệt thì coi như từ chối, không phải cho qua.
+3. Timeout phải chặn theo kiểu fail-closed (fail-closed = khi không chắc thì từ chối, không cho qua): không có phản hồi từ cổng duyệt thì coi như từ chối.
 4. Mọi lần guardrail chặn đều phải ghi lại lý do. Nếu không phân biệt được "chặn vì path" với "chặn vì hết hạn mức", bạn không sửa được mà cũng không truy vết được.
 
 **Kiểm tra**
 
 Đổi chính sách một lần, chạy lại toàn bộ loop, và xác nhận chỉ có một nơi chứa luật. Nếu bạn phải sửa file ở cả thư mục này lẫn thư mục khác cùng lúc, luật đang nằm sai chỗ.
+
+> **Tóm gọn 1 câu:** Thư mục này chỉ là danh mục thư viện kiểm tra — chính sách quyền thuộc harness/15, cơ chế cách ly thuộc harness/12; luật mỗi thứ chỉ nằm đúng một chỗ để không lệch nhau.
 
 ---
 

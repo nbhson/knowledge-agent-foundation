@@ -1,6 +1,7 @@
 # ❓ FAQ — Trajectory & Observability (Câu hỏi thật, dễ hiểu)
 
 Nếu câu hỏi chưa rõ, đọc `README.md` phần được nêu trong ngoặc vuông.
+(Trajectory = "quỹ đạo": bản ghi mọi bước agent đã làm — nghĩ gì, gọi tool nào, ra kết quả gì; Observability = khả năng quan sát lại hệ thống từ dữ liệu ghi được.)
 
 ---
 
@@ -16,7 +17,7 @@ Chat log ghi lại điều mô hình **nói**, không phải điều nó **làm*
 
 **Làm gì**
 
-1. Mọi module trong hệ thống đều ghi vào **một** nơi: một sự kiện (event) chỉ-append, mỗi sự kiện có số thứ tự `seq` liền mạch, có `sessionId`, `parentTaskId`, `actor` (ai làm: model hay người), thời điểm, và nội dung đã che khoá.
+1. Mọi module trong hệ thống đều ghi vào **một** nơi: một sự kiện (event) chỉ-append (chỉ ghi thêm, không sửa/xóa dòng cũ — như sổ ghi chép niêm phong), mỗi sự kiện có số thứ tự `seq` liền mạch, có `sessionId` (mã phiên), `parentTaskId` (mã công việc cha), `actor` (ai làm: model hay người), thời điểm, và nội dung đã che khoá.
 2. Cặp `tool_call` với `tool_result` luôn đi kèm. Một `tool_call` không có `tool_result` là một bước đã bị treo.
 3. Truy vấn lại phiên đó bằng một câu lệnh, không cần đoán:
 
@@ -27,6 +28,8 @@ Chat log ghi lại điều mô hình **nói**, không phải điều nó **làm*
 **Kiểm tra**
 
 Lấy một phiên đã chạy và trả lời năm câu hỏi: nó **làm** gì, nó **thấy** gì, nó **tin** gì, nó **hỏng** ở đâu, **giám khảo** nói gì. Nếu cả năm đều có câu trả lời từ dữ liệu thì hệ thống đã dùng được.
+
+> **Tóm gọn 1 câu:** Chat log chỉ ghi lời model nói, không ghi việc nó làm — cần một dòng sự kiện chỉ-append có số thứ tự và cặp `tool_call`/`tool_result` để truy vết được "nó xoá file ở bước nào".
 
 ---
 
@@ -42,7 +45,7 @@ Vì bạn đang lưu **lời nói** chứ không lưu **dấu vết hành độn
 
 **Làm gì**
 
-1. Bổ sung những trường mà mọi truy vấn sau này đều cần: `id` theo kiểu sắp xếp được (ULID), `seq`, `sessionId`, `parentTaskId`, `actor`, `tokens`, `latencyMs`, `model`, `costUsd`, và `fingerprint` (dấu vân tay của prompt).
+1. Bổ sung những trường mà mọi truy vấn sau này đều cần: `id` theo kiểu sắp xếp được (ULID — mã nhận dạng vừa độc nhất vừa đúng thứ tự thời gian), `seq`, `sessionId`, `parentTaskId`, `actor`, `tokens`, `latencyMs`, `model`, `costUsd`, và `fingerprint` (dấu vân tay của prompt — để nhận ra prompt này đã thấy bao nhiêu lần).
 2. Chỉ-append: **không** sửa event cũ. Cách đính chính là thêm một sự kiện mới (`plan_revision`), không phải ghi đè.
 3. Với sự kiện nhạy cảm, dùng giá trị trung thực chỉ-append. Không có giá trị trung thực thì mọi kết luận rút ra — kể cả kết luận về chi phí — đều đáng ngờ.
 4. Chỉ `fsync` (ghi cưỡng bức xuống đĩa) cho phần quyết định: phê duyệt, ghi nhớ, kết quả đánh giá, và hai đầu phiên. Phần còn lại đẩy ra sau, tối đa 100 mili giây.
@@ -51,6 +54,8 @@ Vì bạn đang lưu **lời nói** chứ không lưu **dấu vết hành độn
 **Kiểm tra**
 
 Chạy truy vấn "tìm bước đắt nhất" và "tìm `tool_call` không có `tool_result`". Nếu cả hai đều trả về kết quả có nghĩa, bạn đã có nền để debug và tính tiền.
+
+> **Tóm gọn 1 câu:** Chat log không thay thế được trajectory — thiếu `seq`, `parentTaskId`, `model`, `tokens` thì không đếm được mất gì, nối được các bước, hay quy được tiền; bổ sung các trường đó và chỉ-append vĩnh viễn.
 
 ---
 
@@ -75,6 +80,8 @@ Ghi đủ chi tiết cho mọi thứ ở mọi nơi là vừa đắt vừa ít g
 
 Mô phỏng 10.000 phiên: so dung lượng và số tiền trước/sau khi áp tầng + lấy mẫu. Sau đó hỏi lại ba câu: bao nhiêu bước trung bình mỗi phiên, tỉ lệ tự phục hồi, tổng chi phí theo model. Cả ba phải vẫn trả lời được.
 
+> **Tóm gọn 1 câu:** Chia log theo tuổi (nóng giữ nguyên → ấm rút gọn → lạnh chỉ giữ số tổng hợp → xoá) và lấy mẫu theo độ quan trọng của tín hiệu — nhưng bộ đếm tổng hợp phải luôn giữ 100%.
+
 ---
 
 ## Q4. Tôi sợ log của agent lộ khoá hay dữ liệu khách hàng — làm gì? [→ §5.2 Redaction Lúc Emit · §5.3 Cô Lập Tenant & GDPR]
@@ -98,6 +105,8 @@ Nếu che khoá (redaction) lúc **đọc** thì đã thua: bảng gốc vẫn c
 **Kiểm tra**
 
 Chạy câu lệnh kiểm tra hằng quý trên kho tầng ấm, đếm số chuỗi khớp mẫu khoá. Phải bằng 0. Khác 0 là sự cố dữ liệu, cần xử lý ngay chứ không phải việc dọn dẹp cuối tuần.
+
+> **Tóm gọn 1 câu:** Che khoá phải làm ngay lúc ghi (sửa vĩnh viễn trước khi chạm đĩa), không phải lúc đọc; mỗi sự kiện phải có mã khách hàng, và xoá dữ liệu theo GDPR phải gỡ sạch 4 nơi kèm biên nhận.
 
 ---
 

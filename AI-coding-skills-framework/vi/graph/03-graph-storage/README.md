@@ -22,13 +22,19 @@ Bạn đã trích được 5,000 entities và 12,000 relations. Bạn lưu vào 
 
 Tuần sau, bạn cần trả lời: *"Tìm tất cả projects mà team của Alice đã làm, qua tối đa 3 bước REPORTS_TO/MANAGES."*
 
-Với JSON, bạn viết vòng lặp BFS thủ công, load toàn bộ file vào RAM, chạy 2 giây cho 1 query. Với 100 queries? Timeout.
+Với JSON, bạn viết vòng lặp BFS thủ công (BFS = duyệt graph theo từng vòng: ghé hết node gần trước, rồi mới đi xa), load toàn bộ file vào RAM, chạy 2 giây cho 1 query. Với 100 queries? Timeout.
 
-**Graph Database** giải quyết: **lưu native + index + query engine** — trả lời cùng câu hỏi trong 15ms bằng một dòng Cypher.
+**Graph Database** giải quyết: **lưu native + index + query engine** — trả lời cùng câu hỏi trong 15ms bằng một dòng Cypher (ngôn ngữ truy vấn đồ thị, chi tiết ở §2).
+
+> **Tóm gọn 1 câu:** Lưu graph trong JSON chỉ ổn với graph nhỏ; muốn hỏi nhanh những câu nhiều bước, cần graph database có index và ngôn ngữ truy vấn riêng.
 
 ### Tại Sao Storage & Query Quan Trọng?
 
 > *"Không có DB phù hợp, graph chỉ là JSON đắt tiền. Không có query language, graph chỉ là hình vẽ."*
+>
+> (3-hop = câu hỏi cần đi qua 3 cạnh quan hệ, ví dụ A → B → C → D.)
+
+> **Cách đọc bảng này:** mỗi dòng là 1 nghiên cứu/benchmark; cột "Phát Hiện" nói nó đo được điều gì. Ví dụ, dòng 1: với câu hỏi cần đi qua 3 cạnh, lưu graph "thuần" nhanh hơn JOIN SQL 100–1000 lần.
 
 | # | Nguồn | Phát Hiện |
 |---|-------|-----------|
@@ -39,6 +45,8 @@ Với JSON, bạn viết vòng lặp BFS thủ công, load toàn bộ file vào 
 ---
 
 ## Tổng Quan
+
+Phần này vẽ 6 giai đoạn để đưa graph từ "nhận về" tới "truy vấn được": chọn DB → tạo schema và index → nạp dữ liệu an toàn → truy vấn → theo dõi hiệu năng.
 
 ```
 Knowledge Graph (từ 02)
@@ -69,6 +77,8 @@ Knowledge Graph (từ 02)
 
 ## Nội Dung
 
+> **Cách đọc bảng này:** cột "Chủ đề" là mục con bên dưới; cột "Mô tả" tóm tắt mục đó gồm những gì. Ví dụ, dòng 3 nói: phần Indexing sẽ dạy tạo index và tối ưu câu truy vấn.
+
 | # | Chủ đề | Mô tả |
 |---|--------|-------|
 | 1 | [Chọn DB](#1-chọn-graph-database) | So sánh 6 DB, decision matrix |
@@ -90,6 +100,8 @@ Knowledge Graph (từ 02)
 > - Cần phản hồi dưới một mili giây? → **FalkorDB / Memgraph** (chạy trong bộ nhớ)
 
 ### 1.1 So Sánh Chi Tiết
+
+> **Cách đọc bảng này:** cột "Kiểu" = cách DB lưu graph (embedded = chạy ngay trong app, không cần server riêng; in-memory = giữ hết trong RAM); cột "Quy mô" = cỡ dữ liệu chịu được; cột "Truy vấn" = ngôn ngữ dùng để hỏi; cột cuối = tình huống hợp nhất. Ví dụ, Kuzu hợp ai viết Python và muốn chạy local dưới 1 giây.
 
 ```
 ┌────────────────┬──────────┬──────────┬──────────┬────────────────────────────┐
@@ -113,6 +125,8 @@ Knowledge Graph (từ 02)
 > 📄 **Code ví dụ:** [`examples/01-1-2-decision-matrix.py`](examples/01-1-2-decision-matrix.py)
 
 **Khuyến nghị cho Framework này:**
+
+> **Cách đọc bảng này:** mỗi dòng là 1 giai đoạn của dự án — chọn DB theo nơi bạn đang đứng. Ví dụ, đang học thì chọn Kuzu vì cài 1 dòng `pip install` là chạy được.
 
 | Giai đoạn | DB | Lý do |
 |-----------|----|-------|
@@ -170,6 +184,8 @@ Neo4j hỗ trợ hybrid: graph traversal + full-text + vector index trên cùng 
 
 > 📄 **Code ví dụ:** [`examples/04-2-3-full-text-vector-search-trong-graph.cypher`](examples/04-2-3-full-text-vector-search-trong-graph.cypher)
 
+> **Tóm gọn 1 câu:** Cypher = SQL của đồ thị: bạn "vẽ" pattern cần tìm, DB tự đi tìm mọi chỗ khớp.
+
 ---
 
 ## 3. Indexing & Performance
@@ -187,6 +203,8 @@ Neo4j hỗ trợ hybrid: graph traversal + full-text + vector index trên cùng 
 > - Cần đảm bảo không trùng lặp → **Unique Constraint** (tự tạo index ngầm)
 
 ### 3.1 Các Loại Index
+
+> **Cách đọc bảng này:** cột "Khi nào dùng" chỉ tình huống; cột "Cypher" là lệnh tạo index tương ứng. Ví dụ, dòng 1: hay hỏi theo tên → tạo index trên `n.name`.
 
 ```
 ┌──────────────────┬─────────────────────────────────┬─────────────────────────┐
@@ -214,6 +232,8 @@ Neo4j hỗ trợ hybrid: graph traversal + full-text + vector index trên cùng 
 
 ### 4.1 ACID Cho Graph
 
+> **ACID = 4 lời hứa của một transaction** (transaction = nhóm thao tác hoặc xong hết, hoặc không xong gì — như chuyển tiền: không thể trừ tiền mà không nhận tiền). Cách đọc bảng: cột trái là tên lời hứa, cột phải là nghĩa của nó khi nạp dữ liệu vào graph.
+
 ```
 ┌───────────┬──────────────────────────────────────────────────────────┐
 │ Thuộc tính│ Ý nghĩa cho Graph                                        │
@@ -232,7 +252,9 @@ Neo4j hỗ trợ hybrid: graph traversal + full-text + vector index trên cùng 
 
 > 📄 **Code ví dụ:** [`examples/07-4-2-batch-ingest-idempotent.py`](examples/07-4-2-batch-ingest-idempotent.py)
 
-**Key pattern:** `MERGE` thay vì `CREATE` → idempotent, chạy lại không tạo duplicate.
+**Key pattern:** `MERGE` thay vì `CREATE` → idempotent (chạy lại bao nhiêu lần cũng cho cùng kết quả — như nút thang máy: bấm 5 lần vẫn chỉ gọi 1 chuyến), chạy lại không tạo node trùng.
+
+> **Tóm gọn 1 câu:** Transaction bảo đảm "hoặc xong hết hoặc không xong gì", còn `MERGE` bảo đảm nạp lại 100 lần cũng không sinh dữ liệu trùng.
 
 </details>
 
@@ -241,6 +263,8 @@ Neo4j hỗ trợ hybrid: graph traversal + full-text + vector index trên cùng 
 ## 5. Triển Khai Với Neo4j & Kuzu
 
 ### 5.1 Neo4j với Docker
+
+> **Docker** = chạy phần mềm trong "hộp" đóng gói sẵn — không cần cài tay từng thành phần, xoá hộp là sạch sẽ.
 
 > 📄 **Code ví dụ:** [`examples/08-5-1-neo4j-voi-docker.yaml`](examples/08-5-1-neo4j-voi-docker.yaml)
 
@@ -258,6 +282,8 @@ Neo4j hỗ trợ hybrid: graph traversal + full-text + vector index trên cùng 
 ### 5.3 NetworkX (Prototyping, Không Cần DB)
 
 > 📄 **Code ví dụ:** [`examples/11-5-3-networkx-prototyping-khong-can-db.py`](examples/11-5-3-networkx-prototyping-khong-can-db.py)
+
+> **Tóm gọn 1 câu:** Neo4j chạy như server riêng (qua Docker), Kuzu chạy ngay trong Python (embedded = gắn liền app, không cần server), còn NetworkX chỉ là thư viện prototype — chưa phải database.
 
 ---
 
@@ -278,11 +304,15 @@ Neo4j hỗ trợ hybrid: graph traversal + full-text + vector index trên cùng 
 ### Lab 3: So Sánh 3 DB
 
 - Cùng một dataset 1K nodes, ingest vào NetworkX, Kuzu, và Neo4j
-- Chạy cùng query `MATCH (a)-[*1..3]->(b)` và so sánh latency
+- Chạy cùng query `MATCH (a)-[*1..3]->(b)` — đi 1 đến 3 bước từ node này tới node kia — và so sánh latency (latency = thời gian trả lời 1 câu hỏi)
+
+> **Tóm gọn 1 câu:** Tự tay làm 3 lab trên là cách nhanh nhất để "cảm" được khác biệt giữa các DB và giá trị thật của index.
 
 ---
 
 ## Tài Liệu Tham Khảo
+
+> Tài liệu chính thức để tra cú pháp khi làm; cần gì tra nấy, không cần đọc hết.
 
 - Neo4j Docs — *Cypher Manual* (https://neo4j.com/docs/cypher-manual/current/)
 - Kuzu Docs — *Cypher Query* (https://docs.kuzudb.com/cypher/)
@@ -294,16 +324,20 @@ Neo4j hỗ trợ hybrid: graph traversal + full-text + vector index trên cùng 
 
 ## GraphRAG — Cập nhật 2026
 
+> **Đang nói về gì:** GraphRAG = RAG có trợ giúp của đồ thị (RAG = đưa tài liệu liên quan vào prompt cho LLM trả lời). **Multi-hop** = câu hỏi cần nối 2+ bước quan hệ; **vector-only RAG** = chỉ tìm theo "giống về nghĩa", không nhìn cấu trúc.
+
 Microsoft GraphRAG (2024-2025): dùng knowledge graph để enhance RAG. Query phức tạp (multi-hop) tốt hơn vector-only RAG.
 
 **Tin mới 2025-2026:**
-- **LazyGraphRAG** (Microsoft, cuối 2024): defer LLM summarisation tới query time — indexing cost ngang vector RAG, quality ngang full GraphRAG, query cost thấp hơn ~700×. Đã tích hợp Microsoft Discovery (2025) và Azure Local.
-- **LightRAG** (HKUDS, EMNLP 2025): dual-layer graph + vector, incremental update thay vì re-index toàn bộ.
+- **LazyGraphRAG** (Microsoft, cuối 2024): defer LLM summarisation tới query time — "defer" = trì hoãn bước tóm tắt đắt tiền đến khi có người hỏi, thay vì tóm trước mọi thứ — indexing cost ngang vector RAG, quality ngang full GraphRAG, query cost thấp hơn ~700×. Đã tích hợp Microsoft Discovery (2025) và Azure Local.
+- **LightRAG** (HKUDS, EMNLP 2025): dual-layer graph + vector, incremental update (thêm tài liệu mới chỉ cập nhật phần thay đổi) thay vì re-index toàn bộ.
 - **GraphRAG-Bench** (Microsoft, 06/2025): multi-hop + global queries GraphRAG thắng; single-hop factoid vanilla RAG thắng.
 - **Gartner (2026)**: GraphRAG trong "Top Trends in D&A for 2026" cho complex cases mà high-accuracy RAG thất bại.
 - **Knowledge Graph Market**: 1.48B USD (2025) → 2.04B USD (2026). GraphRAG chuyển từ "enterprise luxury" → production baseline.
 
 Ref: https://microsoft.github.io/graphrag/
+
+> **Tóm gọn 1 câu:** Từ 2025-2026, GraphRAG đã rẻ và phổ biến hơn nhiều — chọn đúng biến thể giúp trả các câu hỏi nhiều bước mà vector RAG bó tay.
 
 ---
 

@@ -1,6 +1,6 @@
 # ❓ FAQ — GraphRAG (Real Stories, Plain Language)
 
-If a question is unclear, read the section in `../README.md` (named in brackets).
+If a question is unclear, read the section in `../README.md` (named in brackets). Each answer has four parts: **What you see** (the symptom), **Why** (the cause), **What to do** (the fix), and **Verify** (how to confirm the fix worked).
 
 ---
 
@@ -8,7 +8,7 @@ If a question is unclear, read the section in `../README.md` (named in brackets)
 
 **What you see**
 
-Same corpus, same 1,000 documents (~500K tokens). Vanilla RAG index: `500K × $0.0001/1K = $0.05`. GraphRAG index: entity extraction `500K × $0.005/1K × 2 gleanings = $5.00`, community summaries `50 communities × 2K tokens × $0.005/1K = $0.50`, embeddings `$0.05` → **$5.55 total, 111× more expensive**. Nothing crashed, no error was logged. The bill just arrived.
+Same corpus, same 1,000 documents (~500K tokens). (Corpus = your document collection; a token ≈ ¾ of a word, the unit LLMs bill by.) Vanilla RAG index: `500K × $0.0001/1K = $0.05`. GraphRAG index: entity extraction `500K × $0.005/1K × 2 gleanings = $5.00`, community summaries `50 communities × 2K tokens × $0.005/1K = $0.50`, embeddings `$0.05` → **$5.55 total, 111× more expensive**. Nothing crashed, no error was logged. The bill just arrived.
 
 **Why**
 
@@ -27,6 +27,8 @@ The graph index is not built by reading text — it is built by *paying a model 
 
 Your index job logs "skipped, 0 documents changed" on re-runs. Compare actual spend against the `$5.55` estimate line by line — extraction vs summaries vs embeddings. Query cost should *drop* versus vanilla RAG, because a 2K-token community summary replaces 20 raw chunks in the prompt.
 
+> **One-line summary:** GraphRAG's index is built with paid LLM calls, so cache the index, only re-index changed documents, and use cheap/local models for extraction.
+
 ---
 
 ## Q2. I asked "What are the AI trends of 2024?" and got five disconnected sentences — which search mode am I supposed to use? [→ §3, §8]
@@ -37,7 +39,7 @@ Vanilla RAG returns the top-5 most similar chunks; each one covers a different a
 
 **Why**
 
-The two modes answer different shapes of question. **Local search is entity-centric**: extract entities from the query (`["Phoenix", "contract"]`), find them in the graph, walk 1–2 hops, rerank with a cross-encoder. It produces a proof path like `Phoenix —[BELONGS_TO]→ Contract C-2024 —[APPROVED_BY]→ Alice (confidence: 0.95)`. **Global search deliberately does not extract entities** — "the query is too general to map to a specific entity" — and instead map-reduces over all ~50 community summaries: one LLM call per community, then a second call to merge the answers.
+The two modes answer different shapes of question. **Local search is entity-centric**: extract entities from the query (`["Phoenix", "contract"]`), find them in the graph, walk 1–2 hops (a hop = one step along an edge), rerank with a cross-encoder (a reranking model that reads question + candidate together and scores how well they match). It produces a proof path like `Phoenix —[BELONGS_TO]→ Contract C-2024 —[APPROVED_BY]→ Alice (confidence: 0.95)`. **Global search deliberately does not extract entities** — "the query is too general to map to a specific entity" — and instead map-reduces over all ~50 community summaries (map-reduce = ask each summary separately in parallel, then merge the answers with one more call): one LLM call per community, then a second call to merge the answers.
 
 **What to do**
 
@@ -52,13 +54,15 @@ The two modes answer different shapes of question. **Local search is entity-cent
 
 Judge 10 real questions by hand, vanilla vs GraphRAG, and log which mode wins each one. Expect local to win factoid/multi-hop and global to win themes and comparisons. If global wins nothing, check the map-step ratio first.
 
+> **One-line summary:** Route by question shape — a named entity means Local search; a corpus-wide theme means Global search over community summaries.
+
 ---
 
 ## Q3. `detect_communities()` gave me 400 communities of 3 nodes each — is that a bug, and what is `resolution`? [→ §4.1, §4.3]
 
 **What you see**
 
-The log prints `Detected 400 communities` where every one holds three nodes — or, at the other extreme, `Community 0: 1800 nodes`. Global answers get vague or miss half the corpus. And here is the sneaky one: if `python-louvain` is not installed, the reference code silently falls back to NetworkX's `greedy_modularity_communities`. You think you are running Leiden (an improvement over the older Louvain algorithm); you are not.
+The log prints `Detected 400 communities` where every one holds three nodes — or, at the other extreme, `Community 0: 1800 nodes`. Global answers get vague or miss half the corpus. And here is the sneaky one: if `python-louvain` is not installed, the reference code silently falls back to NetworkX's `greedy_modularity_communities`. You think you are running Leiden (an improvement over the older Louvain algorithm); you are not. (Both algorithms split a network into tightly connected groups — "communities".)
 
 **Why**
 
@@ -76,6 +80,8 @@ The log prints `Detected 400 communities` where every one holds three nodes — 
 **Verify**
 
 Print `len(members)` per community and confirm ~90% fall inside 10–200. Re-run at resolution ±0.5 and check that the global answer barely changes — if it swings wildly, you are sitting on a knife edge, not a tuned setting.
+
+> **One-line summary:** Check community sizes before summarizing (aim for 10–200 nodes), tune `resolution` by answer quality, and never let the algorithm swap silently.
 
 ---
 
@@ -100,7 +106,9 @@ Two separate mistakes. First, people dump the entire database schema into the pr
 
 **Verify**
 
-Track the empty-result rate per day; it should fall as self-correction is added. Check RRF actually rewards agreement: an item ranked #1 in vectors only (`≈1/61`) is beaten by one ranked #8 that appears in two lists (`1/68 + 1/68`).
+Track the empty-result rate per day; it should fall as self-correction is added. Check RRF actually rewards agreement: an item ranked #1 in vectors only (`≈1/61`) is beaten by one ranked #8 that appears in two lists (`1/68 + 1/68`). (RRF = Reciprocal Rank Fusion — a merge formula that scores an item by `1/(60 + rank)` in each list and adds the parts, so appearing in several lists beats ranking #1 in one.)
+
+> **One-line summary:** Give the LLM a small schema sample, never accept an empty result — feed errors back for a rewrite, and keep a hybrid retriever as fallback.
 
 ---
 
@@ -116,6 +124,8 @@ Three findings from the counter-evidence in the README. (1) On single-hop, facto
 
 **What to do**
 
+How to read this table: each row is a corpus/question combination. **Corpus size / question shape** = your situation, **Build what** = the system to pick. For instance, row 1 says: under 100 documents of simple fact questions, plain RAG is enough.
+
 | Corpus size / question shape | Build what |
 |---|---|
 | < 100 docs, mostly factoid | vanilla RAG — it is enough |
@@ -128,6 +138,8 @@ Run the last two weeks of real questions through vanilla RAG first. Build a grap
 **Verify**
 
 You can name the specific question shapes that vanilla RAG failed on, and each one maps to a row of the table. If you cannot name any, do not build the index — you would be paying $5.55 to answer questions you already answer.
+
+> **One-line summary:** Let real logged questions justify the build — if plain RAG already answers them all, GraphRAG is pure cost.
 
 ---
 

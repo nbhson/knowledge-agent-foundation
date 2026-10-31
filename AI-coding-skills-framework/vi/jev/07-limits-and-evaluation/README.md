@@ -45,20 +45,7 @@
 
 ### 1.3 Code: Giữ Toán Trong Code
 
-```python
-# ❌ SAI — đừng hỏi Jev những câu này
-jev_decide(state, {"days_until_due": {"type": "score", ...}})   # date compare
-jev_decide(state, {"line_count": {"type": "choice", ...}})       # counting
-jev_decide(state, {"sum": {"type": "choice", ...}})              # arithmetic
-
-# ✅ ĐÚNG — code tính, Jev phân loại kết quả nếu cần schema
-from datetime import date
-days_left = (due_date - date.today()).days           # arithmetic trong code
-result = jev_decide(
-    state=f"Invoice {id} due {due_date}, today {date.today()}, amount {amt}.",
-    questions={"urgency": {"type": "choice", "options": ["overdue", "due_soon", "ok"]}},
-)                                                     # Jev phân loại MỌI TRẠNG THÁI
-```
+> 📄 **Code ví dụ:** [`examples/01-1-3-code-giu-toan-trong-code.py`](examples/01-1-3-code-giu-toan-trong-code.py)
 
 ---
 
@@ -137,21 +124,7 @@ result = jev_decide(
 
 ### 3.2 Ví Dụ: Chọn Đúng Đoạn Context
 
-```python
-# ❌ SAI — dump toàn bộ repo/file (thừa, dễ vượt budget, accuracy tụt)
-state = open("huge_log.txt").read()                     # 40k tokens unrelated
-
-# ✅ ĐÚNG — extract đoạn LIÊN QUAN tới question trước
-def build_state(ticket: dict, question: str) -> str:
-    # Chỉ phần subject + body đã cắt, bỏ quoted history / signatures
-    core = f"{ticket['subject']}\n{ticket['body'][:1500]}"
-    return core                                          # nhỏ, liên quan
-
-# Với map-reduce: mỗi record 1 state nhỏ — không cần gộp dataset vào 1 state
-# Với questions khác nhau: tách state nếu material khác nhau
-#   state_Q1 = extract_for("queue")     ← song song, gần free
-#   state_Q2 = extract_for("priority")
-```
+> 📄 **Code ví dụ:** [`examples/02-3-2-vi-du-chon-ung-oan-context.py`](examples/02-3-2-vi-du-chon-ung-oan-context.py)
 
 ### 3.3 Đo Ảnh Hưởng Của State
 
@@ -200,46 +173,7 @@ def build_state(ticket: dict, question: str) -> str:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-from collections import defaultdict
-
-
-def calibration_report(pairs: list[tuple[float, bool]], buckets: int = 10) -> dict:
-    """
-    pairs = [(predicted_probability_of_selected, was_correct), ...]
-    Trả về bảng calibration + ECE.
-    """
-    bucketed: dict[int, list[bool]] = defaultdict(list)
-    for p, correct in pairs:
-        b = min(int(p * buckets), buckets - 1)
-        bucketed[b].append(correct)
-
-    rows, ece = [], 0.0
-    total = sum(len(v) for v in bucketed.values()) or 1
-    for b in sorted(bucketed):
-        ps = [(b + 0.5) / buckets] * len(bucketed[b])
-        p_avg = sum(ps) / len(ps)
-        acc = sum(bucketed[b]) / len(bucketed[b])
-        n = len(bucketed[b])
-        ece += (n / total) * abs(p_avg - acc)
-        rows.append({"bucket": f"{b}/{buckets}", "mean_p": round(p_avg, 3),
-                     "accuracy": round(acc, 3), "n": n})
-    return {"rows": rows, "ece": round(ece, 4)}
-
-
-def per_class_accuracy(results: list[dict]) -> dict:
-    """results = [{gold, pred}, ...] → accuracy từng class."""
-    stats = defaultdict(lambda: {"correct": 0, "total": 0})
-    for r in results:
-        stats[r["gold"]]["total"] += 1
-        if r["gold"] == r["pred"]:
-            stats[r["gold"]]["correct"] += 1
-    return {
-        k: {"accuracy": round(v["correct"] / max(v["total"], 1), 3),
-            "n": v["total"]}
-        for k, v in stats.items()
-    }
-```
+> 📄 **Code ví dụ:** [`examples/03-4-2-bang-metrics.py`](examples/03-4-2-bang-metrics.py)
 
 </details>
 
@@ -282,35 +216,7 @@ def per_class_accuracy(results: list[dict]) -> dict:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-def tune_threshold(eval_rows: list[dict],
-                   min_precision: float = 0.95) -> dict:
-    """
-    eval_rows: [{confidence, correct}, ...]  — correct = outcome thật
-    Chọn threshold THẤP NHẤT đạt min_precision (tối đa coverage).
-    """
-    rows = sorted(eval_rows, key=lambda r: r["confidence"], reverse=True)
-    best = None
-    for i in range(1, len(rows) + 1):
-        bucket = rows[:i]                       # confidence >= rows[i-1]
-        precision = sum(r["correct"] for r in bucket) / len(bucket)
-        threshold = bucket[-1]["confidence"]
-        if precision >= min_precision:
-            best = {                            # giữ threshold thấp nhất
-                "threshold": threshold,
-                "precision": round(precision, 3),
-                "coverage": round(len(bucket) / len(rows), 3),
-            }
-        else:
-            break                               # thêm case → precision rơi
-    return best or {"threshold": 1.0, "precision": None, "coverage": 0.0}
-
-
-# Áp dụng:
-# tuned = tune_threshold(eval_rows, min_precision=0.95)
-# settings.typesafe_tool_call_threshold = tuned["threshold"]
-#   thay vì mặc định 0.6 chưa validated cho domain bạn
-```
+> 📄 **Code ví dụ:** [`examples/04-5-2-quy-trinh-tune.py`](examples/04-5-2-quy-trinh-tune.py)
 
 </details>
 

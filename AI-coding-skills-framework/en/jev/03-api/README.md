@@ -25,18 +25,7 @@
 | **Latency** | 70–500ms end-to-end |
 | **Price** | $0.042 / M input tokens; **output free** |
 
-```bash
-curl -sS https://api.typesafe.ai/v1/systemone \
-  -H "Authorization: Bearer $TYPESAFE_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "jev-latest",
-    "state": "Deploy pipeline red: auth service OOMKilled after migration.",
-    "questions": {
-      "team": {"type": "choice", "options": ["billing","infra","bug","other"]}
-    }
-  }'
-```
+> 📄 **Example code:** [`examples/01-1-1-the-basics.sh`](examples/01-1-1-the-basics.sh)
 
 ### 1.2 Key Handling
 
@@ -64,73 +53,11 @@ One key → /v1/systemone          (or the same key pointed at OpenRouter — §
 
 Three questions — one Choice, one Noul, one Score — in a single pass:
 
-```json
-{
-  "model": "jev-latest",
-  "state": "Ticket #4821: Customer charged twice after upgrading to Pro. Wants the extra $49 reversed; mentions chargeback if not fixed by Friday. Third contact today.",
-  "questions": {
-    "team": {
-      "type": "choice",
-      "options": ["billing", "infra", "bug", "product", "other"],
-      "question": "Which team should own this ticket?"
-    },
-    "refund_requested": {
-      "type": "noul",
-      "question": "Does the customer explicitly ask for money back?",
-      "criteria": "Yes only if the text requests a refund or reversal of a charge."
-    },
-    "urgency": {
-      "type": "score",
-      "levels": [
-        { "level": 1, "description": "routine — no time pressure" },
-        { "level": 2, "description": "soon — customer waiting, no threat" },
-        { "level": 3, "description": "critical — threats, chargeback, churn risk" }
-      ],
-      "question": "How urgent is this ticket?"
-    }
-  }
-}
-```
+> 📄 **Example code:** [`examples/02-2-1-full-request-example.json`](examples/02-2-1-full-request-example.json)
 
 ### 2.2 Response Shape
 
-```json
-{
-  "model": "jev-1.13.0",
-  "answers": {
-    "team": {
-      "choice": {
-        "selected": "billing",
-        "probabilities": {
-          "billing": 0.93,
-          "infra": 0.02,
-          "bug": 0.03,
-          "product": 0.01,
-          "other": 0.01
-        },
-        "confidence": 0.88
-      }
-    },
-    "refund_requested": {
-      "noul": {
-        "p_yes": 0.96
-      }
-    },
-    "urgency": {
-      "score": {
-        "score": 2.71,
-        "legend": [
-          { "level": 1, "description": "routine — no time pressure" },
-          { "level": 2, "description": "soon — customer waiting, no threat" },
-          { "level": 3, "description": "critical — threats, chargeback, churn risk" }
-        ],
-        "probabilities": { "1": 0.04, "2": 0.25, "3": 0.71 },
-        "confidence": 0.74
-      }
-    }
-  }
-}
-```
+> 📄 **Example code:** [`examples/03-2-2-response-shape.json`](examples/03-2-2-response-shape.json)
 
 ### 2.3 Reading the Blocks
 
@@ -165,33 +92,7 @@ low     → route to a human or another system / LLM
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import os
-from typesafe import TypeSafe  # official TypeSafe Python SDK
-
-client = TypeSafe(api_key=os.environ["TYPESAFE_API_KEY"])
-
-result = client.systemone.ask(
-    model="jev-latest",
-    state="Invoice shows 3 line items; customer says they only ordered 2.",
-    questions={
-        "discrepancy": {
-            "type": "noul",
-            "question": "Does the text claim a billing discrepancy?",
-            "criteria": "Yes only if the customer states the charge does not match the order.",
-        },
-        "team": {
-            "type": "choice",
-            "options": ["billing", "fraud", "support"],
-            "question": "Which team owns this?",
-        },
-    },
-)
-
-p_disc = result.answers["discrepancy"].p_yes          # 0.91
-team = result.answers["team"].choice.selected          # "billing"
-conf = result.answers["team"].choice.confidence        # margin, not P(correct)
-```
+> 📄 **Example code:** [`examples/04-3-1-python-quickstart.py`](examples/04-3-1-python-quickstart.py)
 
 </details>
 
@@ -200,35 +101,7 @@ conf = result.answers["team"].choice.confidence        # margin, not P(correct)
 <details>
 <summary>JavaScript Code (Click to expand/collapse)</summary>
 
-```js
-import { TypeSafe } from "@typesafe/sdk"; // official TypeSafe JS SDK
-
-const client = new TypeSafe({ apiKey: process.env.TYPESAFE_API_KEY });
-
-const result = await client.systemone.ask({
-  model: "jev-latest",
-  state: "PR #220 deletes the payment retry limit check.",
-  questions: {
-    risky: {
-      type: "noul",
-      question: "Does this change remove a safety guardrail?",
-      criteria: "Yes only if a limit, check, or permission gate is deleted or weakened.",
-    },
-    area: {
-      type: "choice",
-      options: ["payments", "api", "ui", "docs"],
-      question: "Which area of the codebase does this touch?",
-    },
-  },
-});
-
-const risky = result.answers.risky.noul.p_yes;   // e.g. 0.87
-const area = result.answers.area.choice.selected;
-
-if (risky > 0.5 && Math.abs(risky - 0.5) * 2 >= 0.6) {
-  blockAutoMerge(pr); // Noul intrinsic confidence ≥ 0.6 → hold for review
-}
-```
+> 📄 **Example code:** [`examples/05-3-2-javascript-quickstart.js`](examples/05-3-2-javascript-quickstart.js)
 
 </details>
 
@@ -236,12 +109,7 @@ if (risky > 0.5 && Math.abs(risky - 0.5) * 2 >= 0.6) {
 
 Same client, different base URL — no application restructure:
 
-```python
-client = TypeSafe(
-    api_key=os.environ["OPENROUTER_API_KEY"],
-    base_url="https://openrouter.ai/api",   # route via OpenRouter
-)
-```
+> 📄 **Example code:** [`examples/06-3-3-pointing-the-sdk-at-openrouter.py`](examples/06-3-3-pointing-the-sdk-at-openrouter.py)
 
 Full OpenRouter mechanics in §6.
 
@@ -273,42 +141,7 @@ Full OpenRouter mechanics in §6.
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-from typing import Literal
-from pydantic import Field
-from pydantic_ai import Agent
-from pydantic_ai.models.typesafe import TypeSafeModel  # TypeSafeModel
-from pydantic_ai.models.fallback import FallbackModel
-
-
-class Triage(BaseModel):
-    """Framing: answer as the support triage desk; evidence is the ticket only."""
-
-    team: Literal["billing", "infra", "bug", "product"] = Field(
-        description="Which team should own this ticket?"   # ← the QUESTION
-    )
-    refund_requested: bool = Field(
-        description="Does the customer explicitly ask for money back?"
-    )
-    urgency: Literal[1, 2, 3] = Field(
-        description="Urgency: 1 routine, 2 soon, 3 critical (threat/churn)"
-    )
-
-
-agent = Agent(
-    TypeSafeModel("jev-latest"),          # Jev decides…
-    output_type=Triage,
-    # instructions → FRAMING only; the questions live on the fields
-    instructions="Use only the ticket text. Do not speculate about intent.",
-)
-
-result = agent.run_sync(
-    "Ticket #4821: charged twice, wants $49 back, threatens chargeback by Friday."
-)
-print(result.output.team)             # "billing"
-print(result.output.refund_requested) # True
-print(result.output.urgency)          # 3
-```
+> 📄 **Example code:** [`examples/07-4-2-decide-only-agent.py`](examples/07-4-2-decide-only-agent.py)
 
 </details>
 
@@ -361,29 +194,7 @@ Jev picks a tool (typesafe_tool_call_threshold, default 0.6)
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-from langchain.classifiers import TypeSafeClassifier
-
-classifier = TypeSafeClassifier(model="jev-latest")
-
-answers = await classifier.ainvoke(
-    state="User: my export keeps failing with timeout after 30s",
-    questions={
-        "intent": {
-            "type": "choice",
-            "options": ["bug_report", "how_to", "billing", "churn_risk"],
-            "question": "What is the user's intent?",
-        },
-        "is_escalation": {
-            "type": "noul",
-            "question": "Is the user asking for a human?",
-        },
-    },
-)
-
-intent = answers["intent"].selected          # "bug_report"
-p_esc = answers["is_escalation"].p_yes       # e.g. 0.12
-```
+> 📄 **Example code:** [`examples/08-5-1-classifier-invocation.py`](examples/08-5-1-classifier-invocation.py)
 
 </details>
 
@@ -417,16 +228,7 @@ request ──► TypeSafeClassifier ──► answers (+ distributions)
 
 ### 6.1 Direct Call
 
-```bash
-curl -sS https://openrouter.ai/api/alpha/decisions \
-  -H "Authorization: Bearer $OPENROUTER_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "typesafe/jev-1.13",
-    "state": "…",
-    "questions": { "…": { "type": "noul", "question": "…" } }
-  }'
-```
+> 📄 **Example code:** [`examples/09-6-1-direct-call.sh`](examples/09-6-1-direct-call.sh)
 
 | Item | Value |
 |------|-------|

@@ -278,29 +278,7 @@ failure mode, and a quiet one.
 
 ### 3.2 The Pin Set
 
-```typescript
-export interface PinSet {
-  tenantId: string;                   // routing + consistency key (→ 05 §17.5)
-  system: true;                       // always
-  goal: true;                         // task spec + definition of done
-  invariants: string[];               // ≤5 constraints from the plan (→ 05 §17.5)
-  activeDiffPaths: string[];          // files with uncommitted edits
-  lastUserMessage: true;              // most recent instruction wins
-  activeLoopFailure?: { cmd: string; error: string };   // only while unresolved
-  pendingApprovals: string[];         // gate keys awaiting verdict (→ 15)
-  schema: true;                       // the shape the final answer must take
-}
-
-export function isPinned(span: ContextSpan, pins: PinSet, planState: PlanState): boolean {
-  if (span.role === "system" || span.kind === "goal" || span.kind === "schema") return true;
-  if (span.kind === "user" && span.id === pins.lastUserMessage) return true;
-  if (span.kind === "invariant") return true;
-  if (span.kind === "diff" && pins.activeDiffPaths.includes(span.path!)) return true;
-  if (span.kind === "failure" && planState.activeLoopUnresolved) return true;
-  if (span.kind === "approval" && pins.pendingApprovals.includes(span.gateKey!)) return true;
-  return false;
-}
-```
+> 📄 **Example code:** [`examples/01-3-2-the-pin-set.ts`](examples/01-3-2-the-pin-set.ts)
 
 **Rule: the pin set is derived, not hand-maintained.** It's computed from the plan, the
 active loop, and the pending gate list — so it shrinks automatically as work completes
@@ -345,20 +323,7 @@ Then evict ascending utility, never crossing the budget. Crucially, **this order
 operates on the plan graph, not on the message list** — which is why it needs `08` and
 `04` to be useful.
 
-```typescript
-/** Reference implementation: §8.3. The loop's last-error signal is worth 0.30 —
- *  without it, a run stuck in a retry loop keeps scoring every span identical. */
-export function utility(span: ContextSpan, plan: PlanGraph, loop: ActiveLoop | null, now: number): number {
-  const recency = Math.exp(-(now - span.turn) / 12);
-  const serves = span.producedFor ?? [];
-  const reachable = serves.length === 0 ? 0.4
-    : serves.some(t => plan.pendingIds.includes(t))      ? 1.0    // still needed
-    : serves.every(t => plan.completedIds.includes(t))    ? 0.1    // branch is done
-    : 0.4;                                                       // parallel / unknown
-  const failure = loop?.unresolved && span.text?.includes(firstLine(loop.error)) ? 1 : 0;
-  return 0.30 * recency + 0.40 * reachable + 0.30 * failure;
-}
-```
+> 📄 **Example code:** [`examples/02-4-2-scoring-trajectory-aware-utility.ts`](examples/02-4-2-scoring-trajectory-aware-utility.ts)
 
 ### 4.3 Collapse, Don't Delete
 
@@ -406,16 +371,7 @@ prose breaks all three.
 A resume block is good when a **fresh agent with an empty context** can pick up the run
 and do the next step correctly. Test it exactly that way:
 
-```typescript
-/** The acceptance test for a resume block: can a cold agent continue? */
-export function resumeIsSufficient(block: ResumeBlock, nextAction: string): boolean {
-  return block.goal.length > 0                                    // no goal, no task
-      && block.open.length > 0                                    // must know what is still open
-      && block.repro.command.length > 0                           // must be able to re-trigger the bug
-      && block.next.length > 0                                    // must know what to do next
-      && countTokens(block) <= 300;                               // hard budget
-}
-```
+> 📄 **Example code:** [`examples/03-5-2-quality-bar.ts`](examples/03-5-2-quality-bar.ts)
 
 A block that says "we were refactoring authentication and hit some issues" fails every
 one of these lines. It feels informative and is useless — this is the most common way
@@ -519,206 +475,28 @@ The general rule: **paraphrase is where precision dies.** A summarizer asked to
 
 ### 8.1 Types
 
-```typescript
-export interface ContextSpan {
-  id: string;                    // span_01H…  — the unit of eviction
-  kind: "system" | "goal" | "schema" | "invariant" | "user" | "assistant"
-      | "tool_output" | "diff" | "failure" | "approval" | "chitchat" | "branch";
-  role: "system" | "user" | "assistant" | "tool";
-  turn: number;
-  tokens: number;
-  text?: string;
-  path?: string;                 // for diff spans
-  tool?: string;
-  gateKey?: string;              // for approval spans
-  producedFor?: string[];        // task ids this span serves (plan graph, → 08)
-  keep?: boolean;                // hard pin, overrides scoring
-}
-
-export interface ResumeBlock {
-  goal: string;
-  decisions: string[];           // ≤5
-  open: { taskId: string; title: string }[];
-  repro: { command: string; error: string };
-  next: string;
-  invariants: string[];
-  evicted: string[];             // span ids
-}
-```
+> 📄 **Example code:** [`examples/04-8-1-types.ts`](examples/04-8-1-types.ts)
 
 ### 8.2 shouldCompact + compact()
 
 <details>
 <summary>TypeScript Code — trigger + pin + utility prune + resume (Click to expand/collapse)</summary>
 
-```typescript
-export const COMPACT_AT = 0.70, RESUME_BUDGET = 300, MAX_TURNS = 20;
-
-export function shouldCompact(used: number, budget: number, turns: number): boolean {
-  return used / budget > COMPACT_AT || turns > MAX_TURNS;
-}
-
-export interface CompactOutcome {
-  kept: ContextSpan[]; resume: ResumeBlock;
-  ratio: number; dropped: string[]; writeBack: DurableExtract;
-}
-
-export function compact(
-  spans: ContextSpan[], budget: number, goal: string,
-  pins: PinSet, plan: PlanGraph, activeLoop: ActiveLoop | null,
-): CompactOutcome {
-  // 1. Pin set first — never a candidate for eviction, no matter the score.
-  const pinned = spans.filter(s => isPinned(s, pins, plan.state));
-  const now = maxTurn(spans);
-  const activeTask = plan.activeTask ?? null;   // the task the resume block must continue
-
-  // 2. Everything else ranked by trajectory-aware utility, highest first.
-  const rest = spans.filter(s => !isPinned(s, pins, plan.state))
-    .map(s => ({ s, u: utility(s, plan, activeLoop, now) }))
-    .sort((a, b) => b.u - a.u);
-
-  // 3. Fill the budget from the top down.
-  let used = pinned.reduce((n, s) => n + s.tokens, 0) + RESUME_BUDGET;
-  const kept = [...pinned];
-  for (const { s } of rest) if (used + s.tokens <= budget) { kept.push(s); used += s.tokens; }
-
-  // 4. Collapse repeated identical failures instead of dropping them wholesale.
-  const { kept: collapsed, resumeHints } = collapseRetries(kept);
-
-  // 5. Extract durable content from what is about to go.
-  const dropped = spans.filter(s => !collapsed.some(k => k.id === s.id));
-  const writeBack = extractDurable(dropped, goal);
-
-  // 6. Structured resume block, built from durable content + plan state.
-  const resume: ResumeBlock = {
-    goal,
-    decisions: writeBack.decisions.slice(0, 5),
-    open: plan.pending(activeTask).map(t => ({ taskId: t.id, title: t.title })),
-    repro: activeLoop
-      ? { command: activeLoop.command, error: firstLine(activeLoop.error) }
-      : { command: plan.reproCommand(activeTask), error: plan.lastError(activeTask) },
-    next: plan.nextAction(activeTask),
-    invariants: pins.invariants,
-    evicted: dropped.map(s => s.id),
-  };
-  resumeHints.forEach(h => resume.decisions.push(h));   // "retried 6×, last_err: …"
-
-  return {
-    kept: collapsed, resume, writeBack,
-    dropped: dropped.map(s => s.id),
-    ratio: totalTokens(spans) / (used || 1),
-  };
-}
-```
+> 📄 **Example code:** [`examples/05-8-2-shouldcompact-compact.ts`](examples/05-8-2-shouldcompact-compact.ts)
 
 </details>
 
 ### 8.3 Trajectory Utility Scorer
 
-```typescript
-export interface ActiveLoop { command: string; error: string; unresolved: boolean }
-
-/** 0.30 recency + 0.40 structural reachability + 0.30 failure signal.
- *  The middle term is why compaction needs the plan graph (→ 04/08): it knows
- *  which spans still feed a *pending* node. */
-export function utility(s: ContextSpan, plan: PlanGraph, loop: ActiveLoop | null, now: number): number {
-  const recency = Math.exp(-(now - s.turn) / 12);
-
-  const serves = s.producedFor ?? [];
-  const reachable = serves.length === 0 ? 0.4
-    : serves.some(t => plan.pendingIds.includes(t))      ? 1.0    // still needed
-    : serves.every(t => plan.completedIds.includes(t))    ? 0.1    // branch is done
-    : 0.4;                                                       // parallel / unknown
-
-  const failure = loop?.unresolved && s.text?.includes(firstLine(loop.error)) ? 1 : 0;
-
-  return 0.30 * recency + 0.40 * reachable + 0.30 * failure;
-}
-
-/** N identical failed calls → 1 line. 18k tokens → 24. */
-export function collapseRetries(spans: ContextSpan[]): { kept: ContextSpan[]; resumeHints: string[] } {
-  const groups = new Map<string, ContextSpan[]>();
-  for (const s of spans.filter(s => s.kind === "tool_output" || s.kind === "failure")) {
-    const key = `${s.tool}:${s.kind}`;
-    (groups.get(key) ?? groups.set(key, []).get(key)!).push(s);
-  }
-  const hints: string[] = [];
-  const drop = new Set<string>();
-  for (const [, g] of groups) {
-    if (g.length < 3) continue;
-    const last = g[g.length - 1]!;
-    drop.add(last.id);
-    for (const s of g.slice(0, -1)) drop.add(s.id);
-    hints.push(`retried ${g.length}× (${g[0]!.turn}→${last.turn}): ${firstLine(last.text ?? "")}`);
-  }
-  return { kept: spans.filter(s => !drop.has(s.id)), resumeHints: hints };
-}
-```
+> 📄 **Example code:** [`examples/06-8-3-trajectory-utility-scorer.ts`](examples/06-8-3-trajectory-utility-scorer.ts)
 
 ### 8.4 Resume Block Builder
 
-```typescript
-export function buildResume(o: {
-  goal: string; decisions: string[]; pending: Task[]; lastCmd: string; lastErr: string;
-  invariants: string[]; evicted: string[];
-}): ResumeBlock {
-  const b: ResumeBlock = {
-    goal: o.goal.slice(0, 200),
-    decisions: o.decisions.slice(0, 5).map(d => d.slice(0, 200)),
-    open: o.pending.map(t => ({ taskId: t.id, title: t.title.slice(0, 80) })),
-    repro: { command: o.lastCmd.slice(0, 200), error: firstLine(o.lastErr).slice(0, 200) },
-    next: o.pending[0] ? `Continue with ${o.pending[0].id}: ${o.pending[0].title}` : "Summarize and hand off",
-    invariants: o.invariants.slice(0, 5),
-    evicted: o.evicted,
-  };
-  const t = countTokens(b);
-  if (t > RESUME_BUDGET) {                                  // hard budget, enforced
-    b.decisions = b.decisions.slice(0, 3);
-    b.invariants = b.invariants.slice(0, 3);
-    b.open = b.open.slice(0, 8);
-    b.evicted = b.evicted.slice(0, 40);
-  }
-  return b;
-}
-
-export function renderResume(b: ResumeBlock): string {
-  return [
-    `Goal: ${b.goal}`,
-    `Decisions: ${b.decisions.map(d => `[${d}]`).join("") || "[none]"}`,
-    `Open: ${b.open.map(t => `[${t.taskId}: ${t.title}]`).join("") || "[none]"}`,
-    `Repro: ${b.repro.command} → ${b.repro.error}`,
-    `Next: ${b.next}`,
-    `Invariants: ${b.invariants.join(" | ")} || "(none declared)"`,
-    `Evicted: [${b.evicted.join(",")}]`,
-  ].join("\n");
-}
-```
+> 📄 **Example code:** [`examples/07-8-4-resume-block-builder.ts`](examples/07-8-4-resume-block-builder.ts)
 
 ### 8.5 Memory Write-Back
 
-```typescript
-/** MUST run before the evicted spans are dropped. A failure here must abort the
- *  compaction — a run that silently loses a decision is worse than a run that
- *  stops with a clear error. */
-export async function writeBackAndCompact(
-  spans: ContextSpan[], budget: number, memory: MemoryStore, traj: TrajectorySink,
-  pins: PinSet, plan: PlanGraph, loop: ActiveLoop | null, goal: string,
-): Promise<CompactOutcome> {
-  const o = compact(spans, budget, goal, pins, plan, loop);
-
-  const facts = o.writeBack.facts.map(f => ({ ...f, tenantId: pins.tenantId, taskId: plan.activeTask }));
-  await memory.persist(facts, { fsync: true });          // durable BEFORE eviction
-
-  await traj.append({                                       // → 13
-    kind: "compaction", parentTaskId: plan.activeTask,
-    payload: { keptIds: o.kept.map(s => s.id), evictedIds: o.dropped, ratio: o.ratio,
-               resumeHash: hash(renderResume(o.resume)), factsWritten: facts.length },
-    tokens: { in: totalTokens(spans), out: countTokens(o.resume) },
-  });
-
-  return o;
-}
-```
+> 📄 **Example code:** [`examples/08-8-5-memory-write-back.ts`](examples/08-8-5-memory-write-back.ts)
 
 ---
 
@@ -726,44 +504,14 @@ export async function writeBackAndCompact(
 
 ### 9.1 Invariant Tests
 
-```typescript
-export function assertInvariants(o: CompactOutcome, budget: number): void {
-  const keptIds = new Set(o.kept.map(s => s.id));
-
-  for (const p of PINNED_KINDS)                                            // (1) pins survive
-    if (o.dropped.some(id => kindOf(id) === p)) throw new Error(`evicted pinned ${p}`);
-
-  if (totalTokens(o.kept) > budget) throw new Error("over budget");       // (2) fits
-  if (countTokens(o.resume) > RESUME_BUDGET) throw new Error("resume too big");
-  if (!resumeIsSufficient(o.resume, o.resume.next)) throw new Error("resume insufficient");
-  if (o.resume.evicted.length !== o.dropped.length) throw new Error("audit ids mismatch");
-  if (o.ratio < 1.2) throw new Error(`weak ratio ${o.ratio.toFixed(2)}`);  // (3) actually compacted
-  for (const s of o.kept) if (!keptIds.has(s.id)) throw new Error("kept/evicted overlap");
-}
-```
+> 📄 **Example code:** [`examples/09-9-1-invariant-tests.ts`](examples/09-9-1-invariant-tests.ts)
 
 Run these on **every** recorded trajectory that hits a compaction, in nightly CI. Real
 trajectories catch the edge cases synthetic ones never do.
 
 ### 9.2 The Contract Test That Matters Most
 
-```typescript
-/** If memory is down, compaction MUST NOT silently proceed. */
-it("refuses to evict unpersisted decisions", async () => {
-  const spans = realTrajectorySpans();                     // 40 messages incl. 4 decisions
-  const memory = brokenMemoryStore();                     // persist() always throws
-  await expect(writeBackAndCompact(spans, 12_000, memory, sink, pins, plan, null, goal))
-    .rejects.toThrow(/memory unavailable/);
-  expect(spans.length).toBe(40);                           // nothing was evicted
-});
-
-it("a cold agent can continue from the resume block alone", async () => {
-  const o = await writeBackAndCompact(realTrajectorySpans(), 12_000, mem, sink, pins, plan, loop, goal);
-  const cold = await runAgent({ context: [systemPrompt, renderResume(o.resume)], tools });
-  const warm = await runAgent({ context: originalSpans, tools });
-  expect(await nextActionOf(cold)).toBe(await nextActionOf(warm));   // same next move
-});
-```
+> 📄 **Example code:** [`examples/10-9-2-the-contract-test-that-matters-most.ts`](examples/10-9-2-the-contract-test-that-matters-most.ts)
 
 The second test is the real acceptance criterion for the whole module. It's also the
 test most teams skip, and it's the one that would have caught the turn-47 failure
@@ -774,14 +522,7 @@ described at the top.
 Track, per compaction, whether the run still succeeds. If quality drops after
 compaction, the pin set is wrong — and this is the measurement that finds it:
 
-```sql
-SELECT s.kind, AVG(e.payload->>'score') AS score_after_compaction, COUNT(*) AS runs
-FROM trajectory c
-JOIN trajectory e ON e.session_id = c.session_id AND e.kind = 'eval'
-JOIN trajectory s ON s.session_id = c.session_id AND s.kind = 'session_start'
-WHERE c.kind = 'compaction'
-GROUP BY s.kind ORDER BY score_after_compaction;
-```
+> 📄 **Example code:** [`examples/11-9-3-quality-regression-suite.sql`](examples/11-9-3-quality-regression-suite.sql)
 
 A specific run that fails only when a compaction happened immediately before the
 failure is the strongest possible signal that the pin set is missing something.
@@ -860,78 +601,7 @@ cold-start continuation, not by reading it.
 
 ## 11. TypeScript Interfaces for Compaction
 
-```typescript
-// ── Context ────────────────────────────────────────────────────────────────
-export interface ContextSpan {
-  id: string;
-  kind: "system" | "goal" | "schema" | "invariant" | "user" | "assistant"
-      | "tool_output" | "diff" | "failure" | "approval" | "chitchat" | "branch";
-  role: "system" | "user" | "assistant" | "tool";
-  turn: number; tokens: number;
-  text?: string; path?: string; tool?: string; gateKey?: string;
-  producedFor?: string[];      // task ids served (plan graph, → 08)
-  keep?: boolean;              // hard pin
-}
-
-// ── Policy ─────────────────────────────────────────────────────────────────
-export interface CompactionPolicy {
-  triggerRatio: number;        // 0.70
-  maxTurns: number;            // 20
-  resumeBudgetTokens: number;  // 300
-  minRatio: number;            // 1.2 — below this, compaction "failed"
-  weights: { recency: number; reachability: number; failure: number };
-  collapseRetryThreshold: number;  // 3
-}
-export const DEFAULT_POLICY: CompactionPolicy = {
-  triggerRatio: 0.70, maxTurns: 20, resumeBudgetTokens: 300, minRatio: 1.2,
-  weights: { recency: 0.30, reachability: 0.40, failure: 0.30 },
-  collapseRetryThreshold: 3,
-};
-
-// ── Pin set ────────────────────────────────────────────────────────────────
-export interface PinSet {
-  tenantId: string; system: true; goal: true; schema: true;
-  lastUserMessage: true; invariants: string[];
-  activeDiffPaths: string[]; pendingApprovals: string[];   // → 15
-}
-
-// ── Resume ─────────────────────────────────────────────────────────────────
-export interface ResumeBlock {
-  goal: string; decisions: string[];
-  open: { taskId: string; title: string }[];
-  repro: { command: string; error: string };
-  next: string; invariants: string[]; evicted: string[];
-}
-
-// ── Outcome ────────────────────────────────────────────────────────────────
-export interface DurableExtract {
-  facts: { key: string; value: string; kind: "decision" | "constraint" | "preference" | "todo" }[];
-}
-export interface CompactOutcome {
-  kept: ContextSpan[]; resume: ResumeBlock; ratio: number;
-  dropped: string[]; writeBack: DurableExtract;
-}
-
-// ── Compactor ──────────────────────────────────────────────────────────────
-export interface Compactor {
-  shouldCompact(used: number, budget: number, turns: number): boolean;
-  compact(spans: ContextSpan[], budget: number, goal: string, pins: PinSet,
-          plan: PlanGraph, loop: ActiveLoop | null): CompactOutcome;
-  buildResume(input: ResumeInput): ResumeBlock;
-  render(b: ResumeBlock): string;
-  /** MUST persist before returning. A throw here must abort the compaction. */
-  writeBackAndCompact(spans: ContextSpan[], budget: number, memory: MemoryStore,
-                      traj: TrajectorySink, pins: PinSet, plan: PlanGraph,
-                      loop: ActiveLoop | null, goal: string): Promise<CompactOutcome>;
-}
-
-// ── Test surface ───────────────────────────────────────────────────────────
-export interface CompactionInvariant { name: string; assert(o: CompactOutcome, budget: number): void }
-export interface ColdStartTest {
-  name: string; spans: ContextSpan[]; budget: number;
-  expectSameNextAction: boolean;
-}
-```
+> 📄 **Example code:** [`examples/12-11-typescript-interfaces-for-compaction.ts`](examples/12-11-typescript-interfaces-for-compaction.ts)
 
 ---
 
@@ -1178,46 +848,7 @@ it becomes "no longer needed" and falls into the droppable group.
 <details>
 <summary>Python Code — should_compact + compact with keeping the 5 most recent files (Click to expand/collapse)</summary>
 
-```python
-COMPACT_RATIO = 0.70          # trigger: 70% ngân sách
-MAX_RECENT_FILES = 5          # giữ 5 file gần nhất được truy cập (Claude Code)
-RESUME_BUDGET = 300           # token cho resume block
-
-def should_compact(tokens_used: int, limit: int) -> bool:
-    """Trigger compaction khi sử dụng > 70% ngân sách."""
-    return (tokens_used / limit) > COMPACT_RATIO
-
-
-def compact(messages: list[dict], recent_files: list[str] | None = None) -> str:
-    """Tóm tắt lịch sử hội thoại, giữ 5 file gần nhất.
-
-    Args:
-        messages: lịch sử hội thoại
-        recent_files: danh sách file gần nhất được truy cập (mặc định giữ 5)
-    Returns:
-        Resume block dạng text, ≤ RESUME_BUDGET tokens
-    """
-    if recent_files is None:
-        recent_files = []
-    recent_files = recent_files[-MAX_RECENT_FILES:]
-
-    # 1. Filter: tool results cũ deep trong history
-    kept = [m for m in messages if m.get("role") != "tool" or m.get("keep")]
-
-    # 2. Gộp lại messages còn lại (nếu nhiều → summarize)
-    total = sum(len(str(m.get("content", ""))) for m in kept)
-    if total > RESUME_BUDGET * 4:   # rough: ~4 chars/token
-        # Ưu tiên: goal + quyết định + unresolved + next + recent_files
-        summary_parts = [
-            "Goal: [trích nhiệm vụ hiện tại từ system/goal messages]",
-            "Decisions: [các quyết định đã đưa ra]",
-            "Open issues: [bug/task chưa giải quyết]",
-            "Next: [bước kế tiếp]",
-            f"Recent files: {', '.join(recent_files)}",
-        ]
-        return "\n".join(summary_parts)
-    return "\n".join(str(m.get("content", "")) for m in kept[-10:])
-```
+> 📄 **Example code:** [`examples/13-5-sample-code-should-compact-compact.py`](examples/13-5-sample-code-should-compact-compact.py)
 
 </details>
 

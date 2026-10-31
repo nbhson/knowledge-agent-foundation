@@ -33,10 +33,7 @@ OpenLLMetry nằm giữa: dùng chuẩn OpenTelemetry nên đẩy dữ liệu sa
 5. Đang làm nghiên cứu, so sánh nhiều biến thể thì dùng W&B.
 6. Chỉ ghi lại những trường bạn thật sự dùng để quyết định, ví dụ `session_id`, `user_id`, `tool_name`.
 
-```bash
-export OPENAI_API_BASE="https://oai.helicone.ai/v1"
-export HELICONE_API_KEY="sk-helicone-..."
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-langsmith-langfuse-helicone-openllmetry-w-b-chon.sh`](examples/01-q1-langsmith-langfuse-helicone-openllmetry-w-b-chon.sh)
 
 **Kiểm tra**
 
@@ -96,11 +93,7 @@ Số liệu thật để bắt đầu: cảnh báo khi truy vấn vector vượt
 4. Khi có cảnh báo, mở trace của phiên đó để xem chuỗi bước — công cụ chậm thường do đầu vào quá lớn, không phải do nó bị lỗi.
 5. Đo cả số lần gọi: `total_calls` tăng bất thường là dấu hiệu agent đang lặp vô ích.
 
-```python
-tool.update_metrics(latency_ms=1200, success=True)
-# Cảnh báo: vector_search.avg_latency_ms > 2000
-# Cảnh báo: execute_python.success_rate < 0.95
-```
+> 📄 **Code ví dụ:** [`examples/02-q3-lam-sao-biet-cong-cu-nao-cham.py`](examples/02-q3-lam-sao-biet-cong-cu-nao-cham.py)
 
 **Kiểm tra**
 

@@ -14,17 +14,7 @@
 
 > **Đọc sao cho dễ:** `init` là "dựng khung loop cho repo của bạn" (skills, state, budget); `doctor` là "khám sức khỏe" và cho biết 3 việc nên làm tiếp. Bạn bắt đầu mọi dự án loop từ đây — đừng tự dựng bằng tay.
 
-```bash
-# Front door (khuyên dùng) — một binary cho init + doctor + status
-npx @cobusgreyling/loop init . --pattern daily-triage --tool grok
-npx @cobusgreyling/loop doctor .
-
-# Tương đương cũ (vẫn hỗ trợ — forks không cần đổi)
-npx @cobusgreyling/loop-init .
-
-# Tuỳ chọn: scaffold thêm versioned harness (harness-foundry)
-npx @cobusgreyling/loop init . --with-foundry
-```
+> 📄 **Code ví dụ:** [`examples/01-1-front-door-loop-init-doctor-status.sh`](examples/01-1-front-door-loop-init-doctor-status.sh)
 
 `loop init` (hoặc `loop-init`) dựng sẵn skills, state, budget files, rồi in ra **Loop Ready score** và lệnh loop đầu tiên. `loop doctor` gộp audit, sync và kiểm tra file thành top-3 việc nên làm tiếp. Bạn đổi `--tool` sang `claude`, `codex`, hoặc `opencode`. Dùng `--with-foundry` khi muốn loop thành composable runtime stack.
 
@@ -34,9 +24,7 @@ npx @cobusgreyling/loop init . --with-foundry
 
 > **Đọc sao cho dễ:** `audit` là "chấm điểm bài kiểm tra vận hành" — cho bạn con số 0–100 thể hiện mức sẵn sàng production. Giống điểm tín nhiệm tín dụng: điểm thấp thì khoan để loop tự chạy, điểm cao dần lên khi bạn dựng khung đúng cách.
 
-```bash
-npx @cobusgreyling/loop audit . --suggest
-```
+> 📄 **Code ví dụ:** [`examples/02-2-loop-audit-loop-readiness-score.sh`](examples/02-2-loop-audit-loop-readiness-score.sh)
 
 Chấm điểm **Loop Readiness** (L0→L3) cho project của bạn — con số chạy từ ~10 lên 100 khi bạn dựng khung đúng các phần. Gồm constraints, governance và **Harness Runtime** (v1.7). Giữ ở **L3** cho đến khi có `loop-budget.md`, `loop-run-log.md`, và mục budget trong LOOP.md.
 
@@ -44,9 +32,7 @@ Chấm điểm **Loop Readiness** (L0→L3) cho project của bạn — con số
 
 ## 3. loop-cost — Ước Tính Token
 
-```bash
-npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
-```
+> 📄 **Code ví dụ:** [`examples/03-3-loop-cost-uoc-tinh-token.sh`](examples/03-3-loop-cost-uoc-tinh-token.sh)
 
 Ước lượng token spend **trước khi lên lịch chạy** — để không bất ngờ với bill tuần sau. Xem chi tiết budget rules trong [04-operating](../04-operating/).
 
@@ -54,9 +40,7 @@ npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
 
 ## 4. loop-sync — Phát Hiện Drift
 
-```bash
-npx @cobusgreyling/loop sync .
-```
+> 📄 **Code ví dụ:** [`examples/04-4-loop-sync-phat-hien-drift.sh`](examples/04-4-loop-sync-phat-hien-drift.sh)
 
 Phát hiện lệch giữa `STATE.md` và `LOOP.md` — hai file mô tả trạng thái và cấu hình loop nhưng có thể lệch nhau dần theo thời gian.
 
@@ -64,9 +48,7 @@ Phát hiện lệch giữa `STATE.md` và `LOOP.md` — hai file mô tả trạn
 
 ## 5. loop-context — Memory + Circuit Breaker
 
-```bash
-npx @cobusgreyling/loop context --check --ledger run.json
-```
+> 📄 **Code ví dụ:** [`examples/05-5-loop-context-memory-circuit-breaker.sh`](examples/05-5-loop-context-memory-circuit-breaker.sh)
 
 Bộ nhớ có trạng thái và cầu dao tự ngắt cho các run dài. Giúp context không phình vô hạn qua nhiều vòng lặp.
 
@@ -76,9 +58,7 @@ Bộ nhớ có trạng thái và cầu dao tự ngắt cho các run dài. Giúp 
 
 > **Đọc sao cho dễ:** `worktree` là "phòng thực hành riêng" cho mỗi lần thử fix — agent sửa trong phòng riêng, hỏng thì bỏ phòng đó, không ảnh hưởng tới code chính. Kèm thêm `lock/unlock` để các loop không vào cùng chỗ cùng lúc.
 
-```bash
-npx @cobusgreyling/loop-worktree create --run-id <id> --pattern <p>
-```
+> 📄 **Code ví dụ:** [`examples/06-6-loop-worktree-co-lap-thay-oi.sh`](examples/06-6-loop-worktree-co-lap-thay-oi.sh)
 
 Quản lý git worktree riêng cho mỗi lần thử fix — một worktree cho mỗi attempt, theo dõi trong manifest, dọn khi reject/escalate. Kèm `lock`/`unlock` cho multi-loop coordination (xem [05-multi-loop](../05-multi-loop/)).
 
@@ -86,9 +66,7 @@ Quản lý git worktree riêng cho mỗi lần thử fix — một worktree cho 
 
 ## 7. loop-gate — Cưỡng Chế Cơ Học
 
-```bash
-npx @cobusgreyling/loop gate check --action auto-merge --paths <f1,f2,...>
-```
+> 📄 **Code ví dụ:** [`examples/07-7-loop-gate-cuong-che-co-hoc.sh`](examples/07-7-loop-gate-cuong-che-co-hoc.sh)
 
 Cưỡng chế **bằng máy** path denylist và auto-merge allowlist từ `gate.yaml` — không phụ thuộc vào việc loop có đọc file safety hay không. Exit `2` là escalate, `0` là proceed — cùng quy ước mà `loop-context --check` dùng, nên control scripts nối tiếp được cả hai.
 
@@ -96,9 +74,7 @@ Cưỡng chế **bằng máy** path denylist và auto-merge allowlist từ `gate
 
 ## 8. loop-sandbox & loop-swarm — Cô Lập + Consensus
 
-```bash
-npx @cobusgreyling/loop-sandbox run -- <cmd>   # Ephemeral worktree isolation + patch capture
-```
+> 📄 **Code ví dụ:** [`examples/08-8-loop-sandbox-loop-swarm-co-lap-consensus.sh`](examples/08-8-loop-sandbox-loop-swarm-co-lap-consensus.sh)
 
 - **loop-sandbox**: git worktree tách biệt tạm thời cho từng lượt chạy agent đơn lẻ. Gom changes thành patch files để review trước khi áp vào.
 - **loop-swarm**: sandbox lấy đồng thuận từ nhiều agent qua các lượt `loop-sandbox` chạy nối tiếp. Chỉ chấp nhận edits khi các lượt cho ra patch **giống nhau từng byte**.

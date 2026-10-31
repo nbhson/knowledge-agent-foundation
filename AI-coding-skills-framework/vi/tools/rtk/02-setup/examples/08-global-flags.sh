@@ -1,0 +1,2 @@
+-u, --ultra-compact    # ASCII icons, inline format (giảm output thêm nữa)
+-v, --verbose          # Tăng verbosity (-v, -vv, -vvv)

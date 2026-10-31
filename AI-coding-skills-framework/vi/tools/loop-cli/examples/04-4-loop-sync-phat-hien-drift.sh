@@ -1,0 +1,1 @@
+npx @cobusgreyling/loop sync .

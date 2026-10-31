@@ -22,15 +22,7 @@ Because LangChain is not an orchestrator you must adopt; it is a **library of th
 4. Move to LangGraph once you have branches and loops you cannot express linearly — that is what it is for.
 5. Add tracing early with LangSmith (step 5 of the roadmap), before you have a bug you cannot locate.
 
-```typescript
-const harness = {
-  llm: new ChatOpenAI({ model: "gpt-4" }),
-  tools: [ new DynamicStructuredTool({
-    name: "search", description: "Search the web",
-    func: async (input) => { /* ... */ }
-  })]
-};
-```
+> 📄 **Example code:** [`examples/01-q1-do-i-need-langchain-at-all-or.ts`](examples/01-q1-do-i-need-langchain-at-all-or.ts)
 
 **Verify**
 
@@ -56,12 +48,7 @@ Because `graph.add_edge("tools", "agent")` is an **unconditional loop-back**, an
 4. Trim the state between rounds — keep the last N tool results, not all of them.
 5. Test the stop path deliberately before the happy path.
 
-```python
-graph.add_conditional_edges(
-    "agent", should_continue, {"tools": "tools", END: END}
-)
-graph.add_edge("tools", "agent")   # loop, gated by should_continue only
-```
+> 📄 **Example code:** [`examples/02-q2-my-graph-runs-forever-agent-tools-agent.py`](examples/02-q2-my-graph-runs-forever-agent-tools-agent.py)
 
 **Verify**
 

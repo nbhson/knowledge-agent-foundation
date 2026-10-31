@@ -6,23 +6,15 @@
 
 ### macOS (Homebrew — khuyến nghị)
 
-```bash
-brew install rtk
-```
+> 📄 **Code ví dụ:** [`examples/01-macos-homebrew-khuyen-nghi.sh`](examples/01-macos-homebrew-khuyen-nghi.sh)
 
 ### Linux/macOS (Quick Install)
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
-# Cài vào ~/.local/bin — thêm vào PATH nếu cần:
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-```
+> 📄 **Code ví dụ:** [`examples/02-linux-macos-quick-install.sh`](examples/02-linux-macos-quick-install.sh)
 
 ### Cargo
 
-```bash
-cargo install --git https://github.com/rtk-ai/rtk
-```
+> 📄 **Code ví dụ:** [`examples/03-cargo.sh`](examples/03-cargo.sh)
 
 > ⚠️ **Name collision**: Có một project khác tên "rtk" (Rust Type Kit) trên crates.io. Nếu `rtk gain` fail, bạn đã cài nhầm package — dùng `cargo install --git` phía trên thay thế.
 
@@ -32,39 +24,17 @@ Tải binary `rtk-x86_64-pc-windows-msvc.zip` từ [releases](https://github.com
 
 ### Kiểm Tra Cài Đặt
 
-```bash
-rtk --version   # # Nên hiện "rtk 0.x.x"
-rtk gain        # Nên mở dashboard tiết kiệm token
-```
+> 📄 **Code ví dụ:** [`examples/04-kiem-tra-cai-at.sh`](examples/04-kiem-tra-cai-at.sh)
 
 ## Tích Hợp Vào AI Coding Tool
 
 Chạy đúng lệnh ứng với tool bạn đang dùng:
 
-```bash
-# Hook-based (transparent rewrite — khuyến nghị)
-rtk init -g                     # Claude Code / GitHub Copilot (default)
-rtk init -g --gemini            # Gemini CLI
-rtk init -g --codex             # Codex (OpenAI)
-rtk init -g --agent cursor      # Cursor
-rtk init -g --agent windsurf    # Windsurf
-rtk init -g --opencode          # OpenCode
-rtk init -g --agent pi          # Pi
-rtk init -g --agent droid       # Factory Droid
-
-# Plugin / Rule-based (project-scoped)
-rtk init --agent cline          # Cline / Roo Code  ← dùng .clinerules
-rtk init --agent kilocode       # Kilo Code
-rtk init --agent antigravity    # Google Antigravity
-rtk init --agent kimi           # Kimi AI
-rtk init --agent hermes         # Hermes
-```
+> 📄 **Code ví dụ:** [`examples/05-tich-hop-vao-ai-coding-tool.sh`](examples/05-tich-hop-vao-ai-coding-tool.sh)
 
 Cài xong thì **khởi động lại AI tool**, rồi test nhanh:
 
-```bash
-git status  # Sẽ tự động được rewrite thành "rtk git status"
-```
+> 📄 **Code ví dụ:** [`examples/06-tich-hop-vao-ai-coding-tool.sh`](examples/06-tich-hop-vao-ai-coding-tool.sh)
 
 ## Bảng Tích Hợp Từng Tool
 
@@ -94,29 +64,15 @@ git status  # Sẽ tự động được rewrite thành "rtk git status"
 
 macOS: `~/Library/Application Support/rtk/config.toml`
 
-```toml
-[hooks]
-exclude_commands = ["curl", "playwright"]  # skip rewrite cho các lệnh này
-
-[tee]
-enabled = true          # lưu raw output khi fail (default: true)
-mode = "failures"       # "failures", "always", hoặc "never"
-```
+> 📄 **Code ví dụ:** [`examples/07-cau-hinh-chinh-config-rtk-config-toml.toml`](examples/07-cau-hinh-chinh-config-rtk-config-toml.toml)
 
 ### Global Flags
 
-```bash
--u, --ultra-compact    # ASCII icons, inline format (giảm output thêm nữa)
--v, --verbose          # Tăng verbosity (-v, -vv, -vvv)
-```
+> 📄 **Code ví dụ:** [`examples/08-global-flags.sh`](examples/08-global-flags.sh)
 
 ## Gỡ Cài Đặt
 
-```bash
-rtk init -g --uninstall     # Gỡ hook, RTK.md, settings.json entry
-cargo uninstall rtk          # Gỡ binary (nếu cài qua cargo)
-brew uninstall rtk           # Gỡ qua Homebrew (nếu cài brew)
-```
+> 📄 **Code ví dụ:** [`examples/09-go-cai-at.sh`](examples/09-go-cai-at.sh)
 
 ## Troubleshooting Cài Đặt Nhanh
 

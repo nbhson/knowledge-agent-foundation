@@ -30,12 +30,7 @@ A chat transcript records what the model *said*. A trajectory records what it *d
 3. Require `actor` (`"agent:coder"`, `"human:alice"`, `"system"`) and `parentTaskId` on every event except `session_start` / `session_end`.
 4. Validate one single shape at write time, so a new module cannot break every downstream query.
 
-```sql
-SELECT seq, kind, payload->>'tool' AS tool, payload->>'path' AS path
-FROM trajectory
-WHERE session_id = 'ses_44a' AND payload->>'path' LIKE '%middleware%'
-ORDER BY seq;
-```
+> 📄 **Example code:** [`examples/01-q1-the-agent-deleted-a-file-and-the.sql`](examples/01-q1-the-agent-deleted-a-file-and-the.sql)
 
 **Verify**
 
@@ -62,13 +57,7 @@ Billing gives you the total, not the step. Without the model name attached to ea
 3. Run the loop detector: the same command signature (`argvHash`) repeated 3+ times in one session is a stuck agent, not a hard task.
 4. Sample payloads to save storage, but keep cost counters at 100%.
 
-```sql
-SELECT t.session_id, e.model, SUM(e.cost_usd) AS usd, SUM(e.tokens_out) AS out_tok
-FROM trajectory e JOIN trajectory t
-  ON t.session_id = e.session_id AND t.kind = 'session_start'
-WHERE e.cost_usd IS NOT NULL
-GROUP BY t.session_id, e.model ORDER BY usd DESC LIMIT 20;
-```
+> 📄 **Example code:** [`examples/02-q2-our-bill-tripled-last-month-and-nobody.sql`](examples/02-q2-our-bill-tripled-last-month-and-nobody.sql)
 
 **Verify**
 
@@ -102,11 +91,7 @@ Redaction at read time fails the moment *anything* reads the raw table, and raw 
 3. Keep a `stdoutHash` beside each `ref`, so a cold record is still auditable.
 4. Cap any payload at 64KB; anything larger becomes `{ ref }`.
 
-```sql
-SELECT COUNT(*) FROM read_json_auto('trajectories-warm/*.jsonl')
-WHERE payload::TEXT ~ 'sk-[A-Za-z0-9]{20}';
--- must be 0. Non-zero = incident.
-```
+> 📄 **Example code:** [`examples/03-q3-storage-costs-more-than-the-model-bill.sql`](examples/03-q3-storage-costs-more-than-the-model-bill.sql)
 
 **Verify**
 
@@ -131,12 +116,7 @@ Replay re-triggers irreversible effects because steps carry no idempotency key. 
 3. Compare the prompt `fingerprint` first. It hashes template + retrieved chunk ids + memory ids + policy hash; if it differs, the *inputs* changed and comparing outputs will only mislead you.
 4. Replay the top-20 production trajectories nightly against a pinned model. Drift on a deterministic step is a hard failure.
 
-```typescript
-export function idempotencyKeyOf(e: TrajectoryEvent): string {
-  return `${e.parentTaskId}:${e.payload.tool}:${e.payload.argvHash}`;
-}
-// replay: key already in `done` → skip the call, use the recorded tool_result
-```
+> 📄 **Example code:** [`examples/04-q4-i-replayed-a-run-to-reproduce-a.ts`](examples/04-q4-i-replayed-a-run-to-reproduce-a.ts)
 
 **Verify**
 
@@ -163,12 +143,7 @@ Progress says `5/5`. Invoices do not match. Three different causes hide inside e
 3. Build the live UI as a fold over events — one function, one stream, no parallel state.
 4. Keep the counters at 100% even when you drop payloads.
 
-```sql
-SELECT kind, COUNT(*) AS orphans, MIN(ts) AS first_seen
-FROM trajectory
-WHERE parent_task_id IS NULL
-  AND kind NOT IN ('session_start','session_end') GROUP BY kind;
-```
+> 📄 **Example code:** [`examples/05-q5-the-dashboard-says-5-5-tasks-done.sql`](examples/05-q5-the-dashboard-says-5-5-tasks-done.sql)
 
 One more free detector: a `tool_call` with no matching `tool_result` is every step that never came back. One query finds them all — wire it to an alert and a "run appears stuck" badge.
 

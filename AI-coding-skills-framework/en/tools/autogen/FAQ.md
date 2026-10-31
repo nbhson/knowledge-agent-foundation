@@ -53,14 +53,7 @@ A conversation has no natural end. Two caps exist and you must set both. `max_ro
 4. Add a repeat detector on the last message of each agent. Two identical messages in a row → force `END`.
 5. If you use `speaker_selection_method`, `"auto"` is a model call per round. `"round_robin"` is free and predictable — use it while debugging.
 
-```python
-group_chat = GroupChat(
-    agents=[planner, coder, critic],
-    messages=[],
-    max_round=12,
-    speaker_selection_method="round_robin",
-)
-```
+> 📄 **Example code:** [`examples/01-q2-the-agents-talk-to-each-other-forever.py`](examples/01-q2-the-agents-talk-to-each-other-forever.py)
 
 **Verify**
 
@@ -94,13 +87,7 @@ You copy the sample from `HARNESS_ENGINEERING.md`, it runs the first task perfec
 4. Move to `"NEVER"` only for tasks where a full rewrite is acceptable and the output directory is disposable.
 5. Log every run's message list. If you cannot replay the transcript, you cannot explain the run.
 
-```python
-safe = UserProxyAgent(
-    name="harness",
-    human_input_mode="TERMINATE",
-    code_execution_config=False,
-)
-```
+> 📄 **Example code:** [`examples/02-q3-human-input-mode-never-is-it-safe.py`](examples/02-q3-human-input-mode-never-is-it-safe.py)
 
 **Verify**
 
@@ -143,17 +130,7 @@ AutoGen has been **archived** and replaced by **Microsoft Agent Framework (MAF)*
 - MAF = unification of AutoGen + Semantic Kernel
 - Completely new API: `agents/`, no more `ConversableAgent`
 
-```python
-# MAF new (2025+)
-from agent_framework import ChatAgent
-from agent_framework.openai import OpenAIChatClient
-
-agent = OpenAIChatClient(model_id="gpt-4o").create_agent(
-    name="assistant",
-    instructions="You are a helpful assistant",
-)
-result = await agent.run("Hello!")
-```
+> 📄 **Example code:** [`examples/03-update-10-2026-autogen-microsoft-agent-framework-maf.py`](examples/03-update-10-2026-autogen-microsoft-agent-framework-maf.py)
 
 **Migrate your project:** https://learn.microsoft.com/en-us/agent-framework/migration-guide/from-autogen/
 **MAF new:** https://github.com/microsoft/agent-framework

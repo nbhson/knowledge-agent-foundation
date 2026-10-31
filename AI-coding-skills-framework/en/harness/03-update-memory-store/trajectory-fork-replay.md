@@ -76,36 +76,7 @@ Instead of storing a conversation as a flat list of messages (`[{role, content}]
 
 Every Event uses the `TrajectoryEvent` contract defined in `13-trajectory-observability` §1.1. This file does not restate it — the only thing worth adding here is how the engine's legacy DeepSeek event names map onto the canonical `EventKind` catalog, because a store that predates `13` will have `user_prompt` / `agent_reasoning` / `state_change` records that must be queryable by the modern kinds:
 
-```typescript
-// Canonical contract — defined once, in 13-trajectory-observability §1.1
-export type EventKind =
-  | "session_start" | "session_end"
-  | "context_assembly" | "prompt"
-  | "plan" | "plan_revision"
-  | "tool_call" | "tool_result" | "sandbox"
-  | "memory_read" | "memory_write"
-  | "delegate" | "message"
-  | "approval_request" | "approval_verdict"
-  | "compaction" | "checkpoint" | "eval" | "error";
-
-export interface TrajectoryEvent {
-  id: string;             // evt_01HZX… — lexicographically sortable (ULID/KSUID)
-  seq: number;            // 0-based, gapless, monotonic within a session
-  sessionId: string;
-  parentTaskId?: string;  // → 08-task TaskNode.id
-  runId?: string;         // one engine invocation; a session may have several
-  ts: number;             // ms epoch
-  kind: EventKind;
-  actor: string;          // "agent:coder" | "human:alice" | "system" | "judge"
-  payload: unknown;       // redacted; ≤64KB; oversize → { ref }
-  tokens?: { in: number; out: number; cached?: number };
-  latencyMs?: number;
-  model?: string;
-  costUsd?: number;
-  error?: { code: string; retryable: boolean };
-  fingerprint?: string;
-}
-```
+> 📄 **Example code:** [`examples/01-3-session-event-stream-architecture.ts`](examples/01-3-session-event-stream-architecture.ts)
 
 **Migration map for pre-`13` stores.** Three fields and three kinds changed. `timestamp` → `ts`,
 `type` → `kind`, `parentId` → `parentTaskId`, and `metadata.tokensUsed` (a single scalar) →
@@ -184,100 +155,7 @@ Below is a simulated implementation of an engine that manages the Trajectory Eve
 emitting the canonical `13` shape. Durability tiers, live tailing, and the append-only
 guarantees are specified in `13` §2.2; `inMemory` here stands in for a JSONL sink.
 
-```typescript
-import { ulid } from 'ulid';
-
-export class TrajectoryEngine {
-  private events: Map<string, TrajectoryEvent[]> = new Map();
-
-  // 1. Record a new Event (seq is gapless and monotonic per session)
-  public append(e: Partial<TrajectoryEvent> & { sessionId: string; kind: EventKind; actor: string }): TrajectoryEvent {
-    const sessionEvents = this.events.get(e.sessionId) || [];
-    const evt: TrajectoryEvent = {
-      id: `evt_${ulid()}`,
-      seq: sessionEvents.length,
-      sessionId: e.sessionId,
-      parentTaskId: e.parentTaskId,
-      runId: e.runId,
-      ts: Date.now(),
-      kind: e.kind,
-      actor: e.actor,
-      payload: e.payload ?? {},
-      tokens: e.tokens,
-      latencyMs: e.latencyMs,
-      model: e.model,
-      costUsd: e.costUsd,
-      error: e.error,
-      fingerprint: e.fingerprint,
-    };
-    sessionEvents.push(evt);
-    this.events.set(e.sessionId, sessionEvents);
-    return evt;
-  }
-
-  // 2. Replay the session to a desired step
-  public replayToStep(sessionId: string, targetEventId: string): TrajectoryEvent[] {
-    const sessionEvents = this.events.get(sessionId) || [];
-    const index = sessionEvents.findIndex(e => e.id === targetEventId);
-    if (index === -1) throw new Error(`Event ID ${targetEventId} not found in session ${sessionId}`);
-
-    return sessionEvents.slice(0, index + 1);
-  }
-
-  // 3. Fork a session from a checkpoint
-  public forkSession(sourceSessionId: string, checkpointEventId: string): { newSessionId: string; events: TrajectoryEvent[] } {
-    const historicalEvents = this.replayToStep(sourceSessionId, checkpointEventId);
-    const newSessionId = `session_fork_${ulid()}`;
-
-    // Shared prefix: re-keyed into the fork session, sequence preserved
-    const forkedEvents: TrajectoryEvent[] = historicalEvents.map((e, i) => ({
-      ...e,
-      id: `evt_${ulid()}`,
-      sessionId: newSessionId,
-      seq: i,
-    }));
-
-    // Register the prefix BEFORE appending, so append() derives the checkpoint's
-    // seq from the real length. Appending first would mint seq 0 and collide
-    // with the first copied event — exactly what findOrphans() would flag.
-    this.events.set(newSessionId, forkedEvents);
-
-    // Record the fork as a checkpoint event, not as an implicit copy
-    this.append({
-      sessionId: newSessionId,
-      kind: "checkpoint",
-      actor: "human:ui",
-      payload: {
-        message: `Forked from session ${sourceSessionId} at event ${checkpointEventId}`,
-        forkedFrom: { sessionId: sourceSessionId, atSeq: historicalEvents.length - 1, by: "human:ui" },
-      },
-    });
-    return { newSessionId, events: this.events.get(newSessionId)! };
-  }
-
-  // 4. Search Events (typed filter; see 13 §6.1 for the production SQL catalog)
-  public searchEvents(sessionId: string, query: { kind?: EventKind; keyword?: string; failedOnly?: boolean }): TrajectoryEvent[] {
-    const sessionEvents = this.events.get(sessionId) || [];
-    return sessionEvents.filter(e => {
-      if (query.kind && e.kind !== query.kind) return false;
-      if (query.failedOnly && !e.error) return false;
-      if (query.keyword) {
-        const jsonStr = JSON.stringify(e.payload).toLowerCase();
-        if (!jsonStr.includes(query.keyword.toLowerCase())) return false;
-      }
-      return true;
-    });
-  }
-
-  // 5. Gap detection — a missing seq means a lost write, not a lost thought (13 §4.3)
-  public findOrphans(sessionId: string): number[] {
-    const seqs = (this.events.get(sessionId) || []).map(e => e.seq);
-    const gaps: number[] = [];
-    for (let i = 0; i < seqs.length; i++) if (seqs[i] !== i) gaps.push(i);
-    return gaps;
-  }
-}
-```
+> 📄 **Example code:** [`examples/02-5-illustrative-implementation-typescript-implementation.ts`](examples/02-5-illustrative-implementation-typescript-implementation.ts)
 
 ---
 

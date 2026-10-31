@@ -24,11 +24,7 @@ Add a command to `exclude_commands` if:
 - It **should not be rewritten** to avoid danger (curl downloading binaries, playwright).
 - A pipeline/script depends on the original output format.
 
-```toml
-# ~/.config/rtk/config.toml
-[hooks]
-exclude_commands = ["curl", "playwright", "terraform plan"]
-```
+> 📄 **Example code:** [`examples/01-exclude-rules-when-to-keep-the-original-command.toml`](examples/01-exclude-rules-when-to-keep-the-original-command.toml)
 
 ## Safety Notes (harness Guardrails connection)
 
@@ -44,9 +40,7 @@ exclude_commands = ["curl", "playwright", "terraform plan"]
 - A command with important side effects where you want to see the full log.
 - A pipeline/CI script that parses output in the original format.
 
-```bash
-rtk init -g --uninstall   # Remove the hook entirely
-```
+> 📄 **Example code:** [`examples/02-when-you-should-turn-rtk-off.sh`](examples/02-when-you-should-turn-rtk-off.sh)
 
 Or use `exclude_commands` per command instead of turning it off entirely.
 

@@ -21,13 +21,7 @@ All questions inside a single POST are evaluated **in parallel, in one pass** �
 3. Set a real timeout (`timeout=5.0`) and put the threshold decision in code, not in the model.
 4. Route below threshold to a human queue instead of guessing.
 
-```python
-questions = {
-    "queue":    {"type": "choice", "options": ["billing","infra","product","data"]},
-    "priority": {"type": "score",  "levels": ["p0","p1","p2","p3"]},
-}
-band = "auto" if res["queue"]["confidence"] >= 0.7 else "human_review"
-```
+> 📄 **Example code:** [`examples/01-q1-my-latency-budget-is-tight-can-i.py`](examples/01-q1-my-latency-budget-is-tight-can-i.py)
 
 **Verify**
 
@@ -51,13 +45,7 @@ Without a gate, an open-ended judgment sits where a typed, calibrated check belo
 2. Put the user's latest message + tool name + target summary in the state — that is what the question is judged on.
 3. Allow only when the probability is high **and** the margin is healthy; otherwise block and escalate.
 
-```python
-p_yes = res["user_authorizes"]["probability"]
-margin = abs(p_yes - 0.5) * 2      # Noul has no separate confidence field
-allowed = p_yes >= AUTH_THRESHOLD and margin >= 0.5
-if not allowed:
-    return escalate_or_ask_human(tool, audit)   # code decides, not the LLM
-```
+> 📄 **Example code:** [`examples/02-q2-the-agent-is-about-to-run-something.py`](examples/02-q2-the-agent-is-about-to-run-something.py)
 
 4. Log request id, probabilities, threshold, and outcome for every gate. Start at `0.80`, not the framework default of `0.6` — that default is a starting point, not validated.
 5. Remember the limit: Jev does **not** judge whether the tool is safe to run. It classifies "did the user authorize this". The approval policy is yours.
@@ -84,12 +72,7 @@ Bulk classification is the *map* phase of map-reduce, and it is cheap enough tha
 2. `label_p ≥ 0.75` → store directly. Below → `needs_review = True`, and send it to a second pass, the language model, or a human queue. Do not silently accept it.
 3. Bound fan-out with a semaphore so 500k records do not stampede the API.
 
-```python
-CONCURRENCY, LABEL_THRESHOLD = 32, 0.75
-p = cat["probabilities"].get(cat["selected"], 0.0)
-row = {"id": rec["id"], "label": cat["selected"], "needs_review": p < 0.75}
-sem = asyncio.Semaphore(CONCURRENCY)      # bound it; don't stampede
-```
+> 📄 **Example code:** [`examples/03-q3-i-classified-500-000-records-and-now.py`](examples/03-q3-i-classified-500-000-records-and-now.py)
 
 4. Do the **reduce** step in plain code over the stored probabilities — counts by label, top-k, low-probability requeue. No model needed.
 5. Decide which bands enter the aggregates: exclude escalated records from the counts, or the summary will lie.
@@ -117,12 +100,7 @@ The levels are an ordered scale — `irrelevant < weak < relevant < core` — an
 2. Filter by **level index**, not by a float.
 3. Sort by the weighted score, descending.
 
-```python
-LEVELS = ["irrelevant", "weak", "relevant", "core"]
-FLOOR  = "weak"
-kept = [c for c in ranked if LEVELS.index(c["selected"]) > LEVELS.index(FLOOR)]
-kept.sort(key=lambda c: c["weighted_score"], reverse=True)
-```
+> 📄 **Example code:** [`examples/04-q4-ranking-puts-relevant-above-core-and-my.py`](examples/04-q4-ranking-puts-relevant-above-core-and-my.py)
 
 4. Ask one Score question per candidate in a **single** POST (`rel_0`, `rel_1`, …) — 70–500 ms for the batch, and shortlists are small by nature.
 5. Keep the full distribution (output is free) for later re-tuning.
@@ -151,14 +129,7 @@ High confidence is not the same as correct (see the calibration section, `../04-
 2. Pass a `grounded_in_policy` Noul plus a `worst_violation` Choice question in the **same** call, so a failure already comes with a reason.
 3. Below threshold → route the rework with that flag instead of blindly retrying.
 
-```python
-PASS_THRESHOLD = 0.85
-p_pass = res["grounded_in_policy"]["probability"]
-if p_pass >= PASS_THRESHOLD:
-    return {"status": "pass", "draft": draft}
-return {"status": "fail", "flag": res["worst_violation"]["selected"],
-        "next": "fallback_llm"}     # stronger model, human, or discard
-```
+> 📄 **Example code:** [`examples/05-q5-the-verifier-said-pass-but-the-draft.py`](examples/05-q5-the-verifier-said-pass-but-the-draft.py)
 
 4. Use the flag values as rework routing: `none`, `unsupported_claim`, `wrong_number`, `tone`, `pii_leak`. A `pii_leak` should never go to "try a stronger model" — it should go to a human.
 5. Keep a fallback path **even above** the threshold for costly or customer-facing outputs.

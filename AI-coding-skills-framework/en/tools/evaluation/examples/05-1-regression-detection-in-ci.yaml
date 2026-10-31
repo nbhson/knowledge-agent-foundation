@@ -1,0 +1,5 @@
+# .github/workflows/evals.yml
+steps:
+  - run: promptfoo eval --share   # run the eval suite
+  - run: promptfoo regression-check  # compare against the baseline
+  # fail CI if accuracy drops by more than 5%

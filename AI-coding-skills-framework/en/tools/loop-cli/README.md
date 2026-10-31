@@ -57,83 +57,56 @@ tools/loop-cli/  ← ❯ TOOLING that materializes both
 
 ### 1. Front Door — `loop init / doctor / status`
 
-```bash
-# Scaffold + diagnose + status (recommended: one binary for all three)
-npx @cobusgreyling/loop init . --pattern daily-triage --tool grok
-npx @cobusgreyling/loop doctor .
-npx @cobusgreyling/loop status .
-
-# Legacy equivalents (forks that don't need to change)
-npx @cobusgreyling/loop-init .
-
-# Optional: scaffold an additional versioned harness
-npx @cobusgreyling/loop init . --with-foundry
-```
+> 📄 **Example code:** [`examples/01-1-front-door-loop-init-doctor-status.sh`](examples/01-1-front-door-loop-init-doctor-status.sh)
 
 `loop init` creates the skills, state, and budget files, then shows the **Loop Ready score** and the first loop command. `loop doctor` combines audit, sync, and file checks into the **top-3 next steps**. Change `--tool` to `claude`, `codex`, or `opencode`.
 
 ### 2. `loop audit` — Loop Readiness Score
 
-```bash
-npx @cobusgreyling/loop audit . --suggest
-```
+> 📄 **Example code:** [`examples/02-2-loop-audit-loop-readiness-score.sh`](examples/02-2-loop-audit-loop-readiness-score.sh)
 
 It scores **Loop Readiness** (L0 to L3) — the number climbs from around 10 toward 100 when the setup is correct. It covers constraints, governance, and the **Harness Runtime** (v1.7). You stay capped at **L3** until you have `loop-budget.md`, `loop-run-log.md`, and the LOOP.md budget section.
 
 ### 3. `loop cost` — Token Estimation
 
-```bash
-npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
-```
+> 📄 **Example code:** [`examples/03-3-loop-cost-token-estimation.sh`](examples/03-3-loop-cost-token-estimation.sh)
 
 It predicts token spend **before you set up a schedule** — so next week's bill does not surprise you.
 
 ### 4. `loop sync` — Drift Detection
 
-```bash
-npx @cobusgreyling/loop sync .
-```
+> 📄 **Example code:** [`examples/04-4-loop-sync-drift-detection.sh`](examples/04-4-loop-sync-drift-detection.sh)
 
 It spots drift between `STATE.md` and `LOOP.md` — those two files can slowly grow apart over time.
 
 ### 5. `loop context` — Memory + Circuit Breaker
 
-```bash
-npx @cobusgreyling/loop context --check --ledger run.json
-```
+> 📄 **Example code:** [`examples/05-5-loop-context-memory-circuit-breaker.sh`](examples/05-5-loop-context-memory-circuit-breaker.sh)
 
 A memory manager with a circuit breaker for long runs. It keeps context from growing without limit over many rounds.
 
 ### 6. `loop worktree` — Isolating Changes
 
-```bash
-npx @cobusgreyling/loop-worktree create --run-id <id> --pattern <p>
-```
+> 📄 **Example code:** [`examples/06-6-loop-worktree-isolating-changes.sh`](examples/06-6-loop-worktree-isolating-changes.sh)
 
 It manages separate git worktrees — each try gets its own worktree, tracked in a list, and cleaned up when rejected or escalated. It includes `lock`/`unlock` so several loops can work side by side.
 
 ### 7. `loop gate` — Mechanical Enforcement
 
-```bash
-npx @cobusgreyling/loop gate check --action auto-merge --paths <f1,f2,...>
-```
+> 📄 **Example code:** [`examples/07-7-loop-gate-mechanical-enforcement.sh`](examples/07-7-loop-gate-mechanical-enforcement.sh)
 
 It strictly applies the path denylist and auto-merge allowlist from `gate.yaml`. Exit `2` means escalate, `0` means go ahead — the same style as `loop-context --check`, so you can chain them.
 
 ### 8. `loop sandbox` & `loop swarm` — Isolation + Consensus
 
-```bash
-npx @cobusgreyling/loop-sandbox run -- <cmd>   # Ephemeral worktree isolation + patch capture
-```
+> 📄 **Example code:** [`examples/08-8-loop-sandbox-loop-swarm-isolation-consensus.sh`](examples/08-8-loop-sandbox-loop-swarm-isolation-consensus.sh)
 
 - **loop-sandbox**: saves changes as reviewable patch files before applying them.
 - **loop-swarm**: team agreement — it needs **byte-identical patches** across runs before accepting them.
 
 ### 9. Loop MCP Server
 
-```bash
-npx @cobusgreyling/loop-mcp-server
-```
+> 📄 **Example code:** [`examples/09-9-loop-mcp-server.sh`](examples/09-9-loop-mcp-server.sh)
 
 Patterns, skills, state, budget, and safety docs become MCP resources — so prompts stay small. Example config: `examples/mcp/loop-engineering.mcp.json`.
 
@@ -184,16 +157,7 @@ Step 5: Add loop gate check into CI for mechanical enforcement
 
 ### 2. Multi-Loop Coordination
 
-```bash
-# Developer A runs a loop in their own worktree
-loop-worktree create --run-id fix-123 --pattern post-merge-cleanup
-
-# Developer B runs a different loop — lock avoids conflicts
-loop-worktree lock --scope refs/heads/main
-
-# Both finish → gate check before auto-merge
-loop gate check --action auto-merge --paths src/,tests/
-```
+> 📄 **Example code:** [`examples/10-2-multi-loop-coordination.sh`](examples/10-2-multi-loop-coordination.sh)
 
 ## Modern Multi-Agent Loops (2025) — Context
 

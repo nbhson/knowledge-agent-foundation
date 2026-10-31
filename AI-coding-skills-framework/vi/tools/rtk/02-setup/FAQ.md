@@ -21,10 +21,7 @@ Một số bộ lọc của RTK gọi ripgrep (`rg`), một công cụ tìm ki�
 1. Chọn đúng một đường cài theo hệ điều hành; đừng cài cả ba cùng lúc.
 2. Nếu dùng script tải về, thêm PATH vào `~/.zshrc`:
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-```
+> 📄 **Code ví dụ:** [`examples/01-q8-cai-rtk-bang-cach-nao-cho-ung.sh`](examples/01-q8-cai-rtk-bang-cach-nao-cho-ung.sh)
 
 3. Kiểm tra bằng hai lệnh: `rtk --version` phải hiện `rtk 0.x.x`, `rtk gain` phải mở dashboard tiết kiệm token.
 4. Thấy lỗi `rg` thì cài ripgrep: `brew install ripgrep` (macOS) hoặc `winget install BurntSushi.ripgrep.MSVC` (Windows).
@@ -49,10 +46,7 @@ Trên crates.io có **một project khác cũng tên "rtk" — Rust Type Kit**, 
 
 1. Gỡ package sai, rồi cài đúng bản từ Git:
 
-```bash
-cargo uninstall rtk
-cargo install --git https://github.com/rtk-ai/rtk
-```
+> 📄 **Code ví dụ:** [`examples/02-q9-toi-cargo-install-xong-ma-rtk-gain.sh`](examples/02-q9-toi-cargo-install-xong-ma-rtk-gain.sh)
 
 2. Trên macOS bạn có thể cài `brew install rtk` cho gọn hơn, nhưng nhớ chỉ chọn một nguồn.
 3. Không dùng `cargo install rtk` (không có cờ `--git`) ở bất kỳ máy nào trong CI.
@@ -77,12 +71,7 @@ Ba nguyên nhân thường gặp. Một: **phải khởi động lại AI tool**
 
 1. Chạy đúng lệnh cho tool của bạn:
 
-```bash
-rtk init -g                 # Claude Code / GitHub Copilot (global)
-rtk init -g --gemini        # Gemini CLI
-rtk init -g --codex         # Codex (OpenAI)
-rtk init --agent cline      # Cline / Roo Code → .clinerules
-```
+> 📄 **Code ví dụ:** [`examples/03-q10-toi-chay-rtk-init-g-xong-roi.sh`](examples/03-q10-toi-chay-rtk-init-g-xong-roi.sh)
 
 2. Khởi động lại AI tool, rồi thử lại `git status`.
 3. Nếu trên Windows sau khi nâng cấp lên bản ≥ 0.37.2 mà hook không chạy, do vẫn dùng script cũ `rtk-rewrite.sh` — chạy lại `rtk init -g` để chuyển sang native binary hook.
@@ -139,11 +128,7 @@ RTK cài ở nhiều chỗ: hook trong `settings.json`, file `RTK.md`, các file
 
 1. Gỡ phần tích hợp trước, rồi mới gỡ binary:
 
-```bash
-rtk init -g --uninstall     # gỡ hook, RTK.md, entry trong settings.json
-brew uninstall rtk           # nếu cài bằng Homebrew
-cargo uninstall rtk          # nếu cài bằng cargo
-```
+> 📄 **Code ví dụ:** [`examples/04-q12-cai-nham-hoac-khong-con-dung-go.sh`](examples/04-q12-cai-nham-hoac-khong-con-dung-go.sh)
 
 2. Dò tay các file rules còn sót trong từng project (`git status` sẽ cho bạn thấy những file mới sinh ra).
 3. Xoá `~/.config/rtk/config.toml` và thư mục `~/.local/share/rtk/tee/` nếu muốn sạch tuyệt đối.

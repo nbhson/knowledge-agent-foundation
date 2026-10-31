@@ -1,0 +1,3 @@
+@task(retries=3, retry_delay_seconds=10)
+def extract_task(documents): ...
+schedule={"cron": "0 * * * *"}   # mỗi giờ

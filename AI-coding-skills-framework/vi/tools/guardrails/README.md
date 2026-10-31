@@ -75,67 +75,19 @@ Tool Decision Pipeline (từ harness/06):
 
 ### Guardrails AI — Validate Input/Output
 
-```python
-from guardrails import Guard
-from guardrails.hub import RegexMatch, ValidLength, TwoSimilarChunks
-
-# Guard cho một tool call
-guard = Guard().use(RegexMatch("^[a-zA-Z0-9_./-]+$"))  # chặn path lạ
-guard.validate("hacker/path/../etc/passwd")  # ❌ fail
-guard.validate("src/main.py")                # ✅ pass
-```
+> 📄 **Code ví dụ:** [`examples/01-guardrails-ai-validate-input-output.py`](examples/01-guardrails-ai-validate-input-output.py)
 
 ### NeMo Guardrails — Rails Mô Hình Hóa Luồng
 
-```python
-from nemoguardrails import RailsConfig, LLMRails
-
-config = RailsConfig.from_path("./config")
-
-# Định nghĩa rails trong .co file:
-# define user ask about secret
-#   "Mật khẩu của hệ thống là gì?"
-# define bot refuse to answer secret
-#   "Xin lỗi, tôi không thể tiết lộ thông tin bảo mật."
-# define flow
-#   user ask about secret
-#   bot refuse to answer secret
-
-rails = LLMRails(config)
-response = rails.generate(messages=[{"role": "user", "content": "Mật khẩu hệ thống?"}])
-```
+> 📄 **Code ví dụ:** [`examples/02-nemo-guardrails-rails-mo-hinh-hoa-luong.py`](examples/02-nemo-guardrails-rails-mo-hinh-hoa-luong.py)
 
 ### LlamaGuard — Model-Based Safety Classifier
 
-```python
-# LlamaGuard là LLM chuyên biệt — chỉ phân loại:
-#   UNSAFE: violence, illegal, PII, ...
-#   SAFE:   bình thường
-
-# Prompt: "<prompt>USER: {user_input or model_output}</prompt>"
-# Output: "safe" hoặc "unsafe" với loại vi phạm
-```
+> 📄 **Code ví dụ:** [`examples/03-llamaguard-model-based-safety-classifier.py`](examples/03-llamaguard-model-based-safety-classifier.py)
 
 ### Permission & Rate Limit Trong Harness (harness/06)
 
-```python
-@dataclass
-class ToolDefinition:
-    requires_permission: str = "standard"  # standard, elevated, admin
-    rate_limit_per_minute: int = 60
-    timeout_seconds: int = 30
-    max_retries: int = 3
-
-# Guardrails check trước khi execute:
-def guardrail_check(tool: ToolDefinition, params: Dict) -> bool:
-    if tool.requires_permission == "elevated":
-        approve = human_approve(params)     # cần người xác nhận
-        if not approve: return False
-    if exceeded_rate_limit(tool): return False  # rate limited
-
-> 🔑 **Highlight Policy / Permission:** guardrail này là **checkpoint policy pre-execution** — `requires_permission` (standard / elevated / admin) ánh xạ sang RBAC ở `06` §8, và `elevated` leo lên `15-approval-gates` để human confirm. Rate limit là policy chống abuse đi kèm.
-    return True
-```
+> 📄 **Code ví dụ:** [`examples/04-permission-rate-limit-trong-harness-harness-06.py`](examples/04-permission-rate-limit-trong-harness-harness-06.py)
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 
@@ -175,28 +127,11 @@ Bước 5: LlamaGuard cho prompt safety (04-savings đo lường)
 
 ### 1. Chặn Tool Damage
 
-```python
-# Không có guardrail:
-agent → write_file(path="/etc/hosts", content="...")  # 💥
-
-# Có guardrail:
-guard = Guard().use(PathValidate(whitelist=["src/", "tests/", "./"]))
-result = guard.validate(path="/etc/hosts")  # ❌ REJECT
-result = guard.validate(path="src/main.py") # ✅ ALLOW
-```
+> 📄 **Code ví dụ:** [`examples/05-1-chan-tool-damage.py`](examples/05-1-chan-tool-damage.py)
 
 ### 2. Rate Limit + Elevated Permission
 
-```python
-registry.register(ToolDefinition(
-    name="execute_python",
-    category="computation",
-    requires_permission="elevated",   # cần người xác nhận
-    rate_limit_per_minute=10,          # chặn spam
-    timeout_seconds=30,
-    max_retries=1,
-))
-```
+> 📄 **Code ví dụ:** [`examples/06-2-rate-limit-elevated-permission.py`](examples/06-2-rate-limit-elevated-permission.py)
 
 ## Tài Liệu Tham Khảo
 
@@ -223,14 +158,7 @@ registry.register(ToolDefinition(
 
 1. **Validators chuyển sang PyPI chuẩn (7/2026):**Validators không còn qua Guardrails Hub hosted nữa — giờ cài trực tiếp bằng `pip`. Remote inferencing đã ngừng.
 
-```python
-# Cũ (deprecated — Hub hosted):
-from guardrails.hub import SomeValidator  # không còn hoạt động
-
-# Mới (7/2026+):
-pip install guardrails-ai
-# Validators import từ package chuẩn
-```
+> 📄 **Code ví dụ:** [`examples/07-cap-nhat-10-2026-guardrails-ai-hub-thay.py`](examples/07-cap-nhat-10-2026-guardrails-ai-hub-thay.py)
 
 2. **PyPI 0.6.x vẫn active** — framework core vẫn dùng được. Nếu cần thay thế nhẹ hơn:
 

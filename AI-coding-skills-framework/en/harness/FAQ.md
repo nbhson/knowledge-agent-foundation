@@ -131,12 +131,7 @@ Because "it worked" was never measured, and no run left a record. §4 fixes both
 2. If the context was wrong → module `02`. If the tool was wrong → `06`. If the run "succeeded" wrongly → `11`.
 3. Score the run, not the vibe: steps used, tool precision (right tool / total calls), recovery after failure.
 
-```typescript
-kind: "prompt" | "tool_call" | "tool_result" | "plan"
-    | "eval" | "memory_write" | "approval"
-tokens?: { in: number; out: number };
-latencyMs?: number;
-```
+> 📄 **Example code:** [`examples/01-q5-the-agent-says-done-but-the-bug.ts`](examples/01-q5-the-agent-says-done-but-the-bug.ts)
 
 **Verify**
 

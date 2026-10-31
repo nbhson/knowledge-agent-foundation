@@ -118,10 +118,7 @@ Ghi thẳng vào `minimal-fix` và implementer skills:
 
 Tool `loop-gate` chặn cứng denylist này **bằng máy** dựa trên `gate.yaml` (không trông chờ vào việc loop có đọc file này hay chưa):
 
-```bash
-npx @cobusgreyling/loop gate check --action auto-merge --paths <changed files>
-# exit 2 = escalate, exit 0 = proceed
-```
+> 📄 **Code ví dụ:** [`examples/01-2-1-path-denylist.sh`](examples/01-2-1-path-denylist.sh)
 
 ### 2.2 Auto-Merge Policy
 

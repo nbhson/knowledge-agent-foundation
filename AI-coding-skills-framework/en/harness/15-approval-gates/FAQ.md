@@ -73,15 +73,7 @@ The limits are short on purpose: `write` 5 minutes, `elevated` 30 minutes, `prod
 
 **What to do**
 
-```typescript
-export function onExpire(key: string, g: Gate): void {
-  g.verdict = "expired";
-  audit.append({ kind: "approval_verdict",
-    payload: { key, verdict: "expired", reason: "ttl_elapsed" } });
-  plan.markBlocked(g.taskId, "approval-timeout");
-  replanner.excludeBranch(g.taskId);
-}
-```
+> 📄 **Example code:** [`examples/01-q3-nobody-was-awake-when-the-page-fired.ts`](examples/01-q3-nobody-was-awake-when-the-page-fired.ts)
 
 1. Run and persist the expiry timer in the engine process, so a restart re-arms it instead of forgetting it.
 2. Mark the task blocked with reason `approval-timeout` and let the replanner route around it. The frozen run keeps its checkpoint, which is what makes escalation free.
@@ -140,13 +132,7 @@ Approval fatigue, the quietest failure mode in this whole module, and it is meas
 
 Run this nightly and watch the slope, not one day's number:
 
-```sql
-SELECT tier,
-       COUNT(*) FILTER (WHERE verdict='approved')::float / COUNT(*) AS approval_rate,
-       percentile_disc(0.5) WITHIN GROUP (ORDER BY (verdict_time - request_time)) AS med
-FROM approval_verdict v JOIN approval_request r ON r.key = v.key
-GROUP BY tier ORDER BY tier;
-```
+> 📄 **Example code:** [`examples/02-q5-our-approval-rate-is-98-and-the.sql`](examples/02-q5-our-approval-rate-is-98-and-the.sql)
 
 A tier sitting at a 98% approval rate with a sub-10-second median wait is not being read. Reassign the tier, re-measure in a week, and keep the query in the nightly catalog so the next drift shows up before the incident it eventually causes.
 

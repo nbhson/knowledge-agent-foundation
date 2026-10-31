@@ -165,45 +165,15 @@ Nếu các modules chẳng thống nhất được gì khác, thì ít nhất h�
 
 **A. Trajectory event** — cuốn sổ cái duy nhất để lần ra lỗi:
 
-```typescript
-interface TrajectoryEvent {
-  id: string;            // evt_01H…
-  sessionId: string;
-  parentTaskId?: string; // link tới 08-task
-  ts: number;
-  kind: "prompt" | "tool_call" | "tool_result" | "plan" | "eval" | "memory_write" | "approval";
-  payload: unknown;
-  tokens?: { in: number; out: number };
-  latencyMs?: number;
-}
-```
+> 📄 **Code ví dụ:** [`examples/01-4-ba-contract-dung-chung.ts`](examples/01-4-ba-contract-dung-chung.ts)
 
 **B. Context object** — bên 02 dựng lên, bên 05 mang đi nấu thành prompt:
 
-```typescript
-interface BuiltContext {
-  system: string;        // identity, rules (không bao giờ cắt)
-  goal: string;          // task hiện tại + definition of done
-  retrieved: Chunk[];    // từ 01, kèm score
-  history: string;       // summary đã nén, không phải raw log
-  immediate: FileSnap[]; // files đang mở, diffs
-  budget: { limit: number; used: number };
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-4-ba-contract-dung-chung.ts`](examples/02-4-ba-contract-dung-chung.ts)
 
 **C. Task node** — bên 04 đẻ ra, bên 07 cho chạy, bên 08 ngồi theo dõi:
 
-```typescript
-interface TaskNode {
-  id: string;
-  title: string;
-  status: "pending" | "running" | "blocked" | "done" | "failed";
-  idempotencyKey: string; // retry an toàn
-  needsApproval: boolean;
-  budget: { maxSteps: number; maxTokens: number; timeoutMs: number };
-  deps: string[];
-}
-```
+> 📄 **Code ví dụ:** [`examples/03-4-ba-contract-dung-chung.ts`](examples/03-4-ba-contract-dung-chung.ts)
 
 ## 5. Đọc Thư Mục Này Thế Nào
 

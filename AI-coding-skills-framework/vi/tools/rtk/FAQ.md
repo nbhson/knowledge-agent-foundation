@@ -28,12 +28,7 @@ RTK (Rust Token Killer) là một CLI proxy viết bằng Rust, chèn vào giữ
 1. Trước khi cài, xem lệnh nào trong dự án bạn hay chạy nhất và output dài bao nhiêu dòng. `cargo test` và `git push` thường là hai thủ phạm lớn nhất.
 2. Cài rồi tích hợp, đo lại để so sánh số dòng trước/sau:
 
-```bash
-brew install rtk
-rtk init -g          # Claude Code / GitHub Copilot
-rtk --version        # rtk 0.x.x
-rtk gain             # dashboard token đã tiết kiệm
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-rtk-la-cai-gi-cai-vao-co.sh`](examples/01-q1-rtk-la-cai-gi-cai-vao-co.sh)
 
 3. Nếu dự án bạn chủ yếu chạy `ls` với vài chục file, lợi ích sẽ ít hơn — đừng kỳ vọng con số 90%.
 

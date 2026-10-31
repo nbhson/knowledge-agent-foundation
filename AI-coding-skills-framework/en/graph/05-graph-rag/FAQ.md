@@ -21,10 +21,7 @@ The graph index is not built by reading text — it is built by *paying a model 
 3. Cut the number of communities. Summaries are billed per community, so a graph split into 400 groups costs 8× more than one split into 50.
 4. If cost still blocks you, switch variants: **LightRAG** (dual-level index, 10× faster, 1/3–1/4 the cost) or **HippoRAG2** (personalized PageRank, ~20× cheaper per answer). Both give up some global aggregation quality.
 
-```python
-rag.index(documents)          # ~$5.55 for 1,000 docs / 500K tokens — ONE TIME
-save(graph, communities, summaries)   # cache; queries never re-pay this
-```
+> 📄 **Example code:** [`examples/01-q1-our-indexing-bill-jumped-from-0-05.py`](examples/01-q1-our-indexing-bill-jumped-from-0-05.py)
 
 **Verify**
 
@@ -49,11 +46,7 @@ The two modes answer different shapes of question. **Local search is entity-cent
 3. For hybrid questions, run Global first, then Local on the entities the Global answer surfaced. That is where the good evidence paths come from.
 4. Keep the community id on every claim so a reviewer can open that summary and check it.
 
-```python
-def route(q):                        # q = the user's question
-    if has_named_entity(q): return local_search(q, max_hops=2)
-    return global_search(q)          # map-reduce over community summaries
-```
+> 📄 **Example code:** [`examples/02-q2-i-asked-what-are-the-ai-trends.py`](examples/02-q2-i-asked-what-are-the-ai-trends.py)
 
 **Verify**
 
@@ -78,12 +71,7 @@ The log prints `Detected 400 communities` where every one holds three nodes — 
 3. Make the fallback loud. A silent swap to a different algorithm invalidates every community id you cached.
 4. Respect the token caps the summarizer uses: `members[:20]`, `relations[:20]`, `chunks[:5]` at 500 chars each. Bigger communities are silently truncated, so the summary is built from the first 20 members and the rest never appear.
 
-```python
-try:
-    partition = community_louvain.best_partition(graph, resolution=1.0)  # Louvain
-except ImportError:
-    raise RuntimeError("python-louvain missing — greedy fallback is NOT Leiden")
-```
+> 📄 **Example code:** [`examples/03-q3-detect-communities-gave-me-400-communities-of.py`](examples/03-q3-detect-communities-gave-me-400-communities-of.py)
 
 **Verify**
 
@@ -108,12 +96,7 @@ Two separate mistakes. First, people dump the entire database schema into the pr
 3. Validate labels before execution: if the query mentions a label not in the schema, reject it.
 4. Have a fallback retriever ready: `HybridRetriever` fuses vector search with full-text using **RRF** (Reciprocal Rank Fusion), which combines ranked lists without needing comparable scores.
 
-```python
-Nodes: Person(name,role), Project(name,budget)
-Edges: Person-WORKS_ON->Project, Person-REPORTS_TO->Person
-Sample: (Alice,REPORTS_TO,Bob) — Bob is Alice's manager
-score = sum(1/(k + rank))   for k ≈ 60      # RRF fusion, no normalization
-```
+> 📄 **Example code:** [`examples/04-q4-the-model-wrote-a-cypher-query-it.py`](examples/04-q4-the-model-wrote-a-cypher-query-it.py)
 
 **Verify**
 

@@ -44,11 +44,7 @@ FAILED: 2/15 tests
 
 Configured in `config.toml`:
 
-```toml
-[tee]
-enabled = true          # save raw output on failure (default: true)
-mode = "failures"       # "failures", "always", or "never"
-```
+> 📄 **Example code:** [`examples/01-when-a-command-fails-tee-recovery.toml`](examples/01-when-a-command-fails-tee-recovery.toml)
 
 ## Binary Structure & Dependencies
 
@@ -62,15 +58,7 @@ mode = "failures"       # "failures", "always", or "never"
 
 ## Basic Configuration
 
-```toml
-# ~/.config/rtk/config.toml (macOS: ~/Library/Application Support/rtk/config.toml)
-[hooks]
-exclude_commands = ["curl", "playwright"]  # skip rewrite for these commands
-
-[tee]
-enabled = true
-mode = "failures"
-```
+> 📄 **Example code:** [`examples/02-basic-configuration.toml`](examples/02-basic-configuration.toml)
 
 See the full configuration (env vars, per-project filters) in the [Configuration guide](https://www.rtk-ai.app/guide/getting-started/configuration).
 

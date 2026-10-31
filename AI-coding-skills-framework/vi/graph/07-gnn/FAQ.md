@@ -97,10 +97,7 @@ KG thật luôn **không đồng nhất** (heterogeneous): nhiều loại node, 
 3. Nếu cần tầng ý nghĩa cao hơn: HAN tổng hợp theo từng "con đường loại" (ví dụ `Person–WORKS_ON–Project–HAS_BUDGET–Budget`) rồi dùng chú ý để gộp; HGT là biến thể Transformer mạnh nhất.
 4. Sau khi học, dùng scoring function (TransE, DistMult, ComplEx, RotatE) để chấm điểm bộ ba thiếu.
 
-```python
-model = RGCN(8, 16, 8, num_relations=2)
-out = model(x, edge_index, edge_type)   # out shape: (4, 8)
-```
+> 📄 **Code ví dụ:** [`examples/01-q4-nhet-kg-that-vao-gnn-thi-sao.py`](examples/01-q4-nhet-kg-that-vao-gnn-thi-sao.py)
 
 **Kiểm tra**
 
@@ -125,11 +122,7 @@ Dự đoán cạnh học theo kiểu "cặp có thật" và "cặp không có th
 3. Dùng hàm mất mát nhị phân: cặp thật về gần 1, cặp âm về gần 0, tổng hai phần lại.
 4. Dùng tích của hai vector để chấm điểm cặp (điểm cao = khả năng có quan hệ).
 
-```python
-neg = negative_sampling(edge_index, num_nodes=4, num_neg_samples=4)
-pos_loss = F.binary_cross_entropy_with_logits(pos_score, torch.ones_like(pos_score))
-loss = pos_loss + neg_loss
-```
+> 📄 **Code ví dụ:** [`examples/02-q5-oan-quan-he-moi-thi-dung-cap.py`](examples/02-q5-oan-quan-he-moi-thi-dung-cap.py)
 
 **Kiểm tra**
 

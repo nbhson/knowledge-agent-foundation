@@ -52,15 +52,7 @@ Because the settings file holds **one `mcpServers` object containing many server
 4. Set `"disabled": false` deliberately and keep `"autoApprove": []` empty until you have seen what the server does.
 5. Restart the client after each single addition, so you know which entry broke it.
 
-```jsonc
-{
-  "mcpServers": {
-    "github.com/github/github-mcp-server": { "type": "http", "url": "https://api.githubcopilot.com/mcp/" },
-    "my-custom-tool": { "command": "npx", "args": ["-y", "@my-org/my-mcp-server"],
-                        "env": { "API_KEY": "${API_KEY}" } }
-  }
-}
-```
+> 📄 **Example code:** [`examples/01-q2-how-do-i-add-a-second-mcp.json`](examples/01-q2-how-do-i-add-a-second-mcp.json)
 
 **Verify**
 

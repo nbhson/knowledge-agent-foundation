@@ -24,11 +24,7 @@ Bốn việc đó khác nhau về bản chất và khác nhau về thứ tự b�
 4. Với việc ghi vào hệ thống thật (deploy, gửi email, xoá dữ liệu), tách nó thành công việc riêng có điều kiện phụ thuộc: chỉ chạy khi *kiểm tra* đã xanh.
 5. Đính kèm tiêu chí nghiệm thu cho mỗi việc nhỏ, nếu không bạn không biết nó làm đúng chưa.
 
-```python
-if any(k in task.description.lower() for k in ["fix", "bug", "refactor"]):
-    task.category = TaskCategory.MODIFICATION
-task.priority = 5        # 1 = cao nhất, 10 = thấp nhất
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-toi-giao-refactor-auth-them-test-update.py`](examples/01-q1-toi-giao-refactor-auth-them-test-update.py)
 
 **Kiểm tra**
 
@@ -83,10 +79,7 @@ Phụ thuộc chéo tạo ra một vòng tròn trong đồ thị. Bộ xếp th�
 5. Sửa gốc chứ không cắt tuỳ tiện: nếu phải cắt một cạnh, hãy hỏi việc nào thật sự cần việc nào.
 6. Ghi rõ cái phụ thuộc đó trong mô tả việc, để sau này người khác hiểu vì sao thứ tự là vậy.
 
-```python
-if len(order) != len(self.tasks):
-    raise ValueError("Cycle detected in task dependencies")
-```
+> 📄 **Code ví dụ:** [`examples/02-q3-hai-viec-cho-lan-nhau-agent-ung.py`](examples/02-q3-hai-viec-cho-lan-nhau-agent-ung.py)
 
 **Kiểm tra**
 
@@ -122,10 +115,7 @@ Không có con số nào để chia. Nếu bạn đoán rồi chia mù, bạn s�
 5. Trước khi bắt đầu mỗi việc nhỏ, hỏi còn bao nhiêu token; **dưới 20% thì dọn ngay** — tóm tắt ngữ cảnh cũ, bỏ file không còn liên quan, làm nốt việc đang dở rồi mở phiên mới.
 6. Giữ một khoảng đệm tối thiểu bất biến. Con số "còn lại" phải trừ khoản đệm trước, không được hỏi tới đâu trừ tới đó.
 
-```python
-base = BASE_TOKENS[task.complexity]            # vd MODERATE = 5000
-value = base * CATEGORY_MULTIPLIERS[task.category] + 500 * len(task.files_involved)
-```
+> 📄 **Code ví dụ:** [`examples/03-q4-khong-biet-truoc-can-bao-nhieu-token.py`](examples/03-q4-khong-biet-truoc-can-bao-nhieu-token.py)
 
 **Kiểm tra**
 
@@ -152,12 +142,7 @@ Agent nhận câu *"cải thiện code đi"* và bắt đầu sửa loạn. Mư�
 5. Nhiều hơn 5 phụ thuộc là dấu hiệu việc đó quá tải hoặc nên tách ra.
 6. Với việc sửa code mà chưa xác định được file nào bị đụng, dừng lại quét mã trước — đừng đoán.
 
-```python
-vague = ["improve", "optimize", "clean", "better",
-         "refactor", "make it work", "fix it"]
-if any(k in task.description.lower() for k in vague) and not task.verification_criteria:
-    issues.append({"pattern": "AMBIGUOUS_TASK", "severity": "MEDIUM"})
-```
+> 📄 **Code ví dụ:** [`examples/04-q5-sep-giao-mo-ho-kieu-cai-thien.py`](examples/04-q5-sep-giao-mo-ho-kieu-cai-thien.py)
 
 **Kiểm tra**
 

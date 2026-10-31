@@ -1,0 +1,52 @@
+---
+name: code-review-python
+description: >
+  Thực hiện code review cho Python code. Phát hiện:
+  - Security issues (SQL injection, hardcoded secrets, unsafe eval)
+  - Performance bottlenecks (N+1 queries, inefficient loops)
+  - Style violations (PEP8, docstring missing)
+  - Test coverage thấp
+version: 1.2.0
+tags: [python, security, quality, review]
+triggers:
+  - pattern: ".*review.*python.*"
+    context: ["code", "file", "repository"]
+  - pattern: ".*check.*security.*"
+    context: ["code"]
+allowed_scripts:
+  - run_static_analysis.py
+  - generate_report.py
+---
+
+# Code Review Python Skill
+
+## Mục tiêu
+Nhận vào một code snippet hoặc file Python, trả về báo cáo review có cấu trúc.
+
+## Quy trình
+
+1. **Parse input** — nhận file path hoặc code string
+2. **Static analysis** — chạy `ruff`, `bandit`, `pylint` qua scripts kèm theo
+3. **Security scan** — kiểm tra patterns nhạy cảm (secrets, SQL injection, eval)
+4. **Generate report** — tổng hợp thành JSON/Markdown với severity levels
+
+## Output format
+
+```json
+{
+  "files_reviewed": ["src/api.py", "src/auth.py"],
+  "issues": [
+    {
+      "severity": "HIGH",
+      "category": "SECURITY",
+      "file": "src/auth.py",
+      "line": 42,
+      "message": "Hardcoded password detected",
+      "suggestion": "Use environment variable or secrets manager"
+    }
+  ],
+  "summary": {
+    "critical": 1, "high": 3, "medium": 5, "low": 12
+  },
+  "coverage_percent": 67.5
+}

@@ -30,12 +30,7 @@ Two silent filters did it. `allowed_edge_types={"MANAGES", "WORKS_ON"}` drops `K
 4. When the filtered node matters, lower the floor for that one query instead of globally.
 5. If the target is a property (`domain="AI"`) rather than the node name, filter on the property — never on `"AI" in target`, which matches any project whose name contains the letters.
 
-```python
-results = constrained_bfs(G, "Alice", max_hops=3,
-                          allowed_edge_types={"MANAGES", "WORKS_ON"},
-                          min_confidence=0.7)
-# Dave is excluded twice: KNOWS not allowed, and 0.60 < 0.7
-```
+> 📄 **Example code:** [`examples/01-q1-the-traversal-returns-the-wrong-team-dave.py`](examples/01-q1-the-traversal-returns-the-wrong-team-dave.py)
 
 **Verify**
 
@@ -61,11 +56,7 @@ BFS cost grows with *breadth*, not depth. A person with 40 direct contacts, each
 4. Put the cap in the query, not in your head — return the count of *visited* nodes alongside the count of *returned* nodes.
 5. If a question genuinely needs the whole neighbourhood (community detection, centrality), that is a different tool — see Q5's neighbours and §4.
 
-```python
-results = sampled_traversal(G, start="Alice", max_hops=2,
-                            max_neighbors_per_hop=10,
-                            sample_strategy="top-confidence")
-```
+> 📄 **Example code:** [`examples/02-q2-the-same-traversal-worked-on-20-demo.py`](examples/02-q2-the-same-traversal-worked-on-20-demo.py)
 
 **Verify**
 
@@ -91,11 +82,7 @@ Each path-finding kind answers a different question: **shortest path** = fewest 
 4. Always attach the evidence — for each hop, the edge type and its confidence. Evidence is what turns a path into a proof.
 5. In Cypher, bound it in the query itself: `[:MANAGES|WORKS_ON*1..4]` plus `WHERE all(r in relationships(path) WHERE r.confidence > 0.7)`, then `ORDER BY length(path) LIMIT 5`.
 
-```python
-paths = list(nx.all_simple_paths(G, source="Bob", target="Atlas", cutoff=4))
-evidence = [(p[i], p[i+1], G.get_edge_data(p[i], p[i+1])["type"])
-            for p in paths for i in range(len(p) - 1)]
-```
+> 📄 **Example code:** [`examples/03-q3-the-model-gives-one-confident-path-and.py`](examples/03-q3-the-model-gives-one-confident-path-and.py)
 
 **Verify**
 
@@ -121,12 +108,7 @@ It is not a hallucination — it's **inference**, and the edge was never written
 4. Filter inferred results out of answers when the user needs ground truth, and say so: "derived by rule `transitive_manages`, not stored in the KG".
 5. Watch for false positives from composition rules like `works_on_implies_team` (`MANAGES + WORKS_ON → OVERSEES`, confidence **0.75**) — a manager who once touched a project is not necessarily still overseeing it.
 
-```python
-INFERENCE_RULES = [{"name": "transitive_manages",
-    "pattern": [("A","MANAGES","B"), ("B","MANAGES","C")],
-    "infer": ("A","INDIRECTLY_MANAGES","C"), "confidence": 0.8}]
-# Alice INDIRECTLY_MANAGES Carol via transitive_manages (conf=0.80)
-```
+> 📄 **Example code:** [`examples/04-q4-the-system-says-alice-manages-carol-but.py`](examples/04-q4-the-system-says-alice-manages-carol-but.py)
 
 **Verify**
 
@@ -152,11 +134,7 @@ Temporal knowledge graphs report a **35% cut in stale answers** — answers buil
 4. Close the old edge on write (`valid_until = new_valid_from`), never delete it. Deleting history makes "who was accountable then?" unanswerable forever.
 5. When a question mixes a person and a period ("who ran X in Q2"), filter by both — edge window *and* node property (`domain="AI"`).
 
-```python
-active = [e for e in edges
-          if e["valid_from"] <= query_date <= (e.get("valid_until") or date(9999,12,31))]
-# 2024-03-01 → TeamA      2024-08-01 → TeamB
-```
+> 📄 **Example code:** [`examples/05-q5-the-answer-is-right-about-the-person.py`](examples/05-q5-the-answer-is-right-about-the-person.py)
 
 **Verify**
 

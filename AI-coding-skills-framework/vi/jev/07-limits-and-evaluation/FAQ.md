@@ -21,13 +21,7 @@ Bạn hỏi Jev đọc nội dung một tệp để tóm tắt, hoặc hỏi nó
 3. Ảnh thì xử lý bằng pipeline thị giác riêng trước, rồi đưa phần chữ đã trích ra cho Jev.
 4. Viết hàm bao bọc có điều kiện chặn từ đầu: nếu yêu cầu cần văn bản, cần đọc tệp, hay cần phép tính thì chuyển sang công cụ khác ngay, đừng gọi Jev.
 
-```python
-from datetime import date
-days_left = (due_date - date.today()).days     # code tính
-ans = decide(state=f"Hóa đơn {inv} đến hạn {due_date}, hôm nay {date.today()}",
-             questions={"status": {"type": "choice",
-                                   "options": ["overdue", "due_soon", "ok"]}})
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-toi-giao-viec-cho-jev-ma-no.py`](examples/01-q1-toi-giao-viec-cho-jev-ma-no.py)
 
 **Kiểm tra**
 
@@ -107,16 +101,7 @@ Con số mặc định là **điểm khởi đầu, không phải giá trị đ�
 3. Đặt ngưỡng riêng theo câu hỏi: câu định tuyến vô hại có thể tự xử lý ở 0.7; câu cho phép hành động phá hại cần tới 0.95.
 4. Ghi lại ngưỡng đã áp dụng cùng kết quả thật vào nhật ký, và định kỳ điều chỉnh lại khi dữ liệu đầu vào thay đổi.
 
-```python
-rows = sorted(rows, key=lambda r: r["confidence"], reverse=True)
-best = None
-for i in range(1, len(rows) + 1):
-    bucket = rows[:i]
-    prec = sum(r["correct"] for r in bucket) / len(bucket)
-    if prec < min_precision:
-        break                      # thêm mẫu thì độ chính xác tụt
-    best = {"threshold": bucket[-1]["confidence"], "precision": prec}
-```
+> 📄 **Code ví dụ:** [`examples/02-q4-nguong-0-6-va-0-8-mac.py`](examples/02-q4-nguong-0-6-va-0-8-mac.py)
 
 Mỗi lần tăng ngưỡng, bạn đánh đổi: ít chuyển giao hơn và chuyển giao đúng hơn, nhưng độ phủ tự xử lý giảm. Cả hai trục đều phải đo, không được bỏ cái nào.
 
@@ -144,12 +129,7 @@ Nhật ký quyết định chỉ có giá trị khi nó **tái lập được m�
 4. Theo dõi phân phối độ tự tin và tỉ lệ từng vùng theo thời gian; lệch bất thường là dấu hiệu dữ liệu đầu vào đổi hoặc mô hình đổi phiên bản.
 5. Định kỳ gộp cặp (xác suất, kết quả) thành báo cáo hiệu chỉnh theo từng nhãn.
 
-```python
-entry = {"ts": ts, "request_id": rid, "questions": names,
-         "probabilities": probs, "confidence": round(conf, 4),
-         "threshold_low": lo, "threshold_high": hi, "band": band,
-         "model": "jev-1.13.0", "outcome": outcome}   # không kèm dữ liệu đầu vào
-```
+> 📄 **Code ví dụ:** [`examples/03-q5-khi-co-su-co-toi-truy-vet.py`](examples/03-q5-khi-co-su-co-toi-truy-vet.py)
 
 **Kiểm tra**
 

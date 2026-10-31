@@ -46,20 +46,7 @@ Turn 5: LLM ──[JSON: run_linter]────► Harness ──[Exec]──�
 
 DeepSeek Harness giới thiệu **Code Mode** cùng với SDK chuẩn hóa (`@deepseek-ai/dsh`). Thay vì gọi tool qua JSON, LLM sinh ra một đoạn mã TypeScript/JavaScript thực thi trong Sandboxing Runtime:
 
-```typescript
-// 1 Round-trip duy nhất! LLM viết code điều phối SDK:
-import { tools } from '@deepseek-ai/dsh';
-
-const files = await tools.findFiles('src/**/*.ts');
-for (const file of files) {
-  const content = await tools.readFile(file);
-  if (content.includes('legacyFetch')) {
-    const updated = content.replace(/legacyFetch/g, 'modernFetch');
-    await tools.writeFile(file, updated);
-  }
-}
-await tools.bash('pnpm lint');
-```
+> 📄 **Code ví dụ:** [`examples/01-2-loi-ich-cot-loi-cua-code-mode.ts`](examples/01-2-loi-ich-cot-loi-cua-code-mode.ts)
 
 ```
 Single Turn: LLM ──[TypeScript Code]──► Code Runtime Engine ──[Exec All Steps]──► LLM (Kết quả cuối)
@@ -76,26 +63,7 @@ Single Turn: LLM ──[TypeScript Code]──► Code Runtime Engine ──[Exe
 
 Harness SDK đóng gói toàn bộ công cụ của hệ thống (Search, File System, MCP Tools, Shell execution) thành một đối tượng TypeScript có type-definition rõ ràng:
 
-```typescript
-export interface HarnessSDK {
-  fs: {
-    readFile(path: string): Promise<string>;
-    writeFile(path: string, content: string): Promise<void>;
-    searchFiles(pattern: string): Promise<string[]>;
-  };
-  bash: {
-    exec(command: string, options?: { timeoutMs?: number }): Promise<{ stdout: string; stderr: string; exitCode: number }>;
-  };
-  mcp: {
-    callTool(serverName: string, toolName: string, args: Record<string, any>): Promise<any>;
-  };
-  logger: {
-    info(msg: string): void;
-    warn(msg: string): void;
-    error(msg: string): void;
-  };
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-3-kien-truc-sdk-deepseek-ai-dsh-pattern.ts`](examples/02-3-kien-truc-sdk-deepseek-ai-dsh-pattern.ts)
 
 ---
 
@@ -124,52 +92,7 @@ export interface HarnessSDK {
 
 Dưới đây là mã nguồn đơn giản hóa của một **Code Mode Sandbox Executor** chạy mã TypeScript do LLM tạo ra:
 
-```typescript
-import * as vm from 'vm';
-import { HarnessSDK } from './sdk-types';
-
-export class CodeModeExecutor {
-  constructor(private sdk: HarnessSDK) {}
-
-  public async executeScript(code: string, timeoutMs: number = 30000): Promise<{ success: boolean; result?: any; logs: string[]; error?: string }> {
-    const logs: string[] = [];
-
-    // 1. Tạo Context an toàn với các API được duyệt
-    const sandboxContext = {
-      dsh: this.sdk,
-      console: {
-        log: (...args: any[]) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')),
-        error: (...args: any[]) => logs.push(`[ERROR] ${args.join(' ')}`),
-      },
-      setTimeout,
-      clearTimeout,
-    };
-
-    // 2. Wrap mã nguồn vào một Async IIFE
-    const wrappedCode = `
-      (async () => {
-        ${code}
-      })();
-    `;
-
-    try {
-      const vmContext = vm.createContext(sandboxContext);
-      const script = new vm.Script(wrappedCode);
-      
-      // 3. Thực thi mã nguồn trong sandbox có timeout
-      const result = await script.runInContext(vmContext, { timeout: timeoutMs });
-      
-      return { success: true, result, logs };
-    } catch (err: any) {
-      return {
-        success: false,
-        logs,
-        error: err.message || String(err)
-      };
-    }
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/03-5-trien-khai-minh-hoa-typescript-execution-sandbox.ts`](examples/03-5-trien-khai-minh-hoa-typescript-execution-sandbox.ts)
 
 ---
 

@@ -81,31 +81,11 @@ In Minimal Mode, the agent is given exactly **2 standardized tools**:
 
 ### 1. `bash`
 Allows running commands in the sandbox environment's terminal:
-```json
-{
-  "name": "bash",
-  "description": "Execute bash command in sandbox terminal",
-  "parameters": {
-    "command": { "type": "string", "description": "Command to run" }
-  }
-}
-```
+> 📄 **Example code:** [`examples/01-1-bash.json`](examples/01-1-bash.json)
 
 ### 2. `editor`
 Allows viewing and editing files at specified line ranges:
-```json
-{
-  "name": "editor",
-  "description": "View or edit file content",
-  "parameters": {
-    "command": { "type": "string", "enum": ["view", "create", "str_replace"] },
-    "path": { "type": "string" },
-    "file_text": { "type": "string" },
-    "old_str": { "type": "string" },
-    "new_str": { "type": "string" }
-  }
-}
-```
+> 📄 **Example code:** [`examples/02-2-editor.json`](examples/02-2-editor.json)
 
 ---
 
@@ -113,74 +93,7 @@ Allows viewing and editing files at specified line ranges:
 
 Below is the source code of a **Minimal Benchmark Runner** that fully isolates the execution environment:
 
-```typescript
-import { MinimalBashTool, MinimalEditorTool } from './minimal-tools';
-
-export interface BenchmarkTask {
-  id: string;
-  problemStatement: string;
-  repoPath: string;
-  testCommand: string;
-}
-
-export class MinimalBenchmarkRunner {
-  constructor(private llmClient: any) {}
-
-  public async runTask(task: BenchmarkTask, maxTurns: number = 20): Promise<{ solved: boolean; turns: number; log: any[] }> {
-    const bash = new MinimalBashTool(task.repoPath);
-    const editor = new MinimalEditorTool(task.repoPath);
-
-    // Minimal system prompt < 100 tokens
-    const systemPrompt = `You are an expert software engineer. Solve the issue using bash and editor tools. When finished, output COMPLETE_TASK.`;
-
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: task.problemStatement }
-    ];
-
-    const log: any[] = [];
-    let turn = 0;
-
-    while (turn < maxTurns) {
-      turn++;
-      // Call the LLM directly, without going through RAG or Memory Middleware
-      const response = await this.llmClient.chat({
-        messages,
-        tools: [bash.definition, editor.definition]
-      });
-
-      log.push({ turn, response });
-
-      if (response.content?.includes('COMPLETE_TASK')) {
-        break;
-      }
-
-      if (response.toolCalls) {
-        for (const call of response.toolCalls) {
-          let toolResult: any;
-          if (call.name === 'bash') {
-            toolResult = await bash.execute(call.args);
-          } else if (call.name === 'editor') {
-            toolResult = await editor.execute(call.args);
-          }
-
-          messages.push({
-            role: 'tool',
-            tool_call_id: call.id,
-            content: JSON.stringify(toolResult)
-          });
-        }
-      }
-    }
-
-    // Verify the result with an objective test script
-    const evalResult = await bash.execute({ command: task.testCommand });
-    const solved = evalResult.exitCode === 0;
-
-    return { solved, turns: turn, log };
-  }
-}
-```
+> 📄 **Example code:** [`examples/03-5-implementing-the-benchmark-runner-typescript-implementation.ts`](examples/03-5-implementing-the-benchmark-runner-typescript-implementation.ts)
 
 ---
 

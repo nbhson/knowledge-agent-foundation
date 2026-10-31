@@ -72,57 +72,7 @@
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import httpx
-
-API_URL = "https://api.typesafe.ai/v1/systemone"
-MODELS = {
-    "trivial":   "fast-model",     # cheapest, fastest
-    "moderate":  "mid-model",
-    "hard":      "capable-model",  # expensive — reserve for hard
-}
-ROUTING_THRESHOLD = 0.70
-
-
-def route_model(task: str, agent_state: dict) -> tuple[str, dict]:
-    """Middleware: Jev picks the LLM; probabilities stay in agent state."""
-    r = httpx.post(
-        API_URL,
-        headers={"Authorization": f"Bearer {API_KEY}"},
-        json={
-            "model": "jev-latest",
-            "state": {"task": task, "repo_context": agent_state.get("context", "")},
-            "questions": {
-                "difficulty": {
-                    "type": "choice",
-                    "options": ["trivial", "moderate", "hard"],
-                }
-            },
-        },
-        timeout=5.0,
-    )
-    r.raise_for_status()
-    d = r.json()["results"]["difficulty"]
-    pick = d["selected"]
-
-    # keep the full distribution in agent state — the audit signal later
-    agent_state["model_route"] = {
-        "selected": pick,
-        "probabilities": d["probabilities"],
-        "confidence": d["confidence"],
-        "threshold": ROUTING_THRESHOLD,
-    }
-
-    # low confidence → don't gamble on the cheap model for a hard task
-    if d["confidence"] < ROUTING_THRESHOLD:
-        return MODELS["hard"], agent_state["model_route"]
-
-    return MODELS.get(pick, "mid-model"), agent_state["model_route"]
-
-
-# usage: model_id, route_info = route_model(task, agent_state)
-#         response = call_llm(model_id, task)
-```
+> 📄 **Example code:** [`examples/01-the-routing-flow.py`](examples/01-the-routing-flow.py)
 
 </details>
 
@@ -165,45 +115,7 @@ def route_model(task: str, agent_state: dict) -> tuple[str, dict]:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import httpx
-
-API_URL = "https://api.typesafe.ai/v1/systemone"
-DESTRUCTIVE = {"delete_files", "charge_account", "send_email"}
-AUTHORIZE_THRESHOLD = 0.80
-
-
-def tool_gateway(proposed_tool: str, args: dict, agent_state: dict) -> dict:
-    """Jev gates side-effecting tool calls before execution."""
-    if proposed_tool not in DESTRUCTIVE:
-        return {"allow": True, "gate": "passthrough"}
-
-    r = httpx.post(
-        API_URL,
-        headers={"Authorization": f"Bearer {API_KEY}"},
-        json={
-            "model": "jev-latest",
-            "state": {
-                "user_request": agent_state.get("last_user_message", ""),
-                "tool": proposed_tool,
-                "target_summary": args.get("summary", str(args))[:500],
-            },
-            "questions": {"authorized": {"type": "noul"}},
-        },
-        timeout=5.0,
-    )
-    r.raise_for_status()
-    p_yes = r.json()["results"]["authorized"]["probability"]
-
-    allow = p_yes >= AUTHORIZE_THRESHOLD
-    log_decision(proposed_tool, {"p_yes": p_yes,
-                                 "threshold": AUTHORIZE_THRESHOLD,
-                                 "model": "jev-latest"})
-    if not allow:
-        return {"allow": False, "gate": "blocked",
-                "next": "request_approval"}   # tie into auth/approval system
-    return {"allow": True, "gate": "authorized"}
-```
+> 📄 **Example code:** [`examples/02-gateway-flow.py`](examples/02-gateway-flow.py)
 
 </details>
 
@@ -253,53 +165,7 @@ def tool_gateway(proposed_tool: str, args: dict, agent_state: dict) -> dict:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-# Pydantic AI: TypeSafeModel (Jev) + FallbackModel (LLM)
-# pip install pydantic-ai typesafe  (names illustrative)
-
-from enum import Enum
-from pydantic import BaseModel, Field
-from pydantic_ai import Agent
-from pydantic_ai.models.typesafe import TypeSafeModel
-from pydantic_ai.models.fallback import FallbackModel
-
-
-class Action(str, Enum):
-    """Which workflow step should run next?"""
-    REFETCH = Field(description="Re-fetch the missing data")
-    RETRY = Field(description="Retry the failed operation")
-    ESCALATE = Field(description="Escalate to a human")
-
-
-# Jev path: output_type → questions; docstring → framing
-jev_model = TypeSafeModel(
-    'jev-latest',
-    # default typesafe_tool_call_threshold=0.6 — retune from YOUR labels
-)
-
-# LLM path: handles steps Jev cannot (anything proposing arg-taking tools)
-llm_model = FallbackModel('gpt-class-model', 'claude-class-model')
-
-agent = Agent(FallbackModel(jev_model, llm_model))
-
-
-@agent.tool_plain          # NO-ARG tool → called directly on Jev's pick
-def escalate() -> str:
-    return create_escalation_ticket()
-
-
-@agent.tool                 # tool WITH args → ToolCallProposed (ModelAPIError)
-def retry(operation_id: str, reason: str) -> str:
-    return retry_operation(operation_id, reason)
-
-
-# Flow in practice:
-# 1. Jev evaluates questions in parallel; if the pick maps to a no-arg tool
-#    above threshold → tool runs immediately (fast, typed, cheap).
-# 2. If the step needs an arg-taking tool → ToolCallProposed ModelAPIError
-#    → FallbackModel (LLM) takes over THE WHOLE STEP — it decides and writes args.
-# 3. Never drop the fallback: Jev can be confidently wrong in-schema (see 04/07).
-```
+> 📄 **Example code:** [`examples/03-4-2-mapping-pydantic-jev-questions.py`](examples/03-4-2-mapping-pydantic-jev-questions.py)
 
 </details>
 

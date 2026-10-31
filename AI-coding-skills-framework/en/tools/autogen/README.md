@@ -57,40 +57,13 @@ User → UserProxyAgent → AssistantAgent (calls tool) → UserProxyAgent (runs
 
 ### Sample Code From HARNESS_ENGINEERING.md
 
-```python
-from autogen import AssistantAgent, UserProxyAgent
-
-assistant = AssistantAgent(
-    name="assistant",
-    llm_config={"model": "gpt-4"},
-    system_message="You are a helpful assistant"
-)
-
-# UserProxyAgent plays the harness role — orchestration, code execution, control
-harness = UserProxyAgent(
-    name="harness",
-    human_input_mode="NEVER",
-    max_consecutive_auto_reply=10,
-    code_execution_config={"work_dir": "coding"}
-)
-```
+> 📄 **Example code:** [`examples/01-sample-code-from-harness-engineering-md.py`](examples/01-sample-code-from-harness-engineering-md.py)
 
 With `human_input_mode="NEVER"`, the UserProxyAgent turns into a **harness that runs by itself**: it calls tools on its own, gathers the results on its own, and keeps going until the job is done or it reaches the `max_consecutive_auto_reply` limit.
 
 ### GroupChat — Multiple Agents
 
-```python
-from autogen import GroupChat, GroupChatManager
-
-agents = [planner, assistant, critic, executor]
-group_chat = GroupChat(
-    agents=agents,
-    messages=[],
-    max_round=20,
-    speaker_selection_method="auto"  # or "round_robin", "vote"
-)
-manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config)
-```
+> 📄 **Example code:** [`examples/02-groupchat-multiple-agents.py`](examples/02-groupchat-multiple-agents.py)
 
 This is **harness/09-multi-agent** written as code — a manager decides who speaks next, much like a harness guides its workers.
 
@@ -131,29 +104,13 @@ Step 5: Connect memory + evaluation (see tools/observability, tools/evaluation)
 
 ### 1. Code Review Pipeline (Planner → Coder → Critic)
 
-```python
-planner  = AssistantAgent(name="planner",  system_message="Create a detailed plan")
-coder    = AssistantAgent(name="coder",    system_message="Write code following the plan")
-critic   = AssistantAgent(name="critic",   system_message="Review logic & safety errors")
-
-group_chat = GroupChat(agents=[planner, coder, critic], max_round=15)
-manager = GroupChatManager(groupchat=group_chat)
-
-# The harness starts the council
-result = manager.run(task="Implement login API with rate limiting")
-```
+> 📄 **Example code:** [`examples/03-1-code-review-pipeline-planner-coder-critic.py`](examples/03-1-code-review-pipeline-planner-coder-critic.py)
 
 How it runs: the planner suggests a plan → the coder writes the code → the critic spots bugs → the coder fixes them → this repeats until the critic is happy — a code version of **loop/05-multi-loop**.
 
 ### 2. Human-in-the-Loop for Sensitive Changes
 
-```python
-sensitive_harness = UserProxyAgent(
-    name="harness",
-    human_input_mode="TERMINATE",  # only stops when confirmation is needed
-    code_execution_config=False
-)
-```
+> 📄 **Example code:** [`examples/04-2-human-in-the-loop-for-sensitive-changes.py`](examples/04-2-human-in-the-loop-for-sensitive-changes.py)
 
 ## Reference Materials
 
@@ -181,17 +138,7 @@ AutoGen has been **archived** and replaced by **Microsoft Agent Framework (MAF)*
 - MAF = unification of AutoGen + Semantic Kernel
 - Completely new API: `agents/`, no more `ConversableAgent`
 
-```python
-# MAF new (2025+)
-from agent_framework import ChatAgent
-from agent_framework.openai import OpenAIChatClient
-
-agent = OpenAIChatClient(model_id="gpt-4o").create_agent(
-    name="assistant",
-    instructions="You are a helpful assistant",
-)
-result = await agent.run("Hello!")
-```
+> 📄 **Example code:** [`examples/05-update-10-2026-autogen-microsoft-agent-framework-maf.py`](examples/05-update-10-2026-autogen-microsoft-agent-framework-maf.py)
 
 **Migrate your project:** https://learn.microsoft.com/en-us/agent-framework/migration-guide/from-autogen/
 **MAF new:** https://github.com/microsoft/agent-framework

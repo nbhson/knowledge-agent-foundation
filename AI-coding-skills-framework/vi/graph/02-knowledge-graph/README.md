@@ -117,114 +117,14 @@ Raw Documents
 
 ### 1.2 Thiết Kế Ontology
 
-```yaml
-# ontology.yaml — Schema cho Enterprise KG
-
-node_types:
-  Person:
-    properties:
-      name: {type: string, required: true, unique: true}
-      role: {type: string, enum: [CTO, Engineer, Manager, Intern]}
-      email: {type: string, format: email}
-    indexes: [name]
-
-  Project:
-    properties:
-      name: {type: string, required: true}
-      budget: {type: number, min: 0}
-      status: {type: string, enum: [Active, Completed, Cancelled]}
-    indexes: [name, status]
-
-  Document:
-    properties:
-      title: string
-      doc_type: {type: string, enum: [Contract, Report, Email]}
-      created_at: {type: datetime}
-
-edge_types:
-  MANAGES:
-    from: Person
-    to: Person
-    properties:
-      since: {type: date}
-      confidence: {type: float, min: 0, max: 1}
-    temporal: true  # có valid_from / valid_until
-
-  APPROVES:
-    from: Person
-    to: Document
-    properties:
-      approved_at: date
-      confidence: float
-
-  WORKS_ON:
-    from: Person
-    to: Project
-    properties:
-      role: string
-      allocation: {type: float, min: 0, max: 1}  # % thời gian
-
-  BELONGS_TO:
-    from: Document
-    to: Project
-
-constraints:
-  - "Person -[MANAGES]-> Person (không tự quản lý chính mình)"
-  - "Project.budget > 0"
-  - "APPROVES.confidence >= 0.7 mới được coi là valid"
-```
+> 📄 **Code ví dụ:** [`examples/01-1-2-thiet-ke-ontology.yaml`](examples/01-1-2-thiet-ke-ontology.yaml)
 
 ### 1.3 Validation Code
 
 <details>
 <summary>Python Code — Ontology Validation (Click để xem)</summary>
 
-```python
-from dataclasses import dataclass
-from typing import Dict, List, Optional
-
-@dataclass
-class Ontology:
-    node_types: Dict[str, Dict]
-    edge_types: Dict[str, Dict]
-    
-    def validate_node(self, label: str, props: Dict) -> tuple[bool, str]:
-        if label not in self.node_types:
-            return False, f"Unknown node type: {label}"
-        schema = self.node_types[label]
-        for prop, rules in schema.get("properties", {}).items():
-            if rules.get("required") and prop not in props:
-                return False, f"Missing required property: {prop}"
-            if prop in props and "enum" in rules:
-                if props[prop] not in rules["enum"]:
-                    return False, f"Invalid value for {prop}: {props[prop]}"
-        return True, "OK"
-    
-    def validate_edge(self, edge_type: str, from_label: str, to_label: str) -> tuple[bool, str]:
-        if edge_type not in self.edge_types:
-            return False, f"Unknown edge type: {edge_type}"
-        rule = self.edge_types[edge_type]
-        if rule["from"] != from_label or rule["to"] != to_label:
-            return False, f"Edge {edge_type} requires {rule['from']} -> {rule['to']}, got {from_label} -> {to_label}"
-        if from_label == to_label and edge_type == "MANAGES":
-            return False, "Cannot manage self"
-        return True, "OK"
-
-# Usage
-ontology = Ontology(
-    node_types={
-        "Person": {"properties": {"name": {"required": True}, "role": {"enum": ["CTO", "Engineer"]}}},
-        "Project": {"properties": {"name": {"required": True}}},
-    },
-    edge_types={
-        "MANAGES": {"from": "Person", "to": "Person"},
-        "WORKS_ON": {"from": "Person", "to": "Project"},
-    }
-)
-print(ontology.validate_node("Person", {"name": "Alice", "role": "CTO"}))  # (True, OK)
-print(ontology.validate_edge("MANAGES", "Person", "Person"))  # (True, OK)
-print(ontology.validate_edge("MANAGES", "Project", "Person"))  # (False, ...)
-```
+> 📄 **Code ví dụ:** [`examples/02-1-3-validation-code.py`](examples/02-1-3-validation-code.py)
 
 </details>
 
@@ -261,73 +161,7 @@ print(ontology.validate_edge("MANAGES", "Project", "Person"))  # (False, ...)
 <details>
 <summary>Python Code — Entity Extraction với Gleaning (Click để xem)</summary>
 
-```python
-import requests
-
-OLLAMA_URL = "http://localhost:11434"
-
-EXTRACTION_PROMPT = """Trích xuất entities từ văn bản sau.
-Chỉ trích các loại: Person, Project, Document, Organization.
-
-Văn bản:
-{text}
-
-Đã trích trước đó (để tránh trùng):
-{already_extracted}
-
-Trả về JSON list:
-[{{"name": "...", "type": "Person", "description": "..."}}]
-
-Nếu không còn entity mới, trả về []
-"""
-
-def extract_entities(text: str, model: str = "gemma3:12b", max_gleanings: int = 2) -> list:
-    """Gleaning loop: trích nhiều vòng để tăng coverage."""
-    all_entities = []
-    already = set()
-    
-    for glean_round in range(max_gleanings + 1):
-        prompt = EXTRACTION_PROMPT.format(
-            text=text,
-            already_extracted=", ".join(already) if already else "chưa có"
-        )
-        
-        resp = requests.post(f"{OLLAMA_URL}/api/generate", json={
-            "model": model,
-            "prompt": prompt,
-            "stream": False,
-            "format": "json"
-        })
-        import json as js
-        try:
-            new_entities = js.loads(resp.json()["response"])
-        except:
-            new_entities = []
-        
-        # Lọc trùng
-        added = 0
-        for ent in new_entities:
-            key = ent["name"].lower().strip()
-            if key not in already:
-                already.add(key)
-                all_entities.append(ent)
-                added += 1
-        
-        print(f"Gleaning round {glean_round}: +{added} entities")
-        if added == 0:
-            break  # Không còn gì mới
-    
-    return all_entities
-
-# Usage
-text = """
-Dự án Phoenix do Nguyễn Văn A phê duyệt. Hợp đồng C-2024 thuộc dự án Phoenix.
-Nguyễn Văn A báo cáo cho Trần Thị B, CTO của công ty. Trần Thị B quản lý team AI.
-"""
-entities = extract_entities(text)
-print(entities)
-# [{"name": "Nguyễn Văn A", "type": "Person", ...}, {"name": "Phoenix", "type": "Project", ...}, ...]
-```
+> 📄 **Code ví dụ:** [`examples/03-2-2-llm-extraction-voi-gleaning-loop-graphrag.py`](examples/03-2-2-llm-extraction-voi-gleaning-loop-graphrag.py)
 
 </details>
 
@@ -335,25 +169,7 @@ print(entities)
 
 Giống như RAG, documents lớn cần chia nhỏ trước khi extraction:
 
-```python
-def chunk_for_extraction(text: str, chunk_size: int = 1000, overlap: int = 100) -> list[str]:
-    """Chia document thành chunks cho extraction — mỗi chunk trích riêng, rồi merge."""
-    chunks = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunks.append(text[start:end])
-        start = end - overlap
-    return chunks
-
-# Extract từng chunk, rồi merge entities
-def extract_from_document(doc_text: str) -> list:
-    chunks = chunk_for_extraction(doc_text)
-    all_entities = []
-    for chunk in chunks:
-        all_entities.extend(extract_entities(chunk, max_gleanings=1))
-    return all_entities
-```
+> 📄 **Code ví dụ:** [`examples/04-2-3-chunking-truoc-khi-extract.py`](examples/04-2-3-chunking-truoc-khi-extract.py)
 
 ### 2.4 Claims Extraction (GraphRAG Pattern)
 
@@ -367,31 +183,7 @@ def extract_from_document(doc_text: str) -> list:
 >
 > **Tại sao cần?** GraphRAG của Microsoft trích cả 3 loại (entity/relation/claim). Claim cho phép trả lời câu hỏi dạng **"qui định nào / bằng chứng nào nói về X?"** — LLM trả lời kèm **nguồn bằng chứng** (source text) thay vì đoán. Mỗi claim **click được về chunk gốc** (evidence provenance).
 
-```python
-CLAIM_PROMPT = """Trích xuất các khẳng định (claims) từ văn bản.
-Mỗi claim = 1 sự thật đáng lưu, kèm header (chủ đề) đơn giản.
-
-Văn bản:
-{text}
-
-Trả về JSON list, mỗi phần tử:
-{{"subject": "...", "predicate": "...", "object": "...", "description": "..."}}
-Nếu không có claim, trả về []
-"""
-
-def extract_claims(text: str, model: str = "gemma3:12b") -> list:
-    # (triển khai tương tự extract_entities — gọi LLM, parse JSON)
-    ...
-    return claims
-
-# Mỗi claim được GẮN với chunk gốc → truy vết được về tài liệu
-def attach_claims(chunks: list[dict]) -> list[dict]:
-    for chunk in chunks:
-        claims = extract_claims(chunk["text"])
-        for c in claims:
-            c["source_chunk_id"] = chunk["id"]   # ← evidence provenance
-    return ...
-```
+> 📄 **Code ví dụ:** [`examples/05-2-4-claims-extraction-graphrag-pattern.py`](examples/05-2-4-claims-extraction-graphrag-pattern.py)
 
 ---
 
@@ -402,47 +194,7 @@ def attach_claims(chunks: list[dict]) -> list[dict]:
 <details>
 <summary>Python Code — Relation Extraction (Click để xem)</summary>
 
-```python
-RELATION_PROMPT = """Cho danh sách entities và văn bản, trích xuất quan hệ.
-
-Entities:
-{entities}
-
-Văn bản:
-{text}
-
-Các loại quan hệ hợp lệ:
-- MANAGES: Person -> Person
-- APPROVES: Person -> Document
-- WORKS_ON: Person -> Project
-- BELONGS_TO: Document -> Project
-- REPORTS_TO: Person -> Person
-
-Trả về JSON:
-[{{"source": "Nguyễn Văn A", "target": "Hợp đồng C-2024", "type": "APPROVES", "confidence": 0.9, "evidence": "..."}}]
-"""
-
-def extract_relations(text: str, entities: list, model: str = "gemma3:12b") -> list:
-    ent_str = "\n".join(f"- {e['name']} ({e['type']})" for e in entities)
-    prompt = RELATION_PROMPT.format(entities=ent_str, text=text)
-    
-    resp = requests.post(f"{OLLAMA_URL}/api/generate", json={
-        "model": model,
-        "prompt": prompt,
-        "stream": False,
-        "format": "json"
-    })
-    import json as js
-    try:
-        return js.loads(resp.json()["response"])
-    except:
-        return []
-
-# Usage
-relations = extract_relations(text, entities)
-print(relations)
-# [{"source": "Nguyễn Văn A", "target": "Hợp đồng C-2024", "type": "APPROVES", "confidence": 0.9}, ...]
-```
+> 📄 **Code ví dụ:** [`examples/06-3-1-schema-guided-relation-extraction.py`](examples/06-3-1-schema-guided-relation-extraction.py)
 
 </details>
 
@@ -450,13 +202,7 @@ print(relations)
 
 Mỗi relation nên có `confidence` để downstream filtering:
 
-```python
-def filter_by_confidence(relations: list, threshold: float = 0.7) -> list:
-    """Chỉ giữ relations có confidence >= threshold."""
-    filtered = [r for r in relations if r.get("confidence", 0) >= threshold]
-    print(f"Filtered: {len(relations)} -> {len(filtered)} (threshold={threshold})")
-    return filtered
-```
+> 📄 **Code ví dụ:** [`examples/07-3-2-confidence-scoring.py`](examples/07-3-2-confidence-scoring.py)
 
 ---
 
@@ -492,71 +238,7 @@ Raw extraction:
 <details>
 <summary>Python Code — Deduplication (Click để xem)</summary>
 
-```python
-import numpy as np
-
-def cosine_sim(a, b):
-    a, b = np.array(a), np.array(b)
-    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
-
-def embed(text: str, model: str = "nomic-embed-text") -> list[float]:
-    resp = requests.post(f"{OLLAMA_URL}/api/embed", json={"model": model, "input": text})
-    return resp.json()["embeddings"][0]
-
-def deduplicate_entities(entities: list, threshold: float = 0.85) -> list:
-    """
-    Gộp entities trùng lặp dựa trên embedding similarity.
-    Giữ entity đầu tiên làm canonical.
-    """
-    if not entities:
-        return []
-    
-    # Embed từng entity name
-    embeddings = [embed(e["name"]) for e in entities]
-    
-    canonical = []  # list of (entity, embedding)
-    mapping = {}    # old_name -> canonical_name
-    
-    for ent, emb in zip(entities, embeddings):
-        found = False
-        for canon_ent, canon_emb in canonical:
-            if ent["type"] != canon_ent["type"]:
-                continue  # Chỉ so sánh cùng type
-            sim = cosine_sim(emb, canon_emb)
-            if sim >= threshold:
-                mapping[ent["name"]] = canon_ent["name"]
-                # Merge properties
-                print(f"Dedup: '{ent['name']}' -> '{canon_ent['name']}' (sim={sim:.3f})")
-                found = True
-                break
-        
-        if not found:
-            canonical.append((ent, emb))
-            mapping[ent["name"]] = ent["name"]
-    
-    # Trả về canonical entities + mapping để sửa relations
-    canonical_entities = [c[0] for c in canonical]
-    return canonical_entities, mapping
-
-def remap_relations(relations: list, mapping: dict) -> list:
-    """Sửa source/target trong relations theo mapping dedup."""
-    for r in relations:
-        r["source"] = mapping.get(r["source"], r["source"])
-        r["target"] = mapping.get(r["target"], r["target"])
-    # Loại bỏ self-loops sau dedup
-    return [r for r in relations if r["source"] != r["target"]]
-
-# Usage
-entities_raw = [
-    {"name": "Nguyễn Văn A", "type": "Person"},
-    {"name": "Alice Nguyen", "type": "Person"},
-    {"name": "Phoenix", "type": "Project"},
-    {"name": "Dự án Phoenix", "type": "Project"},
-]
-canonical, mapping = deduplicate_entities(entities_raw, threshold=0.80)
-print(f"Canonical: {[c['name'] for c in canonical]}")
-print(f"Mapping: {mapping}")
-```
+> 📄 **Code ví dụ:** [`examples/08-4-2-embedding-based-deduplication.py`](examples/08-4-2-embedding-based-deduplication.py)
 
 </details>
 
@@ -569,21 +251,7 @@ print(f"Mapping: {mapping}")
 >
 > **Analogies:** Giống tổ chức sự kiện: 3 người đăng ký ghi khác tên ("Nguyễn Văn A", "NV A", "anh A") — bảo vệ (linking) phải nhận ra đó là 1 người để không cấp 3 thẻ khác nhau.
 
-```python
-# Coreference trong text: "Alice ký hợp đồng. Cô ấy giao 200m." 
-# → "Cô ấy" = Alice (coreference)
-# → "Alice" (doc khác viết "A. Nguyen") = node Alice đang tồn tại (entity linking)
-
-def entity_linking(mention: str, graph_entities: list[str], embedding_fn) -> str:
-    """Gắn mention ('A. Nguyen') về canonical entity bằng similarity."""
-    best, best_score = None, 0
-    v_mention = embedding_fn(mention)
-    for ent in graph_entities:
-        score = cosine(v_mention, embedding_fn(ent))
-        if score > best_score:
-            best, best_score = ent, score
-    return best if best_score > 0.85 else None   # dưới ngưỡng → entity MỚI
-```
+> 📄 **Code ví dụ:** [`examples/09-4-3-entity-linking-coreference-resolution.py`](examples/09-4-3-entity-linking-coreference-resolution.py)
 
 ---
 
@@ -591,54 +259,7 @@ def entity_linking(mention: str, graph_entities: list[str], embedding_fn) -> str
 
 KG production thay đổi hàng ngày — không thể rebuild toàn bộ mỗi lần.
 
-```python
-class IncrementalKGUpdater:
-    """Cập nhật KG theo event — thêm/sửa/xóa không rebuild."""
-    
-    def __init__(self, graph):
-        self.graph = graph  # Neo4j / NetworkX / Kuzu
-    
-    def upsert_entity(self, entity: dict):
-        """Thêm hoặc cập nhật entity (dựa trên unique key)."""
-        # Cypher: MERGE (tạo nếu chưa có, cập nhật nếu có)
-        query = """
-        MERGE (n:Person {name: $name})
-        SET n.role = $role, n.updated_at = datetime()
-        RETURN n
-        """
-        self.graph.query(query, params=entity)
-    
-    def upsert_relation(self, source: str, target: str, rel_type: str, props: dict):
-        query = f"""
-        MATCH (a {{name: $source}}), (b {{name: $target}})
-        MERGE (a)-[r:{rel_type}]->(b)
-        SET r.confidence = $confidence, r.updated_at = datetime()
-        RETURN r
-        """
-        self.graph.query(query, params={"source": source, "target": target, **props})
-    
-    def soft_delete(self, node_name: str):
-        """Soft delete: đánh dấu, không xóa cứng — giữ history."""
-        query = """
-        MATCH (n {name: $name})
-        SET n.deleted = true, n.deleted_at = datetime()
-        """
-        self.graph.query(query, params={"name": node_name})
-    
-    def process_new_document(self, doc_text: str, doc_id: str):
-        """Pipeline cho document mới: extract → dedup → upsert."""
-        entities = extract_entities(doc_text)
-        relations = extract_relations(doc_text, entities)
-        canonical, mapping = deduplicate_entities(entities)
-        relations = remap_relations(relations, mapping)
-        
-        for ent in canonical:
-            self.upsert_entity(ent)
-        for rel in relations:
-            self.upsert_relation(rel["source"], rel["target"], rel["type"], rel)
-        
-        print(f"Ingested doc {doc_id}: {len(canonical)} entities, {len(relations)} relations")
-```
+> 📄 **Code ví dụ:** [`examples/10-5-incremental-kg-updates.py`](examples/10-5-incremental-kg-updates.py)
 
 ---
 
@@ -647,62 +268,7 @@ class IncrementalKGUpdater:
 <details>
 <summary>Python Code — End-to-End KG Construction (Click để xem)</summary>
 
-```python
-def build_knowledge_graph(documents: list[str], ontology: Ontology) -> dict:
-    """
-    Pipeline hoàn chỉnh: Documents -> Knowledge Graph
-    """
-    all_entities = []
-    all_relations = []
-    
-    # Step 1: Extract từ từng document
-    for doc in documents:
-        entities = extract_entities(doc, max_gleanings=2)
-        relations = extract_relations(doc, entities)
-        all_entities.extend(entities)
-        all_relations.extend(relations)
-    
-    print(f"Raw: {len(all_entities)} entities, {len(all_relations)} relations")
-    
-    # Step 2: Deduplicate
-    canonical_entities, mapping = deduplicate_entities(all_entities, threshold=0.85)
-    all_relations = remap_relations(all_relations, mapping)
-    
-    print(f"After dedup: {len(canonical_entities)} entities, {len(all_relations)} relations")
-    
-    # Step 3: Validate against ontology
-    valid_entities = []
-    for ent in canonical_entities:
-        ok, msg = ontology.validate_node(ent["type"], ent)
-        if ok:
-            valid_entities.append(ent)
-        else:
-            print(f"Invalid entity {ent['name']}: {msg}")
-    
-    valid_relations = []
-    for rel in all_relations:
-        # Tìm type của source/target
-        src_type = next((e["type"] for e in valid_entities if e["name"] == rel["source"]), None)
-        tgt_type = next((e["type"] for e in valid_entities if e["name"] == rel["target"]), None)
-        if src_type and tgt_type:
-            ok, msg = ontology.validate_edge(rel["type"], src_type, tgt_type)
-            if ok and rel.get("confidence", 0) >= 0.7:
-                valid_relations.append(rel)
-            else:
-                print(f"Invalid relation {rel}: {msg}")
-    
-    print(f"After validation: {len(valid_entities)} entities, {len(valid_relations)} relations")
-    
-    return {"entities": valid_entities, "relations": valid_relations}
-
-# Usage
-docs = [
-    "Dự án Phoenix do Nguyễn Văn A phê duyệt. Hợp đồng C-2024 thuộc dự án Phoenix.",
-    "Nguyễn Văn A báo cáo cho Trần Thị B, CTO. Trần Thị B quản lý team AI gồm 10 engineers.",
-]
-kg = build_knowledge_graph(docs, ontology)
-print(kg)
-```
+> 📄 **Code ví dụ:** [`examples/11-6-complete-pipeline.py`](examples/11-6-complete-pipeline.py)
 
 </details>
 
@@ -727,33 +293,7 @@ print(kg)
 >
 > Các hệ thống điển hình: **KnoBuilder, KG-Agent** (tự trích triplet theo vòng lặp), **RAGA** (đánh giá chất lượng KG rồi cho agent sửa). Nghiên cứu 2025-2026 cho thấy agentic approach **giảm đáng kể triplets sai** so với batch single-pass, với chi phí cao hơn 2-3×.
 
-```python
-# Pseudocode — Agent xây KG (dùng Cypher + query kiểm tra)
-TOOLS = ["create_entity", "link_entities", "query_graph", "delete_triplet"]
-
-def agent_build_chunk(chunk_text: str, cypher_exec) -> list[str]:
-    """Agent đọc chunk, quyết định các thao tác CRUD, rồi tự verify."""
-    actions = []
-    # 1) PLAN: LLM quyết định triplet nào cần thêm
-    triplets = llm(f"Từ đoạn sau, các (entity, relation, entity) nào đáng ghi? {chunk_text}")
-    for subj, rel, obj in triplets:
-        # 2) ACTION: thử MERGE + SET source để truy vết
-        cypher_exec("""
-            MERGE (s {name:$subj}) 
-            ON CREATE SET s.source_chunk=$chunk
-            WITH s
-            MATCH (t {name: $obj})
-            MERGE (s)-[r:REL {type:$rel}]->(t)
-            SET r.source_chunk=$chunk
-        """, subj=subj, rel=rel, obj=obj, chunk=chunk_text[:100])
-        actions.append(f"CREATE {subj}--{rel}-->{obj}")
-    # 3) VERIFY: ở cuối chunk, hỏi lại LLM kiểm tra những gì vừa viết
-    review = llm(f"Các triplet này có đúng/đủ không? {triplets}")
-    if "cần sửa" in review:
-        cypher_exec("DELETE ...")  # agent tự sửa (UPDATE/DELETE)
-        actions.append("FIX: " + review)
-    return actions
-```
+> 📄 **Code ví dụ:** [`examples/12-7-agentic-kg-construction.py`](examples/12-7-agentic-kg-construction.py)
 
 ---
 

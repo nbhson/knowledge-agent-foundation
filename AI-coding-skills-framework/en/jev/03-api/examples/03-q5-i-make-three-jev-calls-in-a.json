@@ -1,0 +1,5 @@
+{"model": "jev-latest", "state": "Ticket #4821: charged twice, wants $49 back...",
+ "questions": {
+   "team":   {"type": "choice", "options": ["billing","infra","bug"], "question": "Which team owns this?"},
+   "refund": {"type": "noul", "question": "Does the customer ask for money back?", "criteria": "Yes only if a refund or reversal is requested."},
+   "urgency":{"type": "score", "levels": [{"level":1,"description":"routine"},{"level":2,"description":"soon"},{"level":3,"description":"critical"}], "question": "How urgent?"}}}

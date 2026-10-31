@@ -23,33 +23,12 @@ check JSON with `jq . NAME.json` and make scripts runnable with `chmod +x script
 
 Standard frame:
 
-```json
-{
-  "version": 1,
-  "hooks": {
-    "sessionStart": [],
-    "sessionEnd": [],
-    "userPromptSubmitted": [],
-    "preToolUse": [],
-    "postToolUse": [],
-    "errorOccurred": []
-  }
-}
-```
+> 📄 **Example code:** [`examples/01-how-to-write-a-hook.json`](examples/01-how-to-write-a-hook.json)
 
 Each hook is one concrete command. Always write **both** `bash` (Linux/macOS)
 and `powershell` (Windows) so every machine runs it:
 
-```json
-{
-  "type": "command",
-  "bash": "./scripts/log-prompt.sh",
-  "powershell": "./scripts/log-prompt.ps1",
-  "cwd": "scripts",
-  "env": { "LOG_LEVEL": "INFO" },
-  "timeoutSec": 10
-}
-```
+> 📄 **Example code:** [`examples/02-how-to-write-a-hook.json`](examples/02-how-to-write-a-hook.json)
 
 Besides local scripts, hooks can POST the JSON payload to a URL (HTTP hooks).
 
@@ -72,9 +51,7 @@ Besides local scripts, hooks can POST the JSON payload to a URL (HTTP hooks).
 
 Fake one tool call, pipe it into your script, check the JSON answer:
 
-```bash
-echo '{"timestamp":1704614400000,"cwd":"/tmp","toolName":"bash","toolArgs":"{\"command\":\"ls\"}"}' | ./my-hook.sh
-```
+> 📄 **Example code:** [`examples/03-test-it-on-your-machine-first.sh`](examples/03-test-it-on-your-machine-first.sh)
 
 Three usual mistakes: file outside `.github/hooks/`, missing `"version": 1`,
 script not `chmod +x`. For approval doors remember **fail-closed**:

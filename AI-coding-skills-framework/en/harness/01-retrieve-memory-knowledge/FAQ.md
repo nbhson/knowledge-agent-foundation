@@ -53,16 +53,7 @@ Chunking happens before embedding, so a bad cut becomes a permanent defect in th
 
 Split on structure first, keep the overlap, and carry the section name as metadata so a retrieved chunk still knows where it came from.
 
-```python
-sections = re.split(r'^(#{1,3}\s+.+)$', text, flags=re.MULTILINE)
-for section in sections:
-    if re.match(r'^#{1,3}\s+', section):
-        current_header = section.strip()      # the heading becomes metadata
-    elif section.strip():
-        for para in section.split('\n\n'):   # too big → split by paragraph
-            chunks.append({"content": para.strip(),
-                           "metadata": {"section": current_header}})
-```
+> 📄 **Example code:** [`examples/01-q2-the-retrieved-chunk-cuts-a-sentence-in.py`](examples/01-q2-the-retrieved-chunk-cuts-a-sentence-in.py)
 
 **Verify**
 
@@ -84,15 +75,7 @@ Most RAG code treats "zero results" and "one weak result" the same as "great res
 
 Set a score floor, retry once with keyword search only, then abstain explicitly instead of inventing. Retrieval precision@10 above 85% is the threshold where this whole approach starts paying off.
 
-```python
-TOP_SCORE_FLOOR, TOP_K = 0.25, 5
-hits = vector_search(q_emb, tenant_id)
-top = max([h["score"] for h in hits], default=0.0)
-if not hits or top < TOP_SCORE_FLOOR:
-    hits = bm25_search(q, tenant_id)          # one retry, keyword only
-if not hits:
-    return {"answer": None, "abstain": True, "reason": "no grounding found"}
-```
+> 📄 **Example code:** [`examples/02-q3-the-bot-invents-facts-when-the-index.py`](examples/02-q3-the-bot-invents-facts-when-the-index.py)
 
 Log the fallback every time it fires, and watch four numbers on a dashboard: `hit_rate@k`, zero-hit percentage, low-score percentage, and latency at the 50th and 99th percentile.
 

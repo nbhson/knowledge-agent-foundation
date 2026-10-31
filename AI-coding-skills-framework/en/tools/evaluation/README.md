@@ -56,61 +56,17 @@ You change the system prompt from "you are a helpful assistant" to "you are a se
 
 ### PromptFoo — Config-Driven Eval
 
-```yaml
-# promptfooconfig.yaml
-prompts:
-  - "Summarize: {{input}}"
-  - "Provide a concise summary: {{input}}"
+> 📄 **Example code:** [`examples/01-promptfoo-config-driven-eval.yaml`](examples/01-promptfoo-config-driven-eval.yaml)
 
-providers:
-  - openai:gpt-4
-  - anthropic:claude-3-5-sonnet
-
-tests:
-  - vars:
-      input: "Long technical document..."
-    assert:
-      - type: contains
-        value: "key concept"
-      - type: cost
-        threshold: 0.05  # each prompt ≤ $0.05
-```
-
-```bash
-promptfoo eval   # run the whole test suite
-promptfoo view   # view the comparison table of providers + prompts
-```
+> 📄 **Example code:** [`examples/02-promptfoo-config-driven-eval.sh`](examples/02-promptfoo-config-driven-eval.sh)
 
 ### Deepeval — Pytest-Style Eval
 
-```python
-import pytest
-from deepeval import assert_test
-from deepeval.metrics import AnswerRelevancyMetric, FaithfulnessMetric
-from deepeval.test_case import LLMTestCase
-
-def test_harness_answer():
-    test_case = LLMTestCase(
-        input="For whom is BHYT applicable?",
-        actual_output=harness.run("For whom is BHYT applicable?"),
-        retrieval_context=retrieved_chunks,
-    )
-    assert_test(test_case, [AnswerRelevancyMetric(), FaithfulnessMetric()])
-```
+> 📄 **Example code:** [`examples/03-deepeval-pytest-style-eval.py`](examples/03-deepeval-pytest-style-eval.py)
 
 ### Ragas — RAG-Specific Metrics
 
-```python
-from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevancy, context_precision
-
-dataset = load_your_qa_dataset()
-results = evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_precision])
-
-# faithfulness        → is the answer consistent with the context
-# answer_relevancy    → is the answer relevant to the question
-# context_precision   → are the retrieved chunks sufficient/correct
-```
+> 📄 **Example code:** [`examples/04-ragas-rag-specific-metrics.py`](examples/04-ragas-rag-specific-metrics.py)
 
 ## Learning Roadmap (Directory Structure)
 
@@ -150,13 +106,7 @@ Step 5: Integrate eval into CI — block regressions on every prompt change (03-
 
 ### 1. Regression Detection in CI
 
-```yaml
-# .github/workflows/evals.yml
-steps:
-  - run: promptfoo eval --share   # run the eval suite
-  - run: promptfoo regression-check  # compare against the baseline
-  # fail CI if accuracy drops by more than 5%
-```
+> 📄 **Example code:** [`examples/05-1-regression-detection-in-ci.yaml`](examples/05-1-regression-detection-in-ci.yaml)
 
 ### 2. Comparing Prompt Engineering Changes
 

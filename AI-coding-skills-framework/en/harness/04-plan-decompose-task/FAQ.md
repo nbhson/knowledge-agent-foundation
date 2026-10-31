@@ -49,15 +49,7 @@ Three causes: no termination condition per sub-task, no hardcoded-but-computed o
 3. Cap the outer loop too, so a confused agent cannot burn the whole budget.
 4. Keep sub-tasks coarse; over-decomposition costs more overhead than it saves.
 
-```python
-class Task:                      # guardrails nằm trên từng task
-    max_retries = 3; timeout_seconds = 300
-    token_budget = None; tools_allowed = []
-
-class ReActAgent:
-    def __init__(self, tools, llm_func, max_steps=10):
-        self.max_steps = max_steps   # outer loop guardrail
-```
+> 📄 **Example code:** [`examples/01-q2-the-agent-loops-a-b-a-b.py`](examples/01-q2-the-agent-loops-a-b-a-b.py)
 
 **Verify**
 
@@ -88,11 +80,7 @@ Classify every failure into one of three decisions, then log `attempt, error_cla
 
 **Verify**
 
-```python
-if state.get("replans", 0) >= MAX_REPLAN: return "escalate"
-if state.get("transient") and state.get("attempts", 0) < MAX_RETRY: return "retry"
-if state.get("status") == "failed": return "replan"
-```
+> 📄 **Example code:** [`examples/02-q3-a-subtask-fails-and-the-agent-retries.py`](examples/02-q3-a-subtask-fails-and-the-agent-retries.py)
 
 Assert in tests that a run cannot exceed 3 retries and 2 replans, and that every transition wrote a decision and a reason to the log.
 
@@ -115,16 +103,7 @@ Side-effecting subtasks had no stable identity. Without one, "resume" and "run a
 3. Tag risky subtasks during decomposition: `db.migrate, prod.deploy, user.delete, external.send` → `risk ∈ {high, irreversible}`. Untagged subtasks are `low` and never block.
 4. Track per-node status `ok/failed/skipped`, keep independent branches going, skip dependents of failed nodes, and return `partial:true + completed[] + failed[]` explicitly.
 
-```python
-def idem_key(plan: str, sub: str, inputs: dict) -> str:
-    h = hashlib.sha1(repr(sorted(inputs.items())).encode()).hexdigest()[:12]
-    return f"{plan}:{sub}:{h}"
-
-store: dict = {}
-def run_subtask(plan, sub, inputs, fn, *, risk="low"):
-    k = idem_key(plan, sub, inputs)
-    if k in store: return store[k]   # idempotent replay
-```
+> 📄 **Example code:** [`examples/03-q4-a-deploy-subtask-ran-twice-after-a.py`](examples/03-q4-a-deploy-subtask-ran-twice-after-a.py)
 
 **Verify**
 
@@ -146,13 +125,7 @@ Two missing ceilings. **Tree of Thoughts** (ToT — explore several reasoning br
 
 Hard-cap structure and cost together: `MAX_DEPTH=4, MAX_FANOUT=5, MAX_SUBTASKS=25`; ToT `MAX_BRANCHES=3, MAX_ROLLOUTS=9`, prune any branch scoring below 0.3 after 2 steps. Globally: `MAX_TOKENS_PER_PLAN=100k` and `MAX_TOOL_CALLS=50`, with a warning subtask at 80% and a freeze plus escalate at 100%, carrying a `best-so-far` summary. Per task, stop at 90% of its own allocation.
 
-```typescript
-canContinue(taskId: string): boolean {
-  const allocated = this.allocated.get(taskId) || 0;
-  const used = this.used.get(taskId) || 0;
-  return used < allocated * 0.9;   // allow up to 90%
-}
-```
+> 📄 **Example code:** [`examples/04-q5-my-token-bill-exploded-and-tree-of.ts`](examples/04-q5-my-token-bill-exploded-and-tree-of.ts)
 
 **Verify**
 

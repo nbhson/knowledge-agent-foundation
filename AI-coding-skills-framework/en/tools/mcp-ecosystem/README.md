@@ -71,18 +71,7 @@ Harness Tool Pipeline (harness/06):
 
 This repo already sets up the GitHub MCP server in `MCP_SETUP.md`:
 
-```json
-{
-  "mcpServers": {
-    "github.com/github/github-mcp-server": {
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "disabled": false,
-      "autoApprove": []
-    }
-  }
-}
-```
+> 📄 **Example code:** [`examples/01-github-mcp-server-from-mcp-setup-md.json`](examples/01-github-mcp-server-from-mcp-setup-md.json)
 
 **Capabilities**: manage repos, issues and PRs, GitHub Actions, code security, projects, discussions, gists, notifications...
 
@@ -95,19 +84,7 @@ Examples:
 
 ### Quickly Adding Another MCP Server
 
-```jsonc
-// cline_mcp_settings.json — add a new server
-{
-  "mcpServers": {
-    "github.com/github/github-mcp-server": { /* ... already there ... */ },
-    "my-custom-tool": {
-      "command": "npx",
-      "args": ["-y", "@my-org/my-mcp-server"],
-      "env": { "API_KEY": "${API_KEY}" }
-    }
-  }
-}
-```
+> 📄 **Example code:** [`examples/02-quickly-adding-another-mcp-server.json`](examples/02-quickly-adding-another-mcp-server.json)
 
 ## Learning Roadmap (Directory Structure)
 
@@ -158,17 +135,7 @@ Loop "issue-triage" (from loop/02-patterns):
 
 ### 2. Registry Mixing Built-in + MCP
 
-```python
-registry.register(ToolDefinition(
-    name="github_search_code",
-    source="mcp:github",          # comes from an MCP server
-    description="Search code in GitHub repos",
-    parameters={"query": {"type": "string", "required": True}},
-    category="search",
-    requires_permission="standard",  # guardrails apply just like a normal tool
-    rate_limit_per_minute=30,
-))
-```
+> 📄 **Example code:** [`examples/03-2-registry-mixing-built-in-mcp.py`](examples/03-2-registry-mixing-built-in-mcp.py)
 
 ## Reference Materials
 

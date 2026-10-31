@@ -73,9 +73,7 @@ Last run: 2026-06-09 16:00 UTC
 
 **Cadence**: 6h–1d · **Tier**: medium · **Suggested daily cap**: 500k tokens
 
-```bash
-npx @cobusgreyling/loop cost --pattern dependency-sweeper --cadence 1d --level L2
-```
+> 📄 **Code ví dụ:** [`examples/01-cost-profile.sh`](examples/01-cost-profile.sh)
 
 ## Success Metrics
 

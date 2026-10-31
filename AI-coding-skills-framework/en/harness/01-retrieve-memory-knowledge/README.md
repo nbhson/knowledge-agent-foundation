@@ -411,35 +411,7 @@ Chunking is simply **slicing a long document into bite-size pieces** before turn
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-def fixed_size_chunk(text, chunk_size=500, overlap=50):
-    """
-    Split by a fixed character count with overlap to avoid losing context.
-
-    chunk_size: Number of characters per chunk
-    overlap: Number of overlapping characters between consecutive chunks
-
-    Example:
-    chunk_size=10, overlap=2:
-    "abcdefghij" → "abcdefghij"
-    "klmnopqrst" → "ghijklmnop"
-                    ^^ overlap ^^
-    """
-    chunks = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunk = text[start:end]
-        chunks.append(chunk)
-        start = end - overlap  # Step back by the overlap amount
-
-    return chunks
-
-# Example
-text = "Health insurance is a mandatory form of insurance. " * 10
-chunks = fixed_size_chunk(text, chunk_size=100, overlap=20)
-print(f"Number of chunks: {len(chunks)}")
-```
+> 📄 **Example code:** [`examples/01-strategy-1-fixed-size-chunking.py`](examples/01-strategy-1-fixed-size-chunking.py)
 
 </details>
 
@@ -455,62 +427,7 @@ Pros:                       Cons:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-def recursive_split(text, chunk_size=500, overlap=50,
-                    separators=["\n\n", "\n", ". ", " "]):
-    """
-    Split by text structure, prioritizing the most important separator.
-
-    Priority order:
-    1. "\n\n" (paragraph)
-    2. "\n" (new line)
-    3. ". " (sentence)
-    4. " " (word)
-
-    → Respects the natural structure of the text
-    """
-    if len(text) <= chunk_size:
-        return [text]
-
-    for sep in separators:
-        if sep not in text:
-            continue
-
-        parts = text.split(sep)
-        chunks = []
-        current = ""
-
-        for part in parts:
-            candidate = current + sep + part if current else part
-            if len(candidate) <= chunk_size:
-                current = candidate
-            else:
-                if current:
-                    chunks.append(current.strip())
-                current = part
-
-        if current:
-            chunks.append(current.strip())
-
-        # If it was split into multiple chunks, return them
-        if len(chunks) > 1:
-            return chunks
-
-    return [text]
-
-# Example
-text = """Article 1: Health insurance is a mandatory form of insurance.
-
-Article 2: The health insurance contribution rate is 4.5% of the base salary.
-
-Article 3: Participants are entitled to benefits as prescribed by law.
-
-Article 4: The health insurance card is valid for 5 years."""
-
-chunks = recursive_split(text, chunk_size=80)
-for i, chunk in enumerate(chunks):
-    print(f"Chunk {i+1}: {chunk[:60]}...")
-```
+> 📄 **Example code:** [`examples/02-strategy-2-recursive-character-splitting.py`](examples/02-strategy-2-recursive-character-splitting.py)
 
 </details>
 
@@ -526,51 +443,7 @@ Pros:                       Cons:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import numpy as np
-
-def semantic_chunking(text, embedding_func, threshold=0.5,
-                      min_chunk_sentences=2):
-    """
-    Split based on semantic change between sentences.
-
-    If two consecutive sentences have similarity < threshold → split them
-
-    threshold:
-    - High (0.8): small chunks, more of them
-    - Low (0.3): large chunks, fewer of them
-    """
-    sentences = text.split('. ')
-    if len(sentences) <= min_chunk_sentences:
-        return [text]
-
-    # Embed each sentence
-    embeddings = [embedding_func(s) for s in sentences]
-
-    # Compute similarity between consecutive sentences
-    chunks = []
-    current_chunk = [sentences[0]]
-
-    for i in range(1, len(sentences)):
-        # Cosine similarity
-        sim = cosine_similarity(embeddings[i-1], embeddings[i])
-
-        if sim < threshold:
-            # Meaning changes → split the chunk
-            chunks.append('. '.join(current_chunk) + '.')
-            current_chunk = [sentences[i]]
-        else:
-            current_chunk.append(sentences[i])
-
-    if current_chunk:
-        chunks.append('. '.join(current_chunk) + '.')
-
-    return chunks
-
-def cosine_similarity(a, b):
-    a, b = np.array(a), np.array(b)
-    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-```
+> 📄 **Example code:** [`examples/03-strategy-3-semantic-chunking.py`](examples/03-strategy-3-semantic-chunking.py)
 
 </details>
 
@@ -586,58 +459,7 @@ Pros:                       Cons:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-# Respects document structure (Markdown, HTML, Code)
-
-def markdown_chunk(text, max_chunk_size=1000):
-    """
-    Chunk by Markdown structure:
-    1. Split by headers (#, ##, ###)
-    2. If a section is too large, split by paragraphs
-    3. Keep the header as metadata for each chunk
-    """
-    import re
-
-    # Split by headers
-    sections = re.split(r'^(#{1,3}\s+.+)$', text, flags=re.MULTILINE)
-
-    chunks = []
-    current_header = ""
-
-    for section in sections:
-        if re.match(r'^#{1,3}\s+', section):
-            current_header = section.strip()
-        elif section.strip():
-            if len(section) <= max_chunk_size:
-                chunks.append({
-                    "header": current_header,
-                    "content": section.strip(),
-                    "metadata": {"section": current_header}
-                })
-            else:
-                # Section too large → split by paragraphs
-                paragraphs = section.split('\n\n')
-                current_content = ""
-                for para in paragraphs:
-                    if len(current_content) + len(para) <= max_chunk_size:
-                        current_content += para + "\n\n"
-                    else:
-                        if current_content:
-                            chunks.append({
-                                "header": current_header,
-                                "content": current_content.strip(),
-                                "metadata": {"section": current_header}
-                            })
-                        current_content = para + "\n\n"
-                if current_content:
-                    chunks.append({
-                        "header": current_header,
-                        "content": current_content.strip(),
-                        "metadata": {"section": current_header}
-                    })
-
-    return chunks
-```
+> 📄 **Example code:** [`examples/04-strategy-4-document-aware-chunking.py`](examples/04-strategy-4-document-aware-chunking.py)
 
 </details>
 
@@ -661,80 +483,7 @@ def markdown_chunk(text, max_chunk_size=1000):
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import numpy as np
-
-# ============================================================
-# 1. COSINE SIMILARITY (The most common)
-# ============================================================
-# Measures the ANGLE between two vectors, NOT dependent on length
-
-def cosine_similarity(a, b):
-    """
-    a, b: vectors (list or numpy array)
-    Returns: float [-1, 1]
-
-    1.0  = Completely identical
-    0.0  = Unrelated
-    -1.0 = Completely opposite
-    """
-    a, b = np.array(a), np.array(b)
-    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-
-# Example:
-# "Dog"     → [0.9, 0.1, 0.2]
-# "Cat"     → [0.85, 0.15, 0.25]  # cosine_sim = 0.99 (close)
-# "Car"     → [0.1, 0.8, 0.3]     # cosine_sim = 0.45 (far)
-
-
-# ============================================================
-# 2. DOT PRODUCT
-# ============================================================
-# The simplest; ONLY use when the vectors are already normalized
-
-def dot_product_similarity(a, b):
-    """
-    If the vectors are normalized → dot product = cosine similarity
-    If NOT normalized → depends on magnitude
-    """
-    return np.dot(np.array(a), np.array(b))
-
-
-# ============================================================
-# 3. EUCLIDEAN DISTANCE (L2)
-# ============================================================
-# Measures the actual DISTANCE between two points
-
-def euclidean_distance(a, b):
-    """
-    Smaller = Closer
-    0 = Identical
-
-    Note: Depends on magnitude (vector length)
-    """
-    a, b = np.array(a), np.array(b)
-    return np.linalg.norm(a - b)
-
-
-# ============================================================
-# 4. MANHATTAN DISTANCE (L1)
-# ============================================================
-# Sum of distances along each dimension
-
-def manhattan_distance(a, b):
-    """
-    Sums up |a_i - b_i| over all dimensions i
-    Less sensitive to outliers than L2
-    """
-    return np.sum(np.abs(np.array(a) - np.array(b)))
-
-
-# ============================================================
-# 5. MUTUAL INFORMATION SCORE
-# ============================================================
-# Used for sparse vectors (BM25, TF-IDF)
-# Not used for dense vectors
-```
+> 📄 **Example code:** [`examples/05-1-5-similarity-metrics-in-detail.py`](examples/05-1-5-similarity-metrics-in-detail.py)
 
 </details>
 
@@ -873,82 +622,7 @@ Comparison:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-"""
-Step 1: Document processing — Build the knowledge base
-
-Process:
-Document → Clean → Chunk → Embed → Store
-
-Input:  PDF, HTML, TXT, Markdown...
-Output: Vector DB with embedded chunks
-"""
-
-from pathlib import Path
-
-class DocumentProcessor:
-    def __init__(self, chunk_size=500, chunk_overlap=50):
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-
-    def load_document(self, file_path):
-        """Load and extract text from many formats"""
-        path = Path(file_path)
-
-        if path.suffix == ".pdf":
-            return self._load_pdf(path)
-        elif path.suffix == ".md":
-            return self._load_markdown(path)
-        elif path.suffix == ".txt":
-            return path.read_text(encoding="utf-8")
-        elif path.suffix in [".html", ".htm"]:
-            return self._load_html(path)
-        else:
-            raise ValueError(f"Unsupported format: {path.suffix}")
-
-    def chunk_document(self, text, metadata=None):
-        """Split the document into chunks"""
-        chunks = []
-        start = 0
-
-        while start < len(text):
-            end = start + self.chunk_size
-            chunk_text = text[start:end]
-
-            chunk = {
-                "text": chunk_text,
-                "metadata": {
-                    **(metadata or {}),
-                    "start_char": start,
-                    "end_char": end,
-                }
-            }
-            chunks.append(chunk)
-            start = end - self.chunk_overlap
-
-        return chunks
-
-    def process_directory(self, dir_path):
-        """Process an entire directory"""
-        all_chunks = []
-        for file in Path(dir_path).glob("*"):
-            if file.suffix in [".pdf", ".md", ".txt", ".html"]:
-                text = self.load_document(file)
-                chunks = self.chunk_document(text, {
-                    "source": str(file),
-                    "filename": file.name,
-                })
-                all_chunks.extend(chunks)
-
-        print(f"Processed {len(list(Path(dir_path).glob('*')))} files")
-        print(f"Created {len(all_chunks)} chunks")
-        return all_chunks
-
-
-# Usage
-processor = DocumentProcessor(chunk_size=500, chunk_overlap=50)
-chunks = processor.process_directory("./documents")
-```
+> 📄 **Example code:** [`examples/06-step-1-document-processing-offline.py`](examples/06-step-1-document-processing-offline.py)
 
 </details>
 
@@ -957,64 +631,7 @@ chunks = processor.process_directory("./documents")
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-"""
-Step 2: Create embeddings for all chunks
-
-Uses: nomic-embed-text (Ollama) or sentence-transformers
-"""
-
-import requests
-import numpy as np
-
-OLLAMA_URL = "http://localhost:11434"
-
-class Embedder:
-    def __init__(self, model="nomic-embed-text"):
-        self.model = model
-        self.cache = {}  # Simple cache
-
-    def embed(self, text):
-        """Embed a single text"""
-        if text in self.cache:
-            return self.cache[text]
-
-        response = requests.post(f"{OLLAMA_URL}/api/embed", json={
-            "model": self.model,
-            "input": text
-        })
-
-        embedding = response.json()["embeddings"][0]
-        self.cache[text] = embedding
-        return embedding
-
-    def embed_batch(self, texts, batch_size=32):
-        """Embed many texts (Ollama supports batching)"""
-        all_embeddings = []
-
-        for i in range(0, len(texts), batch_size):
-            batch = texts[i:i + batch_size]
-            response = requests.post(f"{OLLAMA_URL}/api/embed", json={
-                "model": self.model,
-                "input": batch
-            })
-            embeddings = response.json()["embeddings"]
-            all_embeddings.extend(embeddings)
-
-        return all_embeddings
-
-    def embed_query(self, query):
-        """Embed a query (add a prefix to distinguish it from documents)"""
-        return self.embed(f"query: {query}")
-
-
-# Usage
-embedder = Embedder(model="nomic-embed-text")
-
-# Embed chunks
-chunks = ["What is health insurance?", "Health insurance regulations 2024", ...]
-embeddings = embedder.embed_batch(chunks)
-```
+> 📄 **Example code:** [`examples/07-step-2-embedding-offline.py`](examples/07-step-2-embedding-offline.py)
 
 </details>
 #### Step 3: Storage (Offline)
@@ -1022,97 +639,7 @@ embeddings = embedder.embed_batch(chunks)
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-"""
-Step 3: Store in a Vector Database
-
-Options: FAISS, ChromaDB, Qdrant, or simply a numpy array
-"""
-
-# Option A: Simple numpy storage (small, simple)
-class SimpleVectorStore:
-    def __init__(self):
-        self.vectors = []
-        self.documents = []
-        self.metadata = []
-
-    def add(self, document, vector, metadata=None):
-        self.documents.append(document)
-        self.vectors.append(vector)
-        self.metadata.append(metadata or {})
-
-    def search(self, query_vector, top_k=5):
-        """Search using cosine similarity"""
-        query = np.array(query_vector)
-        scores = []
-
-        for i, vec in enumerate(self.vectors):
-            v = np.array(vec)
-            score = np.dot(query, v) / (np.linalg.norm(query) * np.linalg.norm(v))
-            scores.append((i, score))
-
-        # Sort by score descending
-        scores.sort(key=lambda x: x[1], reverse=True)
-
-        results = []
-        for idx, score in scores[:top_k]:
-            results.append({
-                "document": self.documents[idx],
-                "score": score,
-                "metadata": self.metadata[idx],
-            })
-
-        return results
-
-    def save(self, path):
-        """Save to disk"""
-        import pickle
-        with open(path, 'wb') as f:
-            pickle.dump({
-                "vectors": self.vectors,
-                "documents": self.documents,
-                "metadata": self.metadata,
-            }, f)
-
-    @classmethod
-    def load(cls, path):
-        """Load from disk"""
-        import pickle
-        store = cls()
-        with open(path, 'rb') as f:
-            data = pickle.load(f)
-            store.vectors = data["vectors"]
-            store.documents = data["documents"]
-            store.metadata = data["metadata"]
-        return store
-
-
-# Option B: ChromaDB (persistent, feature-rich)
-import chromadb
-
-class ChromaVectorStore:
-    def __init__(self, collection_name="documents"):
-        self.client = chromadb.PersistentClient(path="./chroma_db")
-        self.collection = self.client.get_or_create_collection(
-            name=collection_name,
-            metadata={"hnsw:space": "cosine"}
-        )
-
-    def add(self, documents, embeddings=None, metadatas=None, ids=None):
-        self.collection.add(
-            documents=documents,
-            embeddings=embeddings,
-            metadatas=metadatas,
-            ids=ids or [f"doc_{i}" for i in range(len(documents))],
-        )
-
-    def search(self, query_embedding, top_k=5):
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k
-        )
-        return results
-```
+> 📄 **Example code:** [`examples/08-step-3-storage-offline.py`](examples/08-step-3-storage-offline.py)
 
 </details>
 
@@ -1121,75 +648,7 @@ class ChromaVectorStore:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-"""
-Step 4: Process the query before searching
-
-Techniques:
-- Query Expansion: Create multiple variations
-- HyDE: Create a hypothetical answer before searching
-- Query Rewriting: Rewrite the query to be clearer
-"""
-
-class QueryProcessor:
-    def __init__(self, llm_func):
-        self.llm = llm_func
-
-    def expand_query(self, query):
-        """
-        Create multiple variations of the query to increase recall
-
-        Input: "How much is the health insurance contribution?"
-        Output: [
-            "health insurance contribution rate",
-            "how much is the health insurance fee",
-            "health insurance contribution percentage"
-        ]
-        """
-        prompt = f"""Create 3 different questions based on the following question to search for information:
-
-Original question: {query}
-
-Write 3 questions (one per line):"""
-
-        response = self.llm(prompt)
-        variations = [q.strip() for q in response.split('\n') if q.strip()]
-        return [query] + variations
-
-    def hyde_query(self, query):
-        """
-        HyDE (Hypothetical Document Embeddings):
-        Create a hypothetical answer, then use it to search
-
-        Idea: The hypothetical answer will be closer to the real answer
-        in the embedding space
-        """
-        prompt = f"""Write a short paragraph answering the following question:
-
-Question: {query}
-
-Short answer:"""
-
-        hypothetical_answer = self.llm(prompt)
-        return hypothetical_answer
-
-    def classify_query(self, query):
-        """
-        Classify the query to choose the appropriate search strategy
-
-        Simple: only needs 1 source
-        Complex: needs multiple sources
-        Aggregation: needs calculation/data combining
-        """
-        prompt = f"""Classify the following question:
-
-Question: {query}
-
-Type (simple/complex/aggregation):"""
-
-        response = self.llm(prompt).strip().lower()
-        return response if response in ["simple", "complex", "aggregation"] else "simple"
-```
+> 📄 **Example code:** [`examples/09-step-4-query-processing-online.py`](examples/09-step-4-query-processing-online.py)
 
 </details>
 
@@ -1198,95 +657,7 @@ Type (simple/complex/aggregation):"""
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-"""
-Step 5: Search for relevant documents
-
-Strategies:
-- Single vector search
-- Multi-query search (combines expanded queries)
-- Hybrid search (vector + BM25)
-"""
-
-class Retriever:
-    def __init__(self, vector_store, embedder, top_k=10):
-        self.vector_store = vector_store
-        self.embedder = embedder
-        self.top_k = top_k
-
-    def retrieve(self, query):
-        """Basic vector search"""
-        query_embedding = self.embedder.embed_query(query)
-        results = self.vector_store.search(query_embedding, self.top_k)
-        return results
-
-    def multi_query_retrieve(self, queries):
-        """Search with multiple queries and merge the results"""
-        all_results = {}
-
-        for query in queries:
-            results = self.retrieve(query)
-            for r in results:
-                doc_text = r["document"]
-                if doc_text not in all_results:
-                    all_results[doc_text] = r
-                else:
-                    # Boost the score if it appears in multiple queries
-                    all_results[doc_text]["score"] += r["score"] * 0.5
-
-        # Sort and return the top_k
-        sorted_results = sorted(
-            all_results.values(),
-            key=lambda x: x["score"],
-            reverse=True
-        )
-        return sorted_results[:self.top_k]
-
-    def mmr_retrieve(self, query, lambda_param=0.5):
-        """
-        Maximal Marginal Relevance:
-        Balances RELEVANCE and DIVERSITY
-
-        Avoids returning many documents that are too similar
-
-        lambda_param:
-        - 1.0: Only cares about relevance
-        - 0.0: Only cares about diversity
-        - 0.5: Balances both
-        """
-        query_embedding = self.embedder.embed_query(query)
-        candidates = self.vector_store.search(query_embedding, self.top_k * 3)
-
-        selected = []
-        remaining = list(candidates)
-
-        while len(selected) < self.top_k and remaining:
-            best_score = -1
-            best_idx = 0
-
-            for i, candidate in enumerate(remaining):
-                # Relevance score
-                relevance = candidate["score"]
-
-                # Diversity: max similarity to already-selected docs
-                diversity_penalty = 0
-                for s in selected:
-                    sim = self._cosine_sim(
-                        candidate["vector"], s["vector"]
-                    )
-                    diversity_penalty = max(diversity_penalty, sim)
-
-                # MMR score
-                mmr_score = lambda_param * relevance - (1 - lambda_param) * diversity_penalty
-
-                if mmr_score > best_score:
-                    best_score = mmr_score
-                    best_idx = i
-
-            selected.append(remaining.pop(best_idx))
-
-        return selected
-```
+> 📄 **Example code:** [`examples/10-step-5-retrieval-online.py`](examples/10-step-5-retrieval-online.py)
 
 </details>
 
@@ -1295,81 +666,7 @@ class Retriever:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-"""
-Step 6: Generate the answer with the retrieved context
-"""
-
-class RAGGenerator:
-    def __init__(self, llm_model="gemma3:12b"):
-        self.llm_model = llm_model
-        self.ollama_url = "http://localhost:11434"
-
-    def generate(self, query, context_docs, system_prompt=None):
-        """
-        Generate an answer with the retrieved context
-        """
-        # Build the context
-        context_parts = []
-        for i, doc in enumerate(context_docs, 1):
-            score = doc.get("score", 0)
-            text = doc["document"]
-            source = doc.get("metadata", {}).get("source", "unknown")
-            context_parts.append(f"[{i}] (confidence: {score:.2f}) {text}\nSource: {source}")
-
-        context = "\n\n".join(context_parts)
-
-        # Build the prompt
-        system = system_prompt or """You are a smart assistant. Answer the question based on the provided information.
-
-Rules:
-1. Use only information from the provided context
-2. Always cite sources [1], [2]...
-3. If the information is insufficient, say so clearly
-4. Answer in English"""
-
-        prompt = f"""{system}
-
-REFERENCE INFORMATION:
-{context}
-
-QUESTION: {query}
-
-ANSWER:"""
-
-        # Call the LLM
-        response = requests.post(f"{self.ollama_url}/api/generate", json={
-            "model": self.llm_model,
-            "prompt": prompt,
-            "stream": False
-        })
-
-        return {
-            "answer": response.json()["response"],
-            "sources": context_docs,
-            "context_used": len(context_docs),
-        }
-
-
-# Complete RAG Pipeline
-class RAGPipeline:
-    def __init__(self, vector_store, embedder, llm_model="gemma3:12b"):
-        self.retriever = Retriever(vector_store, embedder)
-        self.query_processor = QueryProcessor(self._llm_call)
-        self.generator = RAGGenerator(llm_model)
-
-    def query(self, question):
-        # Step 1: Process the query
-        expanded_queries = self.query_processor.expand_query(question)
-
-        # Step 2: Retrieve
-        context_docs = self.retriever.multi_query_retrieve(expanded_queries)
-
-        # Step 3: Generate
-        result = self.generator.generate(question, context_docs)
-
-        return result
-```
+> 📄 **Example code:** [`examples/11-step-6-generation-online.py`](examples/11-step-6-generation-online.py)
 
 </details>
 
@@ -1680,158 +977,7 @@ graph TD
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-class KnowledgeGraph:
-    """A simple in-memory knowledge graph"""
-
-    def __init__(self):
-        self.triplets = []
-        self.entities = set()
-        self.predicates = set()
-
-    def add_triplet(self, subject, predicate, obj):
-        self.triplets.append((subject, predicate, obj))
-        self.entities.add(subject)
-        self.entities.add(obj)
-        self.predicates.add(predicate)
-
-    def add_from_text(self, text, llm_func):
-        """
-        Extract triplets from text using the LLM
-
-        Input: "gemma3:12b is a 12B LLM model running on Ollama"
-        Output: [("gemma3:12b", "is_a", "LLM"),
-                 ("gemma3:12b", "has_size", "12B"),
-                 ("gemma3:12b", "runs_on", "Ollama")]
-        """
-        prompt = f"""Extract entity-relationship triplets from the following text.
-Format: (subject, predicate, object)
-
-Text: {text}
-
-Triplets:"""
-
-        response = llm_func(prompt)
-
-        # Parse the triplets
-        import re
-        triplet_pattern = r'\(([^,]+),\s*([^,]+),\s*([^)]+)\)'
-        matches = re.findall(triplet_pattern, response)
-
-        for subject, predicate, obj in matches:
-            self.add_triplet(
-                subject.strip(),
-                predicate.strip(),
-                obj.strip()
-            )
-
-        return matches
-
-    def query_entity(self, entity, max_hops=2):
-        """Find all triplets related to an entity (up to max_hops)"""
-        results = []
-        visited = set()
-        queue = [(entity, 0)]
-
-        while queue:
-            current, depth = queue.pop(0)
-            if depth > max_hops or current in visited:
-                continue
-
-            visited.add(current)
-
-            for subj, pred, obj in self.triplets:
-                if subj == current:
-                    results.append((subj, pred, obj, depth))
-                    if depth < max_hops:
-                        queue.append((obj, depth + 1))
-                elif obj == current:
-                    results.append((obj, pred, subj, depth))
-                    if depth < max_hops:
-                        queue.append((subj, depth + 1))
-
-        return results
-
-    def find_path(self, start, end, max_depth=5):
-        """Find the shortest path between two entities"""
-        from collections import deque
-
-        queue = deque([(start, [start])])
-        visited = {start}
-
-        while queue:
-            current, path = queue.popleft()
-
-            if current == end:
-                return path
-
-            if len(path) > max_depth:
-                continue
-
-            for subj, pred, obj in self.triplets:
-                next_entity = None
-                edge = None
-
-                if subj == current:
-                    next_entity = obj
-                    edge = f"--{pred}-->"
-                elif obj == current:
-                    next_entity = subj
-                    edge = f"<--{pred}--"
-
-                if next_entity and next_entity not in visited:
-                    visited.add(next_entity)
-                    queue.append((next_entity, path + [edge, next_entity]))
-
-        return None  # No path found
-
-    def community_detection(self):
-        """
-        Detect communities (groups of related entities)
-
-        Simple approach: connected components
-        """
-        visited = set()
-        communities = []
-
-        for entity in self.entities:
-            if entity not in visited:
-                community = []
-                queue = [entity]
-                while queue:
-                    current = queue.pop(0)
-                    if current in visited:
-                        continue
-                    visited.add(current)
-                    community.append(current)
-
-                    for subj, pred, obj in self.triplets:
-                        if subj == current and obj not in visited:
-                            queue.append(obj)
-                        elif obj == current and subj not in visited:
-                            queue.append(subj)
-
-                communities.append(community)
-
-        return communities
-
-    def summarize_community(self, community, llm_func):
-        """Generate a summary of a community of entities"""
-        # Gather all facts about the entities in the community
-        facts = []
-        for entity in community:
-            for subj, pred, obj in self.triplets:
-                if subj == entity or obj == entity:
-                    facts.append(f"{subj} {pred} {obj}")
-
-        prompt = f"""Summarize the following information about a group of related entities:
-
-{chr(10).join(facts)}
-
-Summary:"""
-
-        return llm_func(prompt)
-```
+> 📄 **Example code:** [`examples/12-3-3-knowledge-graph-operations.py`](examples/12-3-3-knowledge-graph-operations.py)
 
 </details>
 
@@ -1876,79 +1022,7 @@ flowchart LR
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-class GraphRAG:
-    """A graph-based RAG system"""
-
-    def __init__(self, knowledge_graph, embedder, llm_model):
-        self.kg = knowledge_graph
-        self.embedder = embedder
-        self.llm_model = llm_model
-
-    def retrieve(self, query):
-        """
-        Retrieve context from the knowledge graph
-
-        1. Extract entities from the query
-        2. Find the related subgraph
-        3. Rank by relevance
-        4. Convert to context
-        """
-        # Step 1: Extract entities from the query
-        entities = self._extract_entities(query)
-
-        # Step 2: Get the subgraph for each entity
-        subgraph_facts = []
-        for entity in entities:
-            related = self.kg.query_entity(entity, max_hops=2)
-            subgraph_facts.extend(related)
-
-        # Step 3: Rank by relevance to the query
-        query_embedding = self.embedder.embed_query(query)
-
-        ranked_facts = []
-        for subj, pred, obj, depth in subgraph_facts:
-            fact_text = f"{subj} {pred} {obj}"
-            fact_embedding = self.embedder.embed(fact_text)
-
-            # Score = relevance × (1 / (depth + 1))
-            import numpy as np
-            similarity = np.dot(query_embedding, fact_embedding) / (
-                np.linalg.norm(query_embedding) * np.linalg.norm(fact_embedding)
-            )
-            score = similarity * (1 / (depth + 1))
-            ranked_facts.append((fact_text, score))
-
-        ranked_facts.sort(key=lambda x: x[1], reverse=True)
-
-        # Step 4: Convert to context
-        context = "\n".join([
-            f"[{i+1}] {fact}"
-            for i, (fact, _) in enumerate(ranked_facts[:10])
-        ])
-
-        return context
-
-    def _extract_entities(self, text):
-        """Simple entity extraction (can use an NER model)"""
-        # Placeholder - use the LLM for better extraction
-        prompt = f"""Extract all entities (names, products, concepts) from:
-{text}
-
-Entities (one per line):"""
-
-        response = requests.post("http://localhost:11434/api/generate", json={
-            "model": self.llm_model,
-            "prompt": prompt,
-            "stream": False
-        })
-
-        entities = [
-            e.strip() for e in response.json()["response"].split('\n')
-            if e.strip()
-        ]
-        return entities
-```
+> 📄 **Example code:** [`examples/13-3-4-graph-rag-implementation.py`](examples/13-3-4-graph-rag-implementation.py)
 
 </details>
 
@@ -2004,88 +1078,7 @@ The nice part of step ③: it combines both the **graph** (depth — closer to t
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import math
-from collections import Counter
-
-class BM25:
-    """
-    The Okapi BM25 scoring function
-
-    BM25(D, Q) = Σ IDF(qi) × (f(qi, D) × (k1 + 1)) /
-                        (f(qi, D) + k1 × (1 - b + b × |D|/avgdl))
-
-    Where:
-    - IDF(qi): Inverse Document Frequency of term qi
-    - f(qi, D): Term frequency of qi in document D
-    - k1: Term saturation parameter (default 1.5)
-    - b: Length normalization parameter (default 0.75)
-    - |D|: Document length
-    - avgdl: Average document length
-    """
-
-    def __init__(self, k1=1.5, b=0.75):
-        self.k1 = k1
-        self.b = b
-        self.documents = []
-        self.doc_freqs = {}
-        self.avgdl = 0
-        self.n_docs = 0
-
-    def fit(self, documents):
-        """Build the index from documents"""
-        self.documents = documents
-        self.n_docs = len(documents)
-
-        # Calculate document frequencies
-        for doc in documents:
-            terms = doc.lower().split()
-            unique_terms = set(terms)
-            for term in unique_terms:
-                self.doc_freqs[term] = self.doc_freqs.get(term, 0) + 1
-
-        # Average document length
-        self.avgdl = sum(len(doc.split()) for doc in documents) / self.n_docs
-
-    def _idf(self, term):
-        """Inverse Document Frequency"""
-        n_containing = self.doc_freqs.get(term, 0)
-        return math.log((self.n_docs - n_containing + 0.5) / (n_containing + 0.5) + 1)
-
-    def _score(self, document, query_terms):
-        """BM25 score for a document"""
-        terms = document.lower().split()
-        doc_len = len(terms)
-        term_freqs = Counter(terms)
-
-        score = 0
-        for term in query_terms:
-            if term not in term_freqs:
-                continue
-
-            f = term_freqs[term]
-            idf = self._idf(term)
-
-            numerator = f * (self.k1 + 1)
-            denominator = f + self.k1 * (1 - self.b + self.b * doc_len / self.avgdl)
-
-            score += idf * numerator / denominator
-
-        return score
-
-    def search(self, query, top_k=10):
-        """Search for the most relevant documents"""
-        query_terms = query.lower().split()
-
-        scores = []
-        for i, doc in enumerate(self.documents):
-            score = self._score(doc, query_terms)
-            scores.append((i, score))
-
-        scores.sort(key=lambda x: x[1], reverse=True)
-
-        return [(self.documents[i], score) for i, score in scores[:top_k]]
-```
+> 📄 **Example code:** [`examples/14-4-2-bm25-algorithm.py`](examples/14-4-2-bm25-algorithm.py)
 
 </details>
 
@@ -2094,48 +1087,7 @@ class BM25:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-def reciprocal_rank_fusion(rankings, k=60):
-    """
-    Combine multiple ranked lists using RRF
-
-    RRF_score(d) = Σ 1/(k + rank_i(d))
-
-    k: a constant (default 60, used by many implementations)
-
-    Advantages:
-    - Simple to implement
-    - No need to normalize scores across different methods
-    - Robust to outlier scores
-    """
-    scores = {}
-
-    for ranking_list in rankings:
-        for rank, doc_id in enumerate(ranking_list, start=1):
-            if doc_id not in scores:
-                scores[doc_id] = 0
-            scores[doc_id] += 1 / (k + rank)
-
-    # Sort by RRF score descending
-    sorted_docs = sorted(scores.keys(), key=lambda x: scores[x], reverse=True)
-    return sorted_docs
-
-
-# Example with detailed calculation
-semantic_ranking = ["doc_A", "doc_B", "doc_C", "doc_D", "doc_E"]
-keyword_ranking = ["doc_B", "doc_D", "doc_A", "doc_F", "doc_C"]
-metadata_ranking = ["doc_A", "doc_C", "doc_E", "doc_B", "doc_D"]
-
-merged = reciprocal_rank_fusion(
-    [semantic_ranking, keyword_ranking, metadata_ranking], k=60
-)
-
-# Score calculation for doc_A:
-# semantic: 1/(60+1) = 0.01639
-# keyword:  1/(60+3) = 0.01587
-# metadata: 1/(60+1) = 0.01639
-# Total:    0.04866
-```
+> 📄 **Example code:** [`examples/15-4-3-reciprocal-rank-fusion-rrf.py`](examples/15-4-3-reciprocal-rank-fusion-rrf.py)
 
 </details>
 ### 4.4 Hybrid Search Implementation
@@ -2143,91 +1095,7 @@ merged = reciprocal_rank_fusion(
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-class HybridSearch:
-    """Combines semantic (vector) search with keyword (BM25) search"""
-
-    def __init__(self, vector_store, embedder, bm25_index,
-                 rrf_k=60, semantic_weight=1.0, keyword_weight=1.0):
-        self.vector_store = vector_store
-        self.embedder = embedder
-        self.bm25 = bm25_index
-        self.rrf_k = rrf_k
-        self.semantic_weight = semantic_weight
-        self.keyword_weight = keyword_weight
-
-    def search(self, query, top_k=10):
-        """Perform hybrid search"""
-
-        # 1. Semantic search
-        query_embedding = self.embedder.embed_query(query)
-        semantic_results = self.vector_store.search(
-            query_embedding, top_k=top_k * 2
-        )
-        semantic_ranking = [r["document"] for r in semantic_results]
-
-        # 2. Keyword search (BM25)
-        bm25_results = self.bm25.search(query, top_k=top_k * 2)
-        keyword_ranking = [doc for doc, score in bm25_results]
-
-        # 3. Combine using RRF
-        combined_ranking = reciprocal_rank_fusion(
-            [semantic_ranking, keyword_ranking],
-            k=self.rrf_k
-        )
-
-        # 4. Return the top_k
-        return combined_ranking[:top_k]
-
-    def search_with_scores(self, query, top_k=10):
-        """Hybrid search with individual scores"""
-
-        # Semantic
-        query_embedding = self.embedder.embed_query(query)
-        semantic_results = self.vector_store.search(
-            query_embedding, top_k=top_k * 2
-        )
-
-        # BM25
-        bm25_results = self.bm25.search(query, top_k=top_k * 2)
-
-        # Score normalization and combination
-        # Normalize the scores to [0, 1]
-        max_semantic = max(r["score"] for r in semantic_results) if semantic_results else 1
-        max_bm25 = max(score for _, score in bm25_results) if bm25_results else 1
-
-        combined_scores = {}
-
-        for r in semantic_results:
-            doc = r["document"]
-            norm_score = r["score"] / max_semantic
-            combined_scores[doc] = {
-                "semantic_score": r["score"],
-                "keyword_score": 0,
-                "combined_score": norm_score * self.semantic_weight,
-            }
-
-        for doc, score in bm25_results:
-            norm_score = score / max_bm25
-            if doc in combined_scores:
-                combined_scores[doc]["keyword_score"] = score
-                combined_scores[doc]["combined_score"] += norm_score * self.keyword_weight
-            else:
-                combined_scores[doc] = {
-                    "semantic_score": 0,
-                    "keyword_score": score,
-                    "combined_score": norm_score * self.keyword_weight,
-                }
-
-        # Sort by the combined score
-        sorted_results = sorted(
-            combined_scores.items(),
-            key=lambda x: x[1]["combined_score"],
-            reverse=True
-        )
-
-        return sorted_results[:top_k]
-```
+> 📄 **Example code:** [`examples/16-4-4-hybrid-search-implementation.py`](examples/16-4-4-hybrid-search-implementation.py)
 
 </details>
 
@@ -2264,70 +1132,7 @@ class HybridSearch:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-from sentence_transformers import CrossEncoder
-import numpy as np
-
-class Reranker:
-    """Re-rank documents using a cross-encoder model"""
-
-    def __init__(self, model_name="cross-encoder/ms-marco-MiniLM-L-6-v2"):
-        self.model = CrossEncoder(model_name)
-
-    def rerank(self, query, documents, top_k=5):
-        """
-        Re-rank documents based on query relevance
-
-        Args:
-            query: The search query
-            documents: A list of document strings or dicts
-            top_k: The number of results to return
-
-        Returns:
-            The reranked list with scores
-        """
-        # Create (query, document) pairs
-        if isinstance(documents[0], dict):
-            doc_texts = [d["document"] for d in documents]
-        else:
-            doc_texts = documents
-
-        pairs = [(query, doc) for doc in doc_texts]
-
-        # Score with the cross-encoder
-        scores = self.model.predict(pairs)
-
-        # Combine and sort
-        results = []
-        for i, (doc, score) in enumerate(zip(documents, scores)):
-            if isinstance(doc, dict):
-                result = {**doc, "rerank_score": float(score)}
-            else:
-                result = {"document": doc, "rerank_score": float(score)}
-            results.append(result)
-
-        results.sort(key=lambda x: x["rerank_score"], reverse=True)
-        return results[:top_k]
-
-    def rerank_with_feedback(self, query, documents, top_k=5,
-                              user_feedback=None):
-        """
-        Re-rank with optional user feedback (learning from clicks)
-        """
-        results = self.rerank(query, documents, top_k=top_k * 2)
-
-        if user_feedback:
-            # Boost the documents the user found relevant
-            for r in results:
-                doc_text = r["document"]
-                if doc_text in user_feedback.get("relevant", []):
-                    r["rerank_score"] *= 1.5  # Boost
-                elif doc_text in user_feedback.get("irrelevant", []):
-                    r["rerank_score"] *= 0.5  # Penalize
-
-        results.sort(key=lambda x: x["rerank_score"], reverse=True)
-        return results[:top_k]
-```
+> 📄 **Example code:** [`examples/17-5-2-cross-encoder-implementation.py`](examples/17-5-2-cross-encoder-implementation.py)
 
 </details>
 
@@ -2414,34 +1219,7 @@ Note: Quality scores are approximate and vary depending on the evaluation benchm
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-from collections import deque
-
-class BufferMemory:
-    """
-    Keeps ALL messages in the buffer
-
-    ✅ No information is lost
-    ❌ Token usage grows linearly
-    ❌ The context window will fill up
-    """
-
-    def __init__(self):
-        self.messages = []
-
-    def add(self, role, content):
-        self.messages.append({"role": role, "content": content})
-
-    def get_context(self):
-        return self.messages  # Return everything
-
-    def get_token_count(self, tokenizer):
-        """Estimate the token count"""
-        total = 0
-        for msg in self.messages:
-            total += len(tokenizer.encode(msg["content"]))
-        return total
-```
+> 📄 **Example code:** [`examples/18-buffer-memory.py`](examples/18-buffer-memory.py)
 
 </details>
 
@@ -2450,26 +1228,7 @@ class BufferMemory:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-class WindowMemory:
-    """
-    Keeps the most recent N messages
-
-    ✅ Fixed token usage
-    ✅ Simple implementation
-    ❌ Loses context from older messages
-    """
-
-    def __init__(self, window_size=10):
-        self.window_size = window_size
-        self.messages = deque(maxlen=window_size)
-
-    def add(self, role, content):
-        self.messages.append({"role": role, "content": content})
-
-    def get_context(self):
-        return list(self.messages)
-```
+> 📄 **Example code:** [`examples/19-window-memory.py`](examples/19-window-memory.py)
 
 </details>
 
@@ -2478,54 +1237,7 @@ class WindowMemory:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-class SummaryMemory:
-    """
-    Summarizes older messages, keeps the most recent ones
-
-    ✅ Balances information and token usage
-    ❌ The summary may lose details
-    ❌ Requires an LLM to summarize
-    """
-
-    def __init__(self, window_size=5, llm_func=None):
-        self.window_size = window_size
-        self.messages = deque(maxlen=window_size)
-        self.summary = ""
-        self.llm = llm_func
-
-    def add(self, role, content):
-        self.messages.append({"role": role, "content": content})
-
-    def get_context(self):
-        context = []
-
-        if self.summary:
-            context.append({
-                "role": "system",
-                "content": f"Summary of the previous conversation:\n{self.summary}"
-            })
-
-        context.extend(list(self.messages))
-        return context
-
-    def update_summary(self):
-        """Summarize all messages except the recent window"""
-        if len(self.messages) <= self.window_size:
-            return
-
-        # Messages to summarize
-        old_messages = list(self.messages)[:-self.window_size]
-
-        conversation = "\n".join([
-            f"{m['role']}: {m['content']}" for m in old_messages
-        ])
-
-        if self.llm:
-            self.summary = self.llm(
-                f"Summarize concisely:\n{conversation}\n\nSummary:"
-            )
-```
+> 📄 **Example code:** [`examples/20-summary-memory.py`](examples/20-summary-memory.py)
 
 </details>
 
@@ -2534,64 +1246,7 @@ class SummaryMemory:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-class EntityMemory:
-    """
-    Tracks entities (people, places, events) that are mentioned
-
-    ✅ Structured information
-    ✅ Persistent across sessions
-    ❌ Requires NER (Named Entity Recognition)
-    """
-
-    def __init__(self):
-        self.entities = {}  # entity_name -> {attributes}
-
-    def extract_and_update(self, text, llm_func):
-        """Extract entities from text and update memory"""
-        prompt = f"""Extract entities from this text:
-Text: {text}
-
-Format as JSON:
-{{
-  "entities": [
-    {{"name": "...", "type": "person/org/location/...", "attributes": {{"key": "value"}}}},
-  ]
-}}"""
-
-        response = llm_func(prompt)
-
-        # Parse and update
-        import json
-        try:
-            data = json.loads(response)
-            for entity in data.get("entities", []):
-                name = entity["name"]
-                if name not in self.entities:
-                    self.entities[name] = {
-                        "type": entity.get("type", "unknown"),
-                        "attributes": {},
-                    }
-                self.entities[name]["attributes"].update(
-                    entity.get("attributes", {})
-                )
-        except json.JSONDecodeError:
-            pass
-
-    def recall(self, entity_name):
-        """Recall information about an entity"""
-        return self.entities.get(entity_name, None)
-
-    def get_context_string(self):
-        """Get all entities as a context string"""
-        lines = []
-        for name, data in self.entities.items():
-            attrs = ", ".join(
-                f"{k}={v}" for k, v in data["attributes"].items()
-            )
-            lines.append(f"- {name} ({data['type']}): {attrs}")
-        return "\n".join(lines)
-```
+> 📄 **Example code:** [`examples/21-entity-memory.py`](examples/21-entity-memory.py)
 
 </details>
 #### Semantic Memory (Vector-based)
@@ -2599,103 +1254,7 @@ Format as JSON:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-class SemanticMemory:
-    """
-    Store and retrieve facts using vector search
-
-    ✅ Scalable
-    ✅ Semantic search capability
-    ❌ Dependent on embedding quality
-    """
-
-    def __init__(self, vector_store, embedder):
-        self.store = vector_store
-        self.embedder = embedder
-        self.fact_count = 0
-
-    def add_fact(self, fact, metadata=None):
-        """Store a new fact"""
-        embedding = self.embedder.embed(fact)
-        self.store.add(
-            document=fact,
-            vector=embedding,
-            metadata={
-                "type": "fact",
-                "id": f"fact_{self.fact_count}",
-                **(metadata or {}),
-            }
-        )
-        self.fact_count += 1
-
-    def recall(self, query, top_k=5):
-        """Recall relevant facts"""
-        query_embedding = self.embedder.embed_query(query)
-        results = self.store.search(query_embedding, top_k)
-        return results
-
-    def consolidate(self, llm_func):
-        """
-        Consolidate similar facts (reduce redundancy)
-        """
-        # Get all facts
-        all_facts = self.store.search(
-            self.embedder.embed("fact"), top_k=1000
-        )
-
-        # Group similar facts
-        groups = self._cluster_facts(all_facts)
-
-        # Summarize each group
-        consolidated = []
-        for group in groups:
-            if len(group) == 1:
-                consolidated.append(group[0]["document"])
-            else:
-                facts_text = "\n".join(
-                    f"- {f['document']}" for f in group
-                )
-                summary = llm_func(
-                    f"Consolidate these facts:\n{facts_text}\n\nConsolidated:"
-                )
-                consolidated.append(summary)
-
-        return consolidated
-
-    def _cluster_facts(self, facts, threshold=0.8):
-        """Group similar facts together"""
-        import numpy as np
-
-        if not facts:
-            return []
-
-        embeddings = [f.get("vector", []) for f in facts]
-
-        groups = []
-        used = set()
-
-        for i, emb_i in enumerate(embeddings):
-            if i in used:
-                continue
-
-            group = [facts[i]]
-            used.add(i)
-
-            for j, emb_j in enumerate(embeddings):
-                if j in used or not emb_i or not emb_j:
-                    continue
-
-                sim = np.dot(emb_i, emb_j) / (
-                    np.linalg.norm(emb_i) * np.linalg.norm(emb_j)
-                )
-                if sim > threshold:
-                    group.append(facts[j])
-                    used.add(j)
-
-            groups.append(group)
-
-        return groups
-```
+> 📄 **Example code:** [`examples/22-semantic-memory-vector-based.py`](examples/22-semantic-memory-vector-based.py)
 
 </details>
 
@@ -2748,155 +1307,7 @@ class SemanticMemory:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-class MemoryManager:
-    """
-    Complete memory system combining multiple strategies
-    """
-
-    def __init__(self, llm_model="gemma3:12b"):
-        self.llm_model = llm_model
-        self.ollama_url = "http://localhost:11434"
-
-        # Different memory types
-        self.core_memory = {}  # Always in context
-        self.conversation = deque(maxlen=20)  # Short-term
-        self.summary = ""  # Compressed history
-        self.entity_memory = EntityMemory()  # Entities
-        self.semantic_memory = None  # Vector store (optional)
-
-        # Stats
-        self.stats = {
-            "total_messages": 0,
-            "total_tokens_used": 0,
-        }
-
-    def update_core_memory(self, key, value):
-        """Update core memory (always in context)"""
-        self.core_memory[key] = value
-
-    def add_message(self, role, content):
-        """Add message to conversation"""
-        self.conversation.append({
-            "role": role,
-            "content": content,
-            "timestamp": datetime.now().isoformat(),
-        })
-        self.stats["total_messages"] += 1
-
-        # Extract entities
-        if role == "user":
-            self.entity_memory.extract_and_update(content, self._llm_call)
-
-    def get_context(self, strategy="smart"):
-        """
-        Get context based on strategy
-
-        Strategies:
-        - buffer: All messages
-        - window: Last N messages
-        - summary: Summary + recent
-        - smart: Dynamic based on token budget
-        """
-        context = []
-
-        # Core memory (always)
-        if self.core_memory:
-            core_text = "\n".join(
-                f"- {k}: {v}" for k, v in self.core_memory.items()
-            )
-            context.append({
-                "role": "system",
-                "content": f"Core Memory:\n{core_text}"
-            })
-
-        # Entity memory
-        entity_context = self.entity_memory.get_context_string()
-        if entity_context:
-            context.append({
-                "role": "system",
-                "content": f"Known Entities:\n{entity_context}"
-            })
-
-        # Conversation strategy
-        if strategy == "buffer":
-            context.extend(list(self.conversation))
-        elif strategy == "window":
-            context.extend(list(self.conversation)[-10:])
-        elif strategy == "summary":
-            if self.summary:
-                context.append({
-                    "role": "system",
-                    "content": f"Previous context summary:\n{self.summary}"
-                })
-            context.extend(list(self.conversation)[-5:])
-        elif strategy == "smart":
-            # Dynamic strategy based on token budget
-            budget_remaining = 8000  # tokens for conversation
-
-            # Start with recent messages
-            recent = list(self.conversation)[-10:]
-            recent_tokens = sum(
-                len(m["content"].split()) for m in recent
-            ) * 1.3  # rough token estimate
-
-            if recent_tokens < budget_remaining:
-                context.extend(recent)
-
-                # Add summary if we have budget
-                if self.summary and budget_remaining - recent_tokens > 200:
-                    context.insert(-len(recent), {
-                        "role": "system",
-                        "content": f"Summary:\n{self.summary}"
-                    })
-            else:
-                # Too many messages, use summary
-                if self.summary:
-                    context.append({
-                        "role": "system",
-                        "content": f"Summary:\n{self.summary}"
-                    })
-                context.extend(list(self.conversation)[-5:])
-
-        return context
-
-    def update_summary(self):
-        """Update conversation summary"""
-        if len(self.conversation) < 10:
-            return
-
-        old_messages = list(self.conversation)[:-5]
-        conversation_text = "\n".join(
-            f"{m['role']}: {m['content'][:200]}" for m in old_messages
-        )
-
-        prompt = f"""Summarize the following conversation in 3-5 sentences:
-
-{conversation_text}
-
-Summary:"""
-
-        self.summary = self._llm_call(prompt)
-
-    def _llm_call(self, prompt):
-        """Call LLM"""
-        response = requests.post(f"{self.ollama_url}/api/generate", json={
-            "model": self.llm_model,
-            "prompt": prompt,
-            "stream": False
-        })
-        return response.json()["response"]
-
-    def get_stats(self):
-        """Return memory statistics"""
-        return {
-            **self.stats,
-            "core_memory_size": len(self.core_memory),
-            "conversation_length": len(self.conversation),
-            "entity_count": len(self.entity_memory.entities),
-            "has_summary": bool(self.summary),
-        }
-```
+> 📄 **Example code:** [`examples/23-6-4-complete-memory-manager.py`](examples/23-6-4-complete-memory-manager.py)
 
 </details>
 
@@ -2908,21 +1319,7 @@ Summary:"""
 <details>
 <summary><b>Lab 1: Semantic Search with nomic-embed-text (Click to expand/collapse)</b></summary>
 
-```bash
-# Test embedding
-curl -s http://localhost:11434/api/embed -d '{
-  "model": "nomic-embed-text",
-  "input": ["What is health insurance?", "Cardiovascular disease prevention"]
-}' | jq '.embeddings | length'
-# Output: 2
-
-# Check embedding dimensions
-curl -s http://localhost:11434/api/embed -d '{
-  "model": "nomic-embed-text",
-  "input": "test"
-}' | jq '.embeddings[0] | length'
-# Output: 768
-```
+> 📄 **Example code:** [`examples/24-lab-1-semantic-search-with-nomic-embed-text.sh`](examples/24-lab-1-semantic-search-with-nomic-embed-text.sh)
 
 </details>
 
@@ -2931,126 +1328,7 @@ curl -s http://localhost:11434/api/embed -d '{
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-# Complete hybrid search demo
-import requests
-import numpy as np
-from collections import Counter
-import math
-
-OLLAMA_URL = "http://localhost:11434"
-
-# --- Documents ---
-documents = [
-    "Health insurance (HI) is a mandatory form of insurance in the US.",
-    "The HI contribution rate for workers is 4.5% of the base salary.",
-    "People with an HI card can get medical treatment at healthcare facilities.",
-    "HI pays from 80% to 100% of the costs depending on the tier.",
-    "The HI card is valid for 5 years from the issue date.",
-    "Register for HI at the social insurance agency.",
-    "Voluntary HI is for people not covered by the mandatory scheme.",
-]
-
-# --- Semantic Search ---
-def get_embedding(text):
-    response = requests.post(f"{OLLAMA_URL}/api/embed", json={
-        "model": "nomic-embed-text",
-        "input": text
-    })
-    return response.json()["embeddings"][0]
-
-def semantic_search(query, docs, top_k=3):
-    query_emb = get_embedding(query)
-    doc_embs = [get_embedding(doc) for doc in docs]
-
-    scores = []
-    for i, doc_emb in enumerate(doc_embs):
-        score = np.dot(query_emb, doc_emb) / (
-            np.linalg.norm(query_emb) * np.linalg.norm(doc_emb)
-        )
-        scores.append((i, score))
-
-    scores.sort(key=lambda x: x[1], reverse=True)
-    return [(docs[i], score) for i, score in scores[:top_k]]
-
-# --- BM25 Search ---
-class BM25:
-    def __init__(self, k1=1.5, b=0.75):
-        self.k1 = k1
-        self.b = b
-
-    def fit(self, docs):
-        self.docs = docs
-        self.n = len(docs)
-        self.doc_freqs = {}
-        self.doc_lens = []
-
-        for doc in docs:
-            terms = doc.lower().split()
-            self.doc_lens.append(len(terms))
-            for term in set(terms):
-                self.doc_freqs[term] = self.doc_freqs.get(term, 0) + 1
-
-        self.avgdl = sum(self.doc_lens) / self.n
-
-    def search(self, query, top_k=3):
-        query_terms = query.lower().split()
-        scores = []
-
-        for i, doc in enumerate(self.docs):
-            terms = doc.lower().split()
-            tf = Counter(terms)
-            score = 0
-
-            for term in query_terms:
-                if term in tf:
-                    idf = math.log(
-                        (self.n - self.doc_freqs.get(term, 0) + 0.5) /
-                        (self.doc_freqs.get(term, 0) + 0.5) + 1
-                    )
-                    f = tf[term]
-                    numerator = f * (self.k1 + 1)
-                    denominator = f + self.k1 * (
-                        1 - self.b + self.b * self.doc_lens[i] / self.avgdl
-                    )
-                    score += idf * numerator / denominator
-
-            scores.append((i, score))
-
-        scores.sort(key=lambda x: x[1], reverse=True)
-        return [(self.docs[i], score) for i, score in scores[:top_k]]
-
-# --- Hybrid Search ---
-def rrf_fusion(rankings, k=60):
-    scores = {}
-    for ranking in rankings:
-        for rank, doc in enumerate(ranking, 1):
-            if doc not in scores:
-                scores[doc] = 0
-            scores[doc] += 1 / (k + rank)
-    return sorted(scores.keys(), key=lambda x: scores[x], reverse=True)
-
-# --- Run Demo ---
-query = "How much is the HI contribution?"
-
-print("=== Semantic Search ===")
-for doc, score in semantic_search(query, documents):
-    print(f"  {score:.4f} | {doc[:60]}...")
-
-print("\n=== BM25 Search ===")
-bm25 = BM25()
-bm25.fit(documents)
-for doc, score in bm25.search(query):
-    print(f"  {score:.4f} | {doc[:60]}...")
-
-print("\n=== Hybrid Search (RRF) ===")
-semantic_results = [doc for doc, _ in semantic_search(query, documents, 5)]
-bm25_results = [doc for doc, _ in bm25.search(query, 5)]
-
-hybrid = rrf_fusion([semantic_results, bm25_results])
-for i, doc in enumerate(hybrid[:3]):
-    print(f"  #{i+1} | {doc[:60]}...")
-```
+> 📄 **Example code:** [`examples/25-lab-2-bm25-vector-hybrid-search.py`](examples/25-lab-2-bm25-vector-hybrid-search.py)
 
 </details>
 
@@ -3059,10 +1337,7 @@ for i, doc in enumerate(hybrid[:3]):
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-# Run: python 01-retrieve-memory-knowledge/rag_lab.py
-# (See rag_lab.py file in this directory)
-```
+> 📄 **Example code:** [`examples/26-lab-3-full-rag-pipeline.py`](examples/26-lab-3-full-rag-pipeline.py)
 
 </details>
 
@@ -3104,47 +1379,7 @@ for i, doc in enumerate(hybrid[:3]):
 <details>
 <summary>Python Code — Retrieve with Fallback + Logging (Click to expand/collapse)</summary>
 
-```python
-import time, hashlib, logging, re
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("retrieval")
-
-CURRENT_EMBED_VERSION = "nomic-embed-text:v2"
-TOP_SCORE_FLOOR, TOP_K = 0.25, 5
-PII = [(re.compile(r"[\w.-]+@[\w.-]+\.\w+"), "[REDACTED:EMAIL]"),
-       (re.compile(r"\b\d{3}-\d{2}-\d{4}\b"), "[REDACTED:SSN]"),
-       (re.compile(r"sk-[A-Za-z0-9]{8,}"), "[REDACTED:KEY]")]
-
-def scrub(text: str) -> str:
-    for rx, rep in PII:
-        text = rx.sub(rep, text)
-    return text
-
-def get_embedding(text: str, version: str = CURRENT_EMBED_VERSION):
-    # stub: call ollama/vLLM; must return (vector, version)
-    return [0.1, 0.2], version
-
-def vector_search(q_emb, tenant_id: str, k=TOP_K): ...
-def bm25_search(query: str, tenant_id: str, k=TOP_K): ...
-
-def retrieve(query: str, tenant_id: str):
-    t0 = time.time()
-    q = scrub(query)
-    q_emb, ver = get_embedding(q)
-    assert ver == CURRENT_EMBED_VERSION, f"drift: {ver}"
-    hits = [h for h in vector_search(q_emb, tenant_id) if h["tenant_id"] == tenant_id]
-    top = max([h["score"] for h in hits], default=0.0)
-    fallback = None
-    if not hits or top < TOP_SCORE_FLOOR:
-        fallback = "bm25-only-retry"
-        hits = [h for h in bm25_search(q, tenant_id) if h["tenant_id"] == tenant_id]
-    logger.info("retrieve tenant=%s hits=%d top=%.3f fallback=%s ms=%d ver=%s",
-        hashlib.sha256(tenant_id.encode()).hexdigest()[:8],
-        len(hits), top, fallback, int((time.time()-t0)*1000), ver)
-    if not hits:
-        return {"answer": None, "abstain": True, "reason": "no grounding found"}
-    return {"hits": hits[:TOP_K], "fallback": fallback, "abstain": False}
-```
+> 📄 **Example code:** [`examples/27-8-4-failure-observability.py`](examples/27-8-4-failure-observability.py)
 
 </details>
 
@@ -3180,75 +1415,7 @@ def retrieve(query: str, tenant_id: str):
 
 BM25 (rank-bm25) + vector (Ollama nomic-embed-text) → RRF fusion → cross-encoder rerank → top-k.
 
-```python
-import requests
-import numpy as np
-from rank_bm25 import BM25Okapi
-
-OLLAMA = "http://localhost:11434"
-TOP_K = 20
-RERANK_TOP = 5
-
-def embed(texts):
-    """Embed via Ollama nomic-embed-text."""
-    res = requests.post(f"{OLLAMA}/api/embed", json={
-        "model": "nomic-embed-text",
-        "input": texts if isinstance(texts, list) else [texts]
-    })
-    return res.json()["embeddings"]
-
-def bm25_search(query, chunks, tokenizer):
-    """BM25 keyword search."""
-    tokenized_corpus = [tokenizer(c["text"]) for c in chunks]
-    bm25 = BM25Okapi(tokenized_corpus)
-    scores = bm25.get_scores(tokenizer(query))
-    ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
-    return [(idx, score) for idx, score in ranked[:TOP_K]]
-
-def vector_search(query, chunks):
-    """Semantic search via vector similarity."""
-    q_emb = embed(query)[0]
-    results = []
-    for i, c in enumerate(chunks):
-        v_emb = embed(c["text"])[0]
-        sim = np.dot(q_emb, v_emb) / (np.linalg.norm(q_emb) * np.linalg.norm(v_emb))
-        results.append((i, sim))
-    return sorted(results, key=lambda x: x[1], reverse=True)[:TOP_K]
-
-def rrf_fusion(bm25_results, vec_results, k=60):
-    """Reciprocal Rank Fusion."""
-    fused = {}
-    for rank, (idx, _) in enumerate(bm25_results):
-        fused[idx] = fused.get(idx, 0) + 1 / (k + rank + 1)
-    for rank, (idx, _) in enumerate(vec_results):
-        fused[idx] = fused.get(idx, 0) + 1 / (k + rank + 1)
-    return sorted(fused.items(), key=lambda x: x[1], reverse=True)
-
-def rerank_crossencoder(query, chunks, indices):
-    """Cross-encoder rerank (simulated — replace with sentence-transformers in production)."""
-    results = []
-    for idx in indices:
-        c = chunks[idx]
-        # Simulated cross-encoder score; use CrossEncoder("cross-encoder/ms-marco-MiniLML-6-v2") in production
-        score = len([w for w in query.lower().split() if w in c["text"].lower()]) / max(len(query.split()), 1)
-        results.append((idx, score))
-    return sorted(results, key=lambda x: x[1], reverse=True)[:RERANK_TOP]
-
-def hybrid_search(query, chunks):
-    """Complete hybrid pipeline."""
-    tokenizer = lambda t: t.lower().split()
-    bm25_scores = bm25_search(query, chunks, tokenizer)
-    vec_scores = vector_search(query, chunks)
-    fused = rrf_fusion(bm25_scores, vec_scores)
-    indices = [idx for idx, _ in fused]
-    reranked = rerank_crossencoder(query, chunks, indices)
-    return [chunks[idx] for idx, _ in reranked]
-
-# Usage
-chunks = [{"text": "BHYT là bảo hiểm y tế bắt buộc"}, {"text": "Mức đóng BHYT là 4.5%"}]
-results = hybrid_search("mức đóng BHYT", chunks)
-print([r["text"] for r in results])
-```
+> 📄 **Example code:** [`examples/28-1-complete-hybrid-search-pipeline-45-lines-production.py`](examples/28-1-complete-hybrid-search-pipeline-45-lines-production.py)
 
 ### 2. Just-in-Time vs Pre-Computed Retrieval (Anthropic, 09/2025)
 

@@ -30,14 +30,7 @@
 <details>
 <summary><b>Bước 1: Cài đặt môi trường (Click to expand/collapse)</b></summary>
 
-```bash
-# Cài Ollama (chạy LLM & Embedding local)
-curl -fsSL https://ollama.com/install.sh | sh
-
-# Tải model (ví dụ Jul-2026 — xem ghi chú Oct-2026 bên dưới)
-ollama pull gemma3:12b        # LLM chính (ví dụ)
-ollama pull nomic-embed-text  # Embedding model
-```
+> 📄 **Code ví dụ:** [`examples/01-buoc-1-cai-at-moi-truong.sh`](examples/01-buoc-1-cai-at-moi-truong.sh)
 
 > **Ghi chú Oct-2026.** Hai dòng `ollama pull` trên chỉ là ví dụ hồi Jul-2026 thôi,
 > bạn đổi model khác vẫn chạy đúng pattern. Một số lựa chọn mới:
@@ -1088,67 +1081,7 @@ Tuần 21-26: #16 Autonomous AI Development Platform
 <details>
 <summary><b>Ví dụ 1: Xây dựng RAG Pipeline đơn giản (Click to expand/collapse)</b></summary>
 
-```python
-# Bước 1: Chunk documents
-from pathlib import Path
-
-def chunk_text(text, chunk_size=500, overlap=50):
-    chunks = []
-    start = 0
-    while start < len(text):
-        chunks.append(text[start:start + chunk_size])
-        start = start + chunk_size - overlap
-    return chunks
-
-# Bước 2: Embed chunks với Ollama
-import requests
-
-def embed_text(text):
-    response = requests.post("http://localhost:11434/api/embed", json={
-        "model": "nomic-embed-text",
-        "input": text
-    })
-    return response.json()["embeddings"][0]
-
-# Bước 3: Tạo vector store đơn giản
-import numpy as np
-
-class SimpleVectorStore:
-    def __init__(self):
-        self.vectors = []
-        self.documents = []
-    
-    def add(self, doc, vector):
-        self.documents.append(doc)
-        self.vectors.append(vector)
-    
-    def search(self, query_vec, top_k=3):
-        scores = []
-        q = np.array(query_vec)
-        for i, v in enumerate(self.vectors):
-            score = np.dot(q, np.array(v)) / (np.linalg.norm(q) * np.linalg.norm(np.array(v)))
-            scores.append((i, score))
-        scores.sort(key=lambda x: x[1], reverse=True)
-        return [(self.documents[i], s) for i, s in scores[:top_k]]
-
-# Bước 4: Generate câu trả lời
-def generate_answer(query, context_docs):
-    context = "\\n".join([f"- {doc}" for doc in context_docs])
-    prompt = f"""Dựa vào thông tin sau, trả lời câu hỏi.
-
-Thông tin:
-{context}
-
-Câu hỏi: {query}
-
-Trả lời:"""
-    response = requests.post("http://localhost:11434/api/generate", json={
-        "model": "gemma3:12b",
-        "prompt": prompt,
-        "stream": False
-    })
-    return response.json()["response"]
-```
+> 📄 **Code ví dụ:** [`examples/02-vi-du-1-xay-dung-rag-pipeline-on.py`](examples/02-vi-du-1-xay-dung-rag-pipeline-on.py)
 
 </details>
 

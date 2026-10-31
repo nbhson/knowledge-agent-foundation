@@ -151,93 +151,12 @@ Result: Nodes that often "appear together on random paths" → close vectors
 
 > **What's new compared to DeepWalk:** adds two parameters `p` and `q` to **control the direction** of the walk — instead of walking purely at random, you decide whether to "go far" or "stay close".
 
-```python
-# How p and q work:
-
-p = return parameter (probability of going back to the node you just left):
-  - small p (0.5): often returns → explores the tight neighborhood
-  - large p (2.0): rarely returns → goes farther
-
-q = in-out parameter (probability of going far vs returning):
-  - small q (0.5): tends to go far (DFS-like) → explores far-flung structure
-  - large q (2.0): tends to stay close (BFS-like) → explores local community
-
-# Simplest way to understand:
-# q < 1 (DFS-like): "I want to find someone with the SAME ROLE" even in another team
-# q > 1 (BFS-like): "I want to find someone in the SAME TEAM"
-```
+> 📄 **Example code:** [`examples/01-2-2-node2vec-biased-random-walks-added-control.py`](examples/01-2-2-node2vec-biased-random-walks-added-control.py)
 
 <details>
 <summary>Python Code — Node2Vec with NetworkX (Click to view)</summary>
 
-```python
-import networkx as nx
-import numpy as np
-from gensim.models import Word2Vec
-import random
-
-def get_random_walk(graph, start_node: str, walk_length: int = 10) -> list[str]:
-    walk = [start_node]
-    current = start_node
-    for _ in range(walk_length - 1):
-        neighbors = list(graph.neighbors(current))
-        if not neighbors:
-            break
-        current = random.choice(neighbors)
-        walk.append(current)
-    return walk
-
-def deepwalk_embeddings(
-    graph: nx.Graph,
-    num_walks: int = 10,
-    walk_length: int = 20,
-    embedding_dim: int = 64,
-    window: int = 5,
-) -> dict[str, np.ndarray]:
-    """Create embeddings with random walks + Word2Vec."""
-    # Generate the corpus: many random walks
-    walks = []
-    nodes = list(graph.nodes())
-    for _ in range(num_walks):
-        for node in nodes:
-            walks.append(get_random_walk(graph, node, walk_length))
-    
-    print(f"Generated {len(walks)} walks, avg length {sum(len(w) for w in walks)/len(walks):.1f}")
-    
-    # Train Word2Vec
-    model = Word2Vec(
-        walks,
-        vector_size=embedding_dim,
-        window=window,
-        min_count=0,
-        sg=1,  # Skip-gram
-        workers=4,
-        epochs=5,
-    )
-    
-    # Return a dict node -> vector
-    return {node: model.wv[node] for node in graph.nodes() if node in model.wv}
-
-# Usage
-G = nx.karate_club_graph()
-# Rename node labels to strings for Word2Vec
-G_labeled = nx.relabel_nodes(G, {n: f"node_{n}" for n in G.nodes()})
-embeddings = deepwalk_embeddings(G_labeled, num_walks=10, walk_length=20, embedding_dim=64)
-
-# Find similar nodes
-def most_similar(target: str, embeddings: dict, top_k: int = 5) -> list:
-    target_vec = embeddings[target]
-    scores = []
-    for node, vec in embeddings.items():
-        if node == target:
-            continue
-        sim = float(np.dot(target_vec, vec) / (np.linalg.norm(target_vec) * np.linalg.norm(vec)))
-        scores.append((node, sim))
-    scores.sort(key=lambda x: x[1], reverse=True)
-    return scores[:top_k]
-
-print(most_similar("node_0", embeddings, top_k=5))
-```
+> 📄 **Example code:** [`examples/02-2-2-node2vec-biased-random-walks-added-control.py`](examples/02-2-2-node2vec-biased-random-walks-added-control.py)
 
 </details>
 
@@ -289,26 +208,7 @@ K layers = K rounds of "asking friends" — the final node knows information K h
   Layer 3: knows friends of friends of friends (3 hops)
 ```
 
-```python
-# Pseudocode: GraphSAGE forward
-def graphsage_layer(node_features, adjacency, weights, aggregator="mean"):
-    """
-    node_features: (N, D) — features of N nodes
-    adjacency: (N, N) — adjacency matrix
-    """
-    # Aggregate neighbors
-    if aggregator == "mean":
-        neighbor_agg = adjacency @ node_features / adjacency.sum(axis=1, keepdims=True)
-    
-    # Concatenate self + neighbors
-    combined = np.concatenate([node_features, neighbor_agg], axis=1)
-    
-    # Transform
-    output = np.maximum(0, combined @ weights)  # ReLU
-    # Normalize
-    output = output / np.linalg.norm(output, axis=1, keepdims=True)
-    return output
-```
+> 📄 **Example code:** [`examples/03-3-1-graphsage-inductive-node-embeddings.py`](examples/03-3-1-graphsage-inductive-node-embeddings.py)
 
 ### 3.2 GAT — Graph Attention Networks
 
@@ -336,36 +236,7 @@ Concrete example:
 <details>
 <summary>Python Code — GraphSAGE with PyG (Click to view)</summary>
 
-```python
-# pip install torch torch-geometric
-
-import torch
-from torch_geometric.nn import SAGEConv
-from torch_geometric.data import Data
-
-class GraphSAGE(torch.nn.Module):
-    def __init__(self, in_channels: int, hidden_channels: int, out_channels: int):
-        super().__init__()
-        self.conv1 = SAGEConv(in_channels, hidden_channels)
-        self.conv2 = SAGEConv(hidden_channels, out_channels)
-    
-    def forward(self, x, edge_index):
-        x = self.conv1(x, edge_index)
-        x = x.relu()
-        x = self.conv2(x, edge_index)
-        return x  # (N, out_channels) embeddings
-
-# Create graph data
-# edge_index: (2, E) — list of edges
-edge_index = torch.tensor([[0, 1, 1, 2, 2, 3],
-                           [1, 0, 2, 1, 3, 2]], dtype=torch.long)
-x = torch.randn(4, 16)  # 4 nodes, 16 features per node
-
-model = GraphSAGE(in_channels=16, hidden_channels=32, out_channels=8)
-embeddings = model(x, edge_index)
-print(f"Embeddings shape: {embeddings.shape}")  # (4, 8)
-print(f"Embedding node 0: {embeddings[0]}")
-```
+> 📄 **Example code:** [`examples/04-3-2-gat-graph-attention-networks.py`](examples/04-3-2-gat-graph-attention-networks.py)
 
 </details>
 
@@ -440,67 +311,7 @@ Advantage: models symmetry, inversion, composition
 <details>
 <summary>Python Code — TransE Training Loop (Click to view)</summary>
 
-```python
-import torch
-import torch.nn as nn
-
-class TransE(nn.Module):
-    def __init__(self, num_entities: int, num_relations: int, dim: int = 100):
-        super().__init__()
-        self.entity_emb = nn.Embedding(num_entities, dim)
-        self.relation_emb = nn.Embedding(num_relations, dim)
-        nn.init.xavier_uniform_(self.entity_emb.weight)
-        nn.init.xavier_uniform_(self.relation_emb.weight)
-    
-    def forward(self, h: torch.Tensor, r: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
-        """Score triples — lower is better."""
-        h_e = self.entity_emb(h)  # (batch, dim)
-        r_e = self.relation_emb(r)
-        t_e = self.entity_emb(t)
-        # L1 distance: ||h + r - t||
-        score = torch.norm(h_e + r_e - t_e, p=1, dim=1)
-        return score  # (batch,)
-    
-    def predict_tail(self, h: int, r: int, all_entities: int) -> torch.Tensor:
-        """Given (h, r, ?), rank all entities by score."""
-        h_e = self.entity_emb(torch.tensor([h]))
-        r_e = self.relation_emb(torch.tensor([r]))
-        all_t = self.entity_emb.weight  # (num_entities, dim)
-        scores = torch.norm(h_e + r_e - all_t, p=1, dim=1)
-        return scores  # lowest = best prediction
-
-# Training
-model = TransE(num_entities=1000, num_relations=10, dim=100)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-
-for epoch in range(100):
-    # Positive triples: correct (h, r, t)
-    h_pos = torch.randint(0, 1000, (32,))
-    r_pos = torch.randint(0, 10, (32,))
-    t_pos = torch.randint(0, 1000, (32,))
-    
-    # Negative triples: corrupt the tail
-    t_neg = torch.randint(0, 1000, (32,))
-    
-    pos_score = model(h_pos, r_pos, t_pos)
-    neg_score = model(h_pos, r_pos, t_neg)
-    
-    # Margin ranking loss: pos_score + margin < neg_score
-    margin = 1.0
-    loss = torch.relu(pos_score - neg_score + margin).mean()
-    
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    
-    if epoch % 20 == 0:
-        print(f"Epoch {epoch}: loss={loss.item():.4f}")
-
-# Predict: Alice WORKS_ON ?
-# alice_id = entity_to_id["Alice"], works_on_id = relation_to_id["WORKS_ON"]
-# scores = model.predict_tail(alice_id, works_on_id, num_entities=1000)
-# top_k = torch.topk(scores, k=5, largest=False)  # 5 projects with the lowest scores
-```
+> 📄 **Example code:** [`examples/05-4-2-rotate-rotation-in-complex-space.py`](examples/05-4-2-rotate-rotation-in-complex-space.py)
 
 </details>
 
@@ -544,70 +355,7 @@ Graph embeddings don't replace text embeddings — they **complement** each othe
 <details>
 <summary>Python Code — Hybrid Search (RRF + Weighted) (Click to view)</summary>
 
-```python
-import numpy as np
-from typing import List, Dict
-
-def reciprocal_rank_fusion(
-    ranked_lists: List[List[str]],
-    k: int = 60,
-) -> Dict[str, float]:
-    """RRF: merge several ranked lists into one score."""
-    scores: Dict[str, float] = {}
-    for ranked_list in ranked_lists:
-        for rank, doc_id in enumerate(ranked_list):
-            scores[doc_id] = scores.get(doc_id, 0) + 1 / (k + rank + 1)
-    return scores
-
-def hybrid_search(
-    query_text: str,
-    query_vector: List[float],
-    text_index,       # Vector DB for text embeddings
-    graph_embeddings: Dict[str, np.ndarray],
-    top_k: int = 10,
-    alpha: float = 0.6,  # weight for text search
-) -> List[Dict]:
-    """
-    Hybrid: α * text_score + (1-α) * graph_score
-    
-    alpha=1.0 → text search only
-    alpha=0.0 → graph search only
-    alpha=0.6 → balanced (recommended)
-    """
-    # 1. Text search (semantic)
-    text_results = text_index.search(query_vector, top_k=top_k * 2)
-    # text_results = [{"id": "doc_1", "score": 0.92}, ...]
-    
-    # 2. Graph search (structural)
-    query_graph_vec = embed(query_text)  # or the query entity embedding
-    graph_scores = []
-    for node_id, node_vec in graph_embeddings.items():
-        sim = float(np.dot(query_graph_vec, node_vec) / 
-                    (np.linalg.norm(query_graph_vec) * np.linalg.norm(node_vec)))
-        graph_scores.append((node_id, sim))
-    graph_scores.sort(key=lambda x: x[1], reverse=True)
-    graph_ranked = [node_id for node_id, _ in graph_scores[:top_k * 2]]
-    
-    # 3a. Fusion by Weighted Score
-    text_score_map = {r["id"]: r["score"] for r in text_results}
-    graph_score_map = {node_id: score for node_id, score in graph_scores}
-    
-    all_ids = set(text_score_map.keys()) | set(graph_score_map.keys())
-    hybrid_scores = {}
-    for doc_id in all_ids:
-        t_score = text_score_map.get(doc_id, 0)
-        g_score = graph_score_map.get(doc_id, 0)
-        hybrid_scores[doc_id] = alpha * t_score + (1 - alpha) * g_score
-    
-    ranked = sorted(hybrid_scores.items(), key=lambda x: x[1], reverse=True)
-    return [{"id": doc_id, "score": score} for doc_id, score in ranked[:top_k]]
-
-# 3b. Fusion by RRF (no need to tune alpha)
-def hybrid_search_rrf(text_ranked: List[str], graph_ranked: List[str], top_k: int = 10):
-    fused = reciprocal_rank_fusion([text_ranked, graph_ranked])
-    ranked = sorted(fused.items(), key=lambda x: x[1], reverse=True)
-    return ranked[:top_k]
-```
+> 📄 **Example code:** [`examples/06-5-1-fusion-techniques.py`](examples/06-5-1-fusion-techniques.py)
 
 </details>
 

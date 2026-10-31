@@ -18,13 +18,7 @@ Hai tên này là hai tầng khác nhau. LangChain là lớp nền: bọc model 
 
 1. Muốn nhanh, chỉ một lượt gọi: dùng phần nền, không cần `StateGraph`.
 
-```typescript
-import { DynamicStructuredTool } from "@langchain/core/tools";
-const search = new DynamicStructuredTool({
-  name: "search", description: "Search the web",
-  func: async (input) => { /* ... */ },
-});
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-toi-can-ca-langchain-lan-langgraph-khong.ts`](examples/01-q1-toi-can-ca-langchain-lan-langgraph-khong.ts)
 
 2. Muốn agent tự lặp lại: tool → kết quả → lại nghĩ → có thể gọi tool tiếp, thì phải có `StateGraph` với một cạnh quay về. Đây là khác biệt lớn nhất so với việc gọi model một lần rồi tự kết thúc.
 3. Chỉ nhớ trong một phiên làm việc: `InMemoryChatMessageHistory` là đủ. Muốn nhớ xuyên phiên và cần dừng giữa chừng rồi tổi tụi lại: `MemorySaver`.
@@ -51,10 +45,7 @@ Vì trong đồ thị có **hai loại cạnh khác nhau** và nếu lẫn lộn
 1. Kiểm tra `should_continue` có nhánh `END` thật không, và điều kiện dừng có dựa trên tiến trình thật chứ không phải cảm giác.
 2. Tách rõ hai cạnh: node agent kết thúc bằng cạnh điều kiện, node tool quay về agent bằng cạnh thường.
 
-```python
-graph.add_conditional_edges("agent", should_continue, {"tools": "tools", END: END})
-graph.add_edge("tools", "agent")   # vòng lặp — giống loop/
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-vong-lap-trong-stategraph-khong-dung-cu.py`](examples/02-q2-vong-lap-trong-stategraph-khong-dung-cu.py)
 
 3. Đặt trần số lượt cho đồ thị. Nếu trần không có, một agent hỏi lại cùng một thứ sẽ đốt hết ngân sách.
 4. Kiểm tra công cụ có trả về thông tin "không tìm thấy gì" không. Công cụ luôn trả kết quả có vẻ hữu ích là nguyên nhân vòng lặp vô hạn phổ biến nhất.

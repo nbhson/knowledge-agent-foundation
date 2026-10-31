@@ -108,20 +108,7 @@ Quy tắc phân biệt: nếu không có lease + deadline + budget riêng + tool
 <details>
 <summary>Python — loại sub-agent giả</summary>
 
-```python
-def is_real_subagent(spec: dict) -> tuple[bool, str]:
-    for f in ("role", "goal", "context", "tools", "budget", "lease"):
-        if f not in spec:
-            return False, f"thiếu trường: {f}"
-    if not spec["context"].get("files") and not spec["context"].get("parentSummary"):
-        return False, "context phải là files[] + parentSummary cắt gọn, không dump full"
-    if spec["role"] in ("implementer",) and not spec.get("worktree"):
-        return False, "implementer bắt buộc worktree cách ly"
-    lease = spec["lease"]
-    if not (lease.get("leaseId") and lease.get("deadlineMs") and lease.get("maxAttempts")):
-        return False, "lease cần leaseId + deadlineMs + maxAttempts"
-    return True, "ok"
-```
+> 📄 **Code ví dụ:** [`examples/01-1-2-guard-kiem-tra-contract.py`](examples/01-1-2-guard-kiem-tra-contract.py)
 
 </details>
 
@@ -151,31 +138,7 @@ Anti-pattern cấm (`loop/06-anti-patterns`): cùng một agent vừa implement 
 <details>
 <summary>Python — spec từng role kèm DoD</summary>
 
-```python
-ROLES = {
-    "implementer": {
-        "goal_example": "Sửa refresh auth trong src/auth/refresh.ts; AC: refresh thành công sau expiry, không chạm file khác",
-        "definition_of_done": ["diff giới hạn trong files[]", "build pass", "artifact patch sẵn sàng PR"],
-        "forbidden": ["merge", "tự verify", "chạm file ngoài worktree"],
-    },
-    "verifier": {
-        "goal_example": "Verify patch ART-123 theo rubric: build OK, test OK, AC trace",
-        "definition_of_done": ["verdict ACCEPT/REJECT kèm bằng chứng", "tên test fail + log"],
-        "default_stance": "REJECT cho tới khi bằng chứng đủ",
-        "forbidden": ["sửa code", "duyệt khi chưa có output test"],
-    },
-    "reviewer": {
-        "goal_example": "Review diff PR #1234; gắn Blocker/Major/Minor kèm file:line",
-        "definition_of_done": ["danh sách severity", "mỗi Blocker ít nhất một comment actionable"],
-        "forbidden": ["chạy shell", "ghi file"],
-    },
-    "researcher": {
-        "goal_example": "Token refresh xử lý ở đâu? Trả 3 file ứng viên kèm file:line + 5 dòng context",
-        "definition_of_done": ["facts + citations", "không đổi behavior"],
-        "forbidden": ["ghi memory", "đề xuất patch khi chưa được hỏi"],
-    },
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-2-2-inh-nghia-chi-tiet-tung-role.py`](examples/02-2-2-inh-nghia-chi-tiet-tung-role.py)
 
 </details>
 
@@ -222,40 +185,7 @@ spawn (kèm spec §4) → heartbeat 5s → progress stream
 <details>
 <summary>Python — lease + heartbeat + fencing</summary>
 
-```python
-import time, dataclasses
-
-@dataclasses.dataclass
-class Lease:
-    lease_id: int
-    deadline_ms: int = 300_000
-    max_attempts: int = 3
-    fencing_token: int = 0
-    last_heartbeat: float = dataclasses.field(default_factory=time.time)
-    last_progress: float = dataclasses.field(default_factory=time.time)
-
-    def state(self) -> str:
-        now = time.time()
-        if (now - self.last_heartbeat) * 1000 > 15_000:
-            return "DEAD"
-        if self._expired():
-            return "TIMED_OUT"
-        if now - self.last_progress > 60:
-            return "SUSPECT"
-        return "RUNNING"
-
-    def _expired(self) -> bool:
-        return False  # supervisor so với wall-clock deadlineMs
-
-    def requeue(self) -> "Lease":
-        return Lease(self.lease_id, self.deadline_ms, self.max_attempts,
-                     fencing_token=self.fencing_token + 1)
-
-def accept_result(token: int, current: int, attempt: int) -> bool:
-    if attempt > 3:
-        return False  # escalate / fail closed
-    return token == current  # token cũ → loại (fencing)
-```
+> 📄 **Code ví dụ:** [`examples/03-3-2-supervisor-heartbeat.py`](examples/03-3-2-supervisor-heartbeat.py)
 
 </details>
 
@@ -271,62 +201,14 @@ def accept_result(token: int, current: int, attempt: int) -> bool:
 
 ### 4.1 Interface spawn
 
-```typescript
-interface SubAgentSpec {
-  role: "implementer" | "verifier" | "reviewer" | "researcher";
-  taskId: string;            // link tới TaskNode ở 08-task
-  goal: string;              // hẹp, một việc, có definition of done
-  context: {                 // KHÔNG dump toàn bộ context cha
-    files: string[];         // allow-list đường dẫn
-    artifactRefs: { path: string; hash: string }[]; // payload lớn → ref, không inline
-    parentSummary: string;   // transcript cha đã rút gọn, không raw log
-  };
-  tools: string[];           // allow-list thu hẹp từ ma trận role ở 12-sandbox §6
-  worktree?: string;         // BẮT BUỘC với code-editing sub-agents (isolation)
-  budget: { maxTokens: number; maxSteps: number; timeoutMs: number };
-  lease: { leaseId: number; deadlineMs: number; maxAttempts: number };
-  secrets?: { scope: string; ttlMinutes: number }; // 5–15p, env injection, redact trước khi log
-}
-```
+> 📄 **Code ví dụ:** [`examples/04-4-1-interface-spawn.ts`](examples/04-4-1-interface-spawn.ts)
 
 ### 4.2 Validation và ví dụ spawn
 
 <details>
 <summary>TypeScript — validate + hai ví dụ spawn</summary>
 
-```typescript
-function validateSpec(s: SubAgentSpec): string[] {
-  const errs: string[] = [];
-  if (!s.goal || s.goal.length < 20) errs.push("goal phải hẹp + kiểm được (>=20 ký tự)");
-  if (!s.context.files.length && !s.context.parentSummary) errs.push("cần files[] hoặc parentSummary");
-  if (s.role === "implementer" && !s.worktree) errs.push("implementer bắt buộc worktree");
-  if (s.role === "reviewer" && s.tools.includes("shell")) errs.push("reviewer không được có shell");
-  if (s.budget.maxTokens > 8000) errs.push("budget sub-agent quá lớn; tách task");
-  return errs;
-}
-
-const researcherSpawn: SubAgentSpec = {
-  role: "researcher", taskId: "T-101",
-  goal: "Tìm logic token-refresh; trả 3 files kèm citations file:line",
-  context: { files: ["src/auth/"], artifactRefs: [], parentSummary: "Parent: refresh fail sau expiry; nghi interceptor." },
-  tools: ["fs.read", "code.search"],
-  budget: { maxTokens: 2000, maxSteps: 10, timeoutMs: 120_000 },
-  lease: { leaseId: 1, deadlineMs: Date.now() + 120_000, maxAttempts: 3 },
-};
-
-const implementerSpawn: SubAgentSpec = {
-  role: "implementer", taskId: "T-102",
-  goal: "Sửa refresh trong src/auth/refresh.ts theo AC-3; không chạm module khác",
-  context: { files: ["src/auth/refresh.ts", "src/auth/interceptor.ts"],
-    artifactRefs: [{ path: "s3://artifacts/research-T101.md", hash: "sha256:abc" }],
-    parentSummary: "Research T-101: refresh() mất timer khi 401; xem artifact." },
-  tools: ["fs.read", "fs.write.scoped", "shell.sandboxed"],
-  worktree: "/tmp/wt/T-102",
-  budget: { maxTokens: 6000, maxSteps: 25, timeoutMs: 300_000 },
-  lease: { leaseId: 7, deadlineMs: Date.now() + 300_000, maxAttempts: 3 },
-  secrets: { scope: "ci:read", ttlMinutes: 10 },
-};
-```
+> 📄 **Code ví dụ:** [`examples/05-4-2-validation-va-vi-du-spawn.ts`](examples/05-4-2-validation-va-vi-du-spawn.ts)
 
 </details>
 
@@ -362,24 +244,7 @@ Quy tắc spawn (`loop/04-operating`): triage rẻ trước, chỉ spawn khi sta
 <details>
 <summary>Python — blackboard có version với CAS</summary>
 
-```python
-class Blackboard:
-    def __init__(self):
-        self.store: dict[str, tuple[int, str]] = {}  # key -> (version, value)
-        self.owners: dict[str, str] = {}             # file/section -> agent_id
-    def claim(self, resource: str, agent_id: str) -> bool:
-        if resource in self.owners:
-            return False
-        self.owners[resource] = agent_id
-        return True
-    def write(self, key: str, value: str, expected_version: int, agent_id: str) -> bool:
-        ver, _ = self.store.get(key, (0, ""))
-        ns_ok = key.startswith(f"{agent_id}/") or key.startswith("shared/")
-        if not ns_ok or ver != expected_version:
-            return False  # version cũ → đọc lại + merge, không ghi đè mù
-        self.store[key] = (ver + 1, value)
-        return True
-```
+> 📄 **Code ví dụ:** [`examples/06-5-2-cas-single-writer-namespace.py`](examples/06-5-2-cas-single-writer-namespace.py)
 
 </details>
 
@@ -423,19 +288,7 @@ Handoff tốt vs xấu:
 <details>
 <summary>Python — redact + secret theo scope</summary>
 
-```python
-import re, os
-PATTERNS = [r"sk-[A-Za-z0-9]+", r"ghp_[A-Za-z0-9]+", r"AKIA[0-9A-Z]{16}"]
-def redact(text: str) -> str:
-    for p in PATTERNS:
-        text = re.sub(p, "[REDACTED]", text)
-    return text
-
-def inject_secret(scope: str, ttl_min: int) -> dict:
-    token = f"tmp-{scope}-{ttl_min}m"  # broker cấp token thật
-    os.environ["SUBAGENT_TOKEN"] = token
-    return {"scope": scope, "ttlMinutes": ttl_min, "via": "env"}
-```
+> 📄 **Code ví dụ:** [`examples/07-6-2-lease-secret-va-audit.py`](examples/07-6-2-lease-secret-va-audit.py)
 
 </details>
 
@@ -457,13 +310,7 @@ def inject_secret(scope: str, ttl_min: int) -> dict:
 <details>
 <summary>Python — aggregator quorum</summary>
 
-```python
-def aggregate(votes: list[str], artifacts: list[dict]) -> dict:
-    accepts = sum(1 for v in votes if v == "ACCEPT")
-    if accepts >= 2 and all(a.get("build") == "pass" for a in artifacts):
-        return {"verdict": "ACCEPT", "votes": votes}
-    return {"verdict": "REJECT", "votes": votes, "reason": "cần 2 ACCEPT + build xanh"}
-```
+> 📄 **Code ví dụ:** [`examples/08-7-1-maker-checker-va-quorum.py`](examples/08-7-1-maker-checker-va-quorum.py)
 
 </details>
 
@@ -500,19 +347,7 @@ def aggregate(votes: list[str], artifacts: list[dict]) -> dict:
 <details>
 <summary>Python — guard budget</summary>
 
-```python
-class SpawnBudget:
-    def __init__(self, run_cap: int = 20_000, max_spawns: int = 3):
-        self.spent = 0
-        self.spawns = 0
-        self.run_cap, self.max_spawns = run_cap, max_spawns
-    def request(self, tokens: int) -> bool:
-        if self.spawns >= self.max_spawns or self.spent + tokens > self.run_cap:
-            return False
-        self.spawns += 1
-        self.spent += tokens
-        return True
-```
+> 📄 **Code ví dụ:** [`examples/09-8-budget-cost-guards.py`](examples/09-8-budget-cost-guards.py)
 
 </details>
 
@@ -541,17 +376,7 @@ class SpawnBudget:
 <details>
 <summary>Python — test fencing + CAS</summary>
 
-```python
-def test_fencing():
-    assert accept_result(token=5, current=6, attempt=1) is False
-    assert accept_result(token=6, current=6, attempt=1) is True
-    assert accept_result(token=6, current=6, attempt=4) is False
-
-def test_cas():
-    b = Blackboard()
-    assert b.write("a/T-1/x", "v1", 0, "a") is True
-    assert b.write("a/T-1/x", "v2-stale", 0, "a") is False
-```
+> 📄 **Code ví dụ:** [`examples/10-9-kiem-thu-sub-agent.py`](examples/10-9-kiem-thu-sub-agent.py)
 
 </details>
 
@@ -583,10 +408,7 @@ def test_cas():
 
 Explore agent của Claude Code là researcher: nặng đọc, hạn chế ghi, spawn để hỏi đáp codebase. Bài học copy về đây: **tool hẹp + context cắt gọn + gộp độc lập** — child không bao giờ merge, parent quyết.
 
-```python
-# Pattern: researcher → implementer → verifier → quorum reviewer
-pipeline = ["researcher(T-101)", "implementer(T-102, worktree)", "verifier(T-102)", "reviewer-quorum(2-of-3)"]
-```
+> 📄 **Code ví dụ:** [`examples/11-11-1-claude-code-explore-subagents-anthropic-2025.py`](examples/11-11-1-claude-code-explore-subagents-anthropic-2025.py)
 
 ### 11.2 Loop triage đêm (kiểu `loop/05-multi-loop`)
 

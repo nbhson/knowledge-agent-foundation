@@ -25,10 +25,7 @@ The most common cause by far: the tool was not restarted after `rtk init`, so it
 5. If it works in one project and not another, check for a per-project configuration file.
 6. If the agent's own Read / Grep / Glob tools are the ones running raw, that is a different cause — see Q20.
 
-```bash
-rtk init -g            # install (or re-install) the hook
-rtk init -g --uninstall   # remove it entirely, if you must start over
-```
+> 📄 **Example code:** [`examples/01-q31-i-installed-rtk-ran-rtk-init-g.sh`](examples/01-q31-i-installed-rtk-ran-rtk-init-g.sh)
 
 **Verify**
 
@@ -81,11 +78,7 @@ There is a name collision on crates.io: a different, unrelated project called "R
 1. Remove the wrong binary: `cargo uninstall rtk`.
 2. Install from the RTK repository instead of the registry:
 
-```bash
-cargo uninstall rtk
-cargo install --git https://github.com/rtk-ai/rtk
-rtk gain                       # now it should run, not error
-```
+> 📄 **Example code:** [`examples/02-q33-rtk-gain-fails-right-after-cargo-install.sh`](examples/02-q33-rtk-gain-fails-right-after-cargo-install.sh)
 
 3. Re-run `rtk init -g` and restart your tool, because the hook points at the binary path.
 4. If `rtk gain` still misbehaves, confirm which binary is answering with `which rtk`.

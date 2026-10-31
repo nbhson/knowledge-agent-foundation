@@ -14,17 +14,7 @@
 
 > **Easy way to read it:** `init` gives your repo a ready-made loop skeleton (skills, state, budget); `doctor` is a friendly health check that tells you the next 3 things to do. Please start every loop project here — no need to build by hand.
 
-```bash
-# Front door (recommended) — one binary for init + doctor + status
-npx @cobusgreyling/loop init . --pattern daily-triage --tool grok
-npx @cobusgreyling/loop doctor .
-
-# Legacy equivalent (still supported — forks don't need to change)
-npx @cobusgreyling/loop-init .
-
-# Optional: scaffold a versioned harness too (harness-foundry)
-npx @cobusgreyling/loop init . --with-foundry
-```
+> 📄 **Example code:** [`examples/01-1-front-door-loop-init-doctor-status.sh`](examples/01-1-front-door-loop-init-doctor-status.sh)
 
 `loop init` (or `loop-init`) scaffolds the skills, state, and budget files, then prints the **Loop Ready score** and the first loop command. `loop doctor` combines audit + sync + file checks into the top-3 next actions. Switch `--tool` to `claude`, `codex`, or `opencode`. Use `--with-foundry` when you want the loop to be a composable runtime stack.
 
@@ -34,9 +24,7 @@ npx @cobusgreyling/loop init . --with-foundry
 
 > **Easy way to read it:** `audit` grades your setup like an exam — it gives you a 0–100 score for production readiness. Like a credit score: a low score means don't let the loop run alone yet. The score goes up as you add the right pieces.
 
-```bash
-npx @cobusgreyling/loop audit . --suggest
-```
+> 📄 **Example code:** [`examples/02-2-loop-audit-loop-readiness-score.sh`](examples/02-2-loop-audit-loop-readiness-score.sh)
 
 Scores your project's **Loop Readiness** (L0→L3) — a single number that climbs from ~10 to 100 as you scaffold the pieces correctly. Includes constraints + governance + **Harness Runtime** (v1.7). Caps **L3** until `loop-budget.md`, `loop-run-log.md`, and a LOOP.md budget section exist.
 
@@ -44,9 +32,7 @@ Scores your project's **Loop Readiness** (L0→L3) — a single number that clim
 
 ## 3. loop-cost — Token Estimation
 
-```bash
-npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
-```
+> 📄 **Example code:** [`examples/03-3-loop-cost-token-estimation.sh`](examples/03-3-loop-cost-token-estimation.sh)
 
 Estimates token spend **before scheduling** — so you avoid a surprise bill next week. See full budget rules in [04-operating](../04-operating/).
 
@@ -54,9 +40,7 @@ Estimates token spend **before scheduling** — so you avoid a surprise bill nex
 
 ## 4. loop-sync — Drift Detection
 
-```bash
-npx @cobusgreyling/loop sync .
-```
+> 📄 **Example code:** [`examples/04-4-loop-sync-drift-detection.sh`](examples/04-4-loop-sync-drift-detection.sh)
 
 Detects drift between `STATE.md` and `LOOP.md` — two files that describe the loop's state and configuration but can slowly drift apart over time.
 
@@ -64,9 +48,7 @@ Detects drift between `STATE.md` and `LOOP.md` — two files that describe the l
 
 ## 5. loop-context — Memory + Circuit Breaker
 
-```bash
-npx @cobusgreyling/loop context --check --ledger run.json
-```
+> 📄 **Example code:** [`examples/05-5-loop-context-memory-circuit-breaker.sh`](examples/05-5-loop-context-memory-circuit-breaker.sh)
 
 Stateful memory manager + circuit breaker for long runs. Keeps context from growing out of control across iterations.
 
@@ -76,9 +58,7 @@ Stateful memory manager + circuit breaker for long runs. Keeps context from grow
 
 > **Easy way to read it:** `worktree` gives each fix attempt a "private practice room" — the agent edits in its own room, and if it fails that room is thrown away without ever touching the main code. It also has `lock/unlock` so two loops don't walk into the same room at once.
 
-```bash
-npx @cobusgreyling/loop-worktree create --run-id <id> --pattern <p>
-```
+> 📄 **Example code:** [`examples/06-6-loop-worktree-change-isolation.sh`](examples/06-6-loop-worktree-change-isolation.sh)
 
 Manages isolated git worktrees per fix attempt — one worktree per attempt, tracked in a manifest, cleaned up on reject/escalate. Comes with `lock`/`unlock` for multi-loop coordination (see [05-multi-loop](../05-multi-loop/)).
 
@@ -86,9 +66,7 @@ Manages isolated git worktrees per fix attempt — one worktree per attempt, tra
 
 ## 7. loop-gate — Mechanical Enforcement
 
-```bash
-npx @cobusgreyling/loop gate check --action auto-merge --paths <f1,f2,...>
-```
+> 📄 **Example code:** [`examples/07-7-loop-gate-mechanical-enforcement.sh`](examples/07-7-loop-gate-mechanical-enforcement.sh)
 
 Mechanically enforces the path denylist + auto-merge allowlist from `gate.yaml` — it does not depend on whether the loop has read the safety file. Exit `2` = escalate, `0` = proceed — the same convention `loop-context --check` uses, so control scripts can chain both.
 
@@ -96,9 +74,7 @@ Mechanically enforces the path denylist + auto-merge allowlist from `gate.yaml` 
 
 ## 8. loop-sandbox & loop-swarm — Isolation + Consensus
 
-```bash
-npx @cobusgreyling/loop-sandbox run -- <cmd>   # Ephemeral worktree isolation + patch capture
-```
+> 📄 **Example code:** [`examples/08-8-loop-sandbox-loop-swarm-isolation-consensus.sh`](examples/08-8-loop-sandbox-loop-swarm-isolation-consensus.sh)
 
 - **loop-sandbox**: Ephemeral git worktree isolation for single agent runs. Captures changes as reviewable patch files before applying them.
 - **loop-swarm**: Multi-agent consensus sandboxing across sequential `loop-sandbox` runs. Requires **byte-identical patch consensus** between runs before accepting edits.

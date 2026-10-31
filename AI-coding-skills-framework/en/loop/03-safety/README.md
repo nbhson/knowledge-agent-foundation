@@ -118,10 +118,7 @@ Please put this rule in the `minimal-fix` and implementer skills:
 
 The `loop-gate` tool enforces this denylist **automatically** from `gate.yaml` (it does not depend on whether the loop has read the file):
 
-```bash
-npx @cobusgreyling/loop gate check --action auto-merge --paths <changed files>
-# exit 2 = escalate, exit 0 = proceed
-```
+> 📄 **Example code:** [`examples/01-2-1-path-denylist.sh`](examples/01-2-1-path-denylist.sh)
 
 ### 2.2 Auto-Merge Policy
 

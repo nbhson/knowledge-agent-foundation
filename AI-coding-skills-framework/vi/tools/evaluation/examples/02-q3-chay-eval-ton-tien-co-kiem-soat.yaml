@@ -1,0 +1,8 @@
+prompts:
+  - "Summarize: {{input}}"
+providers:
+  - openai:gpt-4
+  - anthropic:claude-3-5-sonnet
+assert:
+  - type: cost
+    threshold: 0.05   # mỗi prompt ≤ 0.05 USD

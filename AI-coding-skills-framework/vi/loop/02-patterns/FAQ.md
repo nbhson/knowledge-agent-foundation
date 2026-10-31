@@ -32,9 +32,7 @@ Mỗi pattern giải quyết đúng một loại đau khác nhau. Bật sai loop
 1. Trả lời đúng một câu: "thứ đang đau nhức ngay lúc này là gì?". Cây quyết định trong README có nhánh **Morning chaos / noisy issues?** → chọn Daily Triage + Issue Triage.
 2. Scaffold (dựng khung sẵn) bằng một câu lệnh, `--tool` đổi theo công cụ bạn dùng: `grok`, `claude`, `opencode`, `codex`.
 
-```bash
-npx @cobusgreyling/loop init . --pattern daily-triage --tool grok
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-sang-thu-hai-mo-may-ci-o.sh`](examples/01-q1-sang-thu-hai-mo-may-ci-o.sh)
 
 3. Chạy **một tuần ở chế độ chỉ báo cáo** (`report-only`) trước khi bật sửa. 4. Kiểm tra cấu hình rồi mới lên lịch chạy tự động.
 
@@ -68,9 +66,7 @@ Chi phí không nằm ở số lần chạy mà ở việc loop có tự sửa h
 2. Giữ Daily Triage ở chu kỳ 1 ngày, mức L1: 1 lần chạy ~50k là nằm trong trần.
 3. Muốn CI Sweeper thì bắt buộc kéo chu kỳ lên 15 phút trở lên và bật thoát sớm.
 
-```bash
-npx @cobusgreyling/loop cost --pattern daily-triage --cadence 1d --level L1
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-token-co-han-moi-ngay-chi-dam.sh`](examples/02-q2-token-co-han-moi-ngay-chi-dam.sh)
 
 **Kiểm tra**
 
@@ -125,10 +121,7 @@ Mỗi loop thêm một lớp trạng thái, một bộ skill và một lịch ch
 3. Đọc cảnh báo ở `04-operating/` về đường nâng cấp mức trước khi muốn đi từ L1 lên L2.
 4. Quy tắc vàng cần thuộc: **không nhảy L3 cho pattern mới trên production repo**.
 
-```bash
-npx @cobusgreyling/loop init . --pattern daily-triage --tool claude
-npx @cobusgreyling/loop audit . --suggest
-```
+> 📄 **Code ví dụ:** [`examples/03-q4-toi-moi-bat-au-cai-7-loop.sh`](examples/03-q4-toi-moi-bat-au-cai-7-loop.sh)
 
 **Kiểm tra**
 
@@ -187,9 +180,7 @@ Pattern này chia 3 giai đoạn. Ở giai đoạn 1 chỉ có báo cáo, ngư�
 2. Khi bật sửa, luôn đi theo chuỗi: worktree → implementer → verifier. Không bỏ qua verifier.
 3. Khi không chắc ưu tiên: ghi thẳng vào state là cần người quyết, đừng đoán.
 
-```bash
-/loop 1d Run $loop-triage and update STATE.md. Do not auto-fix on first week — report only.
-```
+> 📄 **Code ví dụ:** [`examples/04-q6-sau-khi-bat-auto-fix-loop-sua.sh`](examples/04-q6-sau-khi-bat-auto-fix-loop-sua.sh)
 
 **Kiểm tra**
 
@@ -213,9 +204,7 @@ Triage chỉ bắt được những gì **nằm trong cửa sổ nó đọc** �
 2. Tách lịch: chạy một lần đầu ngày, một lệnh giữa ngày. Cửa sổ 24 giờ không còn là thứ duy nhất che chỗ trống.
 3. Nếu team không dùng giao diện dòng lệnh, đặt một workflow GitHub Actions theo cron `0 8 * * 1-5` (8h sáng, thứ Hai đến thứ Sáu).
 
-```bash
-/loop 2h Run the loop-triage skill. Append high-priority items to STATE.md.
-```
+> 📄 **Code ví dụ:** [`examples/05-q7-em-co-thu-hong-ma-sang-hom.sh`](examples/05-q7-em-co-thu-hong-ma-sang-hom.sh)
 
 4. Trong prompt, nhấn: mọi mục mơ hồ thì đánh dấu cần người xem, đừng tự quyết.
 
@@ -248,9 +237,7 @@ Cadence và mức quyền là hai thứ nhân với nhau trong chi phí. Chính 
 1. Đo trước bằng công cụ `cost`, không suy đoán.
 2. Chạy 2 giờ một lần thì đòi hỏi phần lớn lần chạy phải là lần rỗng (~5k), nghĩa là phần lớn thời gian không có gì để làm.
 
-```bash
-npx @cobusgreyling/loop cost --pattern daily-triage --cadence 2h --level L1
-```
+> 📄 **Code ví dụ:** [`examples/06-q8-mot-ngay-daily-triage-ton-bao-nhieu.sh`](examples/06-q8-mot-ngay-daily-triage-ton-bao-nhieu.sh)
 
 3. Nếu tổng vượt trần: giãn về 1 ngày một lần, hoặc giữ L1 và giới hạn việc xử lý mỗi lần chạy.
 
@@ -308,9 +295,7 @@ Phân loại `duplicate` và `stale` chính là hai nhãn để loop cắt tải
 3. Ưu tiên theo mức độ nghiêm trọng, và giới hạn số issue xử lý trong một lần chạy.
 3. Đưa issue ồn (Dependabot, câu hỏi lặp) vào khu vực bỏ qua để lần sau khỏi đọc lại.
 
-```bash
-npx @cobusgreyling/loop cost --pattern issue-triage --cadence 2h --level L1
-```
+> 📄 **Code ví dụ:** [`examples/07-q10-issue-trung-nhau-chong-len-nhau-va.sh`](examples/07-q10-issue-trung-nhau-chong-len-nhau-va.sh)
 
 **Kiểm tra**
 
@@ -365,9 +350,7 @@ Chu kỳ 15 phút là 96 lần chạy mỗi ngày. Nếu mỗi lần đều đi 
 3. Về đêm không ai trông thì giãn còn 30–60 phút.
 4. Tạm dừng loop khi vượt số failure xử lý được trong một lần chạy, rồi gộp bản sửa thành đợt.
 
-```bash
-npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
-```
+> 📄 **Code ví dụ:** [`examples/08-q12-bat-ci-sweeper-5-phut-mot-lan.sh`](examples/08-q12-bat-ci-sweeper-5-phut-mot-lan.sh)
 
 **Kiểm tra**
 
@@ -469,10 +452,7 @@ Cái này cố tình chia làm hai phần: Dependabot (bot của GitHub) chỉ *
 4. Xong thì mở pull request (PR) để **người** merge — loop không tự merge.
 5. Xong vụ đó thì dọn luôn cảnh báo đã xử lý khỏi danh sách.
 
-```bash
-/loop 1d          # 6h–1d cũng được
-npm ci && npm test # verifier bắt buộc trong worktree
-```
+> 📄 **Code ví dụ:** [`examples/09-q16-bot-bao-hang-chuc-lo-hong-bao.sh`](examples/09-q16-bot-bao-hang-chuc-lo-hong-bao.sh)
 
 **Kiểm tra**
 
@@ -553,10 +533,7 @@ Phần tốn tiền nằm ở bước kiểm chứng: `npm ci && npm test` cài 
 1. Đặt trần ngân sách 500k token/ngày cho loop này (mức trung bình trong nhóm bảy pattern).
 2. Xem chi phí trước khi bật:
 
-```bash
-npx @cobusgreyling/loop cost --pattern dependency-sweeper --cadence 1d --level L2
-# no-op ~5k · triage ~20k · patch+verify ~150k · cap 500k/ngày
-```
+> 📄 **Code ví dụ:** [`examples/10-q19-chay-6-gio-mot-lan-thi-ton.sh`](examples/10-q19-chay-6-gio-mot-lan-thi-ton.sh)
 
 3. Khi CI đỏ trên nhánh chính → tạm dừng loop cho tới khi xanh.
 4. Nhiều lỗ hổng cùng lúc → ưu tiên theo mức nghiêm trọng, gom theo tuần thay vì mở một loạt PR.
@@ -673,10 +650,7 @@ Tổng chi phí ngày tăng vọt dù phần lớn thời gian loop không làm 
 3. Ghi trường `acting_on` trong state, và dùng khoá worktree (`lock`) để một PR chỉ có một loop động vào.
 4. Đặt trần 2M token/ngày — cao nhất trong nhóm, vì nhịp chạy ngắn nhất.
 
-```bash
-npx @cobusgreyling/loop cost --pattern pr-babysitter --cadence 10m --level L1
-# no-op ~5k · watch+nudge ~30k · fix attempt ~200k · cap 2M/ngày
-```
+> 📄 **Code ví dụ:** [`examples/11-q23-chay-5-phut-mot-lan-ma-co.sh`](examples/11-q23-chay-5-phut-mot-lan-ma-co.sh)
 
 **Kiểm tra**
 
@@ -761,10 +735,7 @@ Vì nó gần như chỉ đọc và không tự xuất bản, đây là người
 3. Để loop chạy ở chế độ no-op (không làm gì) khi một ngày không có commit mới.
 4. Theo dõi hai chỉ số: thời gian từ lúc bắt đầu chuẩn bị release tới lúc có draft, và tỉ lệ mục trong draft không phải sửa tay.
 
-```bash
-npx @cobusgreyling/loop cost --pattern changelog-drafter --cadence 1d --level L1
-# draft ~30k · no-op ~3k · cap 50k/ngày
-```
+> 📄 **Code ví dụ:** [`examples/12-q26-bat-loop-nay-24-7-co-ton.sh`](examples/12-q26-bat-loop-nay-24-7-co-ton.sh)
 
 **Kiểm tra**
 
@@ -852,10 +823,7 @@ Dọn dẹp là việc không gấp, nhưng lại đụng vào file đang đư�
 3. Đang có release hoặc lúc bảo trì → dừng loop.
 4. Vẫn cần khoá worktree để không đụng loop khác.
 
-```bash
-# ví dụ khung giờ an toàn
-/loop 22:00 daily
-```
+> 📄 **Code ví dụ:** [`examples/13-q29-chay-luc-9-gio-sang-uoc-khong.sh`](examples/13-q29-chay-luc-9-gio-sang-uoc-khong.sh)
 
 **Kiểm tra**
 
@@ -880,10 +848,7 @@ Lần không có gì dọn tốn khoảng 5k token; lần thực sự dọn (qu�
 3. Đo trước 2 tuần để có mốc so sánh.
 4. Xem chi phí bằng lệnh dưới trước khi tăng nhịp.
 
-```bash
-npx @cobusgreyling/loop cost --pattern post-merge-cleanup --cadence 1d --level L1
-# no-op ~5k · cleanup L1→L2 ~100k · cap 200k/ngày
-```
+> 📄 **Code ví dụ:** [`examples/14-q30-chay-6-gio-mot-lan-thi-ton.sh`](examples/14-q30-chay-6-gio-mot-lan-thi-ton.sh)
 
 **Kiểm tra**
 

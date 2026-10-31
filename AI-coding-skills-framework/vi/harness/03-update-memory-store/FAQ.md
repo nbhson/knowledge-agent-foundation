@@ -32,11 +32,7 @@ Nhớ được mà đọc lại sai chỗ thì tệ hơn là không nhớ, vì m
    hoặc phản hồi khi họ nói "câu trả lời trước sai rồi".
 4. Mọi thao tác ghi đều đẩy một dòng vào nhật ký sự kiện, kèm thời điểm và dữ liệu đã sửa.
 
-```python
-profile = self.entity_store.get(f"user_{user_id}", {"attributes": {}})
-profile["attributes"].update({"occupation": "freelancer", "location": "HCM"})
-self._log_event("update_profile", {"user_id": user_id, "updates": updates})
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-moi-phien-moi-no-lai-hoi-toi.py`](examples/01-q1-moi-phien-moi-no-lai-hoi-toi.py)
 
 **Kiểm tra**
 
@@ -69,11 +65,7 @@ trùng, thay bản cũ bằng bản mới, xử lý bản mâu thuẫn) là ph�
    người dùng.
 4. Giữ lại **cả hai** phiên bản cùng quan hệ "thay thế" — không bao giờ ghi đè âm thầm.
 
-```typescript
-g.sort((a, b) => b.trust - a.trust || b.ts - a.ts);  // highest-trust-wins
-this.facts = this.facts.filter(x => !g.slice(1).includes(x));
-conflicts.push(g);   // cả hai bản vẫn còn, chỉ ghi cạnh supersedes
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-trong-bo-nho-toi-co-ca-bhyt.ts`](examples/02-q2-trong-bo-nho-toi-co-ca-bhyt.ts)
 
 **Kiểm tra**
 
@@ -107,12 +99,7 @@ xong, hoặc ghi tạm rồi xả nền.
 4. Đặt mục tiêu độ trễ ghi: trung vị dưới 80 mili giây, mốc 99% dưới 300 mili giây; việc
    gộp nặng đẩy ra ngoài đường chính.
 
-```python
-self.cache[key] = entry                      # ghi tức thì
-self.pending_writes.append(entry)            # xếp hàng xả nền
-if len(self.pending_writes) >= 100: self._flush()
-# ack chỉ sau khi ghi nhật ký WAL + kho chính
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-ghi-bo-nho-cham-lam-bot-lag.py`](examples/03-q3-ghi-bo-nho-cham-lam-bot-lag.py)
 
 **Kiểm tra**
 
@@ -185,11 +172,7 @@ tục không lỗ hổng.
    tự 0 trùng với sự kiện đầu tiên vừa sao chép, đúng thứ mà hàm phát hiện sự kiện mồ côi
    sẽ bắt.
 
-```typescript
-this.events.set(newSessionId, forkedEvents);   // tiền tố đăng ký trước
-this.append({ sessionId: newSessionId, kind: "checkpoint",
-              payload: { forkedFrom: { sessionId: src, atSeq: n - 1, by: "human:ui" } } });
-```
+> 📄 **Code ví dụ:** [`examples/04-q5-agent-sai-o-buoc-15-toi-muon.ts`](examples/04-q5-agent-sai-o-buoc-15-toi-muon.ts)
 
 **Kiểm tra**
 
@@ -259,11 +242,7 @@ thứ tự sự kiện có lỗ hổng, thì bộ dựng trạng thái sẽ bỏ
 5. Không để sự kiện nào thiếu `actor` hoặc thiếu mã nhiệm vụ cha — thiếu là mồ côi, không
    ai truy vết nổi.
 
-```typescript
-const seqs = events.map(e => e.seq);            // 0,1,2,... liên tục
-for (let i = 0; i < seqs.length; i++)
-  if (seqs[i] !== i) gaps.push(i);             // lỗ hổng = mất một lần ghi
-```
+> 📄 **Code ví dụ:** [`examples/05-q7-may-chet-giua-chung-roi-chay-lai.ts`](examples/05-q7-may-chet-giua-chung-roi-chay-lai.ts)
 
 **Kiểm tra**
 

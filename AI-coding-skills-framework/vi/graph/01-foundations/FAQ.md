@@ -22,13 +22,7 @@ Ma trận kề (adjacency matrix) được thiết kế cho graph **đặc** (de
 4. Muốn giảm ma trận dành: chuyển sang biểu diễn "thưa" (sparse) bằng `scipy`, đừng `.todense()`.
 5. Nguyên tắc cho người mới: **đừng tối ưu sớm**. Chỉ đổi cách lưu khi bạn *đo được* vấn đề (chậm, hết RAM), không phải vì nghe nói "ma trận tốn".
 
-```python
-import networkx as nx
-G = nx.karate_club_graph()             # 34 node, rất thưa
-A = nx.to_scipy_sparse_array(G)
-print(A.nnz, A.shape)                  # 78 ô khác 0 trên 1.156 ô
-# shape (34, 34) — cùng dữ liệu này ở 100K node sẽ là (100000, 100000)
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-graph-cua-toi-100-nghin-node-dung.py`](examples/01-q1-graph-cua-toi-100-nghin-node-dung.py)
 
 **Kiểm tra**
 
@@ -53,12 +47,7 @@ Bạn dùng `nx.Graph()` (vô hướng) rồi thêm `add_edge("Alice", "Bob", re
 3. Quan hệ có thời gian → gắn `valid_from` / `valid_until` vào cạnh, lúc truy vấn thì lọc theo mốc thời gian, quan hệ đã hết hạn không được trả lời.
 4. Phân biệt 2 kiểu dữ liệu: **homophily** (cùng loại thì hay nối nhau — mạng xã hội) và **heterophily** (khác loại mới nối nhau — mạng phát hiện gian lận, virus, tấn công mạng). Mô hình đồ thị tiêu chuẩn mặc định giả định homophily, nên chạy trên graph loại thứ hai sẽ cho kết quả kém mà không rõ nguyên nhân.
 
-```python
-G = nx.DiGraph()                          # có hướng
-G.add_edge("Alice", "Bob", relation="REPORTS_TO")
-G.add_edge("Alice", "CompanyY", type="WORKS_AT",
-           valid_from=2024, valid_until=None)   # None = còn hiệu lực
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-toi-luu-quan-he-kieu-vo-huong.py`](examples/02-q2-toi-luu-quan-he-kieu-vo-huong.py)
 
 **Kiểm tra**
 
@@ -83,13 +72,7 @@ Property Graph cho phép thuộc tính nằm thẳng trên node và cạnh (`edg
 3. Cypher học nhanh vì gần tiếng Việt: `MATCH` là "tìm", `-[:TEN_LOAI]->` là "có quan hệ", `*1..2` là đi từ 1 đến 2 bước.
 4. Nhớ bỏ qua `rdf:type` khi so sánh schema: Property Graph đã dùng nhãn (label) làm kiểu dữ liệu rồi.
 
-```cypher
-CREATE (a:Person {name:'Alice', role:'CTO'})
-CREATE (p:Project {name:'Phoenix', budget:500000})
-CREATE (a)-[:MANAGES {since:'2024-01-01', confidence:0.95}]->(p)
-MATCH (who:Person)-[:MANAGES|WORKS_ON*1..2]->(proj:Project {name:'Phoenix'})
-RETURN who.name, proj.name
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-ben-toi-toan-dung-rdf-va-sparql.cypher`](examples/03-q3-ben-toi-toan-dung-rdf-va-sparql.cypher)
 
 **Kiểm tra**
 
@@ -121,13 +104,7 @@ Mỗi thước đo trả lời đúng một câu hỏi. **Degree** = số quan h
 | Ai có ảnh hưởng dù ít giao tiếp | PageRank |
 | Chia 1.000 thực thể thành chủ đề | Clustering + Modularity |
 
-```python
-G = nx.karate_club_graph()          # 34 node mẫu
-print(nx.average_clustering(G))     # bạn bè có quen nhau không
-b = nx.betweenness_centrality(G)
-print(max(b, key=b.get))            # cầu nối
-print(nx.diameter(G), nx.average_shortest_path_length(G))
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-10-nghin-node-trong-tay-muon-biet.py`](examples/04-q4-10-nghin-node-trong-tay-muon-biet.py)
 
 **Kiểm tra**
 

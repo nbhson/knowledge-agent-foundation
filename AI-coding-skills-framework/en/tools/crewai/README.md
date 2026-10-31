@@ -56,39 +56,11 @@ Crew   →  Collection of agents + tasks + process (how they coordinate)
 
 ### Sample Code From HARNESS_ENGINEERING.md
 
-```python
-from crewai import Agent, Task, Crew
-
-# Multi-agent harness
-planner = Agent(role='Planner', goal='Create plan')
-executor = Agent(role='Executor', goal='Execute plan')
-reviewer = Agent(role='Reviewer', goal='Review output')
-
-harness = Crew(
-    agents=[planner, executor, reviewer],
-    tasks=[plan_task, execute_task, review_task]
-)
-```
+> 📄 **Example code:** [`examples/01-sample-code-from-harness-engineering-md.py`](examples/01-sample-code-from-harness-engineering-md.py)
 
 ### Process: Sequential vs Hierarchical
 
-```python
-# Sequential — linear pipeline: plan → execute → review
-harness = Crew(
-    agents=[planner, executor, reviewer],
-    tasks=[plan_task, execute_task, review_task],
-    process=Process.sequential
-)
-
-# Hierarchical — manager agent orchestrates, assigns tasks
-harness = Crew(
-    agents=[executor, reviewer],
-    tasks=[execute_task, review_task],
-    process=Process.hierarchical,
-    manager_agent=manager,  # adds a "harness manager"
-    manager_llm=llm
-)
-```
+> 📄 **Example code:** [`examples/02-process-sequential-vs-hierarchical.py`](examples/02-process-sequential-vs-hierarchical.py)
 
 `Process.hierarchical` matches **harness/09-multi-agent** — a manager guides the work like a harness organizer. `Process.sequential` matches the **harness/07-workflow** pipeline.
 
@@ -129,31 +101,11 @@ Step 5: Connect evaluation + observability (tools/evaluation, tools/observabilit
 
 ### 1. Code Review Crew
 
-```python
-planner = Agent(role='Planner', goal='Break down feature into tasks')
-coder = Agent(role='Coder', goal='Implement tasks', tools=[code_editor])
-reviewer = Agent(role='Reviewer', goal='Find bugs and security issues')
-
-plan_task = Task(description='Plan the login API', expected_output='Task list')
-code_task = Task(description='Implement per plan', expected_output='Working code')
-review_task = Task(description='Review code', expected_output='Review report')
-
-crew = Crew(
-    agents=[planner, coder, reviewer],
-    tasks=[plan_task, code_task, review_task],
-    process=Process.sequential  # plan → code → review → (reviewer feedback loop)
-)
-```
+> 📄 **Example code:** [`examples/03-1-code-review-crew.py`](examples/03-1-code-review-crew.py)
 
 ### 2. Human-in-the-Loop
 
-```python
-task = Task(
-    description="Deploy to production",
-    expected_output="Deployment confirmation",
-    human_input=True  # pause and wait for confirmation before deploying
-)
-```
+> 📄 **Example code:** [`examples/04-2-human-in-the-loop.py`](examples/04-2-human-in-the-loop.py)
 
 ## Reference Materials
 
@@ -188,9 +140,7 @@ CrewAI released **v1.0.0 (10/2025)** and is now at **v1.15.x (2026)** — signif
 
 **Note:** CrewAI >= 1.0 requires **Python 3.10 – 3.13**.
 
-```bash
-pip install crewai>=1.0.0
-```
+> 📄 **Example code:** [`examples/05-update-10-2026-crewai-v1-x-latest-version.sh`](examples/05-update-10-2026-crewai-v1-x-latest-version.sh)
 
 Ref: https://docs.crewai.com/
 

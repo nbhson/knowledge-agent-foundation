@@ -78,55 +78,7 @@ Ticket text ──► Jev ──┬── queue   = Choice [billing | tech | sal
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import requests
-
-API = "https://api.typesafe.ai/v1/systemone"
-HEADERS = {"Authorization": "Bearer <KEY>", "Content-Type": "application/json"}
-
-QUEUES = ["billing", "tech_support", "sales", "churn_risk"]
-PRIORITY_LEVELS = ["p0", "p1", "p2", "p3"]
-
-
-def triage_ticket(ticket_text: str) -> dict:
-    resp = requests.post(
-        API,
-        headers=HEADERS,
-        json={
-            "model": "jev-1.13.0",
-            "state": ticket_text,
-            "questions": {
-                "queue": {"type": "choice", "options": QUEUES},
-                "priority": {"type": "score", "levels": PRIORITY_LEVELS},
-            },
-        },
-        timeout=5,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    q = data["answers"]["queue"]
-    p = data["answers"]["priority"]
-
-    return {
-        "queue": q["selected"],
-        "queue_probs": q.get("probabilities", {}),
-        "queue_confidence": q.get("confidence", 0.0),
-        # Score: probability-weighted score có thể NGỒI GIỮA 2 level
-        "priority": p.get("score", p.get("selected")),
-        "priority_confidence": p.get("confidence", 0.0),
-        "request_id": data.get("request_id"),
-    }
-
-
-def route(ticket_text: str) -> None:
-    result = triage_ticket(ticket_text)
-    if result["queue_confidence"] >= 0.8 and result["priority_confidence"] >= 0.7:
-        auto_route(result["queue"], result["priority"])   # HIGH band
-    elif result["queue_confidence"] >= 0.5:
-        suggest_to_agent(result)                          # MEDIUM band
-    else:
-        human_triage(ticket_text, result)                 # LOW band
-```
+> 📄 **Code ví dụ:** [`examples/01-2-1-vi-du-support-ticket-team-queue.py`](examples/01-2-1-vi-du-support-ticket-team-queue.py)
 
 </details>
 
@@ -174,73 +126,7 @@ def route(ticket_text: str) -> None:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import asyncio
-from typing import Any
-
-import httpx
-
-API = "https://api.typesafe.ai/v1/systemone"
-HEADERS = {"Authorization": "Bearer <KEY>", "Content-Type": "application/json"}
-MODEL = "jev-1.13.0"
-
-TAGS = ["bug", "feature_request", "question", "docs", "spam"]
-
-
-async def classify_one(client: httpx.AsyncClient, record: dict) -> dict:
-    """MAP: một record → một label + probability."""
-    resp = await client.post(
-        API,
-        headers=HEADERS,
-        json={
-            "model": MODEL,
-            "state": record["text"],            # state nhỏ, liên quan
-            "questions": {
-                "tag": {"type": "choice", "options": TAGS},
-            },
-        },
-        timeout=5,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    ans = data["answers"]["tag"]
-    return {
-        "id": record["id"],
-        "tag": ans["selected"],
-        "p": ans.get("probabilities", {}).get(ans["selected"], 0.0),
-        "confidence": ans.get("confidence", 0.0),
-        "request_id": data.get("request_id"),
-    }
-
-
-async def classify_dataset(records: list[dict], batch: int = 50) -> list[dict]:
-    """MAP song song từng batch, trả về labels đã phân loại."""
-    results: list[dict] = []
-    async with httpx.AsyncClient() as client:
-        for i in range(0, len(records), batch):
-            chunk = records[i : i + batch]
-            # Async song song trong chunk — mỗi decide vẫn ~70-500ms
-            results.extend(await asyncio.gather(
-                *[classify_one(client, r) for r in chunk]
-            ))
-    return results
-
-
-def reduce(results: list[dict]) -> dict:
-    """REDUCE: gộp kết quả + tách bucket confidence."""
-    auto, review = [], []
-    for r in results:
-        (auto if r["confidence"] >= 0.8 else review).append(r)
-    return {
-        "auto_tagged": auto,
-        "needs_review": review,
-        "coverage": len(auto) / max(len(results), 1),
-    }
-
-
-# dataset = load_records()
-# summary = reduce(asyncio.run(classify_dataset(dataset)))
-```
+> 📄 **Code ví dụ:** [`examples/02-3-1-ket-hop-voi-map-reduce.py`](examples/02-3-1-ket-hop-voi-map-reduce.py)
 
 </details>
 
@@ -291,68 +177,7 @@ Agent muốn gọi: delete_file(path="/prod/data/users.csv")
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import requests
-
-API = "https://api.typesafe.ai/v1/systemone"
-HEADERS = {"Authorization": "Bearer <KEY>", "Content-Type": "application/json"}
-
-
-def noul_confidence(p_yes: float) -> float:
-    return abs(p_yes - 0.5) * 2
-
-
-def gate_tool_call(
-    conversation_context: str,
-    tool_name: str,
-    tool_args: dict,
-    p_threshold: float = 0.6,
-    conf_threshold: float = 0.5,
-) -> bool:
-    """
-    Trả về True nếu tool được phép chạy.
-    KHÔNG dựa mỗi p_yes — đọc cả confidence (margin).
-    """
-    state = (
-        f"Conversation:\n{conversation_context}\n\n"
-        f"Tool the agent wants to call: {tool_name}\n"
-        f"Arguments: {tool_args}"
-    )
-    resp = requests.post(
-        API,
-        headers=HEADERS,
-        json={
-            "model": "jev-1.13.0",
-            "state": state,
-            "questions": {
-                # Noul: yes/no — không có confidence riêng,
-                # confidence = |p - 0.5| * 2
-                "authorized": {"type": "noul"},
-            },
-        },
-        timeout=5,
-    )
-    resp.raise_for_status()
-    ans = resp.json()["answers"]["authorized"]
-    p_yes = ans.get("p_yes", ans.get("probability_yes", 0.5))
-    conf = noul_confidence(p_yes)
-
-    if p_yes >= p_threshold and conf >= conf_threshold:
-        return True                      # allow
-    # block → human approval hoặc deny
-    request_human_approval(tool_name, tool_args, p_yes, conf)
-    return False
-
-
-# Giống tinh thần LangChain AutoModeMiddleware:
-# middleware wrap tool, decide allow/block trước khi tool thực thi.
-def auto_mode_middleware(tool_call, context) -> bool:
-    return gate_tool_call(
-        conversation_context=context,
-        tool_name=tool_call["name"],
-        tool_args=tool_call["args"],
-    )
-```
+> 📄 **Code ví dụ:** [`examples/03-4-1-vi-du-gate-truoc-khi-goi.py`](examples/03-4-1-vi-du-gate-truoc-khi-goi.py)
 
 </details>
 
@@ -400,63 +225,7 @@ def auto_mode_middleware(tool_call, context) -> bool:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import requests
-
-API = "https://api.typesafe.ai/v1/systemone"
-HEADERS = {"Authorization": "Bearer <KEY>", "Content-Type": "application/json"}
-
-
-def verify_draft(policy_text: str, draft: str) -> dict:
-    """
-    Jev check: draft có grounded theo policy_text không?
-    Noul → P(yes), confidence = |p-0.5|*2
-    """
-    state = (
-        f"Policy document:\n{policy_text}\n\n"
-        f"Draft output to check:\n{draft}"
-    )
-    resp = requests.post(
-        API,
-        headers=HEADERS,
-        json={
-            "model": "jev-1.13.0",
-            "state": state,
-            "questions": {
-                "grounded": {"type": "noul"},          # có grounded policy?
-                "severity": {                           # mức vi phạm nếu fail
-                    "type": "score",
-                    "levels": ["none", "minor", "major", "critical"],
-                },
-            },
-        },
-        timeout=5,
-    )
-    resp.raise_for_status()
-    ans = resp.json()["answers"]
-    p_yes = ans["grounded"].get("p_yes", 0.5)
-    conf = abs(p_yes - 0.5) * 2
-    return {
-        "pass": p_yes >= 0.7 and conf >= 0.5,
-        "p_yes": p_yes,
-        "confidence": conf,
-        "severity": ans["severity"].get("score"),
-    }
-
-
-def verified_cascade(policy_text: str, draft: str, max_retries: int = 2) -> str:
-    """LLM writes → Jev verifies → pass/fail → fallback."""
-    for attempt in range(max_retries + 1):
-        v = verify_draft(policy_text, draft)
-        if v["pass"] and v["severity"] in (0, "none", None):
-            return draft                          # ship
-        if v["confidence"] < 0.5:
-            escalate_to_human(draft, v)           # Jev mơ hồ → người
-            return draft
-        draft = llm_regenerate(policy_text, draft, v)   # fail → viết lại
-    escalate_to_human(draft, {"reason": "max retries"})
-    return draft
-```
+> 📄 **Code ví dụ:** [`examples/04-5-1-chuoi-verified-cascade.py`](examples/04-5-1-chuoi-verified-cascade.py)
 
 </details>
 
@@ -510,55 +279,7 @@ def verified_cascade(policy_text: str, draft: str, max_retries: int = 2) -> str:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import requests
-from typing import List
-
-API = "https://api.typesafe.ai/v1/systemone"
-HEADERS = {"Authorization": "Bearer <KEY>", "Content-Type": "application/json"}
-
-RELEVANCE_LEVELS = ["irrelevant", "weak", "relevant", "strong"]
-
-
-def score_candidate(query: str, passage: str) -> dict:
-    state = f"User query:\n{query}\n\nCandidate passage:\n{passage}"
-    resp = requests.post(
-        API,
-        headers=HEADERS,
-        json={
-            "model": "jev-1.13.0",
-            "state": state,
-            "questions": {
-                "relevance": {"type": "score", "levels": RELEVANCE_LEVELS},
-            },
-        },
-        timeout=5,
-    )
-    resp.raise_for_status()
-    ans = resp.json()["answers"]["relevance"]
-    return {
-        # probability-weighted score — có thể nằm giữa 2 level
-        "score": ans.get("score", ans.get("selected")),
-        "confidence": ans.get("confidence", 0.0),
-        "probabilities": ans.get("probabilities", {}),
-    }
-
-
-def rerank(query: str, passages: List[str], min_score: float = 1.5) -> List[dict]:
-    scored = []
-    for p in passages:                          # production: async/map-reduce
-        r = score_candidate(query, p)
-        r["passage"] = p
-        scored.append(r)
-    # Sort desc theo weighted score
-    scored.sort(key=lambda r: r["score"], reverse=True)
-    # Filter: dưới min_score → loại khỏi top-K
-    return [r for r in scored if r["score"] >= min_score]
-
-
-# VD RAG: shortlist = rerank(query, retriever.top20(query), min_score=2.0)
-# → lấy 3 passage cao nhất để LLM viết câu trả lời
-```
+> 📄 **Code ví dụ:** [`examples/05-6-1-score-levels-cho-re-ranking.py`](examples/05-6-1-score-levels-cho-re-ranking.py)
 
 </details>
 

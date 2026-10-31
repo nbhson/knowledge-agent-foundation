@@ -46,20 +46,7 @@ Turn 5: LLM ──[JSON: run_linter]────► Harness ──[Exec]──�
 
 The DeepSeek Harness introduces **Code Mode** together with a standardized SDK (`@deepseek-ai/dsh`). Instead of calling tools via JSON, the LLM generates a TypeScript/JavaScript code snippet that executes inside a Sandboxing Runtime:
 
-```typescript
-// A single round-trip only! The LLM writes code that orchestrates the SDK:
-import { tools } from '@deepseek-ai/dsh';
-
-const files = await tools.findFiles('src/**/*.ts');
-for (const file of files) {
-  const content = await tools.readFile(file);
-  if (content.includes('legacyFetch')) {
-    const updated = content.replace(/legacyFetch/g, 'modernFetch');
-    await tools.writeFile(file, updated);
-  }
-}
-await tools.bash('pnpm lint');
-```
+> 📄 **Example code:** [`examples/01-2-core-benefits-of-code-mode-sdk.ts`](examples/01-2-core-benefits-of-code-mode-sdk.ts)
 
 ```
 Single Turn: LLM ──[TypeScript Code]──► Code Runtime Engine ──[Exec All Steps]──► LLM (Final result)
@@ -76,26 +63,7 @@ Single Turn: LLM ──[TypeScript Code]──► Code Runtime Engine ──[Exe
 
 The Harness SDK packages all system tools (Search, File System, MCP Tools, Shell execution) into a single TypeScript object with clear type definitions:
 
-```typescript
-export interface HarnessSDK {
-  fs: {
-    readFile(path: string): Promise<string>;
-    writeFile(path: string, content: string): Promise<void>;
-    searchFiles(pattern: string): Promise<string[]>;
-  };
-  bash: {
-    exec(command: string, options?: { timeoutMs?: number }): Promise<{ stdout: string; stderr: string; exitCode: number }>;
-  };
-  mcp: {
-    callTool(serverName: string, toolName: string, args: Record<string, any>): Promise<any>;
-  };
-  logger: {
-    info(msg: string): void;
-    warn(msg: string): void;
-    error(msg: string): void;
-  };
-}
-```
+> 📄 **Example code:** [`examples/02-3-sdk-architecture-deepseek-ai-dsh-pattern.ts`](examples/02-3-sdk-architecture-deepseek-ai-dsh-pattern.ts)
 
 ---
 
@@ -124,52 +92,7 @@ export interface HarnessSDK {
 
 Below is simplified source code for a **Code Mode Sandbox Executor** that runs LLM-generated TypeScript code:
 
-```typescript
-import * as vm from 'vm';
-import { HarnessSDK } from './sdk-types';
-
-export class CodeModeExecutor {
-  constructor(private sdk: HarnessSDK) {}
-
-  public async executeScript(code: string, timeoutMs: number = 30000): Promise<{ success: boolean; result?: any; logs: string[]; error?: string }> {
-    const logs: string[] = [];
-
-    // 1. Create a safe Context with the approved APIs
-    const sandboxContext = {
-      dsh: this.sdk,
-      console: {
-        log: (...args: any[]) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')),
-        error: (...args: any[]) => logs.push(`[ERROR] ${args.join(' ')}`),
-      },
-      setTimeout,
-      clearTimeout,
-    };
-
-    // 2. Wrap the source code in an Async IIFE
-    const wrappedCode = `
-      (async () => {
-        ${code}
-      })();
-    `;
-
-    try {
-      const vmContext = vm.createContext(sandboxContext);
-      const script = new vm.Script(wrappedCode);
-
-      // 3. Execute the source code in the sandbox with a timeout
-      const result = await script.runInContext(vmContext, { timeout: timeoutMs });
-
-      return { success: true, result, logs };
-    } catch (err: any) {
-      return {
-        success: false,
-        logs,
-        error: err.message || String(err)
-      };
-    }
-  }
-}
-```
+> 📄 **Example code:** [`examples/03-5-illustrative-implementation-typescript-execution-sandbox.ts`](examples/03-5-illustrative-implementation-typescript-execution-sandbox.ts)
 
 ---
 

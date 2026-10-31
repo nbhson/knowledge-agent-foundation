@@ -1,0 +1,1 @@
+/loop 1d Run the loop-triage skill. Append high-priority items to STATE.md. For obvious small bugfixes only: worktree + minimal-fix + verifier sub-agent (maker/checker). Flag ambiguous items for human review.

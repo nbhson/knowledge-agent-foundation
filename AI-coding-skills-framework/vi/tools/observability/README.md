@@ -73,42 +73,15 @@ ToolDefinition đã có sẵn metrics tracking (harness/06):
 
 ### LangSmith — Trace Từng Bước
 
-```python
-from langsmith import Client
-from langchain_openai import ChatOpenAI
-
-# Auto-trace mọi LLM call khi dùng LangChain
-llm = ChatOpenAI(model="gpt-4", callbacks=[tracing_callback])
-
-# Xem trong LangSmith UI:
-#   - Chain steps: retrieve → build → agent → tools
-#   - Token usage mỗi call
-#   - Latency từng node
-#   - Feedback/review của user
-```
+> 📄 **Code ví dụ:** [`examples/01-langsmith-trace-tung-buoc.py`](examples/01-langsmith-trace-tung-buoc.py)
 
 ### Helicone — Proxy Không Cần Sửa Code
 
-```bash
-# Cấu hình proxy: thay API base URL
-export OPENAI_API_BASE="https://oai.helicone.ai/v1"
-export HELICONE_API_KEY="sk-helicone-..."
-
-# Tất cả LLM calls tự động được log + metrics
-# → Dashboard: cost, latency, số request, error rate
-```
+> 📄 **Code ví dụ:** [`examples/02-helicone-proxy-khong-can-sua-code.sh`](examples/02-helicone-proxy-khong-can-sua-code.sh)
 
 ### OpenLLMetry — OpenTelemetry Standard
 
-```python
-# OpenTelemetry-compatible — trace chuẩn OTLP
-from traceloop.sdk import Traceloop
-
-Traceloop.init(app_name="my_harness")
-
-# Mọi framework (LangChain, LlamaIndex, OpenAI SDK...) tự động trace
-# → Export sang Jaeger, Grafana, Datadog, ...
-```
+> 📄 **Code ví dụ:** [`examples/03-openllmetry-opentelemetry-standard.py`](examples/03-openllmetry-opentelemetry-standard.py)
 
 ## OpenTelemetry GenAI Semantic Conventions (2025)
 
@@ -169,14 +142,7 @@ Với observability:
 
 ### 2. Tool Latency SLO
 
-```python
-# ToolDefinition metrics (từ harness/06)
-tool.update_metrics(latency_ms=1200, success=True)  # ghi nhận khi gọi
-
-# Dashboard alert:
-#   Nếu vector_search.avg_latency_ms > 2000 → cảnh báo
-#   Nếu execute_python.success_rate < 0.95 → cảnh báo
-```
+> 📄 **Code ví dụ:** [`examples/04-2-tool-latency-slo.py`](examples/04-2-tool-latency-slo.py)
 
 ## Tài Liệu Tham Khảo
 

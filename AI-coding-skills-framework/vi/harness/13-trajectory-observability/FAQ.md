@@ -20,16 +20,7 @@ Chat log ghi lại điều mô hình **nói**, không phải điều nó **làm*
 2. Cặp `tool_call` với `tool_result` luôn đi kèm. Một `tool_call` không có `tool_result` là một bước đã bị treo.
 3. Truy vấn lại phiên đó bằng một câu lệnh, không cần đoán:
 
-```sql
-SELECT seq, kind, payload->>'tool' AS tool, payload->>'path' AS path
-FROM trajectory
-WHERE session_id = 'ses_44a' AND payload->>'path' LIKE '%middleware%'
-ORDER BY seq;
--- seq 31: read_file  src/auth/middleware.ts  → 4.1KB
--- seq 32: edit_file  (patch applied)
--- seq 33: write_file  ← lệnh xoá
--- seq 34: eval        "tests pass" (thật — không còn gì import nó)
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-agent-xoa-file-cua-toi-40-phut.sql`](examples/01-q1-agent-xoa-file-cua-toi-40-phut.sql)
 
 4. Các câu hỏi tiếp theo tự trả lời lấy nhau: nó xoá vì `seq 29` ghi "các export không ai dùng"; hoàn tác được không vì `seq 33` có ghi `git worktree`.
 

@@ -1,0 +1,14 @@
+# argo-rollout.yaml — canary + auto-rollback gắn với metric
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata: { name: api }
+spec:
+  replicas: 20
+  strategy:
+    canary:
+      steps: [{ setWeight: 5 }, { pause: { duration: 10m } },
+              { setWeight: 25 }, { pause: { duration: 30m } },
+              { setWeight: 50 }, { pause: { duration: 30m } }]
+      analysis:
+        templates: [{ templateName: error-rate }, { templateName: p99-latency }]
+        args: [{ name: service, value: api }]

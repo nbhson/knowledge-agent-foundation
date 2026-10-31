@@ -1,0 +1,11 @@
+// cline_mcp_settings.json — thêm server mới
+{
+  "mcpServers": {
+    "github.com/github/github-mcp-server": { /* ... đã có ... */ },
+    "my-custom-tool": {
+      "command": "npx",
+      "args": ["-y", "@my-org/my-mcp-server"],
+      "env": { "API_KEY": "${API_KEY}" }
+    }
+  }
+}

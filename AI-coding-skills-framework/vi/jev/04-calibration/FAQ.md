@@ -80,15 +80,7 @@ Kiểu có/không **không có** trường độ tự tin riêng, vì với câu
 3. Khi độ chắc chắn thấp, coi như mô hình không biết → hỏi người hoặc đưa sang mô hình lớn, tuyệt đối không tự xử lý.
 4. Viết một hàm phân loại khu vực duy nhất, dùng chung cho cả ba kiểu câu hỏi.
 
-```python
-def noul_confidence(p_yes: float) -> float:
-    return abs(p_yes - 0.5) * 2          # 0.45 → 0.10: gần như không biết
-
-def classify_band(conf, high_t=0.8, low_t=0.5):
-    if conf >= high_t: return "high"     # code tự hành động
-    if conf >= low_t: return "medium"   # xin xác nhận / bổ sung ngữ cảnh
-    return "low"                         # chuyển người hoặc mô hình lớn
-```
+> 📄 **Code ví dụ:** [`examples/01-q3-cau-co-khong-khong-co-truong-o.py`](examples/01-q3-cau-co-khong-khong-co-truong-o.py)
 
 **Kiểm tra**
 
@@ -113,12 +105,7 @@ Con số 0.8 là **điểm khởi đầu mang tính gợi ý**, không phải gi
 3. Chọn ngưỡng theo mức rủi ro chịu được: hỏi "auto-act được sai bao nhiêu phần trăm?" rồi đặt vùng cao cho vừa đạt, và hỏi "chuyển người tốn bao nhiêu giờ người?" rồi đặt vùng thấp.
 4. **Đặt ngưỡng riêng cho từng câu hỏi** khi mức rủi ro khác nhau.
 
-```python
-thresholds = {
-    "queue":         (0.5, 0.8),   # định tuyến vô hại → tự làm sớm
-    "refund":        (0.6, 0.95),  # hoàn tiền → ngưỡng cao hơn nhiều
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-q4-nguong-nao-la-chuan-dung-0-8.py`](examples/02-q4-nguong-nao-la-chuan-dung-0-8.py)
 
 Một lưu ý quan trọng: ngay cả khi độ tự tin cao, một phân phối **bất thường phẳng** — hai lựa chọn gần bằng nhau — vẫn nên chuyển người. Độ tự tin và biên độ phải được đọc **cùng nhau**, không thay nhau.
 
@@ -145,13 +132,7 @@ Nhật ký quyết định chỉ có giá trị khi **nối được xác suất
 3. Nếu buộc phải gỡ lỗi dữ liệu đầu vào, hãy băm (hash) hoặc che thông tin nhạy cảm, hoặc lưu ở nơi có kiểm soát truy cập riêng.
 4. Ghi số phiên bản mô hình cụ thể, đừng chỉ ghi `jev-latest` — bí danh đổi được, số phiên bản thì không.
 
-```python
-entry = {"ts": ts, "request_id": rid, "questions": names,
-         "probabilities": probs, "confidence": round(conf, 4),
-         "threshold_low": lo, "threshold_high": hi, "band": band,
-         "model": "jev-1.13.0", "outcome": outcome}
-# ghi vào tệp JSONL — KHÔNG kèm phần state
-```
+> 📄 **Code ví dụ:** [`examples/03-q5-toi-co-nen-ghi-toan-bo-du.py`](examples/03-q5-toi-co-nen-ghi-toan-bo-du.py)
 
 **Kiểm tra**
 

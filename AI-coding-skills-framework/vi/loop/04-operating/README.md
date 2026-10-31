@@ -16,10 +16,7 @@
 
 **Ước lượng trước khi schedule:**
 
-```bash
-npx @cobusgreyling/loop cost --pattern <id> --cadence <interval> --level L1
-npx @cobusgreyling/loop init . --pattern <id>   # scaffold loop-budget.md + loop-run-log.md + loop-budget skill
-```
+> 📄 **Code ví dụ:** [`examples/01-1-token-cost-budgeting.sh`](examples/01-1-token-cost-budgeting.sh)
 
 `loop-audit` chấm điểm khả năng quan sát chi phí, và **giữ loop ở L3** cho tới khi có đủ budget, run log và mục budget trong LOOP.md.
 
@@ -61,18 +58,7 @@ Ghi thẳng vào skill hoặc prompt của scheduler: *"If no high-priority item
 
 Mỗi run bạn ghi tối thiểu chừng này (lưu vào `loop-run-log.md` hoặc JSON có cấu trúc):
 
-```json
-{
-  "run_id": "2026-06-09T08:15:00Z",
-  "pattern": "daily-triage",
-  "duration_s": 45,
-  "items_found": 4,
-  "actions_taken": 1,
-  "escalations": 0,
-  "tokens_estimate": 52000,
-  "outcome": "success"
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-2-logging-moi-run.json`](examples/02-2-logging-moi-run.json)
 
 Bản ngắn gọn cho người đọc, đặt ở cuối `STATE.md`:
 

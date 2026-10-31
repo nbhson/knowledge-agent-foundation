@@ -1,0 +1,14 @@
+--init                                  # thu dọn orphan
+--read-only                             # rootfs bất biến
+--tmpfs /tmp:rw,noexec,nosuid,size=64m  # scratch, không exec, không suid
+--cap-drop=ALL                          # không capability môi trường
+--security-opt=no-new-privileges        # không leo thang setuid
+--pids-limit=64                         # chặn fork bomb
+--memory=512m --memory-swap=512m        # không lỗt qua swap
+--cpus=1.0 --cpu-quota=100000           # chặn CPU
+--network=none                          # không egress
+--ulimit nofile=1024:1024               # chặn FD bomb
+--ulimit core=0                          # không core dump lộ memory
+--user 1000:1000                        # non-root bên trong
+-v "$WORKDIR:/work:rw"                  # ĐƯỜNG GHI DUY NHẤT xuống host
+IMAGE@sha256:<digest>                   # danh tính bất biến

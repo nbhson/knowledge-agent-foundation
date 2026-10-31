@@ -21,12 +21,7 @@ Because you are measuring one end-to-end score for three different systems. RAGA
 3. Only when retrieval passes, look at generation. Hallucination Rate = 1 − Faithfulness.
 4. Write all stages into one JSON record so two runs can be diffed.
 
-```python
-gq = 1 - isolated_rate - invalid_rate   # graph
-rm = retrieval["MRR"]                    # retrieval
-gm = generation["faithfulness"]          # generation
-overall = mean([s for s in (gq, rm, gm) if s > 0])
-```
+> 📄 **Example code:** [`examples/01-q1-my-graphrag-gave-a-wrong-answer-is.py`](examples/01-q1-my-graphrag-gave-a-wrong-answer-is.py)
 
 **Verify**
 
@@ -110,12 +105,7 @@ In a GraphRAG there are two separate places to be wrong. **Graph hallucination**
 3. Verify citations against the graph itself by walking each cited path hop by hop.
 4. If every claim *is* supported but the answer is still wrong, the graph is wrong. Go back to Q2.
 
-```python
-for path in cited_paths:                      # walk each citation
-    if not all(graph.has_edge(path[i], path[i+1])
-               for i in range(len(path) - 1)):
-        valid += 1                            # citation_accuracy drops
-```
+> 📄 **Example code:** [`examples/02-q4-the-model-said-the-ai-team-has.py`](examples/02-q4-the-model-said-the-ai-team-has.py)
 
 **Verify**
 

@@ -44,11 +44,7 @@ FAILED: 2/15 tests
 
 Cấu hình trong `config.toml`:
 
-```toml
-[tee]
-enabled = true          # save raw output on failure (default: true)
-mode = "failures"       # "failures", "always", or "never"
-```
+> 📄 **Code ví dụ:** [`examples/01-khi-lenh-fail-tee-recovery.toml`](examples/01-khi-lenh-fail-tee-recovery.toml)
 
 ## Cấu trúc Binary & Phụ Thuộc
 
@@ -62,15 +58,7 @@ mode = "failures"       # "failures", "always", or "never"
 
 ## Cấu Hình Cơ Bản
 
-```toml
-# ~/.config/rtk/config.toml (macOS: ~/Library/Application Support/rtk/config.toml)
-[hooks]
-exclude_commands = ["curl", "playwright"]  # skip rewrite cho các lệnh này
-
-[tee]
-enabled = true
-mode = "failures"
-```
+> 📄 **Code ví dụ:** [`examples/02-cau-hinh-co-ban.toml`](examples/02-cau-hinh-co-ban.toml)
 
 Xem thêm cấu hình đầy đủ (env vars, per-project filters) tại [Configuration guide](https://www.rtk-ai.app/guide/getting-started/configuration).
 

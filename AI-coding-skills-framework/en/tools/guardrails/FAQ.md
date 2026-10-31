@@ -20,13 +20,7 @@ Large language models have no concept of "unwanted side effect". They generate t
 2. For paths, use a whitelist, not a blacklist — a blacklist always misses something.
 3. For free-text strings, use a shape check like `RegexMatch("^[a-zA-Z0-9_./-]+$")`. It rejects `hacker/path/../etc/passwd` and accepts `src/main.py`.
 
-```python
-from guardrails import Guard
-from guardrails.hub import PathValidate, RegexMatch
-guard = Guard().use(PathValidate(whitelist=["src/", "tests/", "./"]))
-guard.validate(path="/etc/hosts")    # REJECT
-guard.validate(path="src/main.py")   # ALLOW
-```
+> 📄 **Example code:** [`examples/01-q1-the-agent-wrote-to-etc-hosts-which.py`](examples/01-q1-the-agent-wrote-to-etc-hosts-which.py)
 
 **Verify**
 
@@ -57,11 +51,7 @@ They do not check the same thing. Each one covers a different hole.
 3. Add LlamaGuard when input comes from strangers, not from your own code.
 4. Do not expect any of them to protect the machine. They check values, not permissions.
 
-```python
-from nemoguardrails import RailsConfig, LLMRails
-rails = LLMRails(RailsConfig.from_path("./config"))
-rails.generate(messages=[{"role":"user","content":"System password?"}])
-```
+> 📄 **Example code:** [`examples/02-q2-guardrails-ai-nemo-guardrails-or-llamaguard-do.py`](examples/02-q2-guardrails-ai-nemo-guardrails-or-llamaguard-do.py)
 
 **Verify**
 
@@ -85,15 +75,7 @@ Two different knobs, often confused. `rate_limit_per_minute` is abuse control: i
 2. Use `requires_permission="elevated"` for anything destructive — that forces a human confirmation.
 3. Keep `timeout_seconds` and `max_retries` low so a stuck call dies early.
 
-```python
-registry.register(ToolDefinition(
-    name="execute_python",
-    requires_permission="elevated",  # human confirmation required
-    rate_limit_per_minute=10,         # block spam
-    timeout_seconds=30,
-    max_retries=1,
-))
-```
+> 📄 **Example code:** [`examples/03-q3-the-agent-called-the-same-tool-10.py`](examples/03-q3-the-agent-called-the-same-tool-10.py)
 
 **Verify**
 

@@ -69,12 +69,7 @@ Cordis is an ultra-lightweight micro-kernel framework for TypeScript, using a **
 
 ## 3. The Plugin's Lifecycle (Lifecycle Management)
 
-```typescript
-export interface Plugin<C = any> {
-  name: string;
-  apply(ctx: Context, config?: C): void | Promise<void>;
-}
-```
+> 📄 **Example code:** [`examples/01-3-the-plugin-s-lifecycle-lifecycle-management.ts`](examples/01-3-the-plugin-s-lifecycle-lifecycle-management.ts)
 
 A Plugin goes through 3 phases:
 1. **Mount (`apply`)**: The Plugin is loaded into the Context, registering services or event listeners.
@@ -121,76 +116,11 @@ Loads the `RuntimeInspectorPlugin` Plugin. Provides a visual interface for devel
 
 Below is a simplified version of the Cordis-style Micro-Kernel Engine:
 
-```typescript
-export class Context {
-  public services: Map<string, any> = new Map();
-  private events: Map<string, Function[]> = new Map();
-
-  // Register a Service in the Kernel
-  public provide(name: string, service: any) {
-    this.services.set(name, service);
-  }
-
-  // Fetch a Service for use
-  public inject<T>(name: string): T {
-    const service = this.services.get(name);
-    if (!service) throw new Error(`Service ${name} not found in Kernel Context`);
-    return service as T;
-  }
-
-  // Event System for Middleware
-  public on(event: string, handler: Function) {
-    const handlers = this.events.get(event) || [];
-    handlers.push(handler);
-    this.events.set(event, handlers);
-  }
-
-  public async emit(event: string, ...args: any[]) {
-    const handlers = this.events.get(event) || [];
-    for (const handler of handlers) {
-      await handler(...args);
-    }
-  }
-
-  // Load a Plugin
-  public plugin(plugin: { name: string; apply: (ctx: Context) => void }) {
-    console.log(`[Kernel] Mounting Plugin: ${plugin.name}`);
-    plugin.apply(this);
-  }
-}
-```
+> 📄 **Example code:** [`examples/02-5-illustrative-kernel-engine-implementation-typescript.ts`](examples/02-5-illustrative-kernel-engine-implementation-typescript.ts)
 
 ### Example of registering a Plugin:
 
-```typescript
-// Plugin 1: Register the Tool Service
-const MCPToolPlugin = {
-  name: 'mcp-tool-plugin',
-  apply: (ctx: Context) => {
-    ctx.provide('tools', {
-      executeTool: async (name: string, args: any) => {
-        console.log(`Executing MCP tool ${name}`, args);
-        return { success: true };
-      }
-    });
-  }
-};
-
-// Plugin 2: Log every Tool call (Middleware Plugin)
-const LoggerPlugin = {
-  name: 'logger-plugin',
-  apply: (ctx: Context) => {
-    ctx.on('before-tool-call', (toolName: string) => {
-      console.log(`[Event Stream] About to call tool: ${toolName}`);
-    });
-  }
-};
-
-// Boot the Kernel
-const kernel = new Context();
-kernel.plugin(MCPToolPlugin);
-kernel.plugin(LoggerPlugin);
-```
+> 📄 **Example code:** [`examples/03-example-of-registering-a-plugin.ts`](examples/03-example-of-registering-a-plugin.ts)
 
 ---
 

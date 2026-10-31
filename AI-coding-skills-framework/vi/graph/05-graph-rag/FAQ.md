@@ -82,11 +82,7 @@ Tham số `resolution` quyết định độ mịn của việc chia cụm: th�
 4. Nhớ rằng mỗi cụm sẽ tốn **một lần gọi mô hình ngôn ngữ** để tóm tắt. Tách quá nhiều cụm làm chi phí tăng vọt với ít giá trị.
 5. Cần tóm tắt ở nhiều mức chi tiết thì dựng cụm theo tầng: cấp 0 là toàn bộ đồ thị, cấp 1 là vài cụm lớn, cấp 2 là các cụm nhỏ hơn, cấp cuối là từng thực thể.
 
-```python
-comms = detect_communities(G, resolution=1.0)   # thử 0.5 / 1.0 / 2.0
-for cid, members in comms.items():
-    print(cid, len(members), members[:5])          # tên node đầu để đoán chủ đề
-```
+> 📄 **Code ví dụ:** [`examples/01-q3-cu-tang-o-phan-giai-cua-cum.py`](examples/01-q3-cu-tang-o-phan-giai-cua-cum.py)
 
 **Kiểm tra**
 
@@ -142,14 +138,7 @@ Khi các nguồn dùng thang điểm khác nhau, phép cộng trực tiếp là 
 4. Khi dịch câu hỏi sang truy vấn, **đừng nhồi toàn bộ lược đồ** — chỉ nạp tên loại thực thể, tên thuộc tính và vài quan hệ cha-con quan trọng. Nhồi hết sẽ tốn token và làm mô hình lẫn.
 5. Chọn retriever theo dạng câu hỏi: tìm đoạn văn nói về X → tìm vector; biết đoạn văn đó liên quan ai → vector rồi duyệt thêm cạnh.
 
-```python
-def rrf_score(lists, k=60):
-    fused = {}
-    for lst in lists:                     # vector_rank, graph_rank, fulltext_rank
-        for rank, item in enumerate(lst, start=1):
-            fused[item] = fused.get(item, 0.0) + 1.0 / (k + rank)
-    return dict(sorted(fused.items(), key=lambda x: -x[1]))
-```
+> 📄 **Code ví dụ:** [`examples/02-q5-ket-hop-tim-theo-chu-duyet-o.py`](examples/02-q5-ket-hop-tim-theo-chu-duyet-o.py)
 
 **Kiểm tra**
 

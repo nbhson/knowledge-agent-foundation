@@ -164,45 +164,15 @@ If the 11 modules share nothing else, share these three shapes:
 
 **A. Trajectory event** — the single source of truth for debugging:
 
-```typescript
-interface TrajectoryEvent {
-  id: string;            // evt_01H…
-  sessionId: string;
-  parentTaskId?: string; // link to 08-task
-  ts: number;
-  kind: "prompt" | "tool_call" | "tool_result" | "plan" | "eval" | "memory_write" | "approval";
-  payload: unknown;
-  tokens?: { in: number; out: number };
-  latencyMs?: number;
-}
-```
+> 📄 **Example code:** [`examples/01-4-the-three-shared-contracts.ts`](examples/01-4-the-three-shared-contracts.ts)
 
 **B. Context object** — what 02 builds and 05 renders:
 
-```typescript
-interface BuiltContext {
-  system: string;        // identity, rules (never truncated)
-  goal: string;          // current task + definition of done
-  retrieved: Chunk[];    // from 01, with scores
-  history: string;       // compressed summary, not raw log
-  immediate: FileSnap[]; // open files, diffs
-  budget: { limit: number; used: number };
-}
-```
+> 📄 **Example code:** [`examples/02-4-the-three-shared-contracts.ts`](examples/02-4-the-three-shared-contracts.ts)
 
 **C. Task node** — what 04 creates, 07 runs, 08 tracks:
 
-```typescript
-interface TaskNode {
-  id: string;
-  title: string;
-  status: "pending" | "running" | "blocked" | "done" | "failed";
-  idempotencyKey: string; // safe to retry
-  needsApproval: boolean;
-  budget: { maxSteps: number; maxTokens: number; timeoutMs: number };
-  deps: string[];
-}
-```
+> 📄 **Example code:** [`examples/03-4-the-three-shared-contracts.ts`](examples/03-4-the-three-shared-contracts.ts)
 
 ## 5. How to Read This Folder
 

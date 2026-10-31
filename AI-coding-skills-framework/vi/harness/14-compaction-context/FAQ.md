@@ -23,12 +23,7 @@ Vì không có gì tự nén lại. Cửa sổ ngữ cảnh là con số cứng 
 5. Nén ở **ranh giới nhiệm vụ** (giữa hai việc), không nén giữa một việc đang dở.
 6. Tuyệt đối không để mô hình tự quyết "có nên nén không" — hỏi nó thì nó trả lời "không, tôi ổn" khi đang giữ 195k token.
 
-```typescript
-export const COMPACT_AT = 0.70, MAX_TURNS = 20;
-export function shouldCompact(used: number, budget: number, turns: number): boolean {
-  return used / budget > COMPACT_AT || turns > MAX_TURNS;
-}
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-agent-chay-tam-40-luot-la-dung.ts`](examples/01-q1-agent-chay-tam-40-luot-la-dung.ts)
 
 **Kiểm tra**
 
@@ -54,11 +49,7 @@ Vì cách loại "cũ nhất đi trước" giả định giá trị suy giảm t
 4. Lỗi của vòng lặp chỉ được ghim **khi vòng lặp chưa xong**; xong rồi thì nó phải trở lại loại được.
 5. **Gộp các lần thử lại y hệt**: 6 lần `npm test` (exit 1) thành một dòng `retry 6×, last_err: E2BIG at test_refresh_rotation` — 18k token còn 24 token, dòng lỗi cuối giữ nguyên văn.
 
-```typescript
-const recency = Math.exp(-(now - s.turn) / 12);
-const reachable = serves.some(t => plan.pendingIds.includes(t)) ? 1.0 : 0.1;
-return 0.30 * recency + 0.40 * reachable + 0.30 * failure;
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-toi-cat-bo-lich-su-cu-cho.ts`](examples/02-q2-toi-cat-bo-lich-su-cu-cho.ts)
 
 **Kiểm tra**
 
@@ -85,13 +76,7 @@ Vì nén xoá thứ khỏi ngữ cảnh, và nội dung bên trong nó chưa t�
 5. Phần còn dùng được nhưng quá lớn (kết quả lệnh chết) thì **tóm tắt thay vì bỏ hẳn**.
 6. Nhánh đã bỏ vẫn giữ một dòng lý do: `nhánh t3 (vector cache) bị loại: thêm 400ms p99` — rẻ, và chặn agent quay lại vùng đó.
 
-```typescript
-const o = compact(spans, budget, goal, pins, plan, loop);
-await memory.persist(o.writeBack.facts, { fsync: true });   // bền TRƯỚC khi loại
-await traj.append({ kind: "compaction", payload: {
-  keptIds: o.kept.map(s => s.id), evictedIds: o.dropped, ratio: o.ratio } });
-return o;
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-nen-xong-agent-quen-mat-cac-quyet.ts`](examples/03-q3-nen-xong-agent-quen-mat-cac-quyet.ts)
 
 **Kiểm tra**
 
@@ -117,13 +102,7 @@ Vì tiêu chuẩn nghiệm thu không phải "đọc lên có đủ không" mà 
 4. **Pin giá trị thô, không diễn giải lại**: `timeoutMs: 30000`, không phải "khoảng 30 giây". Giữ nguyên văn dòng lỗi cuối trong `Repro`. Giữ nguyên văn diff — tóm tắt một bản vá gần như vô dụng vì giá trị nằm ở đúng những byte của nó.
 5. Bố cục prompt: header là bất biến, giữa là ngữ cảnh tùy ý bị loại, cuối là nhắc lại bất biến.
 
-```typescript
-export function resumeIsSufficient(b: ResumeBlock): boolean {
-  return b.goal.length > 0 && b.open.length > 0
-      && b.repro.command.length > 0 && b.next.length > 0
-      && countTokens(b) <= 300;
-}
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-resume-block-minh-viet-oc-len-thay.ts`](examples/04-q4-resume-block-minh-viet-oc-len-thay.ts)
 
 **Kiểm tra**
 

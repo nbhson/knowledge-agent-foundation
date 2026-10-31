@@ -73,16 +73,7 @@ Cấu hình nằm trong một khối duy nhất, mỗi server một mục có t�
 3. Thêm mỗi server kèm phần quyền riêng qua biến môi trường, không ghi khoá thẳng vào cấu hình.
 4. Cân nhắc bỏ cờ `-y` ở máy chạy thật để phải duyệt trước khi tải code lạ.
 
-```jsonc
-{
-  "mcpServers": {
-    "github.com/github/github-mcp-server": { /* đã có */ },
-    "my-custom-tool": {
-      "command": "npx",
-      "args": ["-y", "@my-org/my-mcp-server"],
-      "env": { "API_KEY": "${API_KEY}" }
-    } } }
-```
+> 📄 **Code ví dụ:** [`examples/01-q3-them-mcp-server-moi-vao-du-an.json`](examples/01-q3-them-mcp-server-moi-vao-du-an.json)
 
 5. Kiểm tra từng server một, không bật cả lô.
 
@@ -106,14 +97,7 @@ Vì thêm một tool vào danh mục không đồng nghĩa với việc cho phé
 
 1. Khi đăng ký tool từ MCP, điền đủ mức quyền và giới hạn tần suất.
 
-```python
-registry.register(ToolDefinition(
-    name="github_search_code", source="mcp:github",
-    description="Tìm code trong GitHub repos",
-    parameters={"query": {"type": "string", "required": True}},
-    requires_permission="standard", rate_limit_per_minute=30,
-))
-```
+> 📄 **Code ví dụ:** [`examples/02-q4-tool-lay-tu-mcp-server-thi-co.py`](examples/02-q4-tool-lay-tu-mcp-server-thi-co.py)
 
 2. Giữ `autoApprove` trong cấu hình MCP ở dạng danh sách rỗng cho tới khi bạn thật sự duyệt tay từng loại thao tác.
 3. Tool ghi dữ liệu thật thì tách quyền riêng, không dùng chung với tool chỉ đọc.

@@ -23,14 +23,7 @@ State lives only in memory. In the reference code the state is `self.state`, `se
 3. On boot: load snapshot → replay the log tail → skip completed steps → resume the pending one. Keep `runId` stable across restarts.
 4. Keep outputs over 64KB out of the log line — store them in an artifact store and leave only a reference.
 
-```ts
-const key = `${runId}:${s.id}:${JSON.stringify(inputs).length}:${s.id}`;
-const cached = s.idem !== false ? (idemStore.get(key) ?? this.done(key)) : undefined;
-if (cached !== undefined) { inputs = cached; continue; }  // already done → skip
-const out = await gate(() => s.run({ idemKey: key }));
-idemStore.set(key, out);
-this.ckpt({ runId, key, status: "ok", at: Date.now() });
-```
+> 📄 **Example code:** [`examples/01-q1-my-agent-restarted-from-step-1-and.ts`](examples/01-q1-my-agent-restarted-from-step-1-and.ts)
 
 **Verify**
 
@@ -55,12 +48,7 @@ Timeouts were treated as an afterthought. `check_timeout()` only fires if you fi
 3. Bound concurrency: one global semaphore with `maxParallel = 4–8`, a per-step queue cap around 100. `enqueue` throws `BackpressureError` when full, and the caller retries with jitter instead of letting memory grow.
 4. Also set a per-state timeout so the state machine itself notices: `sm.set_timeout(AgentState.RUNNING_TESTS, 120)`.
 
-```ts
-const deadlineAt = Date.now() + deadlineMs;            // once per run
-const remain = deadlineAt - Date.now() - 500;
-if (remain <= 0) throw new Error("deadline exceeded");
-const out = await gate(() => s.run({ signal: AbortSignal.timeout(remain) }));
-```
+> 📄 **Example code:** [`examples/02-q2-one-step-hangs-and-the-whole-workflow.ts`](examples/02-q2-one-step-hangs-and-the-whole-workflow.ts)
 
 **Verify**
 
@@ -86,12 +74,7 @@ Exponential backoff on its own synchronises clients; this is called a thundering
 4. Let exactly one probe through when it reopens: OPEN → HALF_OPEN after 30s, `half_open_max_calls = 1`, two successes close it again.
 5. Retry only transient failures — timeouts, 429, and 5xx. A malformed request will fail identically forever.
 
-```python
-wait_time = backoff_factor * (2 ** (attempt - 1))
-if jitter:
-    wait_time *= (0.5 + random.random())   # de-synchronise the clients
-wait_time = min(wait_time, max_backoff)    # max_backoff = 60.0
-```
+> 📄 **Example code:** [`examples/03-q3-all-my-agents-retry-at-exactly-the.py`](examples/03-q3-all-my-agents-retry-at-exactly-the.py)
 
 **Verify**
 
@@ -117,14 +100,7 @@ Retry is only safe when a step is idempotent. Charging a card and reserving stoc
 4. If a compensation itself fails, log `compensation_failed` and alert a human. A failed undo is worse than a failed action, because now nobody knows the real state.
 5. Still add idempotency keys to mutating steps, so compensation and retry can both be attempted safely.
 
-```python
-for step in self.steps:
-    result = step.action(data)                      # forward
-    self.completed_steps.append({"name": step.name})
-except Exception as e:
-    for completed in reversed(self.completed_steps):
-        completed["compensation"]()                 # undo, newest first
-```
+> 📄 **Example code:** [`examples/04-q4-step-3-failed-but-step-1-already.py`](examples/04-q4-step-3-failed-but-step-1-already.py)
 
 **Verify**
 
@@ -152,16 +128,7 @@ Nothing registers services automatically. A plugin only exists once its `apply(c
 4. Read the boot log: each registration prints `[Kernel] Mounting Plugin: mcp-tool-plugin`.
 5. If the service is genuinely optional, guard the lookup and degrade, rather than throwing on a missing capability.
 
-```ts
-const MCPToolPlugin = {
-  name: 'mcp-tool-plugin',
-  apply: (ctx: Context) => {
-    ctx.provide('tools', { executeTool: async (n: string, a: any) => ({ success: true }) });
-  },
-};
-const kernel = new Context();
-kernel.plugin(MCPToolPlugin);   // ← the line people forget
-```
+> 📄 **Example code:** [`examples/05-q5-i-get-service-tools-not-found-in.ts`](examples/05-q5-i-get-service-tools-not-found-in.ts)
 
 **Verify**
 
@@ -187,16 +154,7 @@ That is exactly the two anti-patterns the file names: a **monolithic kernel** (b
 4. Declare `provides` and `consumes` so the kernel, not the order of lines in your file, decides load order.
 5. Treat "Can I delete this plugin and still boot?" as the review question for any kernel change.
 
-```ts
-const GitPlugin = {
-  name: 'git',
-  provides: 'git',
-  apply(ctx: Context) {
-    ctx.provide('git', { log: () => run('git log') });
-    ctx.onDispose(() => console.log('[git] released'));  // removable again
-  },
-};
-```
+> 📄 **Example code:** [`examples/06-q6-should-my-feature-live-inside-the-kernel.ts`](examples/06-q6-should-my-feature-live-inside-the-kernel.ts)
 
 **Verify**
 
@@ -222,16 +180,7 @@ A plugin passes through three phases: mount (`apply`), execute (listen to events
 4. Shrink the reproduction: boot a kernel with only the two plugins. If that passes, add the third back — you have found the interaction.
 5. Remember that automatic cleanup only covers what you registered. Manual listeners, open files, and child processes need their own `ctx.onDispose`.
 
-```ts
-const LoggerPlugin = {
-  name: 'logger-plugin',
-  apply: (ctx: Context) => {
-    ctx.on('before-tool-call', (toolName: string) => {
-      console.log(`[Event Stream] About to call tool: ${toolName}`);
-    });
-  },
-};
-```
+> 📄 **Example code:** [`examples/07-q7-my-plugin-works-alone-but-breaks-when.ts`](examples/07-q7-my-plugin-works-alone-but-breaks-when.ts)
 
 **Verify**
 

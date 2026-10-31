@@ -40,9 +40,7 @@ Bắt buộc:  chặn 169.254.169.254 (địa chỉ lấy khoá cloud), chặn l
 
 **Lớp 3 — giới hạn thời gian, giết cả nhóm tiến trình.**
 Chỉ giết một tiến trình là chưa đủ: lệnh `sleep 60 &` tạo tiến trình con chạy nền vẫn sống. Phải giết cả nhóm, dùng `SIGKILL`, bật `--init` để dọn tiến trình mồ côi, và `--rm` để xoá container.
-```bash
---init --pids-limit=64 --memory=512m --rm
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-cau-hoi-cua-ban-sandbox-bi-lot.sh`](examples/01-q1-cau-hoi-cua-ban-sandbox-bi-lot.sh)
 
 **Lớp 4 — giới hạn lượng in ra.**
 - Đang in dở (256KB) thì **giết luôn**, không cắt bớt rồi để chạy tiếp.
@@ -126,13 +124,7 @@ Dữ liệu test   : nấu sẵn vào ảnh/volume tạm, không tải lúc ch�
 
 **Làm gì**
 
-```javascript
-// Tách tiến trình thành nhóm, giết cả nhóm bằng SIGKILL
-const t = setTimeout(() => {
-  try { process.kill(-child.pid, "SIGKILL"); } catch {}
-  reject(new SandboxError("deadline-exceeded"));
-}, policy.timeoutMs);
-```
+> 📄 **Code ví dụ:** [`examples/02-q4-a-het-gio-ma-tien-trinh-con.js`](examples/02-q4-a-het-gio-ma-tien-trinh-con.js)
 Thêm các cờ: `--init --pids-limit=64 --memory=512m --rm`. Thêm "giới hạn im lặng": nếu 5 giây không có ký tự nào in ra thì coi như treo.
 
 **Kiểm tra**: sau khi hết giờ, trên máy thật không còn tiến trình nào sót; container đã bị xoá; 3 bài kiểm tra tương ứng phải xanh.

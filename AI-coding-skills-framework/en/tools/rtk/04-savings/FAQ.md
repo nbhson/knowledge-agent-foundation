@@ -68,10 +68,7 @@ RTK only compresses commands it has a filter for. `rtk discover` is the honest a
 4. For commands that must stay raw (`terraform plan`), add them to `exclude_commands` deliberately instead of chasing the number.
 5. Pair the report with `rtk session` to see how much of your recent sessions actually ran through RTK at all.
 
-```bash
-rtk discover                  # this project
-rtk discover --all --since 7  # every project, last 7 days
-```
+> 📄 **Example code:** [`examples/01-q29-rtk-discover-found-5-commands-with-0.sh`](examples/01-q29-rtk-discover-found-5-commands-with-0.sh)
 
 **Verify**
 
@@ -97,10 +94,7 @@ Telemetry is **off by default**. RTK does not send your data anywhere unless you
 4. Know where the stored logs live — `~/.local/share/rtk/` — and treat them as sensitive, because they hold real output.
 5. On Windows, the same idea is `setx RTK_TELEMETRY_DISABLED 1` before restarting the shell.
 
-```bash
-RTK_TELEMETRY_DISABLED=1                       # absolute block for this shell
-rtk gain --all --format json > rtk-gain.json    # local export only
-```
+> 📄 **Example code:** [`examples/02-q30-does-rtk-send-my-data-anywhere-i.sh`](examples/02-q30-does-rtk-send-my-data-anywhere-i.sh)
 
 **Verify**
 

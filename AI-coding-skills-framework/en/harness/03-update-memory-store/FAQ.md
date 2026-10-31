@@ -123,12 +123,7 @@ Overwriting without versioning is listed as a flat anti-pattern. A memory store 
 3. Use `rollback(version_id)` to restore a snapshot as the live state.
 4. Keep the event log as the source of truth and derive current state by replaying it: `record_event` appends, then `_apply_event` updates state. `get_state_at(event_id)` answers "what did memory look like at event 412?" and `undo_last()` rebuilds state from the remaining events.
 
-```python
-vm.set("hi_rate", "4.5% MEC 2024", message="Updated year")
-vm.log()          # v0, v1, v2 with message + timestamp
-vm.diff(0, 2)     # {'changes': [...], 'count': 1}
-vm.rollback(0)    # {'rolled_back_to': 0, 'current_state': {...}}
-```
+> 📄 **Example code:** [`examples/01-q4-i-updated-one-fact-and-now-the.py`](examples/01-q4-i-updated-one-fact-and-now-the.py)
 
 **Verify**
 

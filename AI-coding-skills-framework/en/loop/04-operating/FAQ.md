@@ -23,10 +23,7 @@ Cadence is a **linear multiplier** — `5m` versus `1d` is 288× the number of r
 **What to do**
 
 1. Estimate first, then scaffold the budget and log files:
-```bash
-npx @cobusgreyling/loop cost --pattern <id> --cadence <interval> --level L1
-npx @cobusgreyling/loop init .   # makes loop-budget.md + loop-run-log.md + loop-budget skill
-```
+> 📄 **Example code:** [`examples/01-q1-my-first-loop-burned-a-month-of.sh`](examples/01-q1-my-first-loop-burned-a-month-of.sh)
 2. Write a **Loop Budget** block into the skill or `LOOP.md`: max tokens/day (e.g. `2M`), on exceed → *pause schedulers and notify a human*, max sub-agent spawns per run = `3`.
 3. Make do-nothing runs cheap. Put this line in the scheduler prompt: *"If there are no high-priority items, exit immediately."* An empty watchlist should exit in **under 5k tokens**, not 50k.
 4. Cheap triage first, action second — only spawn sub-agents when state reports something actionable.
@@ -50,11 +47,7 @@ The run log is the loop's **black box**. One appended line per run answers the f
 **What to do**
 
 1. Append one entry per run to `loop-run-log.md` (or as structured JSON):
-```json
-{"run_id":"2026-06-09T08:15:00Z","pattern":"daily-triage","duration_s":45,
- "items_found":4,"actions_taken":1,"escalations":0,
- "tokens_estimate":52000,"outcome":"success"}
-```
+> 📄 **Example code:** [`examples/02-q2-three-weeks-later-someone-asks-why-didn.json`](examples/02-q2-three-weeks-later-someone-asks-why-didn.json)
 2. If you prefer prose, put a one-line footer in `STATE.md`: `Run log: 2026-06-09 08:15 | 4 findings | 1 worktree opened | 0 escalations`.
 3. Make sure `outcome` has real values (`success`, `error`, `skipped`) so you can filter later. A run that skipped because another loop held the lock should say so, not record `success` with zero actions.
 4. Scaffold both files with `loop init .` so the format exists before you need it.

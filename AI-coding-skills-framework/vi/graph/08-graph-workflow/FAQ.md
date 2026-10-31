@@ -21,12 +21,7 @@ Dựng lại toàn bộ tốn chi phí tuyến tính theo số tài liệu, kể
 3. Chọn chế độ theo tần suất: nạp lần đầu dùng batch, hằng ngày dùng micro-batch 10–100 tài liệu, thay đổi tức thì dùng streaming.
 4. Ghi lại mã tài liệu nguồn vào mỗi node/cạnh để sau này xoá được đúng nhóm.
 
-```python
-entities = [{"name": "NewPerson", "type": "Person"}]
-new = [e for e in entities if not self._entity_exists(e["name"])]
-for ent in new: self._upsert_entity(ent, "doc_001")
-# Neo4j: MERGE (n:Entity {name:$name}) SET n += $props
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-them-ung-1-tai-lieu-moi-ma.py`](examples/01-q1-them-ung-1-tai-lieu-moi-ma.py)
 
 **Kiểm tra**
 
@@ -51,12 +46,7 @@ Gộp không chỉ là đổi tên. Nếu chỉ dùng lệnh đổi nhãn rồi 
 3. Chỉ xoá node trùng **sau khi** đã chuyển đủ cạnh.
 4. Trong Cypher thì tạo cạnh mới ở node chuẩn, sao chép thuộc tính rồi mới xoá cạnh cũ.
 
-```python
-for successor in list(self.graph.successors(dup_name)):
-    edata = self.graph.get_edge_data(dup_name, successor)
-    self.graph.add_edge(canonical_name, successor, **edata)
-self.graph.remove_node(dup_name)
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-gop-200-thuc-the-trung-ten-quan.py`](examples/02-q2-gop-200-thuc-the-trung-ten-quan.py)
 
 **Kiểm tra**
 
@@ -81,11 +71,7 @@ Graph luôn thay đổi: người đổi bộ phận, dự án bị hủy, hợp
 3. Song song giữ sổ ghi mọi thao tác tạo/cập nhật/xoá, kèm `actor` như `user:alice`, `pipeline:etl`, `loop:daily-triage`, và `prev_state` để quay lui.
 4. Xoá cũng chỉ là **ghi thêm một sự kiện**, nên luôn quay lui được.
 
-```python
-temporal_edge = {"from":"Alice","to":"TeamA","type":"MANAGES",
-  "valid_from":date(2023,1,1), "valid_until":date(2024,6,30),
-  "created_by":"ingest:doc_123"}
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-nhan-vien-chuyen-team-roi-hoi-quy.py`](examples/03-q3-nhan-vien-chuyen-team-roi-hoi-quy.py)
 
 **Kiểm tra**
 
@@ -111,11 +97,7 @@ Ba thứ thường thiếu: không có điểm dừng giữa chừng để quay 
 4. Dùng circuit breaker: 5 lần lỗi liên tiếp thì ngừng gọi, 60 giây sau mới thử lại — tránh đốt tiền vào một dịch vụ đang chết.
 5. Bắt buộc báo cáo số liệu mỗi lần chạy: số thực thể vào/ra, tỉ lệ gộp trùng, số lỗi, thời gian từng bước.
 
-```python
-@retry_with_backoff(max_attempts=3, backoff_factor=2.0)
-def safe_extract(text): return breaker.call(extract_entities, text)
-breaker = CircuitBreaker(failure_threshold=3)   # ngưỡng lỗi
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-batch-nap-giua-chung-bi-loi-khoi.py`](examples/04-q4-batch-nap-giua-chung-bi-loi-khoi.py)
 
 **Kiểm tra**
 
@@ -140,11 +122,7 @@ Khác biệt nằm ở mức độ: lịch chạy, xử lý lỗi, trạng thái
 3. Dùng **Airflow** khi đã có nhiều luồng dữ liệu phụ thuộc nhau cần vẽ thành đồ thị phụ thuộc.
 4. **crontab** chỉ hợp với script nhỏ chạy cục bộ; muốn tự chạy lại và tự phân tích lỗi thì đừng dùng.
 
-```python
-@task(retries=3, retry_delay_seconds=10)
-def extract_task(documents): ...
-schedule={"cron": "0 * * * *"}   # mỗi giờ
-```
+> 📄 **Code ví dụ:** [`examples/05-q5-nen-chay-bang-airflow-prefect-github-actions.py`](examples/05-q5-nen-chay-bang-airflow-prefect-github-actions.py)
 
 **Kiểm tra**
 

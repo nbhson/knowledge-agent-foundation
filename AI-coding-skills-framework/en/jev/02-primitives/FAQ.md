@@ -58,14 +58,7 @@ The distribution is peaked — one option clearly ahead — and yet `billing` wa
 3. Watch `P(other)` as a health signal: a spike means your option list no longer matches reality (taxonomy rot), not that the model got lazy.
 4. Route the low band to a human or to a language model instead of forcing a pick.
 
-```python
-if team["confidence"] >= 0.8:
-    route(ticket, team["selected"])                   # auto-act
-elif team["confidence"] >= 0.5:
-    route(ticket, team["selected"], confirm=True)     # confirm / more context
-else:
-    escalate_to_human(ticket)
-```
+> 📄 **Example code:** [`examples/01-q2-choice-returned-confidence-0-87-and-the.py`](examples/01-q2-choice-returned-confidence-0-87-and-the.py)
 
 **Verify**
 
@@ -98,12 +91,7 @@ Your first instinct is that a level you never defined leaked out. Before this, t
 3. Write each level description carefully; vague level text produces vague scores.
 4. If your buckets have no natural order, you wanted Choice, not Score.
 
-```python
-if anger["score"] >= 2.5 and anger["confidence"] >= 0.6:
-    page_oncall(ticket)            # right level, peaked → auto-act
-elif anger["score"] >= 2.5:
-    flag_for_human_review(ticket)  # right level, weak margin → confirm
-```
+> 📄 **Example code:** [`examples/02-q3-my-anger-score-came-back-2-70.py`](examples/02-q3-my-anger-score-came-back-2-70.py)
 
 **Verify**
 
@@ -127,15 +115,7 @@ A value near `0.5` means the evidence pulls both ways — genuinely balanced, no
 2. Auto-act only in the high-confidence tails; below that, ask a clarifying question.
 3. Add `criteria` so "yes" is written down in the request instead of living in someone's head.
 
-```python
-conf = lambda p: abs(p - 0.5) * 2
-if p_refund > 0.5 and conf(p_refund) >= 0.8:
-    open_refund_workflow(ticket)      # high band
-elif p_refund > 0.5:
-    queue_for_agent_review(ticket)    # balanced → confirm
-else:
-    reply_with_clarifying_question(ticket)
-```
+> 📄 **Example code:** [`examples/03-q4-my-safety-gate-returned-p-yes-0.py`](examples/03-q4-my-safety-gate-returned-p-yes-0.py)
 
 **Verify**
 
@@ -160,14 +140,7 @@ Jev evaluates every question in a single parallel pass, so latency barely moves 
 3. For a list of candidates, fan out one Noul per item instead of looping over calls.
 4. With nested models, fields become namespaced questions (`outer.inner`) in the same pass — depth costs structure, not round-trips.
 
-```python
-questions = {
-    f"hit_{i}": {"type": "noul", "question": "Does this item qualify?", "state_hint": item}
-    for i, item in enumerate(items)
-}
-# One request → answers["hit_0"] … answers["hit_n"], all in 70–500ms
-hits = [i for i in range(len(items)) if answers[f"hit_{i}"]["noul"]["p_yes"] > 0.6]
-```
+> 📄 **Example code:** [`examples/04-q5-six-decisions-per-ticket-and-my-latency.py`](examples/04-q5-six-decisions-per-ticket-and-my-latency.py)
 
 **Verify**
 

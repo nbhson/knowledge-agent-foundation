@@ -23,12 +23,7 @@ Trigger on measured token counts, at 70% used, not 90%. The arithmetic of a 200k
 3. Never let the model decide. Ask it "should we compact?" while it holds 195k tokens and it answers "no, I'm fine".
 4. Trigger at a task seam when the plan has one, instead of in the middle of a task's reasoning.
 
-```typescript
-export const COMPACT_AT = 0.70, MAX_TURNS = 20;
-export function shouldCompact(used: number, budget: number, turns: number): boolean {
-  return used / budget > COMPACT_AT || turns > MAX_TURNS;
-}
-```
+> 📄 **Example code:** [`examples/01-q1-my-agent-died-at-turn-47-with.ts`](examples/01-q1-my-agent-died-at-turn-47-with.ts)
 
 **Verify**
 
@@ -139,14 +134,7 @@ A fluent summary creates a false impression of coverage — models often do *wor
 3. Put invariants in both the HEADER and the FOOTER of the prompt, verbatim. Models attend reliably to the start and end of a long context, so a summarizer that keeps only the head and tail still preserves your constraints.
 4. Keep task ids and file paths raw inside `Open[]`, and keep the raw failing error line inside `Repro`.
 
-```typescript
-it("a cold agent can continue from the resume block alone", async () => {
-  const o = await writeBackAndCompact(realSpans, 12_000, mem, sink, pins, plan, loop, goal);
-  const cold = await runAgent({ context: [systemPrompt, renderResume(o.resume)], tools });
-  const warm = await runAgent({ context: realSpans, tools });
-  expect(await nextActionOf(cold)).toBe(await nextActionOf(warm));
-});
-```
+> 📄 **Example code:** [`examples/02-q5-my-resume-block-reads-well-and-looks.ts`](examples/02-q5-my-resume-block-reads-well-and-looks.ts)
 
 **Verify**
 

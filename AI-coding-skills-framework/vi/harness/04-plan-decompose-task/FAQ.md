@@ -33,13 +33,7 @@ lỗi do cách chia việc sai thì phải chia lại, chứ thử lại chỉ t
 3. Mỗi lần chuyển hướng đều ghi log: số lần thử, loại lỗi, quyết định, và lý do.
 4. Khi hỏi người, kèm theo tóm tắt những gì đã thử để họ ra quyết định, không phải đoán mò.
 
-```python
-if state.get("transient") and state.get("attempts", 0) < 3: return "retry"
-if state.get("status") == "failed": return "replan"
-if state.get("replans", 0) >= 2 or state.get("tokens", 0) > MAX_TOKENS * 0.8:
-    return "escalate"
-return "done"
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-agent-toi-cu-lam-sai-roi-lam.py`](examples/01-q1-agent-toi-cu-lam-sai-roi-lam.py)
 
 **Kiểm tra**
 
@@ -74,11 +68,7 @@ thật — chứ không phải đoán trong đầu kế hoạch rồi quyết đ
 5. Ghi nhật ký duyệt: ai duyệt, lúc nào, mã băm của bản diff. Phần định nghĩa về hạn số
    giờ và luật hai-người thuộc module `15-approval-gates`.
 
-```python
-if risk in ("high", "irreversible") and not approved(plan, sub, inputs):
-    return {"status": "blocked", "reason": "approval-denied"}  # → replan
-# timeout không có phản hồi = deny, không phải approve
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-no-tu-xoa-du-lieu-nguoi-dung.py`](examples/02-q2-no-tu-xoa-du-lieu-nguoi-dung.py)
 
 **Kiểm tra**
 
@@ -111,11 +101,7 @@ nhánh không liên quan.
 4. Khi một nút hỏng: tiếp tục các nhánh độc lập, bỏ qua những nút phụ thuộc vào nó, và trả
    về kèm cờ "hoàn thành một phần" cùng danh sách đã xong và đã hỏng.
 
-```python
-k = idem_key(plan, sub, inputs)
-if k in store: return store[k]          # phát lại = không tác dụng phụ lần hai
-out = fn(inputs); store[k] = {"status": "ok", "out": out}
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-chay-lai-cung-mot-ke-hoach-thi.py`](examples/03-q3-chay-lai-cung-mot-ke-hoach-thi.py)
 
 **Kiểm tra**
 
@@ -146,10 +132,7 @@ phải tuyến tính — đây là loại sự cố làm cháy tài khoản nhan
 4. Ở mốc 80% thì cảnh báo; ở mốc 100% thì đóng băng và chuyển sang hỏi người, kèm tóm
    tắt kết quả tốt nhất tính được.
 
-```python
-MAX_DEPTH, MAX_FANOUT, MAX_TOKENS = 4, 5, 100_000
-if state.get("tokens", 0) > MAX_TOKENS * 0.8: return "escalate"
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-ke-hoach-no-ra-nhu-cay-khong.py`](examples/04-q4-ke-hoach-no-ra-nhu-cay-khong.py)
 
 **Kiểm tra**
 

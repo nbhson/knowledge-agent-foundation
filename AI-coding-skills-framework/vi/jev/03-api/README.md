@@ -64,69 +64,11 @@ Authorization: Bearer $TYPESAFE_API_KEY
 
 ### 2.1 Ví Dụ Request Đầy Đủ — 3 Questions
 
-```json
-POST /v1/systemone
-Authorization: Bearer tsk_...
-{
-  "model": "jev-latest",
-  "state": {
-    "ticket": {
-      "id": 4821,
-      "body": "I was charged twice for my Pro plan this month. I want a refund of the duplicate charge ASAP, I'm really frustrated.",
-      "channel": "email",
-      "history_count": 3
-    },
-    "account": { "tier": "pro", "tenure_days": 400 }
-  },
-  "questions": {
-    "team": {
-      "type": "choice",
-      "choices": ["billing", "tech", "account", "other"],
-      "description": "Which team owns this ticket?"
-    },
-    "refund_requested": {
-      "type": "noul",
-      "description": "Does the customer explicitly request a refund?"
-    },
-    "urgency": {
-      "type": "score",
-      "levels": [
-        { "level": 1, "label": "low" },
-        { "level": 2, "label": "medium" },
-        { "level": 3, "label": "high" },
-        { "level": 4, "label": "critical" }
-      ],
-      "description": "Urgency of handling this ticket"
-    }
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/01-2-1-vi-du-request-ay-u-3.json`](examples/01-2-1-vi-du-request-ay-u-3.json)
 
 ### 2.2 Response Shape
 
-```json
-{
-  "answers": {
-    "team": {
-      "choice": "billing",
-      "probabilities": { "billing": 0.93, "tech": 0.04, "account": 0.02, "other": 0.01 },
-      "confidence": 0.87
-    },
-    "refund_requested": {
-      "noul": true,
-      "p": 0.96,
-      "certainty": 0.92
-    },
-    "urgency": {
-      "score": 3.4,
-      "legend": { "1": "low", "2": "medium", "3": "high", "4": "critical" },
-      "distribution": { "1": 0.01, "2": 0.05, "3": 0.51, "4": 0.43 },
-      "confidence": 0.55
-    }
-  },
-  "usage": { "input_tokens": 214, "output_tokens": 0 }
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-2-2-response-shape.json`](examples/02-2-2-response-shape.json)
 
 ### 2.3 Đọc Response — Bảng Map Sang Code
 
@@ -175,96 +117,14 @@ state + 3 questions ────┼── q "refund_requested.noul" ──► no
 <details>
 <summary>Python — Quickstart (Click to expand/collapse)</summary>
 
-```python
-# pip install typesafe
-import os
-import typesafe
-
-client = typesafe.Client(api_key=os.environ["TYPESAFE_API_KEY"])
-
-resp = client.ask(
-    model="jev-1.13.0",                     # pin version trong production
-    state="Ticket: charged twice, want refund, very frustrated.",
-    questions={
-        "team": {
-            "type": "choice",
-            "choices": ["billing", "tech", "account", "other"],
-            "description": "Which team owns this ticket?",
-        },
-        "refund_requested": {
-            "type": "noul",
-            "description": "Does the customer explicitly request a refund?",
-        },
-        "urgency": {
-            "type": "score",
-            "levels": [
-                {"level": 1, "label": "low"},
-                {"level": 2, "label": "medium"},
-                {"level": 3, "label": "high"},
-                {"level": 4, "label": "critical"},
-            ],
-            "description": "Urgency of handling this ticket",
-        },
-    },
-)
-
-team = resp.answers["team"]
-if team.confidence > 0.7 and team.choice != "other":
-    route(team.choice)
-else:
-    escalate_human(team.probabilities)
-
-refund = resp.answers["refund_requested"]
-if refund.p >= 0.85:
-    open_refund_flow()
-elif abs(refund.p - 0.5) < 0.1:
-    ask_human()          # margin nhỏ → Jev gần như không biết
-
-urgency = resp.answers["urgency"]
-if urgency.score >= 3.5:
-    page_oncall()
-```
+> 📄 **Code ví dụ:** [`examples/03-3-1-quickstart.py`](examples/03-3-1-quickstart.py)
 
 </details>
 
 <details>
 <summary>JavaScript — Quickstart (Click to expand/collapse)</summary>
 
-```javascript
-// npm install @typesafe/sdk
-import { TypeSafe } from "@typesafe/sdk";
-
-const client = new TypeSafe({ apiKey: process.env.TYPESAFE_API_KEY });
-
-const resp = await client.ask({
-  model: "jev-1.13.0",
-  state: "Ticket: charged twice, want refund, very frustrated.",
-  questions: {
-    team: {
-      type: "choice",
-      choices: ["billing", "tech", "account", "other"],
-      description: "Which team owns this ticket?",
-    },
-    refund_requested: {
-      type: "noul",
-      description: "Does the customer explicitly request a refund?",
-    },
-    urgency: {
-      type: "score",
-      levels: [
-        { level: 1, label: "low" },
-        { level: 2, label: "medium" },
-        { level: 3, label: "high" },
-        { level: 4, label: "critical" },
-      ],
-      description: "Urgency of handling this ticket",
-    },
-  },
-});
-
-const team = resp.answers.team;
-console.log(team.choice, team.confidence, team.probabilities);
-```
+> 📄 **Code ví dụ:** [`examples/04-3-1-quickstart.js`](examples/04-3-1-quickstart.js)
 
 </details>
 
@@ -312,40 +172,7 @@ TYPESAFE_BASE_URL=https://openrouter.ai/api/alpha
 <details>
 <summary>Python — TypeSafeModel (Click to expand/collapse)</summary>
 
-```python
-from enum import Enum
-from pydantic import BaseModel, Field
-from pydantic_ai import Agent
-from pydantic_ai.models.typesafe import TypeSafeModel
-
-class Team(str, Enum):
-    BILLING = "billing"
-    TECH = "tech"
-    ACCOUNT = "account"
-    OTHER = "other"
-
-class Triage(BaseModel):
-    """Classify by the PRIMARY owning team, not the first mention."""
-
-    team: Team = Field(
-        description="Which team owns this ticket?"     # ← câu hỏi
-    )
-    refund_requested: bool = Field(
-        description="Does the customer explicitly request a refund?"
-    )
-    urgency: int = Field(
-        description="Urgency of handling this ticket",
-        # score levels do TypeSafeModel map từ schema/config
-    )
-
-agent = Agent(TypeSafeModel("jev-1.13.0"), output_type=Triage)
-
-result = agent.run_sync(
-    "Ticket #4821: charged twice, want refund, very frustrated."
-)
-print(result.output.team)             # Team.BILLING — typed, closed
-print(result.output.refund_requested) # True
-```
+> 📄 **Code ví dụ:** [`examples/05-4-2-vi-du.py`](examples/05-4-2-vi-du.py)
 
 </details>
 
@@ -398,20 +225,7 @@ print(result.output.refund_requested) # True
 <details>
 <summary>Python — FallbackModel (Click to expand/collapse)</summary>
 
-```python
-from pydantic_ai.models.fallback import FallbackModel
-from pydantic_ai.models.typesafe import TypeSafeModel
-from pydantic_ai.models.openai import OpenAIModel
-
-# Jev phía trước (nhanh, rẻ, decide tool/threshold);
-# LLM phía sau cho các step cần sinh text / tool arguments
-model = FallbackModel(
-    TypeSafeModel("jev-1.13.0"),
-    OpenAIModel("gpt-5"),                  # fallback khi ToolCallProposed
-)
-
-agent = Agent(model, output_type=Triage, tools=[lookup_user, refund_flow])
-```
+> 📄 **Code ví dụ:** [`examples/06-4-4-tools-kem-theo-tool-call-threshold.py`](examples/06-4-4-tools-kem-theo-tool-call-threshold.py)
 
 </details>
 
@@ -430,33 +244,7 @@ agent = Agent(model, output_type=Triage, tools=[lookup_user, refund_flow])
 <details>
 <summary>Python — TypeSafeClassifier (Click to expand/collapse)</summary>
 
-```python
-from langchain.typesafe import TypeSafeClassifier
-
-clf = TypeSafeClassifier(
-    model="jev-1.13.0",
-    api_key=os.environ["TYPESAFE_API_KEY"],
-)
-
-answers = clf.invoke({
-    "state": "Ticket #4821: charged twice, want refund.",
-    "questions": {
-        "intent": {
-            "type": "choice",
-            "choices": ["billing", "tech", "account", "other"],
-            "description": "Primary intent of this message?",
-        },
-        "toxic": {
-            "type": "noul",
-            "description": "Is this message abusive or toxic?",
-        },
-    },
-})
-
-print(answers["intent"].choice)     # → routing branch
-if answers["toxic"].p >= 0.9:
-    hold_for_moderation()
-```
+> 📄 **Code ví dụ:** [`examples/07-5-1-co-ban.py`](examples/07-5-1-co-ban.py)
 
 </details>
 
@@ -488,27 +276,11 @@ if answers["toxic"].p >= 0.9:
 
 ### 6.1 Gọi Trực Tiếp Qua OpenRouter
 
-```json
-POST https://openrouter.ai/api/alpha/decisions
-Authorization: Bearer <OPENROUTER_API_KEY>
-Content-Type: application/json
-
-{
-  "model": "typesafe/jev-1.13",
-  "state": "...",
-  "questions": { ... }
-}
-```
+> 📄 **Code ví dụ:** [`examples/08-6-1-goi-truc-tiep-qua-openrouter.json`](examples/08-6-1-goi-truc-tiep-qua-openrouter.json)
 
 ### 6.2 Qua TypeSafe TS SDK + OpenRouter Base URL
 
-```javascript
-const client = new TypeSafe({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/alpha",
-});
-// model: "typesafe/jev-1.13" (hoặc alias tương đương)
-```
+> 📄 **Code ví dụ:** [`examples/09-6-2-qua-typesafe-ts-sdk-openrouter-base.js`](examples/09-6-2-qua-typesafe-ts-sdk-openrouter-base.js)
 
 ### 6.3 Khi Nào Chọn Đường Nào
 

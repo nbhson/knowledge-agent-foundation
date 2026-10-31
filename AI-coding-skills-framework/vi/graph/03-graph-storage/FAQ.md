@@ -54,12 +54,7 @@ Chỉ mục là "mục lục" của database: có nó, tìm "Alice" là tra mộ
 5. Chỉ trả về đúng thứ cần: `RETURN proj.name` thay vì `RETURN n`.
 6. Trước khi tối ưu, đo lại bằng `PROFILE` để biết có dùng chỉ mục không và tốn bao nhiêu lần đọc dữ liệu.
 
-```cypher
-CREATE INDEX person_name FOR (n:Person) ON (n.name);
-CREATE CONSTRAINT person_unique FOR (n:Person) REQUIRE n.name IS UNIQUE;
-MATCH (a:Person {name:'Alice'})-[:MANAGES*1..3]->(b:Person)
-RETURN b.name LIMIT 100
-```
+> 📄 **Code ví dụ:** [`examples/01-q2-truy-van-chay-cham-o-thi-thay.cypher`](examples/01-q2-truy-van-chay-cham-o-thi-thay.cypher)
 
 **Kiểm tra**
 
@@ -85,15 +80,7 @@ Bạn có script nạp 12.000 quan hệ từ 1.000 tài liệu. Chạy lần th�
 4. Ghép nối bằng khoá duy nhất (tên hoặc mã), không ghép theo thứ tự thêm vào.
 5. Chạy lại toàn bộ pipeline ba lần liên tiếp để xác nhận tính chạy-lại-được trước khi đưa lên production.
 
-```python
-query = """
-UNWIND $batch AS row
-MERGE (n:Entity {name: row.name})
-SET n.type = row.type, n.updated_at = datetime()
-"""
-for i in range(0, len(entities), 500):              # lô 500 dòng
-    session.execute_write(lambda tx: tx.run(query, batch=entities[i:i+500]))
-```
+> 📄 **Code ví dụ:** [`examples/02-q3-nap-lai-du-lieu-3-lan-thi.py`](examples/02-q3-nap-lai-du-lieu-3-lan-thi.py)
 
 **Kiểm tra**
 
@@ -119,12 +106,7 @@ Cạnh trong database đồ thị là một đối tượng độc lập, không
 4. Nếu quan hệ có thời hạn, cách đúng là đóng quan hệ: đặt `valid_until` thay vì xoá cạnh.
 5. Nhớ chạy kiểm tra quan hệ với ontology sau mỗi lần xoá lớn.
 
-```cypher
-// xoá mềm — giữ lịch sử
-MATCH (n:Person {name:'Bob'}) SET n.deleted = true, n.deleted_at = datetime();
-// dọn dữ liệu sai — xoá node kèm cạnh
-MATCH (n:Person {name:'Bob'}) DETACH DELETE n;
-```
+> 📄 **Code ví dụ:** [`examples/03-q4-xoa-mot-node-thi-bao-loi-vi.cypher`](examples/03-q4-xoa-mot-node-thi-bao-loi-vi.cypher)
 
 **Kiểm tra**
 

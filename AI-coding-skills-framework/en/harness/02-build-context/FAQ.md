@@ -24,15 +24,7 @@ A context window is a fixed tray with a few slots. Without a written split, the 
 4. Compress to a stated ratio instead of truncating blindly. Compression ratio = compressed size ÷ original size; aim for 0.4 here.
 5. Stop the loop when the budget is spent. Do not "just add one more doc".
 
-```python
-docs = vector_store.search(query, top_k=10)   # not 100
-remaining = budget.available; parts = []
-for doc in docs:
-    t = estimate_tokens(doc)
-    if t < remaining:
-        parts.append(doc); remaining -= t
-print(budget.report())   # retrieved_context 62,000 (50%)
-```
+> 📄 **Example code:** [`examples/01-q1-my-search-returns-10-good-documents-i.py`](examples/01-q1-my-search-returns-10-good-documents-i.py)
 
 **Verify**
 
@@ -58,14 +50,7 @@ Large language models attend most strongly to the **beginning and the end** of t
 4. Repeat the key fact at a second strategic position instead of relying on one copy.
 5. Use section labels (`[SYSTEM]`, `[CONTEXT]`, `[HISTORY]`) so attention has a shape to land on.
 
-```python
-docs = rank_by_relevance(all_docs)   # never random.shuffle(all_docs)
-context = f"""
-MOST IMPORTANT: {docs[0]}    ← beginning, high attention
-{docs[1:-1]}                  ← middle, lower attention
-MOST IMPORTANT: {docs[-1]}   ← end, high attention
-"""
-```
+> 📄 **Example code:** [`examples/02-q2-the-one-document-that-actually-answers-the.py`](examples/02-q2-the-one-document-that-actually-answers-the.py)
 
 **Verify**
 
@@ -90,13 +75,7 @@ Context is the bulk of a retrieval-augmented generation (RAG) pipeline's cost, a
 3. **Retrieve in two passes**: cheap embedding model first, then run the expensive reranker on only the top 20.
 4. **Route by tier**: simple questions to `gemma3:12b` (free locally via Ollama), complex questions to `claude-3.5`.
 
-```python
-metrics.record(query_type="factual", latency_ms=250, tokens=8500,
-               relevance=[0.95, 0.88, 0.72], cache_hit=False,
-               compression_ratio=0.4)
-print(metrics.report())   # avg + P95 latency, avg/max tokens,
-                         # avg relevance, hit_rate, query distribution
-```
+> 📄 **Example code:** [`examples/03-q3-the-api-bill-tripled-and-nobody-knows.py`](examples/03-q3-the-api-bill-tripled-and-nobody-knows.py)
 
 **Verify**
 
@@ -122,13 +101,7 @@ A long conversation does not fit a finite window, and a naive truncation throws 
 4. Layer by priority: system → task → domain → history → immediate. When full, delete from the bottom up. Never delete the system layer.
 5. Keep the immediate context (open file, cursor position, recent edits) — forgetting it is a listed mistake in the source.
 
-```python
-mgr = MultiTurnContextManager(max_turns=50, summary_threshold=20)
-mgr.add_turn("user", "health insurance contribution?")
-mgr.add_turn("assistant", "4.5% employee share")
-mgr.add_turn("user", "and the validity period?")
-prompt = mgr.build_context(max_tokens=4000)  # facts + summary + last 10
-```
+> 📄 **Example code:** [`examples/04-q4-at-message-25-the-chatbot-forgets-what.py`](examples/04-q4-at-message-25-the-chatbot-forgets-what.py)
 
 **Verify**
 
@@ -154,13 +127,7 @@ Validation was never a separate step, so every defect surfaced downstream, where
 4. Warn when any document scores below `min_relevance_score = 0.5`, and when data is older than `max_context_age_hours = 24`.
 5. Auto-fix instead of failing: overflow triggers hierarchical summarization, a missing system section gets a default header.
 
-```python
-result = validator.validate(context)   # 5 checks: budget, sections,
-                                       # relevance, freshness, structure
-if not result["valid"]:
-    context = auto_fix(context, result["issues"])
-response = llm.generate(context)
-```
+> 📄 **Example code:** [`examples/05-q5-i-only-found-out-my-context-was.py`](examples/05-q5-i-only-found-out-my-context-was.py)
 
 **Verify**
 

@@ -1,0 +1,4 @@
+{ "model": "jev-latest",
+  "state": "Ticket #4821: charged twice after plan upgrade…",
+  "questions": { "team": { "type": "choice",
+    "options": ["billing","infra","bug","other"] } } }

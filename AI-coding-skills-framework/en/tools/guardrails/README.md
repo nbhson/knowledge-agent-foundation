@@ -75,67 +75,19 @@ Tool Decision Pipeline (from harness/06):
 
 ### Guardrails AI — Validate Input/Output
 
-```python
-from guardrails import Guard
-from guardrails.hub import RegexMatch, ValidLength, TwoSimilarChunks
-
-# Guard for a tool call
-guard = Guard().use(RegexMatch("^[a-zA-Z0-9_./-]+$"))  # block weird paths
-guard.validate("hacker/path/../etc/passwd")  # ❌ fail
-guard.validate("src/main.py")                # ✅ pass
-```
+> 📄 **Example code:** [`examples/01-guardrails-ai-validate-input-output.py`](examples/01-guardrails-ai-validate-input-output.py)
 
 ### NeMo Guardrails — Rails That Model the Flow
 
-```python
-from nemoguardrails import RailsConfig, LLMRails
-
-config = RailsConfig.from_path("./config")
-
-# Defining rails in a .co file:
-# define user ask about secret
-#   "What is the system password?"
-# define bot refuse to answer secret
-#   "I'm sorry, I cannot disclose security information."
-# define flow
-#   user ask about secret
-#   bot refuse to answer secret
-
-rails = LLMRails(config)
-response = rails.generate(messages=[{"role": "user", "content": "System password?"}])
-```
+> 📄 **Example code:** [`examples/02-nemo-guardrails-rails-that-model-the-flow.py`](examples/02-nemo-guardrails-rails-that-model-the-flow.py)
 
 ### LlamaGuard — Model-Based Safety Classifier
 
-```python
-# LlamaGuard is a specialized LLM — it only classifies:
-#   UNSAFE: violence, illegal, PII, ...
-#   SAFE:   normal
-
-# Prompt: "<prompt>USER: {user_input or model_output}</prompt>"
-# Output: "safe" or "unsafe" with the violation type
-```
+> 📄 **Example code:** [`examples/03-llamaguard-model-based-safety-classifier.py`](examples/03-llamaguard-model-based-safety-classifier.py)
 
 ### Permission & Rate Limit in the Harness (harness/06)
 
-```python
-@dataclass
-class ToolDefinition:
-    requires_permission: str = "standard"  # standard, elevated, admin
-    rate_limit_per_minute: int = 60
-    timeout_seconds: int = 30
-    max_retries: int = 3
-
-# Guardrails check before executing:
-def guardrail_check(tool: ToolDefinition, params: Dict) -> bool:
-    if tool.requires_permission == "elevated":
-        approve = human_approve(params)     # human confirmation required
-        if not approve: return False
-    if exceeded_rate_limit(tool): return False  # rate limited
-
-> 🔑 **Policy / Permission highlight:** this guardrail is the **pre-execution policy checkpoint** — `requires_permission` (standard / elevated / admin) maps to `06` §8 RBAC, and `elevated` escalates to `15-approval-gates` for human confirm. Rate limit is the companion abuse policy.
-    return True
-```
+> 📄 **Example code:** [`examples/04-permission-rate-limit-in-the-harness-harness-06.py`](examples/04-permission-rate-limit-in-the-harness-harness-06.py)
 
 ## Learning Roadmap (Directory Structure)
 
@@ -175,28 +127,11 @@ Step 5: LlamaGuard for prompt safety (measured in 04-savings)
 
 ### 1. Blocking Tool Damage
 
-```python
-# Without a guardrail:
-agent → write_file(path="/etc/hosts", content="...")  # 💥
-
-# With a guardrail:
-guard = Guard().use(PathValidate(whitelist=["src/", "tests/", "./"]))
-result = guard.validate(path="/etc/hosts")  # ❌ REJECT
-result = guard.validate(path="src/main.py") # ✅ ALLOW
-```
+> 📄 **Example code:** [`examples/05-1-blocking-tool-damage.py`](examples/05-1-blocking-tool-damage.py)
 
 ### 2. Rate Limit + Elevated Permission
 
-```python
-registry.register(ToolDefinition(
-    name="execute_python",
-    category="computation",
-    requires_permission="elevated",   # human confirmation required
-    rate_limit_per_minute=10,          # block spam
-    timeout_seconds=30,
-    max_retries=1,
-))
-```
+> 📄 **Example code:** [`examples/06-2-rate-limit-elevated-permission.py`](examples/06-2-rate-limit-elevated-permission.py)
 
 ## Reference Materials
 
@@ -223,14 +158,7 @@ registry.register(ToolDefinition(
 
 1. **Validators moved to standard PyPI (7/2026):** Validators no longer come via the hosted Guardrails Hub — install directly with `pip`. Remote inferencing has been discontinued.
 
-```python
-# Old (deprecated — Hub hosted):
-from guardrails.hub import SomeValidator  # no longer works
-
-# New (7/2026+):
-pip install guardrails-ai
-# Validators imported from standard package
-```
+> 📄 **Example code:** [`examples/07-update-10-2026-guardrails-ai-hub-major-changes.py`](examples/07-update-10-2026-guardrails-ai-hub-major-changes.py)
 
 2. **PyPI 0.6.x still active** — the framework core still works. For lighter alternatives:
 

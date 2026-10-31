@@ -1,0 +1,25 @@
+{
+  "model": "jev-latest",
+  "state": "Ticket #4821: Customer charged twice after upgrading to Pro. Wants the extra $49 reversed; mentions chargeback if not fixed by Friday. Third contact today.",
+  "questions": {
+    "team": {
+      "type": "choice",
+      "options": ["billing", "infra", "bug", "product", "other"],
+      "question": "Which team should own this ticket?"
+    },
+    "refund_requested": {
+      "type": "noul",
+      "question": "Does the customer explicitly ask for money back?",
+      "criteria": "Yes only if the text requests a refund or reversal of a charge."
+    },
+    "urgency": {
+      "type": "score",
+      "levels": [
+        { "level": 1, "description": "routine — no time pressure" },
+        { "level": 2, "description": "soon — customer waiting, no threat" },
+        { "level": 3, "description": "critical — threats, chargeback, churn risk" }
+      ],
+      "question": "How urgent is this ticket?"
+    }
+  }
+}

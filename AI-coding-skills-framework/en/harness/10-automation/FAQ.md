@@ -22,13 +22,7 @@ Human attention is the bottleneck, not the machine. A check that arrives after t
 4. Quarantine flaky tests instead of re-running until green. A test that needs a second chance is a broken test.
 5. Hold the line on the numbers the module gives you: under 10 minutes for CI, under 30 for delivery to production.
 
-```yaml
-jobs:
-  lint-and-type-check: { runs-on: ubuntu-latest }
-  unit-tests:
-    needs: lint-and-type-check
-    strategy: { matrix: { python-version: ['3.10','3.11','3.12'] } }
-```
+> 📄 **Example code:** [`examples/01-q1-our-continuous-integration-run-takes-32-minutes.yaml`](examples/01-q1-our-continuous-integration-run-takes-32-minutes.yaml)
 
 **Verify**
 
@@ -79,16 +73,7 @@ A deploy is only reversible if reversibility was built in. The old version is al
 3. Bind the rollback to metrics, not to a human. Auto-rollback fires when error rate is above 2% for 3 minutes, when p99 exceeds the service level objective for 5 minutes, when a smoke test fails, or when someone adds a `halt` label to the deploy pull request.
 4. Keep database migrations backward compatible using expand → migrate → contract, so the old code can still run against the new schema.
 
-```python
-def decide(baseline: dict, canary: dict) -> str:
-    err_delta = canary["error_rate"] - baseline["error_rate"]
-    lat_delta = (canary["p99_ms"] - baseline["p99_ms"]) / max(baseline["p99_ms"], 1)
-    if canary["smoke_failures"] > 0 or canary["sev1_firing"]:
-        return "ROLLBACK: smoke/sev1"
-    if canary["error_rate"] > 0.02 or err_delta > 0.005:
-        return f"ROLLBACK: error_rate delta={err_delta:+.3f}"
-    return "PROMOTE"
-```
+> 📄 **Example code:** [`examples/02-q3-we-released-at-4pm-and-error-rate.py`](examples/02-q3-we-released-at-4pm-and-error-rate.py)
 
 **Verify**
 
@@ -114,12 +99,7 @@ A cron entry only says "run at 02:00". It does not say "run once per window", it
 4. Set `failedJobsHistoryLimit=3`, and backfill a missed window only when it is explicitly marked `backfill: true`.
 5. Watch `run_count` and `failure_count` from the scheduler report — a rising failure count is the early warning.
 
-```yaml
-concurrencyPolicy: Forbid
-activeDeadlineSeconds: 3600
-startingDeadlineSeconds: 300
-failedJobsHistoryLimit: 3
-```
+> 📄 **Example code:** [`examples/03-q4-my-nightly-job-ran-three-times-at.yaml`](examples/03-q4-my-nightly-job-ran-three-times-at.yaml)
 
 **Verify**
 

@@ -227,9 +227,7 @@ Cheapest correct architecture for high-volume pipelines: generation stays with t
 
 Spice AI lets you **call Jev from SQL** — decisions become query-shaped:
 
-```sql
-SELECT ticket_id, jev_score(state_text) AS urgency FROM tickets;
-```
+> 📄 **Example code:** [`examples/01-5-spice-ai-jev-called-from-sql.sql`](examples/01-5-spice-ai-jev-called-from-sql.sql)
 
 Map-reduce over a large dataset without ever leaving the warehouse: the dataset is the state fan-out, Jev is the reducer, and the typed score lands back in the table.
 

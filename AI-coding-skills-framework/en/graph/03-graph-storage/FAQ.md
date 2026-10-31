@@ -56,11 +56,7 @@ The deciding variable is not features, it is *your* constraint. Deployment type 
 3. For production, use a managed tier (Aura, Neptune) so HA and backup are not your problem.
 4. Do not switch graph DBs late — Cypher is the portable skill, the storage engine is not.
 
-```yaml
-image: neo4j:5-community
-ports: ["7474:7474", "7687:7687"]   # Browser UI / Bolt protocol
-NEO4J_PLUGINS: '["apoc","graph-data-science"]'
-```
+> 📄 **Example code:** [`examples/01-q2-neo4j-kuzu-falkordb-nebulagraph-which-one-do.yaml`](examples/01-q2-neo4j-kuzu-falkordb-nebulagraph-which-one-do.yaml)
 
 **Verify**
 
@@ -145,12 +141,7 @@ The trend in graph databases is one engine with many index types. **FalkorDB** i
 3. Combine them in one statement — vector search first, then traverse from the hits.
 4. Keep the scores in the output and sort, so you can tune the cut-off later.
 
-```cypher
-CREATE VECTOR INDEX personEmbedding FOR (n:Person) ON n.embedding
-OPTIONS {dimension: 768, similarityFunction: 'cosine'}
-CALL db.index.vector.queryNodes("personEmbedding", 10, $queryVector) YIELD node, score
-MATCH (node)-[:WORKS_ON]->(p:Project) RETURN node.name, p.name, score
-```
+> 📄 **Example code:** [`examples/02-q5-do-i-need-a-separate-vector-database.cypher`](examples/02-q5-do-i-need-a-separate-vector-database.cypher)
 
 **Verify**
 

@@ -6,23 +6,15 @@
 
 ### macOS (Homebrew — recommended)
 
-```bash
-brew install rtk
-```
+> 📄 **Example code:** [`examples/01-macos-homebrew-recommended.sh`](examples/01-macos-homebrew-recommended.sh)
 
 ### Linux/macOS (Quick Install)
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
-# Installs into ~/.local/bin — add to PATH if needed:
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-```
+> 📄 **Example code:** [`examples/02-linux-macos-quick-install.sh`](examples/02-linux-macos-quick-install.sh)
 
 ### Cargo
 
-```bash
-cargo install --git https://github.com/rtk-ai/rtk
-```
+> 📄 **Example code:** [`examples/03-cargo.sh`](examples/03-cargo.sh)
 
 > ⚠️ **Name collision**: There is another project called "rtk" (Rust Type Kit) on crates.io. If `rtk gain` fails, you installed the wrong package — use `cargo install --git` above instead.
 
@@ -32,39 +24,17 @@ Download the `rtk-x86_64-pc-windows-msvc.zip` binary from [releases](https://git
 
 ### Verify the Installation
 
-```bash
-rtk --version   # Should print "rtk 0.x.x"
-rtk gain        # Should open the token-savings dashboard
-```
+> 📄 **Example code:** [`examples/04-verify-the-installation.sh`](examples/04-verify-the-installation.sh)
 
 ## Integrating into Your AI Coding Tool
 
 Run the command for the tool you use:
 
-```bash
-# Hook-based (transparent rewrite — recommended)
-rtk init -g                     # Claude Code / GitHub Copilot (default)
-rtk init -g --gemini            # Gemini CLI
-rtk init -g --codex             # Codex (OpenAI)
-rtk init -g --agent cursor      # Cursor
-rtk init -g --agent windsurf    # Windsurf
-rtk init -g --opencode          # OpenCode
-rtk init -g --agent pi          # Pi
-rtk init -g --agent droid       # Factory Droid
-
-# Plugin / Rule-based (project-scoped)
-rtk init --agent cline          # Cline / Roo Code  ← uses .clinerules
-rtk init --agent kilocode       # Kilo Code
-rtk init --agent antigravity    # Google Antigravity
-rtk init --agent kimi           # Kimi AI
-rtk init --agent hermes         # Hermes
-```
+> 📄 **Example code:** [`examples/05-integrating-into-your-ai-coding-tool.sh`](examples/05-integrating-into-your-ai-coding-tool.sh)
 
 After installing, **restart the AI tool**, then test:
 
-```bash
-git status  # Will be automatically rewritten to "rtk git status"
-```
+> 📄 **Example code:** [`examples/06-integrating-into-your-ai-coding-tool.sh`](examples/06-integrating-into-your-ai-coding-tool.sh)
 
 ## Per-Tool Integration Table
 
@@ -94,29 +64,15 @@ git status  # Will be automatically rewritten to "rtk git status"
 
 macOS: `~/Library/Application Support/rtk/config.toml`
 
-```toml
-[hooks]
-exclude_commands = ["curl", "playwright"]  # skip rewrite for these commands
-
-[tee]
-enabled = true          # save raw output on failure (default: true)
-mode = "failures"       # "failures", "always", or "never"
-```
+> 📄 **Example code:** [`examples/07-main-config-config-rtk-config-toml.toml`](examples/07-main-config-config-rtk-config-toml.toml)
 
 ### Global Flags
 
-```bash
--u, --ultra-compact    # ASCII icons, inline format (reduces output even more)
--v, --verbose          # Increase verbosity (-v, -vv, -vvv)
-```
+> 📄 **Example code:** [`examples/08-global-flags.sh`](examples/08-global-flags.sh)
 
 ## Uninstalling
 
-```bash
-rtk init -g --uninstall     # Remove the hook, RTK.md, settings.json entry
-cargo uninstall rtk          # Remove the binary (if installed via cargo)
-brew uninstall rtk           # Remove via Homebrew (if installed via brew)
-```
+> 📄 **Example code:** [`examples/09-uninstalling.sh`](examples/09-uninstalling.sh)
 
 ## Quick Install Troubleshooting
 

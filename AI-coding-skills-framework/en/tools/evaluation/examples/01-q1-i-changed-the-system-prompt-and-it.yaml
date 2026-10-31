@@ -1,0 +1,8 @@
+prompts:
+  - "You are a helpful assistant: {{input}}"
+  - "You are a senior engineer: {{input}}"
+providers:
+  - openai:gpt-4
+tests:
+  - vars: { input: "Long technical document..." }
+    assert: [ { type: cost, threshold: 0.05 } ]

@@ -21,13 +21,7 @@ Traversal không ràng buộc = đi vào mọi nhánh, kể cả nhánh `KNOWS`,
 3. Graph >1 triệu node thì bật chế độ lấy mẫu: mỗi bước chỉ ghé tối đa 10 node, có thể chọn `random`, `top-confidence` hoặc `pagerank`.
 4. Suy ra `confidence` của đường đi bằng giá trị nhỏ nhất trong các cạnh — đường yếu là đường đáng nghi.
 
-```python
-results = constrained_bfs(G, "Alice", max_hops=3,
-    allowed_edge_types={"MANAGES", "WORKS_ON"}, min_confidence=0.7)
-# ['Alice','Bob','Carol'] (hops=2, conf=0.90)
-# ['Alice','Bob','Phoenix'] (hops=2, conf=0.85)
-# Dave bị loại: KNOWS không nằm trong allowed types
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-hoi-alice-quan-ly-ai-thi-bfs.py`](examples/01-q1-hoi-alice-quan-ly-ai-thi-bfs.py)
 
 **Kiểm tra**
 
@@ -52,11 +46,7 @@ Chạy một graph nhỏ 1.000 node / 5.000 cạnh: BFS không ràng buộc thă
 3. Muốn người dùng/model chọn trong nhiều lựa chọn thì lấy nhiều đường: `nx.all_simple_paths(..., cutoff=4)` hoặc `nx.shortest_simple_paths` rồi đưa cả danh sách vào prompt.
 4. Trả kèm bằng chứng: từng cạnh `(từ, đến, loại quan hệ, trọng số)` và `total_confidence`.
 
-```python
-path = nx.dijkstra_path(G, source="Alice", target="Carol", weight="weight")
-all_p = list(nx.all_simple_paths(G, "Alice", "Carol", cutoff=4))
-k_p = list(nx.shortest_simple_paths(G, "Alice", "Carol", weight="weight"))
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-lien-he-alice-voi-du-an-ai.py`](examples/02-q2-lien-he-alice-voi-du-an-ai.py)
 
 Trong Cypher thì ràng buộc bằng `WHERE all(r in relationships(path) WHERE r.confidence > 0.7)`.
 
@@ -83,13 +73,7 @@ Graph thật luôn **thưa** (sparse): không thể lưu mọi quan hệ dẫn x
 3. Giảm độ tin cậy theo chuỗi: Alice 0.95 × Bob 0.90 = **0.855** bằng phép nhân, hoặc lấy giá trị yếu nhất là **0.90**.
 4. Khi trả lời, luôn kèm đường suy luận để người đọc thấy "kết luận này từ cạnh gốc nào".
 
-```python
-INFERENCE_RULES = [{"name": "transitive_manages",
-  "pattern": [("A","MANAGES","B"),("B","MANAGES","C")],
-  "infer": ("A","INDIRECTLY_MANAGES","C"), "confidence": 0.8}]
-inferred = apply_rules(G, INFERENCE_RULES)
-# Alice -[INDIRECTLY_MANAGES]-> Carol via transitive_manages
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-graph-khong-co-canh-noi-truc-tiep.py`](examples/03-q3-graph-khong-co-canh-noi-truc-tiep.py)
 
 **Kiểm tra**
 
@@ -114,11 +98,7 @@ Quan hệ trong đời thực có ngày bắt đầu và ngày kết thúc: nhâ
 3. Khi cập nhật quan hệ, **không xoá cạnh cũ**: đóng hạn nó bằng `valid_until` rồi tạo cạnh mới.
 4. Trả lời kèm khoảng thời gian để câu trả lời tự nói "đúng trong giai đoạn này".
 
-```python
-query_at_time(edges, date(2024, 3, 1), "Alice")  # → TeamA
-query_at_time(edges, date(2024, 8, 1), "Alice")  # → TeamB
-# Cypher: WHERE r.valid_from <= date('2024-03-01') <= r.valid_until
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-hoi-quy-2-2024-alice-quan-ly.py`](examples/04-q4-hoi-quy-2-2024-alice-quan-ly.py)
 
 **Kiểm tra**
 

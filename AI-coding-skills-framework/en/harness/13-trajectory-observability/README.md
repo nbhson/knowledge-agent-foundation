@@ -78,16 +78,7 @@ a guess.
 
 With a trajectory, the same question takes eleven seconds and one query:
 
-```sql
-SELECT seq, kind, payload->>'tool' AS tool, payload->>'path' AS path
-FROM trajectory
-WHERE session_id = 'ses_44a' AND payload->>'path' LIKE '%middleware%'
-ORDER BY seq;
--- seq 31: read_file  src/auth/middleware.ts  → 4.1KB
--- seq 32: edit_file  (patch applied)
--- seq 33: write_file  ← the delete
--- seq 34: eval        "tests pass" (they did — nothing imported it any more)
-```
+> 📄 **Example code:** [`examples/01-opening-story.sql`](examples/01-opening-story.sql)
 
 **And the follow-up questions answer themselves.** Why did it delete? `seq 29: prompt` —
 the exports were unused, and the model chose deletion over leaving dead code. Could you
@@ -200,35 +191,7 @@ event is lost on its own and every question has a join.
 One shape, used by every module, read by every tool. This is the single most
 important piece of your observability layer.
 
-```typescript
-export type EventKind =
-  | "session_start" | "session_end"
-  | "context_assembly" | "prompt"
-  | "plan" | "plan_revision"
-  | "tool_call" | "tool_result" | "sandbox"
-  | "memory_read" | "memory_write"
-  | "delegate" | "message"
-  | "approval_request" | "approval_verdict"
-  | "compaction" | "checkpoint" | "eval" | "error";
-
-export interface TrajectoryEvent {
-  id: string;             // evt_01HZX… — lexicographically sortable (ULID/KSUID)
-  seq: number;            // 0-based, gapless, monotonic within a session
-  sessionId: string;      // one user request = one session
-  parentTaskId?: string;  // → 08-task TaskNode.id
-  runId?: string;         // one engine invocation; a session may have several
-  ts: number;             // ms epoch
-  kind: EventKind;
-  actor: string;          // "agent:coder" | "human:alice" | "system" | "judge"
-  payload: EventPayload;  // redacted; ≤64KB; oversize → { ref }
-  tokens?: { in: number; out: number; cached?: number };
-  latencyMs?: number;
-  model?: string;         // which tier served this step → cost attribution
-  costUsd?: number;       // computed at emit, not recomputed at query time
-  error?: { code: string; retryable: boolean };
-  fingerprint?: string;   // prompt hash → replay dedupe, compaction audit
-}
-```
+> 📄 **Example code:** [`examples/02-1-1-core-schema.ts`](examples/02-1-1-core-schema.ts)
 
 **Every field earns its place:**
 
@@ -264,30 +227,7 @@ it should emit an event. A fact that only lives in memory is a fact you can't de
 
 ### 1.3 Validation & Versioning
 
-```typescript
-import { z } from "zod";
-
-export const TrajectoryEventSchema = z.object({
-  id: z.string().regex(/^evt_[0-9A-HJKMNP-TV-Z]{26}$/),  // ULID
-  seq: z.number().int().nonnegative(),
-  sessionId: z.string().min(1),
-  parentTaskId: z.string().optional(),
-  runId: z.string().optional(),
-  ts: z.number().int(),
-  kind: z.enum([/* … */]),
-  actor: z.string().min(1),
-  payload: z.unknown(),
-  tokens: z.object({ in: z.number(), out: z.number(), cached: z.number().optional() }).optional(),
-  latencyMs: z.number().nonnegative().optional(),
-  model: z.string().optional(),
-  costUsd: z.number().nonnegative().optional(),
-  error: z.object({ code: z.string(), retryable: z.boolean() }).optional(),
-  fingerprint: z.string().optional(),
-}).superRefine((e, ctx) => {
-  if (e.kind !== "session_start" && !e.parentTaskId)
-    ctx.addIssue({ code: "custom", message: "orphan event: parentTaskId required" });
-});
-```
+> 📄 **Example code:** [`examples/03-1-3-validation-versioning.ts`](examples/03-1-3-validation-versioning.ts)
 
 **Version the schema, not the fields.** Add `v: 2` and keep readers that handle both.
 A trajectory written six months ago should still be readable — that is the whole point of
@@ -330,11 +270,7 @@ Not every event deserves an `fsync`. Ranked by cost of losing it:
 | `tool_call` / `tool_result` | flush ≤100 ms | Needed for debugging, tolerable to lose the last 100 ms |
 | `prompt` / `context_assembly` | buffered | Reconstructable from the run itself |
 
-```bash
-# One file per session. Append-only, newline-delimited JSON.
-./trajectories/ses_44a.jsonl
-./trajectories/ses_44b.jsonl
-```
+> 📄 **Example code:** [`examples/04-2-2-write-path-durability-tiers.sh`](examples/04-2-2-write-path-durability-tiers.sh)
 
 **Why JSONL and not a table?** Append-only writes, no locking for the common case,
 `grep`-able, trivially portable, and replayable. The index is a *derived* concern; load
@@ -344,31 +280,11 @@ of a query you run once a week.
 
 ### 2.3 Read Path & Live Tailing
 
-```bash
-# 1. What happened, in order?
-jq -r '[.seq, .kind, .actor, (.payload.tool // "-")] | @tsv' ses_44a.jsonl
-
-# 2. Find the expensive steps
-jq -s 'sort_by(-(.latencyMs // 0))[:10] | .[] | {seq, kind, latencyMs, model}' ses_44a.jsonl
-
-# 3. Find unpaired tool calls (hang detector)
-jq -s '[.[] | select(.kind=="tool_call") | .seq] as $c
-       | [.[] | select(.kind=="tool_result") | .seq] as $r
-       | ($c - $r)' ses_44a.jsonl
-
-# 4. Live tail
-tail -f ses_44a.jsonl | jq -c '{seq, kind, tool: .payload.tool}'
-```
+> 📄 **Example code:** [`examples/05-2-3-read-path-live-tailing.sh`](examples/05-2-3-read-path-live-tailing.sh)
 
 Load into DuckDB for anything heavier:
 
-```sql
-INSTALL httpfs; LOAD httpfs;
-SELECT model, COUNT(*) AS steps, SUM(tokens.in + tokens.out) AS total_tokens,
-       SUM(costUsd) AS usd
-FROM read_json_auto('trajectories/*.jsonl')
-GROUP BY model ORDER BY usd DESC;
-```
+> 📄 **Example code:** [`examples/06-2-3-read-path-live-tailing.sql`](examples/06-2-3-read-path-live-tailing.sql)
 
 ---
 
@@ -390,72 +306,7 @@ teams end up with a "replay" that silently re-sends a production email.
 <details>
 <summary>TypeScript Code — fork / replay / resume (Click to expand/collapse)</summary>
 
-```typescript
-import { createHash } from "node:crypto";
-import { createInterface } from "node:readline";
-import { createReadStream } from "node:fs";
-import { ulid } from "ulid";
-
-export interface Session {
-  sessionId: string;
-  forkedFrom?: { sessionId: string; atSeq: number; by: string };
-  events: TrajectoryEvent[];
-}
-
-export async function loadSession(path: string): Promise<TrajectoryEvent[]> {
-  const out: TrajectoryEvent[] = [];
-  const rl = createInterface({ input: createReadStream(path), crlfDelay: Infinity });
-  for await (const line of rl) if (line.trim()) out.push(JSON.parse(line));
-  return assertGapless(out);
-}
-
-/** Gapless seq proves no write was lost. A gap means the log is incomplete —
- *  every downstream conclusion (cost, replay) is then suspect. */
-function assertGapless(evts: TrajectoryEvent[]): TrajectoryEvent[] {
-  evts.sort((a, b) => a.seq - b.seq);
-  for (let i = 1; i < evts.length; i++)
-    if (evts[i].seq !== evts[i - 1].seq + 1)
-      throw new Error(`trajectory gap: seq ${evts[i - 1].seq} → ${evts[i].seq}`);
-  return evts;
-}
-
-/** FORK — clone the prefix, mint a new identity, continue divergently. */
-export function fork(src: Session, atSeq: number, by: string): Session {
-  const prefix = src.events.filter(e => e.seq <= atSeq);
-  const clone: Session = {
-    sessionId: `ses_${ulid()}`,
-    forkedFrom: { sessionId: src.sessionId, atSeq, by },
-    events: prefix.map(e => ({ ...e })),      // new ids on write, same seq
-  };
-  return clone;
-}
-
-export interface ReplayDiff { step: number; kind: string; drift: "none" | "output" | "error" | "latency" }
-
-/** REPLAY — compare a fresh execution against the recorded one. */
-export function diffRun(recorded: TrajectoryEvent[], fresh: TrajectoryEvent[]): ReplayDiff[] {
-  const diffs: ReplayDiff[] = [];
-  const n = Math.max(recorded.length, fresh.length);
-  for (let i = 0; i < n; i++) {
-    const a = recorded[i], b = fresh[i];
-    if (!a || !b) { diffs.push({ step: i, kind: a?.kind ?? b?.kind ?? "?", drift: "output" }); continue; }
-    if (a.kind !== b.kind) { diffs.push({ step: i, kind: a.kind, drift: "output" }); continue; }
-    if (hash(a.payload) !== hash(b.payload)) diffs.push({ step: i, kind: a.kind, drift: "output" });
-    else if ((a.latencyMs ?? 0) > (b.latencyMs ?? 0) * 3 + 500) diffs.push({ step: i, kind: a.kind, drift: "latency" });
-  }
-  return diffs;
-}
-const hash = (o: unknown) => createHash("sha256").update(JSON.stringify(o)).digest("hex").slice(0, 16);
-
-/** RESUME — idempotency keys make re-execution after a crash safe. */
-export function stepsToSkip(events: TrajectoryEvent[], done: Set<string>): string[] {
-  return events.filter(e => e.kind === "tool_call" && done.has(idempotencyKeyOf(e)))
-               .map(e => e.payload.callId as string);
-}
-export function idempotencyKeyOf(e: TrajectoryEvent): string {
-  return `${e.parentTaskId}:${e.payload.tool}:${e.payload.argvHash}`;  // → 07 §13.3
-}
-```
+> 📄 **Example code:** [`examples/07-3-2-implementation.ts`](examples/07-3-2-implementation.ts)
 
 </details>
 
@@ -501,17 +352,7 @@ query. Each is impossible without the keys.
 
 ### 4.2 Five Questions One Query Answers
 
-```sql
--- "Why was retrieval cited but not used?" — join context_assembly → prompt → eval
-SELECT c.session_id,
-       c.payload->>'chunkIds'    AS retrieved,
-       p.payload->>'chunkIds'    AS used,
-       e.payload->>'score'       AS judge_score
-FROM trajectory c
-JOIN trajectory p ON p.session_id = c.session_id AND p.kind='prompt'
-JOIN trajectory e ON e.session_id = c.session_id AND e.kind='eval'
-WHERE c.kind='context_assembly';
-```
+> 📄 **Example code:** [`examples/08-4-2-five-questions-one-query-answers.sql`](examples/08-4-2-five-questions-one-query-answers.sql)
 
 Join keys turn "the model gave a wrong answer" into "it retrieved 12 chunks, used 4,
 and the 3 highest-scoring ones were stale" — which has an owner and a fix.
@@ -521,12 +362,7 @@ and the 3 highest-scoring ones were stale" — which has an owner and a fix.
 An event with no `parentTaskId` (or a task that doesn't exist) is a wiring bug. Run
 this continuously:
 
-```sql
-SELECT kind, COUNT(*) AS orphans, MIN(ts) AS first_seen
-FROM trajectory
-WHERE parent_task_id IS NULL AND kind NOT IN ('session_start','session_end')
-GROUP BY kind;
-```
+> 📄 **Example code:** [`examples/09-4-3-orphan-detection.sql`](examples/09-4-3-orphan-detection.sql)
 
 Non-zero is a page. Orphans are how a harness ends up with a dashboard that silently
 under-counts cost by 12% for eight months.
@@ -553,31 +389,11 @@ tool outputs are the bulk of the bytes and the least useful six weeks later; a `
 Redaction happens **at write time**, not at read time. Read-time redaction fails the
 moment anything reads the raw table, and raw tables get read by ad-hoc queries.
 
-```typescript
-const PII = [
-  /sk-[A-Za-z0-9_-]{20,}/g,                 // API keys
-  /gh[pousr]_\w{20,}/g,                     // GitHub tokens
-  /AKIA[0-9A-Z]{16}/g,                      // AWS access key id
-  /-----BEGIN [A-Z ]*PRIVATE KEY-----/g,     // private keys
-  /[\w.+-]+@[\w-]+\.[\w.]{2,}/g,             // email
-  /\b(?:\d[ -]?){13,19}\b/g,                 // card numbers
-];
-
-export function redactPayload<T>(payload: T): { payload: T; redactions: number } {
-  let s = JSON.stringify(payload), n = 0;
-  for (const re of PII) s = s.replace(re, () => { n++; return "[REDACTED]"; });
-  return { payload: JSON.parse(s), redactions: n };
-}
-```
+> 📄 **Example code:** [`examples/10-5-2-redaction-at-emit.ts`](examples/10-5-2-redaction-at-emit.ts)
 
 Store `redactions` as a field on the event. Then:
 
-```sql
--- Quarterly assertion: zero secret-shaped strings in warm store
-SELECT COUNT(*) FROM read_json_auto('trajectories-warm/*.jsonl')
-WHERE payload::TEXT ~ 'sk-[A-Za-z0-9]{20}';
--- must be 0. Non-zero = incident.
-```
+> 📄 **Example code:** [`examples/11-5-2-redaction-at-emit.sql`](examples/11-5-2-redaction-at-emit.sql)
 
 ### 5.3 Tenant Isolation & Deletion Receipts
 
@@ -585,11 +401,7 @@ WHERE payload::TEXT ~ 'sk-[A-Za-z0-9]{20}';
 - **Row-level security or separate buckets per tenant.** Cross-tenant leakage in a trajectory store is a data breach in the strictest sense.
 - **GDPR delete** removes: trajectory events, cold aggregates, derived reports, and any cached projections — then emits a receipt:
 
-```json
-{ "kind": "deletion_receipt", "tenantId": "acme",
-  "sessionsDeleted": 1841, "eventsDeleted": 214883, "coldAggregatesPurged": true,
-  "ref": "receipts/acme-2026-07-19.json", "at": 1752900000000 }
-```
+> 📄 **Example code:** [`examples/12-5-3-tenant-isolation-deletion-receipts.json`](examples/12-5-3-tenant-isolation-deletion-receipts.json)
 
 The receipt is itself stored immutably. "We deleted it" must be verifiable without
 trusting the system that deleted it.
@@ -602,49 +414,11 @@ trusting the system that deleted it.
 
 Every metric is a query over the same table. This is the payoff for the schema work.
 
-```sql
--- Step efficiency (→ 11 §15.1)
-SELECT AVG(steps) AS avg_steps, AVG(tokens_out) AS avg_out
-FROM (SELECT session_id, COUNT(*) AS steps, MAX(tokens_out) AS tokens_out
-      FROM trajectory WHERE kind IN ('tool_call','prompt') GROUP BY session_id);
-
--- Tool precision: useful ÷ total (label useful calls at the tool layer)
-SELECT payload->>'tool' AS tool,
-       COUNT(*) AS calls,
-       AVG(CASE WHEN payload->>'useful'='true' THEN 1.0 ELSE 0.0 END) AS precision
-FROM trajectory WHERE kind='tool_call' GROUP BY tool ORDER BY calls DESC;
-
--- Recovery rate: runs that hit an error and still finished
-SELECT COUNT(*) FILTER (WHERE err THEN 1)/COUNT(*)::float AS recovered
-FROM (SELECT session_id, BOOL_OR(kind='error') AS err
-      FROM trajectory GROUP BY session_id);
-
--- Loop detector: same argvHash 3+ times in one session
-SELECT session_id, payload->>'argvHash' AS h, COUNT(*) AS n
-FROM trajectory WHERE kind='tool_call'
-GROUP BY session_id, h HAVING COUNT(*) >= 3 ORDER BY n DESC;
-
--- Compaction health (→ 14)
-SELECT AVG((payload->>'ratio')::float) AS avg_ratio,
-       AVG((payload->>'dropped')::int)  AS avg_dropped
-FROM trajectory WHERE kind='compaction';
-
--- Fallback rate (→ 01): degraded retrieval paths
-SELECT AVG(CASE WHEN payload->>'degraded'='true' THEN 1.0 ELSE 0.0 END)
-FROM trajectory WHERE kind='context_assembly';
-```
+> 📄 **Example code:** [`examples/13-6-1-the-query-catalog.sql`](examples/13-6-1-the-query-catalog.sql)
 
 ### 6.2 Cost Attribution
 
-```sql
--- Cost by task, by model, by tenant — the three questions finance asks
-SELECT t.session_id, e.model,
-       SUM(e.cost_usd) AS usd, SUM(e.tokens_out) AS out_tok
-FROM trajectory e JOIN trajectory t ON t.session_id = e.session_id AND t.kind='session_start'
-WHERE e.cost_usd IS NOT NULL
-GROUP BY t.session_id, e.model
-ORDER BY usd DESC LIMIT 20;
-```
+> 📄 **Example code:** [`examples/14-6-2-cost-attribution.sql`](examples/14-6-2-cost-attribution.sql)
 
 The most common finding: **cost isn't in the prompts, it's in the retry loops and the
 frontier-tier steps nobody needed.** A cost dashboard built on this query usually finds
@@ -670,20 +444,7 @@ correctly reflected that.
 
 ### 7.2 Diffing Two Runs
 
-```typescript
-export function diffSessions(a: TrajectoryEvent[], b: TrajectoryEvent[]): string {
-  const A = new Map(a.map(e => [e.seq, e])), B = new Map(b.map(e => [e.seq, e]));
-  const lines: string[] = [];
-  for (const seq of new Set([...A.keys(), ...B.keys()]).values()) {
-    const x = A.get(seq), y = B.get(seq);
-    if (!x) { lines.push(`+${seq} ${y!.kind} ${y!.payload.tool ?? ""}`); continue; }
-    if (!y) { lines.push(`-${seq} ${x.kind} ${x.payload.tool ?? ""}`); continue; }
-    if (JSON.stringify(x.payload) !== JSON.stringify(y.payload))
-      lines.push(`~${seq} ${x.kind} ${x.payload.tool ?? ""} (${x.latencyMs}ms → ${y.latencyMs}ms)`);
-  }
-  return lines.join("\n");
-}
-```
+> 📄 **Example code:** [`examples/15-7-2-diffing-two-runs.ts`](examples/15-7-2-diffing-two-runs.ts)
 
 Use it for prompt A/B tests, model upgrades, and "it worked yesterday" reports. The
 first `~` line is almost always the interesting one.
@@ -712,97 +473,17 @@ complete aggregates answers SLO questions; a sampled log without them answers no
 <details>
 <summary>TypeScript Code — append-only store with durability tiers (Click to expand/collapse)</summary>
 
-```typescript
-import { appendFile, open, mkdir } from "node:fs/promises";
-import { join } from "node:path";
-import { ulid } from "ulid";
-import { redactPayload, TrajectoryEventSchema } from "./schema";
-
-const FSYNC_KINDS = new Set(["approval_verdict", "memory_write", "eval", "session_start", "session_end"]);
-const MAX_PAYLOAD = 64_000;
-
-export class TrajectoryStore {
-  private seq = 0;
-  private buffer: string[] = [];
-  private timer?: NodeJS.Timeout;
-
-  constructor(private root: string) {}
-
-  /** Every module calls this. Never throws into the agent loop — a telemetry
-   *  failure must not fail the task. Failures are counted and surfaced. */
-  async append(e: Omit<TrajectoryEvent, "id" | "seq">): Promise<void> {
-    try {
-      const { payload, redactions } = redactPayload(e.payload);
-      const ev = TrajectoryEventSchema.parse({
-        ...e, id: `evt_${ulid()}`, seq: this.seq++, redactions,
-        payload: JSON.stringify(payload).length > MAX_PAYLOAD ? { ref: blobRef(payload) } : payload,
-      });
-      const line = JSON.stringify(ev) + "\n";
-      if (FSYNC_KINDS.has(ev.kind)) {
-        await this.flush();
-        const fh = await open(this.path(ev.sessionId), "a");
-        await fh.appendFile(line); await fh.sync(); await fh.close();
-      } else {
-        this.buffer.push(line);
-        this.timer ??= setTimeout(() => void this.flush(), 100);
-      }
-    } catch (err) { this.dropped++; this.lastError = err; }
-  }
-
-  async flush(): Promise<void> {
-    clearTimeout(this.timer); this.timer = undefined;
-    if (!this.buffer.length) return;
-    const b = this.buffer; this.buffer = [];
-    await mkdir(this.root, { recursive: true });
-    await appendFile(this.path(this.currentSession), b.join(""), "utf8");
-  }
-
-  async close(): Promise<void> { await this.flush(); }
-  path(sessionId: string) { return join(this.root, `${sessionId}.jsonl`); }
-  dropped = 0; lastError?: unknown; currentSession = "";
-}
-```
+> 📄 **Example code:** [`examples/16-8-1-trajectorystore.ts`](examples/16-8-1-trajectorystore.ts)
 
 </details>
 
 ### 8.2 Live Progress Projector
 
-```typescript
-/** Projects the event stream into a live UI state. Same stream, different view —
- *  the UI is a fold over the trajectory, not a parallel source of truth. */
-export interface RunProgress {
-  sessionId: string; currentTask?: string; stepsDone: number;
-  tokens: number; costUsd: number; lastError?: string; status: "running" | "waiting" | "done" | "failed";
-}
-
-export function project(e: TrajectoryEvent, prev: RunProgress): RunProgress {
-  const next = { ...prev, stepsDone: prev.stepsDone + (e.kind === "tool_result" ? 1 : 0) };
-  if (e.tokens) next.tokens += e.tokens.in + e.tokens.out;
-  next.costUsd += e.costUsd ?? 0;
-  if (e.kind === "plan") next.currentTask = (e.payload as any).firstPendingTask;
-  if (e.kind === "approval_request") next.status = "waiting";
-  if (e.kind === "approval_verdict") next.status = "running";
-  if (e.kind === "error") next.lastError = e.error?.code;
-  if (e.kind === "session_end") next.status = (e.payload as any).tasksDone === (e.payload as any).tasksTotal ? "done" : "failed";
-  return next;
-}
-```
+> 📄 **Example code:** [`examples/17-8-2-live-progress-projector.ts`](examples/17-8-2-live-progress-projector.ts)
 
 ### 8.3 Debug Logger Adapter
 
-```typescript
-/** One-line human-readable trace, for `DEBUG=agent` runs. Same events, formatted. */
-export function formatEvent(e: TrajectoryEvent): string {
-  const t = `${String(e.seq).padStart(3, "0")} ${e.kind.padEnd(16)} ${e.actor.padEnd(12)}`;
-  const detail = e.kind === "tool_call" ? `${e.payload.tool} ${JSON.stringify(e.payload.args).slice(0, 60)}`
-    : e.kind === "tool_result" ? `exit=${e.payload.exitCode} ${e.latencyMs}ms ${e.payload.bytes}B`
-    : e.kind === "eval" ? `score=${e.payload.score}`
-    : e.kind === "compaction" ? `ratio=${e.payload.ratio} dropped=${e.payload.dropped}`
-    : "";
-  const cost = e.costUsd ? ` $${e.costUsd.toFixed(4)}` : "";
-  return `${t} ${detail}${cost}`;
-}
-```
+> 📄 **Example code:** [`examples/18-8-3-debug-logger-adapter.ts`](examples/18-8-3-debug-logger-adapter.ts)
 
 ---
 
@@ -813,37 +494,14 @@ export function formatEvent(e: TrajectoryEvent): string {
 Run in CI. These catch the class of bug where a new module emits an event that breaks
 every downstream query.
 
-```typescript
-import { TrajectoryEventSchema } from "./schema";
-
-export function validateEmitter(name: string, evts: unknown[]): void {
-  for (const e of evts) {
-    const r = TrajectoryEventSchema.safeParse(e);
-    if (!r.success) throw new Error(`${name} emitted invalid event: ${r.error.message}`);
-  }
-  const seqs = evts.map((e: any) => e.seq).sort((a: number, b: number) => a - b);
-  seqs.forEach((s, i) => { if (s !== i) throw new Error(`${name} produced a seq gap at ${i}`); });
-}
-```
+> 📄 **Example code:** [`examples/19-9-1-contract-tests.ts`](examples/19-9-1-contract-tests.ts)
 
 Also assert: every `tool_call` has a matching `tool_result`; every `tool_result.parentTaskId`
 exists in the plan; no event's payload contains a secret pattern.
 
 ### 9.2 Replay Test Suite
 
-```typescript
-/** Deterministic steps must be byte-identical. LLM steps are compared by
- *  fingerprint + score tolerance. Anything else is a bug in the harness. */
-export async function replayTest(cases: ReplayCase[]): Promise<{ name: string; drift: ReplayDiff[] }[]> {
-  const out: { name: string; drift: ReplayDiff[] }[] = [];
-  for (const c of cases) {
-    const recorded = await loadSession(c.path);
-    const fresh = await c.run();
-    out.push({ name: c.name, drift: diffRun(recorded, fresh) });
-  }
-  return out;
-}
-```
+> 📄 **Example code:** [`examples/20-9-2-replay-test-suite.ts`](examples/20-9-2-replay-test-suite.ts)
 
 **Schedule:** replay the top-20 production trajectories nightly against a pinned model.
 Drift on a deterministic step is a hard failure. Drift on an LLM step beyond ±0.1 score
@@ -891,16 +549,7 @@ Why this matters: if you emit `gen_ai.*` attributes, your traces light up in wha
 observability backend the company already pays for, and your cost/latency dashboards come
 for free. The cost of not adopting the conventions is re-implementing dashboards forever.
 
-```typescript
-span.setAttributes({
-  "gen_ai.system": "anthropic",
-  "gen_ai.request.model": "claude-sonnet-4-5",
-  "gen_ai.usage.input_tokens": 12_480,
-  "gen_ai.usage.output_tokens": 1_120,
-  "gen_ai.agent.id": "agent:coder",
-  "gen_ai.trajectory.session_id": "ses_44a",
-});
-```
+> 📄 **Example code:** [`examples/21-10-3-opentelemetry-genai-conventions.ts`](examples/21-10-3-opentelemetry-genai-conventions.ts)
 
 ### 10.4 OpenHands — Event Stream Runtime
 
@@ -925,69 +574,7 @@ describe it. Two practices worth copying:
 
 ## 11. TypeScript Interfaces for Observability
 
-```typescript
-// ── Event ─────────────────────────────────────────────────────────────────
-export type EventKind =
-  | "session_start" | "session_end" | "context_assembly" | "prompt"
-  | "plan" | "plan_revision" | "tool_call" | "tool_result" | "sandbox"
-  | "memory_read" | "memory_write" | "delegate" | "message"
-  | "approval_request" | "approval_verdict" | "compaction" | "checkpoint"
-  | "eval" | "error";
-
-export interface TrajectoryEvent {
-  id: string; seq: number; sessionId: string; parentTaskId?: string; runId?: string;
-  ts: number; kind: EventKind; actor: string; payload: unknown;
-  tokens?: { in: number; out: number; cached?: number };
-  latencyMs?: number; model?: string; costUsd?: number;
-  error?: { code: string; retryable: boolean };
-  fingerprint?: string; redactions?: number; tenantId: string;
-}
-
-export type NewEvent = Omit<TrajectoryEvent, "id" | "seq" | "redactions">;
-
-// ── Store ──────────────────────────────────────────────────────────────────
-export interface TrajectoryStore {
-  append(e: NewEvent): Promise<void>;
-  flush(): Promise<void>;
-  load(sessionId: string): Promise<TrajectoryEvent[]>;
-  tail(sessionId: string, fromSeq: number): AsyncIterable<TrajectoryEvent>;
-}
-
-// ── Derived views ──────────────────────────────────────────────────────────
-export interface RunProgress {
-  sessionId: string; currentTask?: string; stepsDone: number;
-  tokens: number; costUsd: number; lastError?: string;
-  status: "running" | "waiting" | "done" | "failed";
-}
-
-// ── Fork / replay ──────────────────────────────────────────────────────────
-export interface Session {
-  sessionId: string;
-  forkedFrom?: { sessionId: string; atSeq: number; by: string };
-  events: TrajectoryEvent[];
-}
-export type ReplayDrift = "none" | "output" | "error" | "latency";
-export interface ReplayDiff { step: number; kind: EventKind | string; drift: ReplayDrift }
-
-// ── Redaction ──────────────────────────────────────────────────────────────
-export interface RedactionResult<T> { payload: T; redactions: number }
-export interface Redactor { redact(s: string): RedactionResult<string> }
-
-// ── Retention ──────────────────────────────────────────────────────────────
-export type RetentionTier = "hot" | "warm" | "cold" | "purged";
-export interface RetentionPolicy {
-  hotDays: number; warmDays: number; coldDays: number;
-  inlineMaxBytes: number;             // > this → { ref } in warm tier
-  tenantTtlDays?: number;             // GDPR
-}
-
-// ── Test surface ───────────────────────────────────────────────────────────
-export interface ReplayCase {
-  name: string; path: string;
-  run(): Promise<TrajectoryEvent[]>;
-  expectDeterministic: EventKind[];
-}
-```
+> 📄 **Example code:** [`examples/22-11-typescript-interfaces-for-observability.ts`](examples/22-11-typescript-interfaces-for-observability.ts)
 
 ---
 
@@ -1155,56 +742,14 @@ detectible pattern. The flight recorder is how you find the flight that was hija
 
 ### 1. TrajectoryEvent + JSONL Append-Only (Python)
 
-```python
-from dataclasses import dataclass, field, asdict
-from collections import defaultdict
-from pathlib import Path
-import json, time
-
-@dataclass
-class TrajectoryEvent:
-    session_id: str
-    kind: str                      # prompt | tool_call | tool_result | eval | ...
-    payload: dict                  # đã redact; ≤64KB — quá lớn thì thay bằng {"ref": ...}
-    id: str = ""                   # ULID — sắp xếp được theo lexicographic (§1.1)
-    tokens_in: int = 0
-    tokens_out: int = 0
-    latency_ms: int = 0
-    ts: int = field(default_factory=lambda: int(time.time() * 1000))
-
-class TrajectoryStore:
-    """JSONL append-only, một file / session. Dòng đã ghi không bao giờ sửa."""
-    def __init__(self, root: str):
-        self.root = Path(root); self.root.mkdir(parents=True, exist_ok=True)
-
-    def append(self, e: TrajectoryEvent) -> None:
-        if not e.id:
-            e.id = f"evt_{time.time_ns():024d}"          # thay bằng ULID ở production
-        with (self.root / f"{e.session_id}.jsonl").open("a", encoding="utf-8") as f:
-            f.write(json.dumps(asdict(e), ensure_ascii=False) + "\n")
-
-    def tail(self, session_id: str, n: int = 20) -> list[TrajectoryEvent]:
-        p = self.root / f"{session_id}.jsonl"
-        lines = p.read_text(encoding="utf-8").splitlines() if p.exists() else []
-        return [TrajectoryEvent(**json.loads(l)) for l in lines[-n:]]
-```
+> 📄 **Example code:** [`examples/23-1-trajectoryevent-jsonl-append-only-python.py`](examples/23-1-trajectoryevent-jsonl-append-only-python.py)
 
 The two invariants stay the same as the TypeScript version: **append-only** (a ledger that never deletes) and
 **every event carries a `session_id`** (no orphan events — §4.3).
 
 ### 2. Cost-per-Run: Detecting Abnormally Expensive Runs
 
-```python
-def cost_per_run(events: list[TrajectoryEvent]) -> dict[str, dict]:
-    """Tổng tokens / latency per run, group theo task type.
-    Run vượt p95 của task type × 3 → flag điều tra, đừng đoán."""
-    agg: dict[str, dict] = defaultdict(lambda: {"tokens": 0, "latency_ms": 0, "steps": 0})
-    for e in events:
-        a = agg[e.payload.get("task_type", "unknown")]
-        a["tokens"] += e.tokens_in + e.tokens_out
-        a["latency_ms"] += e.latency_ms; a["steps"] += 1
-    return dict(agg)
-```
+> 📄 **Example code:** [`examples/24-2-cost-per-run-detecting-abnormally-expensive-runs.py`](examples/24-2-cost-per-run-detecting-abnormally-expensive-runs.py)
 
 Why this metric is worth building first: Anthropic's analysis (06/2025) showed
 **token usage explains ~80% of performance variance** between agent runs — slow runs

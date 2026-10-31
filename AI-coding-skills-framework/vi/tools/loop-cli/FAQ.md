@@ -22,11 +22,7 @@ Vì lệnh đầu tiên là `loop init` — nó tạo sẵn toàn bộ khung. C�
 4. Muốn khung nhiều phiên bản hơn thì thêm cờ `--with-foundry`.
 5. Nếu đã dùng bản tách riêng cũ (`loop-init`) thì không cần đổi, chúng cho kết quả tương đương.
 
-```bash
-npx @cobusgreyling/loop init . --pattern daily-triage --tool grok
-npx @cobusgreyling/loop doctor .
-npx @cobusgreyling/loop status .
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-lan-au-cai-thi-dung-lenh-nao.sh`](examples/01-q1-lan-au-cai-thi-dung-lenh-nao.sh)
 
 **Kiểm tra**
 
@@ -53,9 +49,7 @@ Vì điểm này đo xem vòng lặp của bạn đã đủ nguyên tắc chưa,
 3. Với cổng chặn ở mức thấp, đừng ép lên L3 bằng cách sửa điểm — hãy bổ sung thiếu thật.
 4. Chạy lại sau mỗi lần bổ sung, theo dõi điểm tăng dần.
 
-```bash
-npx @cobusgreyling/loop audit . --suggest
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-iem-loop-readiness-dung-e-lam-gi.sh`](examples/02-q2-iem-loop-readiness-dung-e-lam-gi.sh)
 
 **Kiểm tra**
 
@@ -82,10 +76,7 @@ Khác biệt này là toàn bộ ý nghĩa của cổng chặn. Vòng lặp khô
 3. Đọc mã thoát: **2 = cần leo thang**, **0 = được tiếp tục**.
 4. Vì dùng chung quy ước mã thoát với lệnh kiểm tra ngữ cảnh, nên hai lệnh này nối tiếp được với nhau trong một chuỗi.
 
-```bash
-npx @cobusgreyling/loop gate check --action auto-merge --paths src/,tests/
-# exit 2 = escalate, exit 0 = proceed
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-agent-khong-oc-file-an-toan-thi.sh`](examples/03-q3-agent-khong-oc-file-an-toan-thi.sh)
 
 **Kiểm tra**
 
@@ -113,11 +104,7 @@ Với phần nhiều agent, công cụ còn yêu cầu các lần chạy phải 
 4. Trước bước gộp, chạy cổng chặn với danh sách đường dẫn cụ thể.
 5. Dọn worktree khi lần thử bị từ chối hoặc phải leo thang, không để tích tụ.
 
-```bash
-npx @cobusgreyling/loop-worktree create --run-id fix-123 --pattern post-merge-cleanup
-npx @cobusgreyling/loop-worktree lock --scope refs/heads/main
-npx @cobusgreyling/loop-sandbox run -- <cmd>
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-chay-nhieu-vong-lap-song-song-thi.sh`](examples/04-q4-chay-nhieu-vong-lap-song-song-thi.sh)
 
 **Kiểm tra**
 
@@ -144,10 +131,7 @@ Cách so sánh: tạo khung thủ công mất khoảng 30 phút mỗi dự án; 
 3. Nếu vòng lặp chạy dài, dùng `loop context` kèm chế độ kiểm tra và tệp nhật ký chạy để ngữ cảnh không phình vô hạn qua nhiều vòng.
 4. Đặt ngân sách token vào `LOOP.md` — đây cũng là điều kiện để điểm sẵn sàng lên tới mức L3.
 
-```bash
-npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
-npx @cobusgreyling/loop context --check --ledger run.json
-```
+> 📄 **Code ví dụ:** [`examples/05-q5-biet-truoc-vong-lap-nay-ton-bao.sh`](examples/05-q5-biet-truoc-vong-lap-nay-ton-bao.sh)
 
 **Kiểm tra**
 

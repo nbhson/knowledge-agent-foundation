@@ -185,46 +185,7 @@ H^{(l+1)} = σ( D^{-1/2} Â D^{-1/2} H^{(l)} W^{(l)} )
 <details>
 <summary>Python Code — GCN Layer Từ Scratch (Click để xem)</summary>
 
-```python
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-class GCNLayer(nn.Module):
-    def __init__(self, in_dim: int, out_dim: int):
-        super().__init__()
-        self.linear = nn.Linear(in_dim, out_dim)
-    
-    def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
-        """
-        x: (N, in_dim) — node features
-        adj: (N, N) — adjacency matrix (đã chuẩn hóa)
-        """
-        # Aggregate: adj @ x → mỗi node lấy trung bình neighbors
-        agg = adj @ x  # (N, in_dim)
-        # Transform + activation
-        out = self.linear(agg)  # (N, out_dim)
-        return F.relu(out)
-
-def normalize_adjacency(adj: torch.Tensor) -> torch.Tensor:
-    """Chuẩn hóa: D^{-1/2} (A + I) D^{-1/2}"""
-    n = adj.shape[0]
-    adj_hat = adj + torch.eye(n)  # thêm self-loop
-    degree = adj_hat.sum(dim=1)
-    d_inv_sqrt = torch.diag(torch.pow(degree, -0.5))
-    d_inv_sqrt[torch.isinf(d_inv_sqrt)] = 0
-    return d_inv_sqrt @ adj_hat @ d_inv_sqrt
-
-# Usage
-N, in_dim, out_dim = 4, 8, 16
-x = torch.randn(N, in_dim)
-adj = torch.tensor([[0,1,1,0],[1,0,1,0],[1,1,0,1],[0,0,1,0]], dtype=torch.float32)
-adj_norm = normalize_adjacency(adj)
-
-gcn = GCNLayer(in_dim, out_dim)
-h = gcn(x, adj_norm)
-print(f"GCN output: {h.shape}")  # (4, 16)
-```
+> 📄 **Code ví dụ:** [`examples/01-2-1-cong-thuc-gcn-kipf-welling-2017.py`](examples/01-2-1-cong-thuc-gcn-kipf-welling-2017.py)
 
 </details>
 
@@ -233,43 +194,7 @@ print(f"GCN output: {h.shape}")  # (4, 16)
 <details>
 <summary>Python Code — GCN 2-Layer (Click để xem)</summary>
 
-```python
-class GCN(nn.Module):
-    def __init__(self, in_dim: int, hidden_dim: int, out_dim: int, dropout: float = 0.5):
-        super().__init__()
-        self.gc1 = GCNLayer(in_dim, hidden_dim)
-        self.gc2 = GCNLayer(hidden_dim, out_dim)
-        self.dropout = dropout
-    
-    def forward(self, x, adj):
-        x = self.gc1(x, adj)
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.gc2(x, adj)
-        return F.log_softmax(x, dim=1)  # (N, num_classes)
-
-# Training
-model = GCN(in_dim=8, hidden_dim=16, out_dim=3)  # 3 classes
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-
-# Labels: chỉ 1 vài nodes có label (semi-supervised)
-labels = torch.tensor([0, 1, -1, -1])  # -1 = unlabeled
-train_mask = labels != -1
-
-for epoch in range(200):
-    model.train()
-    out = model(x, adj_norm)
-    loss = F.nll_loss(out[train_mask], labels[train_mask])
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    if epoch % 50 == 0:
-        print(f"Epoch {epoch}: loss={loss.item():.4f}")
-
-# Predict unlabeled
-model.eval()
-pred = model(x, adj_norm).argmax(dim=1)
-print(f"Predictions: {pred}")
-```
+> 📄 **Code ví dụ:** [`examples/02-2-2-gcn-2-layer-cho-node-classification.py`](examples/02-2-2-gcn-2-layer-cho-node-classification.py)
 
 </details>
 
@@ -333,58 +258,7 @@ Multi-head (nhiều "góc nhìn"):
 <details>
 <summary>Python Code — GAT Với PyG (Click để xem)</summary>
 
-```python
-# pip install torch torch-geometric
-
-import torch
-from torch_geometric.nn import GATConv, SAGEConv
-from torch_geometric.data import Data
-
-# Chuẩn bị data
-edge_index = torch.tensor([[0,1,1,2,2,3,0,2],
-                           [1,0,2,1,3,2,2,0]], dtype=torch.long)
-x = torch.randn(4, 8)  # 4 nodes, 8 features
-y = torch.tensor([0, 1, 0, 1])  # labels
-
-data = Data(x=x, edge_index=edge_index, y=y)
-
-# GraphSAGE model
-class GraphSAGEModel(torch.nn.Module):
-    def __init__(self, in_c, hid_c, out_c):
-        super().__init__()
-        self.conv1 = SAGEConv(in_c, hid_c)
-        self.conv2 = SAGEConv(hid_c, out_c)
-    def forward(self, x, edge_index):
-        x = self.conv1(x, edge_index).relu()
-        x = self.conv2(x, edge_index)
-        return x
-
-# GAT model
-class GATModel(torch.nn.Module):
-    def __init__(self, in_c, hid_c, out_c, heads=4):
-        super().__init__()
-        self.conv1 = GATConv(in_c, hid_c, heads=heads, dropout=0.6)
-        # GATConv với heads: output = hid_c * heads
-        self.conv2 = GATConv(hid_c * heads, out_c, heads=1, concat=False, dropout=0.6)
-    def forward(self, x, edge_index):
-        x = self.conv1(x, edge_index).relu()
-        x = F.dropout(x, p=0.6, training=self.training)
-        x = self.conv2(x, edge_index)
-        return x
-
-# Train
-for name, ModelClass in [("GraphSAGE", GraphSAGEModel), ("GAT", GATModel)]:
-    model = ModelClass(8, 16, 2)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    for epoch in range(100):
-        model.train()
-        out = model(data.x, data.edge_index)
-        loss = F.cross_entropy(out, data.y)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-    print(f"{name} final loss: {loss.item():.4f}")
-```
+> 📄 **Code ví dụ:** [`examples/03-3-2-gat-attention.py`](examples/03-3-2-gat-attention.py)
 
 </details>
 
@@ -411,83 +285,13 @@ for name, ModelClass in [("GraphSAGE", GraphSAGEModel), ("GAT", GATModel)]:
 <details>
 <summary>Python Code — Link Prediction (Click để xem)</summary>
 
-```python
-import torch
-import torch.nn.functional as F
-from torch_geometric.nn import GCNConv
-from torch_geometric.utils import negative_sampling
-
-class LinkPredictor(torch.nn.Module):
-    def __init__(self, in_dim, hidden_dim, out_dim):
-        super().__init__()
-        self.conv1 = GCNConv(in_dim, hidden_dim)
-        self.conv2 = GCNConv(hidden_dim, out_dim)
-    
-    def encode(self, x, edge_index):
-        x = self.conv1(x, edge_index).relu()
-        x = self.conv2(x, edge_index)
-        return x  # (N, out_dim) embeddings
-    
-    def decode(self, z, edge_label_index):
-        """Score edges bằng dot product."""
-        src = z[edge_label_index[0]]  # (E, out_dim)
-        dst = z[edge_label_index[1]]
-        return (src * dst).sum(dim=-1)  # (E,) scores
-    
-    def forward(self, x, edge_index, edge_label_index):
-        z = self.encode(x, edge_index)
-        return self.decode(z, edge_label_index)
-
-# Data
-edge_index = torch.tensor([[0,1,1,2,2,3],[1,0,2,1,3,2]], dtype=torch.long)
-x = torch.randn(4, 8)
-# Positive edges (tồn tại) + negative sampling
-pos_edges = edge_index
-neg_edges = negative_sampling(edge_index, num_nodes=4, num_neg_samples=4)
-
-model = LinkPredictor(8, 16, 8)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-
-for epoch in range(200):
-    model.train()
-    # Positive scores
-    pos_score = model(x, edge_index, pos_edges)
-    neg_score = model(x, edge_index, neg_edges)
-    
-    # BCE loss: pos → 1, neg → 0
-    pos_loss = F.binary_cross_entropy_with_logits(pos_score, torch.ones_like(pos_score))
-    neg_loss = F.binary_cross_entropy_with_logits(neg_score, torch.zeros_like(neg_score))
-    loss = pos_loss + neg_loss
-    
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    if epoch % 50 == 0:
-        print(f"Epoch {epoch}: loss={loss.item():.4f}")
-
-# Predict: Alice(0) sẽ connect với ai?
-model.eval()
-z = model.encode(x, edge_index)
-for target in range(4):
-    if target == 0:
-        continue
-    score = model.decode(z, torch.tensor([[0],[target]]))
-    prob = torch.sigmoid(score).item()
-    print(f"  Alice -> node_{target}: prob={prob:.3f}")
-```
+> 📄 **Code ví dụ:** [`examples/04-4-1-link-prediction-alice-se-works-on.py`](examples/04-4-1-link-prediction-alice-se-works-on.py)
 
 </details>
 
 ### 4.2 Node Classification — "Người này thuộc team nào?"
 
-```python
-# Đã cover ở §2.2 — GCN 2-layer với cross-entropy loss
-# Thêm: class imbalance handling
-
-# Nếu team A có 100 người, team B có 10 người → weighted loss
-class_weights = torch.tensor([1.0, 10.0])  # weight cho minority class
-loss = F.cross_entropy(out[train_mask], labels[train_mask], weight=class_weights)
-```
+> 📄 **Code ví dụ:** [`examples/05-4-2-node-classification-nguoi-nay-thuoc-team.py`](examples/05-4-2-node-classification-nguoi-nay-thuoc-team.py)
 
 ---
 
@@ -506,29 +310,7 @@ h_v^{(l+1)} = σ( Σ_{r∈R} Σ_{u∈N_r(v)} (1/c_{v,r}) W_r^{(l)} h_u^{(l)} + W
   W_0 = self-loop weights
 ```
 
-```python
-from torch_geometric.nn import RGCNConv
-
-class RGCN(torch.nn.Module):
-    def __init__(self, in_dim, hidden_dim, out_dim, num_relations):
-        super().__init__()
-        self.conv1 = RGCNConv(in_dim, hidden_dim, num_relations)
-        self.conv2 = RGCNConv(hidden_dim, out_dim, num_relations)
-    
-    def forward(self, x, edge_index, edge_type):
-        x = self.conv1(x, edge_index, edge_type).relu()
-        x = self.conv2(x, edge_index, edge_type)
-        return x
-
-# edge_type: (E,) — loại relation cho mỗi edge
-edge_index = torch.tensor([[0,1,2,0],[1,2,3,2]], dtype=torch.long)
-edge_type = torch.tensor([0, 1, 0, 1])  # 0=MANAGES, 1=WORKS_ON
-x = torch.randn(4, 8)
-
-model = RGCN(8, 16, 8, num_relations=2)
-out = model(x, edge_index, edge_type)
-print(f"R-GCN output: {out.shape}")  # (4, 8)
-```
+> 📄 **Code ví dụ:** [`examples/06-5-1-r-gcn-relational-gcn.py`](examples/06-5-1-r-gcn-relational-gcn.py)
 
 ### 5.2 Scoring Functions Cho KG Completion
 
@@ -592,16 +374,7 @@ Sau khi có embeddings từ R-GCN, dùng scoring function để predict missing 
 >
 > **Temporal GNN (TGN)** = extension dành cho **graph biến đổi theo thời gian** (log sự kiện, giao dịch). Thay vì 1 snapshot tĩnh, TGN xử lý **stream sự kiện** theo từng timestamp — mỗi sự kiện "gõ cửa" node, node cập nhật memory. Kết hợp với temporal embeddings (Module 04) thành dòng hoàn chỉnh dự đoán theo thời gian.
 
-```python
-# Pseudocode — HGT: attention theo từng cặp (node_type, edge_type)
-def hgt_message(head, rel, tail):
-    # Project đã có node type khác Person → dùng ma trận riêng
-    W_head = weight_matrix[head.node_type]
-    W_edge = weight_matrix[rel.edge_type]
-    W_tail = weight_matrix[tail.node_type]
-    attn = attention(W_head @ head.h, W_edge @ rel.h, W_tail @ tail.h)
-    return attn * (W_head @ head.h)
-```
+> 📄 **Code ví dụ:** [`examples/07-7-heterogeneous-temporal-gnn.py`](examples/07-7-heterogeneous-temporal-gnn.py)
 
 ---
 
@@ -610,64 +383,7 @@ def hgt_message(head, rel, tail):
 <details>
 <summary>Python Code — Complete Training Pipeline (Click để xem)</summary>
 
-```python
-import torch
-import torch.nn.functional as F
-from torch_geometric.nn import GCNConv
-from torch_geometric.data import Data
-from torch_geometric.utils import train_test_split_edges
-
-# 1. Chuẩn bị data
-edge_index = torch.tensor([
-    [0,1,1,2,2,3,3,0,0,2],
-    [1,0,2,1,3,2,0,3,2,0]
-], dtype=torch.long)
-x = torch.randn(4, 16)
-y = torch.tensor([0, 0, 1, 1])  # 2 classes
-
-data = Data(x=x, edge_index=edge_index, y=y, num_nodes=4)
-# Split edges cho link prediction
-# data = train_test_split_edges(data)  # cho large graphs
-
-# 2. Model
-class GNN(torch.nn.Module):
-    def __init__(self, in_c, hid_c, out_c):
-        super().__init__()
-        self.conv1 = GCNConv(in_c, hid_c)
-        self.conv2 = GCNConv(hid_c, out_c)
-        self.classifier = torch.nn.Linear(out_c, 2)
-    
-    def forward(self, x, edge_index, task="classify"):
-        x = self.conv1(x, edge_index).relu()
-        x = F.dropout(x, p=0.5, training=self.training)
-        x = self.conv2(x, edge_index)
-        if task == "classify":
-            return self.classifier(x)
-        return x  # embeddings cho link prediction
-
-model = GNN(16, 32, 16)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-
-# 3. Training loop
-for epoch in range(200):
-    model.train()
-    out = model(data.x, data.edge_index, task="classify")
-    loss = F.cross_entropy(out, data.y)
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    if epoch % 50 == 0:
-        pred = out.argmax(dim=1)
-        acc = (pred == data.y).float().mean().item()
-        print(f"Epoch {epoch}: loss={loss.item():.4f}, acc={acc:.2f}")
-
-# 4. Evaluation
-model.eval()
-with torch.no_grad():
-    out = model(data.x, data.edge_index, task="classify")
-    pred = out.argmax(dim=1)
-    print(f"Final predictions: {pred.tolist()}, true: {y.tolist()}")
-```
+> 📄 **Code ví dụ:** [`examples/08-8-trien-khai-voi-pyg.py`](examples/08-8-trien-khai-voi-pyg.py)
 
 </details>
 

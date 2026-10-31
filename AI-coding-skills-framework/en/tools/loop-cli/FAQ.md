@@ -21,11 +21,7 @@ You open project number two and you are hand-creating the same files again: `STA
 3. Set `--tool` to the coding agent you actually use: `claude`, `codex` or `opencode`. Leave it at `grok` only if that is your agent.
 4. Add `--with-foundry` if you want an additional, versioned harness scaffolded next to the default one.
 
-```bash
-npx @cobusgreyling/loop init . --pattern daily-triage --tool grok
-npx @cobusgreyling/loop doctor .
-npx @cobusgreyling/loop status .
-```
+> 📄 **Example code:** [`examples/01-q1-i-copy-the-same-state-md-and.sh`](examples/01-q1-i-copy-the-same-state-md-and.sh)
 
 **Verify**
 
@@ -55,12 +51,7 @@ The score is **Loop Readiness**, graded L0 to L3, and it moves from roughly 10 t
 3. Add the budget section inside `LOOP.md` itself. A separate budget file is not enough; the loop reads the section.
 4. Re-run with `--suggest` so the audit names the missing item instead of leaving you to guess.
 
-```bash
-npx @cobusgreyling/loop audit . --suggest
-# expect: loop-budget.md exists
-# expect: loop-run-log.md exists
-# expect: budget section inside LOOP.md
-```
+> 📄 **Example code:** [`examples/02-q2-my-audit-score-sits-near-10-out.sh`](examples/02-q2-my-audit-score-sits-near-10-out.sh)
 
 **Verify**
 
@@ -86,10 +77,7 @@ Token spend is only knowable in advance if you model it from three inputs: the p
 4. Re-run the estimate whenever you change the pattern, the cadence or the level. A stale estimate is worse than none, because it looks like a measurement.
 5. Do the arithmetic yourself — this is the part the tool will not do for you.
 
-```bash
-npx @cobusgreyling/loop cost \
-  --pattern ci-sweeper --cadence 15m --level L2
-```
+> 📄 **Example code:** [`examples/03-q3-i-put-a-loop-on-a-15.sh`](examples/03-q3-i-put-a-loop-on-a-15.sh)
 
 **Verify**
 
@@ -114,10 +102,7 @@ Two separate failures, both invisible while you watch a single run. The first is
 3. Chain both on the same exit-code convention as the gate (see Q5), so drift stops the loop instead of only printing a warning nobody reads.
 4. Treat a disagreement as a bug in your process, not in the files. One of the two is out of date, and the loop cannot tell which.
 
-```bash
-npx @cobusgreyling/loop sync .
-npx @cobusgreyling/loop context --check --ledger run.json
-```
+> 📄 **Example code:** [`examples/04-q4-weeks-in-the-agent-acts-on-information.sh`](examples/04-q4-weeks-in-the-agent-acts-on-information.sh)
 
 **Verify**
 
@@ -143,10 +128,7 @@ Both are enforcement problems, not intelligence problems. A rule written in pros
 4. For several agents at once, use `loop-swarm`: it only accepts edits when the patch is **byte-identical** across runs.
 5. Wrap risky commands in `loop-sandbox run -- <cmd>`; it captures changes into reviewable patch files before they are applied.
 
-```bash
-npx @cobusgreyling/loop gate check --action auto-merge --paths src/,tests/
-npx @cobusgreyling/loop-worktree lock --scope refs/heads/main
-```
+> 📄 **Example code:** [`examples/05-q5-the-agent-promises-it-will-not-touch.sh`](examples/05-q5-the-agent-promises-it-will-not-touch.sh)
 
 **Verify**
 

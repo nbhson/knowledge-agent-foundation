@@ -23,12 +23,7 @@ Vì cả 4 pattern đều đúng cả, nhưng mức rủi ro khác nhau. Git Spe
 3. Chỉ bật thêm Test Only Failures khi CI đang đỏ hoặc bạn đang debug regression; File Smart Read khi bạn lạc trong repo lớn.
 4. Sau mỗi bật, chạy `rtk gain` để xem token đã tiết kiệm thật là bao nhiêu.
 
-```bash
-rtk init -g                 # bật hook cho tool của bạn
-git status                  # output thô, để đối chiếu
-rtk git status              # output đã nén
-rtk gain                    # xem đã tiết kiệm được bao nhiêu
-```
+> 📄 **Code ví dụ:** [`examples/01-q13-toi-moi-cai-rtk-lan-au-nen.sh`](examples/01-q13-toi-moi-cai-rtk-lan-au-nen.sh)
 
 **Kiểm tra**
 
@@ -53,9 +48,7 @@ Vì "ngốn context" có nhiều kiểu khác nhau, và mỗi kiểu cần một
 3. Nếu bạn loạn vì cái nào cũng "High" token cost, hãy bắt đầu từ Test Only Failures: nó giảm mạnh nhất (~90%) vì pass tests bị gom thành một con số.
 4. Ghép pattern thì không phải lo xung đột: `rtk read` cho file, `rtk git` cho git, hai cái chạy song song không tranh nhau.
 
-```bash
-rtk init -g        # áp dụng tất cả pattern, không cần gọi tay
-```
+> 📄 **Code ví dụ:** [`examples/02-q14-agent-cu-goi-git-status-roi-cargo.sh`](examples/02-q14-agent-cu-goi-git-status-roi-cargo.sh)
 
 **Kiểm tra**
 
@@ -80,11 +73,7 @@ Vì mỗi pattern phục vụ một loại đau khác nhau, và README có sẵn
 3. Repo lớn, ít quen thuộc → File Smart Read, và **tránh** `cat` toàn bộ file; dùng `rtk find` + `rtk grep` để lần theo.
 4. Build chạy thường xuyên → Build & Lint Compact, thay vì giữ nguyên output chi tiết.
 
-```bash
-rtk read src/harness/loop.rs       # xem cấu trúc, không phải toàn bộ nội dung
-rtk grep "handleToolCall" .        # tìm chỗ cần sửa
-rtk cargo test                     # chỉ còn failure
-```
+> 📄 **Code ví dụ:** [`examples/03-q15-toi-co-it-token-ci-ang-o.sh`](examples/03-q15-toi-co-it-token-ci-ang-o.sh)
 
 **Kiểm tra**
 
@@ -111,12 +100,7 @@ Vì những dòng đó là tiến trình của git kể cho bạn nghe, không p
 3. Với `git pull`, đọc kỹ phần `3 files +10 -2`: đây là thông tin duy nhất bạn cần để quyết định có xem diff hay không.
 4. Nếu một script của bạn phụ thuộc định dạng gốc, đừng đoán — thêm lệnh vào `exclude_commands` trong `config.toml`.
 
-```bash
-rtk git add .
-rtk git commit -m "fix: đổi timeout mặc định"
-rtk git push
-# ok main
-```
+> 📄 **Code ví dụ:** [`examples/04-q13-git-push-cua-toc-in-ra-15.sh`](examples/04-q13-git-push-cua-toc-in-ra-15.sh)
 
 **Kiểm tra**
 
@@ -141,11 +125,7 @@ Vì `rtk git diff` cố tình bỏ phần không cần thiết để agent nhìn
 3. Với pipeline `| grep`, hãy kiểm tra lại trước khi tin kết quả: định dạng nén có thể làm từ khoá nằm ngoài đoạn đã giữ.
 4. Nhớ nguyên tắc vàng của RTK: việc rewrite là trong suốt, nên loại lệnh riêng luôn an toàn hơn tắt tổng.
 
-```toml
-# ~/.config/rtk/config.toml
-[hooks]
-exclude_commands = ["git diff", "git diff --stat"]
-```
+> 📄 **Code ví dụ:** [`examples/05-q14-agent-can-xem-diff-chi-tiet-e.toml`](examples/05-q14-agent-can-xem-diff-chi-tiet-e.toml)
 
 **Kiểm tra**
 
@@ -200,13 +180,7 @@ Vì định dạng thô của trình kiểm tra kiểu (type-checker) tốn nhi�
 3. Với các linter khác: `rtk lint` cho `eslint` (gom theo rule/file), `rtk ruff check` và `rtk golangci-lint run` (ra JSON, ~80–85%).
 4. Nếu bạn cần nguyên văn thông điệp gốc của compiler để tra cứu, gọi `tsc` trực tiếp.
 
-```bash
-rtk tsc
-# src/harness/context.ts
-#   L42  TS2322  Type mismatch
-# src/harness/loop.ts
-#   L18  TS2554  Expected 2 args
-```
+> 📄 **Code ví dụ:** [`examples/06-q13-tsc-in-ra-hang-tram-dong-error.sh`](examples/06-q13-tsc-in-ra-hang-tram-dong-error.sh)
 
 **Kiểm tra**
 
@@ -231,11 +205,7 @@ Vì RTK parse output rồi mới nén. Nó phải nói đúng ngôn ngữ với 
 3. Cài `rg` (ripgrep): một số bộ lọc của RTK gọi tới nó. Thiếu `rg` thì gặp lỗi `Binary 'rg' not found on PATH`.
 4. Với `next build`: lệnh này có nhiều giai đoạn, RTK giữ lại log ở các bước quan trọng khi build fail — đừng ngạc nhiên vì output không đều.
 
-```bash
-brew install ripgrep          # macOS
-winget install BurntSushi.ripgrep.MSVC   # Windows
-ruff check --format json .    # đảm bảo linter xuất JSON
-```
+> 📄 **Code ví dụ:** [`examples/07-q14-ruff-rubocop-golangci-lint-can-json-moi.sh`](examples/07-q14-ruff-rubocop-golangci-lint-can-json-moi.sh)
 
 **Kiểm tra**
 
@@ -266,14 +236,7 @@ Vì lượng "nhiễu" trong output build khác nhau. Lint thường có hàng t
 3. Ưu tiên `rtk tsc` và `rtk golangci-lint run` vì giảm mạnh nhất.
 4. Đừng kỳ vọng mức ~90% ở đây; nếu bạn cần nén mạnh hơn hãy ghép với Test Only Failures cho phần test.
 
-```bash
-rtk cargo build
-rtk cargo clippy
-rtk tsc
-rtk lint
-rtk prettier --check .   # chỉ còn file cần format, ~75%
-rtk sbt compile         # chỉ còn lỗi biên dịch, ~75%
-```
+> 📄 **Code ví dụ:** [`examples/08-q15-muc-giam-cua-build-va-lint-khac.sh`](examples/08-q15-muc-giam-cua-build-va-lint-khac.sh)
 
 **Kiểm tra**
 
@@ -331,10 +294,7 @@ Vì đây là đánh đổi có chủ đích: bỏ thân hàm để tiết kiệ
 3. Nếu muốn chắc chắn hơn nữa, thêm các lệnh `cat`/`sed` vào `exclude_commands` — tuy nhiên cách này bỏ lỡ phần tiết kiệm lớn nhất của pattern.
 4. Nhớ nguyên tắc: pattern này hiện thực hoá kỹ thuật trích xuất chữ ký hàm — tức là công cụ *tìm hiểu*, không phải công cụ *sửa*.
 
-```bash
-rtk read src/harness/context.rs -l aggressive  # xem bản đồ
-cat src/harness/context.rs | sed -n '205,215p'  # xem đúng vùng cần sửa
-```
+> 📄 **Code ví dụ:** [`examples/09-q14-dung-l-aggressive-co-an-toan-khong.sh`](examples/09-q14-dung-l-aggressive-co-an-toan-khong.sh)
 
 **Kiểm tra**
 
@@ -391,12 +351,7 @@ Vì phần lớn output của một lần chạy test là những dòng báo *th
 3. Với `go test`, RTK parse NDJSON (mỗi dòng một đối tượng JSON) rồi chỉ giữ failure. Với `pytest`, traceback được cắt bớt.
 4. Với `rspec` mức giảm chỉ ~60% vì phần pass vẫn còn, nên cần `rspec` bật formatter JSON trước.
 
-```bash
-rtk cargo test
-# FAILED: 2/15 tests
-#   test_edge_case: assertion failed
-#   test_overflow: panic at utils.rs:18
-```
+> 📄 **Code ví dụ:** [`examples/10-q13-test-fail-agent-lac-trong-200-dong.sh`](examples/10-q13-test-fail-agent-lac-trong-200-dong.sh)
 
 **Kiểm tra**
 
@@ -428,9 +383,7 @@ Vì nén và lưu giữ là hai việc khác nhau: bản nén dùng để agent 
 3. Đây cũng là cách giải quyết tình huống output quan trọng bị nén quá: xem log gốc của lần chạy đó, rồi thêm lệnh vào `exclude_commands` nếu tình trạng lặp lại.
 4. Nhớ tên file log có dấu thời gian ở đầu tên (`1707753600`), nên các lần chạy khác nhau không ghi đè lẫn nhau.
 
-```bash
-cat ~/.local/share/rtk/tee/1707753600_cargo_test.log | grep -A 20 "test_overflow"
-```
+> 📄 **Code ví dụ:** [`examples/11-q14-ban-tom-tat-chi-20-dong-toi.sh`](examples/11-q14-ban-tom-tat-chi-20-dong-toi.sh)
 
 **Kiểm tra**
 
@@ -455,10 +408,7 @@ Vì pattern này chỉ giúp bạn **thấy** failure nhanh hơn, chứ không q
 3. Nếu hai lần chạy cho kết quả khác nhau, coi đó là dấu hiệu flaky — đừng sửa code cho tới khi hiểu vì sao không ổn định.
 4. Nếu nghi ngờ regression do một thay đổi của bạn, dùng `rtk test <cmd>` để lấy danh sách fail gọn, rồi đối chiếu với log thô.
 
-```bash
-rtk cargo test test_overflow     # lần 1
-rtk cargo test test_overflow     # lần 2 — kết quả khác thì là flaky
-```
+> 📄 **Code ví dụ:** [`examples/12-q15-test-fail-mot-lan-roi-toi-bao.sh`](examples/12-q15-test-fail-mot-lan-roi-toi-bao.sh)
 
 **Kiểm tra**
 

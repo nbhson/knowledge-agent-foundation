@@ -56,61 +56,17 @@ Hãy thử thế này: bạn đổi prompt system từ "bạn là assistant hữ
 
 ### PromptFoo — Config-Driven Eval
 
-```yaml
-# promptfooconfig.yaml
-prompts:
-  - "Summarize: {{input}}"
-  - "Provide a concise summary: {{input}}"
+> 📄 **Code ví dụ:** [`examples/01-promptfoo-config-driven-eval.yaml`](examples/01-promptfoo-config-driven-eval.yaml)
 
-providers:
-  - openai:gpt-4
-  - anthropic:claude-3-5-sonnet
-
-tests:
-  - vars:
-      input: "Long technical document..."
-    assert:
-      - type: contains
-        value: "key concept"
-      - type: cost
-        threshold: 0.05  # mỗi prompt ≤ $0.05
-```
-
-```bash
-promptfoo eval   # chạy toàn bộ test suite
-promptfoo view   # xem bảng so sánh providers + prompts
-```
+> 📄 **Code ví dụ:** [`examples/02-promptfoo-config-driven-eval.sh`](examples/02-promptfoo-config-driven-eval.sh)
 
 ### Deepeval — Pytest-Style Eval
 
-```python
-import pytest
-from deepeval import assert_test
-from deepeval.metrics import AnswerRelevancyMetric, FaithfulnessMetric
-from deepeval.test_case import LLMTestCase
-
-def test_harness_answer():
-    test_case = LLMTestCase(
-        input="BHYT áp dụng cho đối tượng nào?",
-        actual_output=harness.run("BHYT áp dụng cho đối tượng nào?"),
-        retrieval_context=retrieved_chunks,
-    )
-    assert_test(test_case, [AnswerRelevancyMetric(), FaithfulnessMetric()])
-```
+> 📄 **Code ví dụ:** [`examples/03-deepeval-pytest-style-eval.py`](examples/03-deepeval-pytest-style-eval.py)
 
 ### Ragas — RAG-Specific Metrics
 
-```python
-from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevancy, context_precision
-
-dataset = load_your_qa_dataset()
-results = evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_precision])
-
-# faithfulness        → câu trả lời có đúng với context không
-# answer_relevancy    → câu trả lời có liên quan câu hỏi không
-# context_precision   → chunks retrieved có đủ/đúng không
-```
+> 📄 **Code ví dụ:** [`examples/04-ragas-rag-specific-metrics.py`](examples/04-ragas-rag-specific-metrics.py)
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 
@@ -150,13 +106,7 @@ Bước 5: Tích hợp eval vào CI — chặn regression mỗi lần đổi pro
 
 ### 1. Regression Detection Trong CI
 
-```yaml
-# .github/workflows/evals.yml
-steps:
-  - run: promptfoo eval --share   # chạy eval suite
-  - run: promptfoo regression-check  # so sánh với baseline
-  # fail CI nếu accuracy giảm > 5%
-```
+> 📄 **Code ví dụ:** [`examples/05-1-regression-detection-trong-ci.yaml`](examples/05-1-regression-detection-trong-ci.yaml)
 
 ### 2. So Sánh Prompt Engineering Thay Đổi
 

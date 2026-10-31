@@ -31,15 +31,7 @@ Vì chúng đo những thứ khác nhau. PromptFoo chạy ở tầng ứng dụn
 5. Dùng Giskard khi cần kiểm định an toàn/bias trước khi deploy, đặc biệt với hệ thống hướng tới người dùng cuối.
 6. Dùng cả năm cùng lúc cũng được: PromptFoo cho prompt, RAGAS cho phần truy xuất, Deepeval cho kiểm thử định kỳ, LangSmith cho production monitoring, Giskard cho scan an toàn.
 
-```yaml
-tests:
-  - vars: { input: "Long technical document..." }
-    assert:
-      - type: contains
-        value: "key concept"
-      - type: cost
-        threshold: 0.05
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-promptfoo-deepeval-ragas-langsmith-giskard-chon-cai.yaml`](examples/01-q1-promptfoo-deepeval-ragas-langsmith-giskard-chon-cai.yaml)
 
 **Kiểm tra**
 
@@ -90,16 +82,7 @@ Vì eval là công việc lặp lại. Ứng dụng chạy mỗi ngày vài tră
 3. Chạy bộ đầy đủ theo lịch đêm, chạy bộ con theo mỗi lần commit.
 4. So sánh một biến thể tại một thời điểm, đừng so sánh 6 biến thể cùng lúc.
 
-```yaml
-prompts:
-  - "Summarize: {{input}}"
-providers:
-  - openai:gpt-4
-  - anthropic:claude-3-5-sonnet
-assert:
-  - type: cost
-    threshold: 0.05   # mỗi prompt ≤ 0.05 USD
-```
+> 📄 **Code ví dụ:** [`examples/02-q3-chay-eval-ton-tien-co-kiem-soat.yaml`](examples/02-q3-chay-eval-ton-tien-co-kiem-soat.yaml)
 
 **Kiểm tra**
 
@@ -132,10 +115,7 @@ Chỉ số `context_precision` thấp trong khi `faithfulness` cao là kết lu�
 3. Nếu `context_precision` thấp, tăng lượng đoạn lấy ra hoặc cải thiện cách cắt đoạn trước khi đổi mô hình.
 4. Nếu `faithfulness` thấp, vấn đề nằm ở chỉ dẫn cho mô hình kèm đoạn tài liệu, không phải ở tìm kiếm.
 
-```python
-results = evaluate(dataset,
-  metrics=[faithfulness, answer_relevancy, context_precision])
-```
+> 📄 **Code ví dụ:** [`examples/03-q4-them-phan-truy-xuat-tai-lieu-co.py`](examples/03-q4-them-phan-truy-xuat-tai-lieu-co.py)
 
 **Kiểm tra**
 
@@ -162,12 +142,7 @@ Mục tiêu của bài đánh giá không phải chứng minh hệ thống tốt
 3. Đặt ngưỡng chặn: giảm quá 5% làm đỏ bước kiểm tra, không cho phát hành.
 4. Khi đỏ, đọc bảng so sánh để xem biến nào làm điểm rơi.
 
-```yaml
-steps:
-  - run: promptfoo eval --share
-  - run: promptfoo regression-check
-  # fail CI nếu accuracy giảm > 5%
-```
+> 📄 **Code ví dụ:** [`examples/04-q5-lam-sao-biet-hom-nay-minh-tao.yaml`](examples/04-q5-lam-sao-biet-hom-nay-minh-tao.yaml)
 
 **Kiểm tra**
 

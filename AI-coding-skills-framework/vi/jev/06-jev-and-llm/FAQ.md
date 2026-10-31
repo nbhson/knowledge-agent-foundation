@@ -29,12 +29,7 @@ Cách chia việc đúng là dựa trên **hình dạng kết quả cần có**,
 3. Chỉ gọi mô hình lớn sau khi đã có quyết định của Jev, và truyền cả xác suất xuống để nó viết cho đúng hướng.
 4. Khi cần biết "tại sao", đừng hỏi Jev — hãy đưa kết quả và xác suất của nó cho mô hình lớn diễn giải.
 
-```python
-d = jev.ask(state=ticket_text, questions={
-    "team":   {"type": "choice", "choices": ["billing", "tech", "account"]},
-    "refund": {"type": "noul", "description": "Khách có yêu cầu hoàn tiền không?"}})
-draft = llm.write(ticket_text, team=d["team"], refund_p=d["refund"].p)
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-trong-mot-request-toi-nen-cho-mo.py`](examples/01-q1-trong-mot-request-toi-nen-cho-mo.py)
 
 **Kiểm tra**
 
@@ -59,16 +54,7 @@ Agent của bạn đề xuất gọi công cụ xóa dữ liệu. Bạn cho ý t
 3. Ba nhánh: xác suất cao thì cho chạy; vừa thì hỏi xác nhận người dùng; thấp thì chặn và chuyển sang luồng phê duyệt.
 4. Yêu cầu cả hai điều kiện, không chỉ một: xác suất ≥ 0.6 **và** độ chắc chắn ≥ 0.5.
 
-```python
-def gateway(context, tool, p_threshold=0.6):
-    ans = decide(state=f"Context:\n{context}\nTool: {tool['name']}\nArgs: {tool.get('args', {})}",
-                 questions={"authorized": {"type": "noul"}})
-    p, conf = ans["p"], abs(ans["p"] - 0.5) * 2
-    if p >= p_threshold and conf >= 0.5:
-        return True, {"p": p, "conf": conf}     # cho chạy
-    approval_request(tool, {"p": p, "conf": conf})   # lớp phân quyền thật
-    return False, {"p": p, "conf": conf}
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-toi-co-the-e-jev-giu-quyen.py`](examples/02-q2-toi-co-the-e-jev-giu-quyen.py)
 
 **Kiểm tra**
 
@@ -93,15 +79,7 @@ Trong Pydantic AI, bạn khai agent với `TypeSafeModel` của Jev và một v�
 3. Nâng ngưỡng lên khi bạn muốn Jev chuyển giao ít hơn nhưng chuyển đúng hơn; hạ nếu bạn muốn tiết kiệm hơn. Mặc định 0.6 chỉ là điểm khởi đầu.
 4. Giữ `FallbackModel` đúng vai: khi được gọi thì nó làm **toàn bộ bước**, đọc ngữ cảnh, sinh tham số và gọi công cụ.
 
-```python
-from pydantic_ai.models.fallback import FallbackModel
-
-model = FallbackModel(
-    TypeSafeModel("jev-1.13.0"),    # quyết định trước, nhanh và rẻ
-    OpenAIModel("gpt-5"),           # nhận cả bước khi Jev kẹt
-)
-agent = Agent(model, output_type=Triage, tools=[refresh_dashboard])
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-cong-cu-cua-toi-can-tham-so.py`](examples/03-q3-cong-cu-cua-toi-can-tham-so.py)
 
 **Kiểm tra**
 
@@ -126,16 +104,7 @@ Phần lớn trường hợp là do bốn lỗi thiết kế lặp lại. Một:
 3. Bắt buộc có nhánh lùi ở mọi vùng độ tự tin, kể cả vùng cao.
 4. Luôn tính chênh lệch giữa hai lựa chọn đứng đầu; dưới 0.15 thì chuyển người bất kể nhãn là gì.
 
-```python
-def decide_or_fallback(state, questions):
-    ans = jev_decide(state, questions)["answers"]["queue"]
-    conf = ans["confidence"]
-    if conf >= 0.8:
-        return {"by": "jev", "value": ans["selected"]}
-    if conf >= 0.5:
-        return {"by": "jev", "value": ans["selected"], "needs_confirm": True}
-    return {"by": "llm_or_human", "value": llm_decide(state, questions)}
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-toi-ghep-jev-voi-mo-hinh-lon.py`](examples/04-q4-toi-ghep-jev-voi-mo-hinh-lon.py)
 
 **Kiểm tra**
 

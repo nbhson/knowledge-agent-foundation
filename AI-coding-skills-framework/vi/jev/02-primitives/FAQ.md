@@ -29,15 +29,7 @@ Quy tắc chọn rất ngắn: đáp án là **một trong tập đã đóng** �
 3. Có cần hoàn tiền không → Noul với câu hỏi "Khách có yêu cầu hoàn tiền không?".
 4. Đặt cả ba câu hỏi trong **một** lượt gọi vì chúng được chấm song song.
 
-```python
-resp = client.ask(model="jev-1.13.0", state=ticket_text, questions={
-    "team": {"type": "choice", "choices": ["billing", "tech", "account", "other"]},
-    "urgency": {"type": "score", "levels": [
-        {"level": 1, "label": "p0"}, {"level": 2, "label": "p1"},
-        {"level": 3, "label": "p2"}, {"level": 4, "label": "p3"}]},
-    "refund": {"type": "noul", "description": "Khách có yêu cầu hoàn tiền không?"},
-})
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-toi-can-phan-loai-ticket-va-cap.py`](examples/01-q1-toi-can-phan-loai-ticket-va-cap.py)
 
 Khi phân loại văn bản do người dùng viết, hãy luôn kèm giá trị `"other"`. Nhưng nếu `"other"` thắng với xác suất cao, đó không phải tín hiệu "chưa rõ" — đó là tín hiệu **bộ danh mục của bạn đang thiếu**. Ngược lại, khi chỉ định tuyến giữa các nhánh workflow đã biết trước thì bỏ `"other"` được.
 
@@ -64,15 +56,7 @@ Score trả về **giá trị kỳ vọng** của phân phối trên thang, khô
 3. Khi gần ngưỡng, bắt buộc có nhánh hỏi xác nhận thay vì tự quyết.
 4. Bản dịch nhãn: `legend` cho biết mỗi mức là gì, nên bạn không cần tự lập bảng tra ở nơi khác.
 
-```python
-u = resp.answers["urgency"]
-if u.score >= 3.5 and u.confidence > 0.5:
-    page_oncall()               # vượt ngưỡng và đủ chắc
-elif u.score >= 2.5:
-    bump_priority_queue()       # trung bình
-else:
-    standard_queue()
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-toi-khai-4-muc-nhung-jev-tra.py`](examples/02-q2-toi-khai-4-muc-nhung-jev-tra.py)
 
 Cẩn thận một điểm khác: mô tả mỗi mức phải **sắc**. Nếu bạn viết `p1: hơi gấp` và `p2: khá gấp` mà không có tiêu chí phân biệt, mô hình không có gốc để phân phối ra sao. Thay bằng tiêu chí quan sát được: `p1: khách nhắc lần thứ hai, chưa nêu hạn chót`.
 
@@ -99,16 +83,7 @@ Với câu hỏi có/không, mô hình **không có trường độ tự tin ri�
 3. Dùng hai điều kiện cùng lúc cho cổng an toàn: `p ≥ 0.85` **và** mức chắc chắn cao mới cho qua.
 4. Nhớ ba số đọc không giống nhau: 0.03 là gần như chắc không, 0.45 là gần như không biết, 0.97 là gần như chắc có.
 
-```python
-p = resp.answers["destructive"].p
-certainty = abs(p - 0.5) * 2
-if p >= 0.85 and certainty >= 0.5:
-    block_and_escalate()
-elif certainty < 0.2:
-    ask_human()          # p ≈ 0.5 → gần như không biết
-else:
-    review_queue()
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-noul-tra-ve-0-45-toi-xu.py`](examples/03-q3-noul-tra-ve-0-45-toi-xu.py)
 
 **Kiểm tra**
 
@@ -133,11 +108,7 @@ Bạn cần mười quyết định cho mỗi ticket: phân loại, độc hại
 3. Nếu danh sách quá lớn không vừa một lượt thì chia thành nhiều lượt **chạy song song**, không phải chạy tuần tự.
 4. Tận dụng tên câu hỏi có dấu chấm để ánh xạ về đúng đường dẫn trong JSON, ví dụ `ticket.body.toxic`.
 
-```python
-questions = {f"classify_{i}": {"type": "choice", "choices": OPTIONS}
-             for i in range(len(items))}
-resp = client.ask(model="jev-1.13.0", state=items, questions=questions)
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-toi-them-muoi-cau-hoi-vao-mot.py`](examples/04-q4-toi-them-muoi-cau-hoi-vao-mot.py)
 
 **Kiểm tra**
 
@@ -162,16 +133,7 @@ Với Jev, phần dữ liệu đầu vào là **hồ sơ vụ án**, không ph�
 3. Đặt framing chung của cả nhóm vào phần chỉ dẫn, áp cho mọi câu hỏi trong nhóm.
 4. Dọn phần dữ liệu: bỏ hướng dẫn thừa, giữ nguyên tắc chỉ phần liên quan.
 
-```python
-# SAI: dữ liệu bị trộn lẫn hướng dẫn
-state = "Bạn là bộ phân loại. Hãy trả lời team nào? Khó thì chọn other. Ticket: ..."
-
-# ĐÚNG: dữ liệu sạch, câu hỏi ở đúng chỗ
-state = "Ticket #4821: tôi bị tính phí 2 lần cho gói Pro tháng này."
-questions = {"team": {"type": "choice",
-                      "choices": ["billing", "tech", "account", "other"],
-                      "description": "Team nào sở hữu ticket này?"}}
-```
+> 📄 **Code ví dụ:** [`examples/05-q5-toi-nhet-cau-neu-kho-hay-chon.py`](examples/05-q5-toi-nhet-cau-neu-kho-hay-chon.py)
 
 Quy tắc rút gọn: **đặt câu hỏi lên kiểu, đặt khung vào chỉ dẫn, giữ dữ liệu làm nguyên liệu.**
 

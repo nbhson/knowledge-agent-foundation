@@ -110,33 +110,7 @@ Knowledge Graph (from 02)
 
 ### 1.2 Decision Matrix
 
-```python
-def choose_graph_db(requirements: dict) -> str:
-    """
-    Choose a DB based on requirements.
-    
-    requirements = {
-        "scale": "small" | "medium" | "large" | "trillion",
-        "deployment": "local" | "self-hosted" | "managed",
-        "latency": "realtime" | "interactive" | "batch",
-        "team_size": int,
-    }
-    """
-    if requirements["scale"] == "small" and requirements["deployment"] == "local":
-        return "Kuzu (embedded, zero-ops) or NetworkX (prototyping)"
-    
-    if requirements["scale"] in ["large", "trillion"]:
-        return "NebulaGraph or Neo4j Enterprise Cluster"
-    
-    if requirements["latency"] == "realtime":
-        return "FalkorDB or Memgraph (in-memory)"
-    
-    if requirements["deployment"] == "managed":
-        return "Neo4j Aura or Amazon Neptune"
-    
-    # Default: production balanced
-    return "Neo4j Community (self-hosted) — recommended for most projects"
-```
+> 📄 **Example code:** [`examples/01-1-2-decision-matrix.py`](examples/01-1-2-decision-matrix.py)
 
 **Recommendation for this Framework:**
 
@@ -179,48 +153,7 @@ def choose_graph_db(requirements: dict) -> str:
 <details>
 <summary>Cypher Code — CRUD (Click to view)</summary>
 
-```cypher
-// ============ CREATE ============
-
-// Create nodes
-CREATE (a:Person {name: 'Alice', role: 'CTO', age: 35})
-CREATE (b:Person {name: 'Bob', role: 'Engineer'})
-CREATE (p:Project {name: 'Phoenix', budget: 500000})
-
-// Create edges
-MATCH (a:Person {name: 'Alice'}), (b:Person {name: 'Bob'})
-CREATE (a)-[:MANAGES {since: '2024-01-01'}]->(b)
-
-MATCH (b:Person {name: 'Bob'}), (p:Project {name: 'Phoenix'})
-CREATE (b)-[:WORKS_ON {role: 'Lead', allocation: 0.8}]->(p)
-
-// ============ READ ============
-
-// Find all Persons
-MATCH (n:Person) RETURN n.name, n.role
-
-// Find with a filter
-MATCH (p:Project) WHERE p.budget > 300000 RETURN p
-
-// ============ UPDATE ============
-
-// Update a property
-MATCH (p:Person {name: 'Bob'}) SET p.role = 'Senior Engineer' RETURN p
-
-// Add a label
-MATCH (n {name: 'Phoenix'}) SET n:ActiveProject RETURN n
-
-// ============ DELETE ============
-
-// Delete an edge
-MATCH (a:Person {name: 'Alice'})-[r:MANAGES]->(b:Person {name: 'Bob'}) DELETE r
-
-// Delete a node (edges must be deleted first)
-MATCH (n:Person {name: 'Bob'}) DETACH DELETE n
-
-// Soft delete (recommended for KGs)
-MATCH (n:Person {name: 'Bob'}) SET n.deleted = true, n.deleted_at = datetime()
-```
+> 📄 **Example code:** [`examples/02-2-1-basic-crud.cypher`](examples/02-2-1-basic-crud.cypher)
 
 </details>
 
@@ -229,39 +162,7 @@ MATCH (n:Person {name: 'Bob'}) SET n.deleted = true, n.deleted_at = datetime()
 <details>
 <summary>Cypher Code — Traversal Patterns (Click to view)</summary>
 
-```cypher
-// 1. ONE-HOP: Who works on Phoenix?
-MATCH (person:Person)-[:WORKS_ON]->(p:Project {name: 'Phoenix'})
-RETURN person.name
-
-// 2. VARIABLE-LENGTH: Find through 1-3 hops of REPORTS_TO/MANAGES
-MATCH path = (junior:Person)-[:REPORTS_TO|MANAGES*1..3]->(senior:Person {name: 'Alice'})
-RETURN junior.name, length(path) as hops, [n in nodes(path) | n.name] as path
-
-// 3. SHORTEST PATH: Shortest path between two people
-MATCH (a:Person {name: 'Bob'}), (b:Person {name: 'Carol'})
-MATCH path = shortestPath((a)-[:REPORTS_TO|MANAGES*]-(b))
-RETURN path, length(path)
-
-// 4. SUBGRAPH: Grab the whole subgraph around a node (1-hop neighbors)
-MATCH (center:Project {name: 'Phoenix'})-[r]-(neighbor)
-RETURN center, r, neighbor
-
-// 5. SUBGRAPH 2-HOPS: Expand 2 hops
-MATCH (center:Project {name: 'Phoenix'})-[r1]-(n1)-[r2]-(n2)
-RETURN center, r1, n1, r2, n2
-LIMIT 50
-
-// 6. AGGREGATION: Count how many projects each person works on
-MATCH (person:Person)-[:WORKS_ON]->(project:Project)
-RETURN person.name, count(project) as project_count
-ORDER BY project_count DESC
-
-// 7. FILTER ON THE PATH: Only take paths with high confidence
-MATCH path = (a:Person)-[r:WORKS_ON*1..2]->(p:Project)
-WHERE all(rel in relationships(path) WHERE rel.confidence > 0.8)
-RETURN path
-```
+> 📄 **Example code:** [`examples/03-2-2-traversal-the-power-of-graphs.cypher`](examples/03-2-2-traversal-the-power-of-graphs.cypher)
 
 </details>
 
@@ -269,28 +170,7 @@ RETURN path
 
 Neo4j supports hybrid: graph traversal + full-text + vector indexes in the same DB.
 
-```cypher
-// Create a full-text index
-CREATE FULLTEXT INDEX personNameFTS FOR (n:Person) ON EACH [n.name]
-
-// Full-text search
-CALL db.index.fulltext.queryNodes("personNameFTS", "Alice") YIELD node, score
-RETURN node.name, score
-
-// Create a vector index (Neo4j 5+)
-CREATE VECTOR INDEX personEmbedding FOR (n:Person) ON n.embedding
-OPTIONS {dimension: 768, similarityFunction: 'cosine'}
-
-// Vector search
-CALL db.index.vector.queryNodes("personEmbedding", 5, $queryVector) YIELD node, score
-RETURN node.name, score
-
-// HYBRID: Vector search + graph traversal
-CALL db.index.vector.queryNodes("personEmbedding", 10, $queryVector) YIELD node, score
-MATCH (node)-[:WORKS_ON]->(project:Project)
-RETURN node.name, project.name, score
-ORDER BY score DESC
-```
+> 📄 **Example code:** [`examples/04-2-3-full-text-vector-search-inside-the.cypher`](examples/04-2-3-full-text-vector-search-inside-the.cypher)
 
 ---
 
@@ -324,35 +204,11 @@ ORDER BY score DESC
 
 ### 3.2 Query Optimization
 
-```python
-# ❌ Slow: no index, full scan
-# MATCH (n:Person) WHERE n.name = 'Alice' RETURN n
-
-# ✅ Fast: uses the index
-# CREATE INDEX FOR (n:Person) ON (n.name)  -- create once
-# MATCH (n:Person {name: 'Alice'}) RETURN n  -- automatically uses the index
-
-# ❌ Slow: unlimited hops, explosion
-# MATCH (a)-[*]->(b) RETURN a, b
-
-# ✅ Fast: cap hops + limit
-# MATCH (a:Person)-[:MANAGES*1..3]->(b:Person) RETURN a, b LIMIT 100
-
-# ❌ Slow: returns the entire graph
-# MATCH (n) RETURN n
-
-# ✅ Fast: take only what you need
-# MATCH (p:Person {name: 'Alice'})-[:WORKS_ON]->(proj) RETURN proj.name
-```
+> 📄 **Example code:** [`examples/05-3-2-query-optimization.py`](examples/05-3-2-query-optimization.py)
 
 ### 3.3 Profiling
 
-```cypher
-// View the query plan
-PROFILE MATCH (a:Person {name: 'Alice'})-[:MANAGES*1..3]->(b:Person) RETURN b
-
-// The output shows: whether an index was used, db hits, memory
-```
+> 📄 **Example code:** [`examples/06-3-3-profiling.cypher`](examples/06-3-3-profiling.cypher)
 
 ---
 
@@ -376,61 +232,7 @@ PROFILE MATCH (a:Person {name: 'Alice'})-[:MANAGES*1..3]->(b:Person) RETURN b
 <details>
 <summary>Python Code — Batch Ingest with MERGE (Click to view)</summary>
 
-```python
-from neo4j import GraphDatabase
-
-class GraphIngestor:
-    def __init__(self, uri: str, user: str, password: str):
-        self.driver = GraphDatabase.driver(uri, auth=(user, password))
-    
-    def ingest_batch(self, entities: list, relations: list, batch_size: int = 1000):
-        """Batch ingest — idempotent thanks to MERGE."""
-        with self.driver.session() as session:
-            # Batch entities
-            for i in range(0, len(entities), batch_size):
-                batch = entities[i:i + batch_size]
-                session.execute_write(self._merge_entities, batch)
-                print(f"Ingested entities batch {i//batch_size + 1}: {len(batch)} nodes")
-            
-            # Batch relations
-            for i in range(0, len(relations), batch_size):
-                batch = relations[i:i + batch_size]
-                session.execute_write(self._merge_relations, batch)
-                print(f"Ingested relations batch {i//batch_size + 1}: {len(batch)} edges")
-    
-    @staticmethod
-    def _merge_entities(tx, batch):
-        # UNWIND = a loop inside Cypher, more efficient than many calls
-        query = """
-        UNWIND $batch as row
-        MERGE (n:Entity {name: row.name})
-        SET n.type = row.type,
-            n.description = row.description,
-            n.updated_at = datetime()
-        """
-        tx.run(query, batch=batch)
-    
-    @staticmethod
-    def _merge_relations(tx, batch):
-        query = """
-        UNWIND $batch as row
-        MATCH (a:Entity {name: row.source})
-        MATCH (b:Entity {name: row.target})
-        MERGE (a)-[r:RELATED {type: row.type}]->(b)
-        SET r.confidence = row.confidence,
-            r.evidence = row.evidence,
-            r.updated_at = datetime()
-        """
-        tx.run(query, batch=batch)
-    
-    def close(self):
-        self.driver.close()
-
-# Usage
-ingestor = GraphIngestor("bolt://localhost:7687", "neo4j", "password")
-ingestor.ingest_batch(entities, relations, batch_size=500)
-ingestor.close()
-```
+> 📄 **Example code:** [`examples/07-4-2-batch-ingest-idempotent.py`](examples/07-4-2-batch-ingest-idempotent.py)
 
 **Key pattern:** `MERGE` instead of `CREATE` → idempotent, re-running doesn't create duplicates.
 
@@ -442,112 +244,22 @@ ingestor.close()
 
 ### 5.1 Neo4j with Docker
 
-```yaml
-# docker-compose.yml
-version: '3.8'
-services:
-  neo4j:
-    image: neo4j:5-community
-    ports:
-      - "7474:7474"  # Browser
-      - "7687:7687"  # Bolt
-    environment:
-      NEO4J_AUTH: neo4j/password
-      NEO4J_PLUGINS: '["apoc", "graph-data-science"]'
-    volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
-    healthcheck:
-      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "RETURN 1"]
-      interval: 10s
-      retries: 5
+> 📄 **Example code:** [`examples/08-5-1-neo4j-with-docker.yaml`](examples/08-5-1-neo4j-with-docker.yaml)
 
-volumes:
-  neo4j_data:
-  neo4j_logs:
-```
-
-```bash
-# Start it up
-docker compose up -d neo4j
-# Open the browser: http://localhost:7474
-
-# Check
-docker exec -it <container> cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"
-```
+> 📄 **Example code:** [`examples/09-5-1-neo4j-with-docker.sh`](examples/09-5-1-neo4j-with-docker.sh)
 
 ### 5.2 Kuzu (Embedded, Python-Native)
 
 <details>
 <summary>Python Code — Kuzu Embedded (Click to view)</summary>
 
-```python
-import kuzu
-
-# Create an in-process DB (no Docker needed)
-db = kuzu.Database("./kuzu_db")
-conn = kuzu.Connection(db)
-
-# Create the schema
-conn.execute("CREATE NODE TABLE Person(name STRING, role STRING, PRIMARY KEY(name))")
-conn.execute("CREATE NODE TABLE Project(name STRING, budget INT64, PRIMARY KEY(name))")
-conn.execute("CREATE REL TABLE WORKS_ON(FROM Person TO Project, role STRING, confidence DOUBLE)")
-conn.execute("CREATE REL TABLE MANAGES(FROM Person TO Person, since STRING)")
-
-# Insert
-conn.execute('CREATE (a:Person {name: "Alice", role: "CTO"})')
-conn.execute('CREATE (a:Person {name: "Bob", role: "Engineer"})')
-conn.execute('CREATE (a:Project {name: "Phoenix", budget: 500000})')
-
-# Query
-result = conn.execute("""
-    MATCH (p:Person)-[r:WORKS_ON]->(proj:Project)
-    RETURN p.name, proj.name, r.role
-""")
-while result.has_next():
-    print(result.get_next())
-
-# Hybrid: Kuzu also supports vector search (extension)
-# conn.execute("INSTALL vector; LOAD EXTENSION vector;")
-```
+> 📄 **Example code:** [`examples/10-5-2-kuzu-embedded-python-native.py`](examples/10-5-2-kuzu-embedded-python-native.py)
 
 </details>
 
 ### 5.3 NetworkX (Prototyping, No DB Needed)
 
-```python
-import networkx as nx
-
-# Fastest way to prototype — no DB to install
-G = nx.DiGraph()
-
-# Add nodes
-G.add_node("Alice", label="Person", role="CTO")
-G.add_node("Phoenix", label="Project", budget=500000)
-
-# Add edges
-G.add_edge("Alice", "Phoenix", type="WORKS_ON", confidence=0.9)
-
-# Query: BFS traversal
-from collections import deque
-
-def bfs_traversal(graph, start: str, max_hops: int = 2) -> list:
-    visited = set([start])
-    queue = deque([(start, 0)])
-    result = []
-    while queue:
-        node, hops = queue.popleft()
-        if hops >= max_hops:
-            continue
-        for neighbor in graph.successors(node):
-            if neighbor not in visited:
-                visited.add(neighbor)
-                result.append((node, neighbor, graph[node][neighbor]))
-                queue.append((neighbor, hops + 1))
-    return result
-
-print(bfs_traversal(G, "Alice", max_hops=2))
-```
+> 📄 **Example code:** [`examples/11-5-3-networkx-prototyping-no-db-needed.py`](examples/11-5-3-networkx-prototyping-no-db-needed.py)
 
 ---
 

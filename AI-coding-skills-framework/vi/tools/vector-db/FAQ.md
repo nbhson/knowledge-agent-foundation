@@ -33,11 +33,7 @@ Về embedding model, bộ ba mới 2026 đáng cân nhắc: **OpenAI text-embed
 5. Chỉ chọn Weaviate khi thật sự cần tìm kiếm lai hoặc xử lý đa phương thức (text + image).
 6. Đã có Postgres và quy mô vừa → dùng pgvector, đừng thêm hạ tầng mới chỉ vì "vector DB chuyên dụng nghe xịn hơn".
 
-```python
-import chromadb
-client = chromadb.PersistentClient(path="./memory")
-collection = client.get_or_create_collection("project_memory")
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-chroma-pinecone-qdrant-weaviate-pgvector-chon-cai.py`](examples/01-q1-chroma-pinecone-qdrant-weaviate-pgvector-chon-cai.py)
 
 **Kiểm tra**
 
@@ -65,13 +61,7 @@ Chỗ chồng lấn quan trọng vì nó làm một nội dung xuất hiện ở
 4. Ghi kèm thuộc tính cho mỗi đoạn (chủ đề, nguồn, thời gian) để sau này lọc được.
 5. Sau khi có kết quả, đo lại bằng [evaluation](../evaluation/): nếu `context_precision` thấp thì thường là do cắt đoạn, không phải do cơ sở dữ liệu vector.
 
-```python
-collection.upsert(
-    ids=["doc-1"],
-    documents=["BHYT cho người lao động: mức đóng 4.5% từ 2026"],
-    metadatas=[{"topic": "insurance", "tier": "warm"}]
-)
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-cat-tai-lieu-thanh-bao-nhieu-token.py`](examples/02-q2-cat-tai-lieu-thanh-bao-nhieu-token.py)
 
 **Kiểm tra**
 
@@ -99,12 +89,7 @@ Quy tắc đơn giản: **lấy đúng bằng số đoạn bạn còn đủ ch�
 4. Khi có nhiều đoạn liên quan, dùng trường `filters` để thu hẹp theo thuộc tính thay vì tăng `top_k`.
 5. Ghi lại cấu hình này cạnh mã nguồn, đừng để trong đầu.
 
-```python
-results = collection.query(
-    query_texts=["chế độ bảo hiểm lao động"],
-    n_results=3
-)
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-lay-bao-nhieu-oan-thi-u-chroma.py`](examples/03-q3-lay-bao-nhieu-oan-thi-u-chroma.py)
 
 **Kiểm tra**
 
@@ -172,9 +157,7 @@ Cơ sở dữ liệu vector nằm ở tầng Ấm — đó là lý do nó tồn 
 4. Dùng bộ lọc theo thuộc tính để giới hạn phạm vi truy vấn, thay vì lấy tất cả rồi lọc tay.
 5. Khi bộ nhớ phình qua nhiều vòng chạy, dùng công cụ quản lý ngữ cảnh ở [loop-cli](../loop-cli/) để không để nó phình vô hạn.
 
-```python
-metadatas=[{"topic": "insurance", "tier": "warm"}]
-```
+> 📄 **Code ví dụ:** [`examples/04-q5-nho-bao-nhieu-thi-u-khong-phai.py`](examples/04-q5-nho-bao-nhieu-thi-u-khong-phai.py)
 
 **Kiểm tra**
 

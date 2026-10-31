@@ -84,56 +84,7 @@ Avoid "other" when:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import os
-import requests
-
-API = "https://api.typesafe.ai/v1/systemone"
-HEADERS = {
-    "Authorization": f"Bearer {os.environ['TYPESAFE_API_KEY']}",
-    "Content-Type": "application/json",
-}
-
-STATE = (
-    "Ticket #4821: Customer was charged twice after upgrading to the Pro plan. "
-    "They want the extra charge reversed and are threatening a chargeback."
-)
-
-QUESTIONS = {
-    "team": {
-        "type": "choice",
-        "options": ["billing", "infra", "bug", "product", "other"],
-        "question": "Which team should own this ticket?",
-    }
-}
-
-
-def classify(text: str, questions: dict) -> dict:
-    resp = requests.post(
-        API,
-        headers=HEADERS,
-        json={"model": "jev-latest", "state": text, "questions": questions},
-        timeout=5,
-    )
-    resp.raise_for_status()
-    return resp.json()["answers"]
-
-
-answers = classify(STATE, QUESTIONS)
-team = answers["team"]["choice"]
-
-print(team["selected"])            # e.g. "billing"
-print(team["probabilities"])       # {"billing": 0.91, "infra": 0.02, ...}
-print(team["confidence"])          # e.g. 0.87  ← a MARGIN, not P(correct)
-
-# Act on the value — and on the confidence band:
-if team["confidence"] >= 0.8:
-    route(ticket, team["selected"])            # auto-act
-elif team["confidence"] >= 0.5:
-    route(ticket, team["selected"], confirm=True)  # confirm / more context
-else:
-    escalate_to_human(ticket)                  # or hand to an LLM
-```
+> 📄 **Example code:** [`examples/01-2-3-code-sample.py`](examples/01-2-3-code-sample.py)
 
 </details>
 
@@ -141,14 +92,7 @@ else:
 
 Choice maps cleanly onto Python typing — which is exactly what `TypeSafeModel` does under the hood (see [03-api](../03-api/)):
 
-```python
-from typing import Literal
-from enum import Enum
-
-# Literal  → one Choice question, options = the literals
-# Enum     → one Choice question, options = the members
-Team = Literal["billing", "infra", "bug", "product", "other"]
-```
+> 📄 **Example code:** [`examples/02-2-4-mapping-to-pydantic-types.py`](examples/02-2-4-mapping-to-pydantic-types.py)
 
 ### 2.5 Pros / Cons
 
@@ -200,49 +144,7 @@ STATE: "charged twice… threatening a chargeback"
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import os
-import requests
-
-API = "https://api.typesafe.ai/v1/systemone"
-HEADERS = {
-    "Authorization": f"Bearer {os.environ['TYPESAFE_API_KEY']}",
-    "Content-Type": "application/json",
-}
-
-STATE = "Third email today. 'If this isn't fixed by Friday I'm filing a chargeback.'"
-
-QUESTIONS = {
-    "anger": {
-        "type": "score",
-        "levels": [
-            {"level": 1, "description": "calm — patient, no urgency signals"},
-            {"level": 2, "description": "frustrated — annoyed, repeated contact"},
-            {"level": 3, "description": "very angry — hostile, threats, chargeback talk"},
-        ],
-        "question": "How angry is the customer?",
-    }
-}
-
-resp = requests.post(
-    API,
-    headers=HEADERS,
-    json={"model": "jev-latest", "state": STATE, "questions": QUESTIONS},
-    timeout=5,
-)
-resp.raise_for_status()
-anger = resp.json()["answers"]["anger"]["score"]
-
-print(anger["score"])            # e.g. 2.70  (may fall BETWEEN levels)
-print(anger["legend"])           # your level descriptions, echoed
-print(anger["probabilities"])    # {1: 0.05, 2: 0.20, 3: 0.75}
-print(anger["confidence"])       # margin from the distribution shape
-
-if anger["score"] >= 2.5 and anger["confidence"] >= 0.6:
-    page_oncall(ticket)          # high band → auto-act
-elif anger["score"] >= 2.5:
-    flag_for_human_review(ticket)  # right level, weaker margin → confirm
-```
+> 📄 **Example code:** [`examples/03-3-3-code-sample.py`](examples/03-3-3-code-sample.py)
 
 </details>
 
@@ -298,54 +200,7 @@ confidence = |p − 0.5| × 2
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import os
-import requests
-
-API = "https://api.typesafe.ai/v1/systemone"
-HEADERS = {
-    "Authorization": f"Bearer {os.environ['TYPESAFE_API_KEY']}",
-    "Content-Type": "application/json",
-}
-
-STATE = "Ticket #4821: charged twice after plan upgrade — please refund the extra $49."
-
-QUESTIONS = {
-    "refund_requested": {
-        "type": "noul",
-        "question": "Does the customer explicitly ask for money back?",
-        "criteria": "Yes only if the text requests a refund or reversal of a charge.",
-    },
-    "chargeback_threat": {
-        "type": "noul",
-        "question": "Does the customer threaten a chargeback?",
-    },
-}
-
-resp = requests.post(
-    API,
-    headers=HEADERS,
-    json={"model": "jev-latest", "state": STATE, "questions": QUESTIONS},
-    timeout=5,
-)
-resp.raise_for_status()
-answers = resp.json()["answers"]
-
-p_refund = answers["refund_requested"]["noul"]["p_yes"]     # e.g. 0.97
-p_charge = answers["chargeback_threat"]["noul"]["p_yes"]    # e.g. 0.61
-
-# Intrinsic confidence — no separate field for Noul:
-conf = lambda p: abs(p - 0.5) * 2
-print(conf(p_refund))   # 0.94  → auto-act (high band)
-print(conf(p_charge))   # 0.22  → confirm / more context (mid band)
-
-if p_refund > 0.5 and conf(p_refund) >= 0.8:
-    open_refund_workflow(ticket)
-elif p_refund > 0.5:
-    queue_for_agent_review(ticket)   # right call, thin margin → confirm
-else:
-    reply_with_clarifying_question(ticket)
-```
+> 📄 **Example code:** [`examples/04-4-3-code-sample.py`](examples/04-4-3-code-sample.py)
 
 </details>
 
@@ -390,15 +245,7 @@ q3 ──► LLM ──► 2.9s  ┘                    └─ q3 (noul)   ─�
 
 Got a list of candidates and a yes/no test? Fan out **one Noul per item** — all evaluated in the same pass:
 
-```python
-items = ["candidate A", "candidate B", "candidate C", ...]   # the list
-questions = {
-    f"hit_{i}": {"type": "noul", "question": "Does this item qualify?", "state_hint": item}
-    for i, item in enumerate(items)
-}
-# One request → answers.hit_0 … answers.hit_n, all in 70–500ms
-hits = [i for i in range(len(items)) if answers[f"hit_{i}"]["noul"]["p_yes"] > 0.6]
-```
+> 📄 **Example code:** [`examples/05-5-2-list-fan-out-one-noul-per.py`](examples/05-5-2-list-fan-out-one-noul-per.py)
 
 This is the mechanical heart of workload #2 (**map-reduce over large datasets**): the *map* is your row extraction, the *reduce* is a threshold over the fan-out distribution.
 

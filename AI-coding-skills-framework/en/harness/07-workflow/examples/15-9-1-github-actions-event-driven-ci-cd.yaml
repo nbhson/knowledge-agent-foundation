@@ -1,0 +1,29 @@
+# Workflow pattern: Event-driven with parallel jobs
+name: CI/CD Pipeline
+on: [push, pull_request]
+
+jobs:
+  lint:          # Parallel job 1
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm run lint
+  
+  test:          # Parallel job 2
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm test
+  
+  build:         # Depends on lint + test
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run build
+  
+  deploy:        # Depends on build + manual approval
+    needs: [build]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - run: npm run deploy

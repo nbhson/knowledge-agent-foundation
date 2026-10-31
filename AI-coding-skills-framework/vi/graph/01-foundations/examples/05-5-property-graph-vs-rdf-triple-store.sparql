@@ -1,0 +1,8 @@
+# Tạo triple
+# <Alice> <manages> <Bob> .
+# <Bob> <worksOn> <Phoenix> .
+# Truy vấn
+SELECT ?person WHERE {
+  ?person <manages> ?someone .
+  ?someone <worksOn> <Phoenix> .
+}

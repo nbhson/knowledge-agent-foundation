@@ -68,42 +68,7 @@ THE COMMON WORKFLOW (all five patterns share this spine):
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import httpx
-
-API_URL = "https://api.typesafe.ai/v1/systemone"
-TEAMS = ["billing", "infra", "product", "data"]
-
-def triage(ticket: dict) -> dict:
-    """One call → queue + priority, evaluated in parallel."""
-    r = httpx.post(
-        API_URL,
-        headers={"Authorization": f"Bearer {API_KEY}"},
-        json={
-            "model": "jev-latest",
-            "state": ticket,          # subject + body snippet + customer tier
-            "questions": {
-                "queue":   {"type": "choice", "options": TEAMS},
-                "priority": {"type": "score",
-                             "levels": ["p0", "p1", "p2", "p3"]},
-            },
-        },
-        timeout=5.0,
-    )
-    r.raise_for_status()
-    res = r.json()["results"]
-
-    queue = res["queue"]
-    priority = res["priority"]
-
-    return {
-        "queue": queue["selected"],
-        "queue_p": queue["probabilities"].get(queue["selected"]),
-        "priority": priority["selected"],
-        "priority_confidence": priority["confidence"],
-        "band": "auto" if queue["confidence"] >= 0.7 else "human_review",
-    }
-```
+> 📄 **Example code:** [`examples/01-pattern-card-routing-triage.py`](examples/01-pattern-card-routing-triage.py)
 
 </details>
 
@@ -138,49 +103,7 @@ def triage(ticket: dict) -> dict:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import asyncio
-import httpx
-
-API_URL = "https://api.typesafe.ai/v1/systemone"
-CONCURRENCY = 32
-LABEL_THRESHOLD = 0.75
-
-async def classify_one(client: httpx.AsyncClient, record: dict) -> dict:
-    r = await client.post(
-        API_URL,
-        headers={"Authorization": f"Bearer {API_KEY}"},
-        json={
-            "model": "jev-latest",
-            "state": record,
-            "questions": {
-                "category": {
-                    "type": "choice",
-                    "options": ["news", "opinion", "research", "spam"],
-                }
-            },
-        },
-        timeout=10.0,
-    )
-    r.raise_for_status()
-    cat = r.json()["results"]["category"]
-    p = cat["probabilities"].get(cat["selected"], 0.0)
-    return {
-        "id": record.get("id"),
-        "label": cat["selected"],
-        "label_p": p,
-        # below threshold → send to LLM or human; don't silently accept
-        "needs_review": p < LABEL_THRESHOLD,
-    }
-
-async def classify_all(records: list[dict]) -> list[dict]:
-    sem = asyncio.Semaphore(CONCURRENCY)
-    async with httpx.AsyncClient() as client:
-        async def bound(rec):
-            async with sem:
-                return await classify_one(client, rec)
-        return await asyncio.gather(*(bound(r) for r in records))
-```
+> 📄 **Example code:** [`examples/02-pattern-card-classification-at-scale.py`](examples/02-pattern-card-classification-at-scale.py)
 
 </details>
 
@@ -215,46 +138,7 @@ async def classify_all(records: list[dict]) -> list[dict]:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import httpx
-
-API_URL = "https://api.typesafe.ai/v1/systemone"
-AUTH_THRESHOLD = 0.80   # tune from YOUR labelled examples, not defaults
-
-def authorize_destructive_action(state: dict) -> tuple[bool, dict]:
-    """Noul gate before a destructive tool call. Jev classifies; code decides."""
-    r = httpx.post(
-        API_URL,
-        headers={"Authorization": f"Bearer {API_KEY}"},
-        json={
-            "model": "jev-latest",
-            "state": state,   # user's latest message + tool name + target summary
-            "questions": {
-                "user_authorizes": {"type": "noul"},
-            },
-        },
-        timeout=5.0,
-    )
-    r.raise_for_status()
-    n = r.json()["results"]["user_authorizes"]
-    p_yes = n["probability"]                    # P(yes), 0–1
-    # Noul has no separate confidence: margin = |p - 0.5| * 2
-    margin = abs(p_yes - 0.5) * 2
-
-    audit = {"p_yes": p_yes, "margin": margin, "threshold": AUTH_THRESHOLD}
-
-    # below threshold → block; the agent must not fire the tool
-    allowed = p_yes >= AUTH_THRESHOLD and margin >= 0.5
-    return allowed, audit
-
-
-def run_tool_if_authorized(tool_name: str, args: dict, state: dict):
-    allowed, audit = authorize_destructive_action(state)
-    log_decision(tool_name, audit)            # request id, probs, threshold, outcome
-    if not allowed:
-        return escalate_or_ask_human(tool_name, audit)
-    return execute_tool(tool_name, args)      # code acts
-```
+> 📄 **Example code:** [`examples/03-pattern-card-gating-agent-actions.py`](examples/03-pattern-card-gating-agent-actions.py)
 
 </details>
 
@@ -289,49 +173,7 @@ def run_tool_if_authorized(tool_name: str, args: dict, state: dict):
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import httpx
-
-API_URL = "https://api.typesafe.ai/v1/systemone"
-PASS_THRESHOLD = 0.85
-
-def verified_cascade(policy_text: str, draft: str) -> dict:
-    """LLM drafts → Jev verifies grounding against policy → pass/fail."""
-    r = httpx.post(
-        API_URL,
-        headers={"Authorization": f"Bearer {API_KEY}"},
-        json={
-            "model": "jev-latest",
-            "state": {
-                "policy": policy_text,     # the standard to check against
-                "draft": draft,            # what the LLM wrote
-            },
-            "questions": {
-                "grounded_in_policy": {"type": "noul"},
-                "worst_violation": {       # only consulted when Noul fails
-                    "type": "choice",
-                    "options": ["none", "unsupported_claim",
-                                "wrong_number", "tone", "pii_leak"],
-                },
-            },
-        },
-        timeout=5.0,
-    )
-    r.raise_for_status()
-    res = r.json()["results"]
-
-    p_pass = res["grounded_in_policy"]["probability"]
-    if p_pass >= PASS_THRESHOLD:
-        return {"status": "pass", "p_pass": p_pass, "draft": draft}
-
-    # fail → fallback: stronger LLM, human review, or discard
-    return {
-        "status": "fail",
-        "p_pass": p_pass,
-        "flag": res["worst_violation"]["selected"],
-        "next": "fallback_llm",   # e.g. call a stronger model for a rewrite
-    }
-```
+> 📄 **Example code:** [`examples/04-pattern-card-verify-llm-output.py`](examples/04-pattern-card-verify-llm-output.py)
 
 </details>
 
@@ -366,49 +208,7 @@ def verified_cascade(policy_text: str, draft: str) -> dict:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import httpx
-
-API_URL = "https://api.typesafe.ai/v1/systemone"
-LEVELS = ["irrelevant", "weak", "relevant", "core"]
-FLOOR = "weak"   # drop everything at or below this level
-
-
-def rerank_shortlist(query: str, candidates: list[dict]) -> list[dict]:
-    """Score each candidate in one batch of parallel questions, then sort."""
-    questions = {
-        f"rel_{i}": {"type": "score", "levels": LEVELS}
-        for i in range(len(candidates))
-    }
-    r = httpx.post(
-        API_URL,
-        headers={"Authorization": f"Bearer {API_KEY}"},
-        json={"model": "jev-latest",
-              "state": {"query": query, "candidates": candidates},
-              "questions": questions},
-        timeout=10.0,
-    )
-    r.raise_for_status()
-    res = r.json()["results"]
-
-    ranked = []
-    for i, cand in enumerate(candidates):
-        s = res[f"rel_{i}"]
-        ranked.append({
-            "candidate": cand,
-            # probability-weighted score — may fall BETWEEN levels
-            "weighted_score": s.get("score", 0),
-            "selected": s["selected"],
-            "confidence": s["confidence"],
-            "distribution": s.get("probabilities", {}),
-        })
-
-    # filter below floor, then rank by weighted score descending
-    kept = [c for c in ranked
-            if LEVELS.index(c["selected"]) > LEVELS.index(FLOOR)]
-    kept.sort(key=lambda c: c["weighted_score"], reverse=True)
-    return kept
-```
+> 📄 **Example code:** [`examples/05-pattern-card-ranking-filtering.py`](examples/05-pattern-card-ranking-filtering.py)
 
 </details>
 

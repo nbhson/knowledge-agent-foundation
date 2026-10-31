@@ -72,9 +72,7 @@ Last run: 2026-06-09 10:00 UTC
 
 **Cadence**: 2h–1d · **Tier**: low · **Suggested daily cap**: 100k tokens
 
-```bash
-npx @cobusgreyling/loop cost --pattern issue-triage --cadence 2h --level L1
-```
+> 📄 **Code ví dụ:** [`examples/01-cost-profile.sh`](examples/01-cost-profile.sh)
 
 ## Success Metrics
 

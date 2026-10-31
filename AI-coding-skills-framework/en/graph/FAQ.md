@@ -52,14 +52,7 @@ The README's analogy is a city map: vector search says "there's a restaurant nea
 
 Keep the vector store. Add a graph beside it, then wire them together — this is the standard 2025–2026 production stack (Neo4j + LangChain):
 
-```python
-from langchain_experimental.graph_transformers import LLMGraphTransformer
-docs = LLMGraphTransformer().transform_documents(raw_docs)
-Neo4jGraph.from_documents(docs)          # writes nodes + relations
-
-# hybrid: vector index on Document nodes
-#         traversal on Person / Project nodes
-```
+> 📄 **Example code:** [`examples/01-q2-should-i-replace-my-vector-database-with.py`](examples/01-q2-should-i-replace-my-vector-database-with.py)
 
 Two query paths, chosen by question type: plain similarity for "what does this document say", graph traversal for "who is connected to whom". Only send a Cypher query (Neo4j's query language) to the database for the second kind.
 

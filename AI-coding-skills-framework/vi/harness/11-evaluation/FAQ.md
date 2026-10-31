@@ -54,13 +54,7 @@ Cải tiến một chỗ thường làm hỏng chỗ khác — đây là đánh 
 4. Ngưỡng cảnh báo là tụt quá 10 điểm ở một bài nào đó thì báo `REGRESSION`. Tăng quá 10 điểm thì ghi vào danh sách cải tiến, để biết nên giữ thay đổi nào.
 5. Có `validator` (hàm kiểm tra kết quả) thì chấm 100 hoặc 0 cho chắc; không có thì mới so độ giống nhau theo từ khoá.
 
-```python
-baseline = self.baselines.get(test["id"], 50.0)
-if score < baseline - 10:      # tụt quá 10 điểm → REGRESSION
-    regressions.append({"id": test["id"], "delta": score - baseline})
-elif score > baseline + 10:    # tăng quá 10 điểm → ghi nhận cải tiến
-    improvements.append({"id": test["id"], "delta": score - baseline})
-```
+> 📄 **Code ví dụ:** [`examples/01-q2-oi-prompt-xong-agent-quen-lam-ung.py`](examples/01-q2-oi-prompt-xong-agent-quen-lam-ung.py)
 
 **Kiểm tra**
 

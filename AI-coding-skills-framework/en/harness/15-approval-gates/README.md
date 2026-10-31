@@ -335,17 +335,7 @@ Every field must be **derived from evidence**, not narrated:
 Implementation-wise it's a validation function that runs *before* `request()` is
 called:
 
-```typescript
-export function validatePayload(r: GateRequest): string[] {
-  const missing: string[] = [];
-  if (!r.diff)                  missing.push("diff");
-  if (r.blastRadius.length === 0) missing.push("blastRadius");
-  if (!r.dryRun)                missing.push("dryRun");      // evidence, not a summary
-  if (!r.rollback)              missing.push("rollback");
-  if (!r.expiresAt || r.expiresAt <= Date.now()) missing.push("expiresAt");
-  return missing;
-}
-```
+> 📄 **Example code:** [`examples/01-3-2-the-mandatory-evidence-rule.ts`](examples/01-3-2-the-mandatory-evidence-rule.ts)
 
 A `request()` with a non-empty `missing` array throws; the run **can't** proceed until
 the evidence exists. Teams that allow "approve anyway" on an invalid payload consistently
@@ -383,16 +373,7 @@ at runtime (e.g. *"user said ok on Slack"*) is a policy gap, not a feature.
 - The expiry timer runs in the *engine*, not in the UI session. Closing the review
   laptop can't extend a gate's life.
 
-```typescript
-// fail-closed consequence of expiry
-export function onExpire(key: string, g: Gate): void {
-  g.verdict = "expired";
-  traj.append({ kind: "approval_verdict", payload: { key, verdict: "expired",
-    reason: "ttl_elapsed", at: Date.now() } });
-  plan.markBlocked(g.taskId, "approval-timeout");
-  replanner.excludeBranch(g.taskId);   // → 04 §14.2
-}
-```
+> 📄 **Example code:** [`examples/02-4-2-timeout-deny-fail-closed.ts`](examples/02-4-2-timeout-deny-fail-closed.ts)
 
 ### 4.3 Deny → Replan, Not Retry
 
@@ -426,29 +407,7 @@ export function onExpire(key: string, g: Gate): void {
 
 ### 5.1 The Gatekeeper API
 
-```typescript
-type Verdict = "approved" | "denied" | "expired";
-interface GateRequest {
-  key: string; tier: "write" | "elevated" | "prod-auth";
-  summary: string; diff: string; blastRadius: string[];
-  dryRun: string; rollback: string; expiresAt: number;
-}
-export class Gatekeeper {
-  private gates = new Map<string, { req: GateRequest; verdict?: Verdict }>();
-  request(r: GateRequest): void {
-    ensureValid(r);                          // mandatory-evidence rule (§3.2)
-    this.gates.set(r.key, { req: r });       // engine throws PAUSED:<key>
-    setTimeout(() => this.settle(r.key, "expired"), r.expiresAt - Date.now());
-  }
-  settle(key: string, v: Verdict, by = "human"): void {
-    const g = this.gates.get(key); if (!g || g.verdict) return;  // one verdict wins
-    g.verdict = v; // audit: { key, v, by, at: Date.now() } → trajectory (→ 13)
-  }
-  verdict(key: string): Verdict | undefined { return this.gates.get(key)?.verdict; }
-}
-// Engine loop: before running a gated step → gatekeeper.request(...) → checkpoint
-// → throw PAUSED → on verdict approved: resume; denied/expired: mark blocked → replan.
-```
+> 📄 **Example code:** [`examples/03-5-1-the-gatekeeper-api.ts`](examples/03-5-1-the-gatekeeper-api.ts)
 
 ### 5.2 The PAUSED Protocol
 
@@ -500,17 +459,7 @@ resume(runId) ──▶ replay cache hit for t1..t214 ──▶ t215 proceeds
 `prod-auth` gates require a second pair of human eyes whose identity differs from the
 proposer:
 
-```typescript
-// engine refuses to materialize the action until a DIFFERENT human approves
-export function tryApprove(key: string, approverId: string, reason?: string): boolean {
-  const g = gates.get(key); if (!g || g.verdict) return false;
-  if (g.req.actorId === approverId) {
-    traj.warn({ kind: "approval_policy", payload: { key, detail: "self_approval_rejected" } });
-    return false;                                  // proposer ≠ approver, hard
-  }
-  gates.get(key)!.actorApproval = approverId;      // second human confirmed
-}
-```
+> 📄 **Example code:** [`examples/04-5-4-two-person-rule-enforcement.ts`](examples/04-5-4-two-person-rule-enforcement.ts)
 
 The proposer is recorded at `request()` time (the step that spawned the gate). The rule
 is enforced *inside* `tryApprove`, so there's no model path around it. Self-approval
@@ -602,134 +551,20 @@ event → 13) so "the human never saw it" is a checkable claim, not an excuse.
 
 ### 8.1 Types
 
-```typescript
-export type Tier = "read" | "write" | "elevated" | "prod-auth";
-export type Verdict = "approved" | "denied" | "expired";
-export type GateState =
-  | { status: "waiting" }
-  | { status: "settled"; verdict: Verdict; by: string; at: number };
-
-export interface Gate {
-  key: string;
-  taskId: string;                 // plan graph node (→ 04)
-  runId: string;                  // for resume idempotency (→ 07 §13)
-  tier: Tier;
-  actorId: string;                // proposer (two-person rule)
-  summary: string;
-  diff: string;
-  blastRadius: string[];
-  dryRun: string;
-  rollback: string;
-  diffHash: string;
-  dryRunHash: string;
-  createdAt: number;
-  expiresAt: number;
-  state: GateState;
-}
-
-export interface RiskTableEntry {
-  action: string;                 // registry key, e.g. "db.migrate"
-  defaultTier: Tier;
-  paths?: RegExp[];               // e.g. force-push on "release/*"
-  noDryRunAllowlist?: boolean;    // must itself be policy-approved
-}
-```
+> 📄 **Example code:** [`examples/05-8-1-types.ts`](examples/05-8-1-types.ts)
 
 ### 8.2 Persisted Gatekeeper
 
 <details>
 <summary>TypeScript Code — persisted Gatekeeper with reload + audit (Click to expand/collapse)</summary>
 
-```typescript
-import { randomBytes, createHash } from "node:crypto";
-
-export class Gatekeeper {
-  private gates = new Map<string, Gate>();
-  constructor(
-    private store: TrajectoryStore,          // audit/durability (→ 13)
-    private risk: RiskTableEntry[],          // tier registry
-  ) {
-    this.reloadOpen();                       // survive restart
-  }
-
-  private key(): string { return `gate_${randomBytes(4).toString("hex")}`; }
-
-  /** Validates tier + evidence, persists, arms the fail-closed timer. */
-  request(input: Omit<Gate, "key" | "state" | "createdAt" | "diffHash">
-      | { diff: string; dryRun: string }): Gate {
-    const missing = validatePayload(input);              // §3.2 mandatory evidence
-    if (missing.length) throw new Error(`gate missing evidence: ${missing.join(",")}`);
-    const gate: Gate = {
-      ...input, key: this.key(), createdAt: Date.now(), state: { status: "waiting" },
-      diffHash: createHash("sha256").update(input.diff).digest("hex"),
-      dryRunHash: createHash("sha256").update(input.dryRun).digest("hex"),
-    };
-    this.gates.set(gate.key, gate);
-    this.store.append({ kind: "approval_request", payload: gate });
-    this.armTimer(gate);
-    return gate;
-  }
-
-  private armTimer(g: Gate): void {
-    const ms = g.expiresAt - Date.now();
-    setTimeout(() => this.settle(g.key, "expired", "timer"), Math.max(0, ms));
-  }
-
-  /** One verdict wins. Self-approval on prod-auth is rejected and audited. */
-  settle(key: string, v: Verdict, by: string, reason?: string): boolean {
-    const g = this.gates.get(key);
-    if (!g || g.state.status === "settled") return false;
-    if (v === "approved" && g.tier === "prod-auth" && by === g.actorId) {
-      this.store.append({ kind: "approval_policy", payload: { key, detail: "self_approval_rejected" } });
-      return false;
-    }
-    g.state = { status: "settled", verdict: v, by, at: Date.now() };
-    this.store.append({ kind: "approval_verdict",
-      payload: { key, verdict: v, by, reason, diffHash: g.diffHash, dryRunHash: g.dryRunHash } });
-    return true;
-  }
-
-  verdict(key: string): Verdict | undefined {
-    return this.gates.get(key)?.state.status === "settled"
-      ? (this.gates.get(key)!.state as { verdict: Verdict }).verdict : undefined;
-  }
-
-  private reloadOpen(): void {
-    for (const ev of this.store.query({ kind: "approval_request" })) {
-      if (!this.verdict(ev.payload.key)) {                    // open gate → re-arm
-        const g = ev.payload as Gate;
-        this.gates.set(g.key, g);
-        this.armTimer(g);
-      }
-    }
-  }
-}
-```
+> 📄 **Example code:** [`examples/06-8-2-persisted-gatekeeper.ts`](examples/06-8-2-persisted-gatekeeper.ts)
 
 </details>
 
 ### 8.3 Engine Loop Integration
 
-```typescript
-export async function runStep(step: Step, ctx: Ctx): Promise<void> {
-  const tier = resolveTier(step, ctx.risk);                  // §2.1 rule, not model
-  await checkpoint(ctx, step);                               // (→ 07 §13) BEFORE throw
-
-  if (tier === "read") { await step.run(ctx); return; }      // auto-approve, log
-
-  const gate = ctx.gates.request({ taskId: step.id, runId: ctx.runId, tier,
-    actorId: ctx.actorId, summary: step.summary, diff: step.renderDiff(),
-    blastRadius: step.blastRadius(ctx), dryRun: await step.dryRun(ctx),
-    rollback: step.rollback(ctx) });
-  await ctx.notify(gate);                                    // §7.2
-
-  throw new Paused(`PAUSED:${gate.key}`);                    // freezes, audit sees it
-
-  // resumed later by driver after human verdict:
-  //   verdict=approved → this function returns, step.run() executes once
-  //   verdict=denied/expired → markBlocked → replanner.excludeBranch(step.id)
-}
-```
+> 📄 **Example code:** [`examples/07-8-3-engine-loop-integration.ts`](examples/07-8-3-engine-loop-integration.ts)
 
 Note what the engine loop *doesn't* contain: no branch where the model "asks nicely" and
 continues. The only way past the throw is a persisted verdict from the Gatekeeper —
@@ -737,19 +572,7 @@ which is the whole integrity story.
 
 ### 8.4 Two-Person Gatekeeper
 
-```typescript
-// wraps Gatekeeper for prod-auth: two independent human approvals, persisted
-export class TwoPersonGatekeeper {
-  constructor(private inner: Gatekeeper) {}
-  request(g: Omit<Gate, "key" | "state" | "createdAt" | "diffHash"
-        | "dryRunHash">): Gate {
-    const gate = this.inner.request(g);
-    return gate;   // approval requires ONE additional actor: settle() enforces ≠ actor
-  }
-  // settle() in the base Gatekeeper already rejects actorId === approver for prod-auth.
-  // All that changes is UI + TTL (4h) + page. The invariant lives in one place.
-}
-```
+> 📄 **Example code:** [`examples/08-8-4-two-person-gatekeeper.ts`](examples/08-8-4-two-person-gatekeeper.ts)
 
 ---
 
@@ -757,23 +580,7 @@ export class TwoPersonGatekeeper {
 
 ### 9.1 Invariant Tests
 
-```typescript
-export function assertGateInvariants(...gates: Gate[]): void {
-  for (const g of gates) {
-    // 1 — settled exactly once
-    if (g.state.status === "settled" && g.state.at < g.createdAt) throw new Error("verdict before creation");
-    // 2 — evidence mandatory
-    if (g.state.status === "settled" && g.state.verdict === "approved" && !g.dryRunHash) throw new Error("approved without dry-run hash");
-    // 3 — fail closed
-    if (g.expiresAt < Date.now() && g.state.status === "waiting") throw new Error("expired gate still waiting (timer lost)");
-    // 4 — two-person rule
-    if (g.tier === "prod-auth" && g.state.status === "settled" && g.state.verdict === "approved"
-        && g.state.by === g.actorId) throw new Error("self-approval on prod-auth");
-    // 5 — out-of-order: verdict must not pre-date the evidence being reviewed
-    if (typeof g.diffHash === "string" && g.diffHash === "" ) throw new Error("empty diff hash");
-  }
-}
-```
+> 📄 **Example code:** [`examples/09-9-1-invariant-tests.ts`](examples/09-9-1-invariant-tests.ts)
 
 Run these across **every recorded gate in production** (like §9.1 of → 13): the invariant
 suite is cheap and catches regressions the unit tests never will — e.g. a timer that
@@ -781,59 +588,14 @@ doesn't survive a restart.
 
 ### 9.2 Contract Tests
 
-```typescript
-describe("Gatekeeper contract", () => {
-  it("validates evidence before opening", () => {
-    expect(() => gates.request({ ...noDryRun })).toThrow(/missing evidence/);
-  });
-
-  it("settles exactly once", async () => {
-    const g = gates.request(validGate);
-    gates.settle(g.key, "approved", "alice");
-    gates.settle(g.key, "denied", "alice");                  // second call is a no-op
-    expect(gates.verdict(g.key)).toBe("approved");
-  });
-
-  it("survives restart and re-arms expiry", async () => {
-    const g = gates.request(validGate);
-    const fresh = new Gatekeeper(store, risk);               // reloads open gates
-    expect(fresh.verdict(g.key)).toBeUndefined();
-    await vi.advanceTimersByTimeAsync(g.expiresAt - Date.now() + 1);
-    expect(fresh.verdict(g.key)).toBe("expired");            // fail closed
-  });
-
-  it("rejects self-approval on prod-auth", () => {
-    const g = gates.request(validGateProdAuth);
-    expect(gates.settle(g.key, "approved", g.actorId)).toBe(false);
-  });
-
-  it("recovers a run after approve and replans after deny", async () => {
-    const approved = gates.request(gate1); gates.settle(approved.key, "approved", "bob");
-    const denied   = gates.request(gate2); gates.settle(denied.key, "denied", "bob", "not today");
-    expect(resume(runId, approved.key)).toExecExactlyOnce(stepAtKey(approved.key));
-    expect(plan.exclude).toHaveBeenCalledWith(denied.taskId);   // deny → replan, not retry
-  });
-});
-```
+> 📄 **Example code:** [`examples/10-9-2-contract-tests.ts`](examples/10-9-2-contract-tests.ts)
 
 The restart test is the one teams skip, and it's the one that proves a gate is a
 *durable security control* rather than a memory object.
 
 ### 9.3 Regression Suite
 
-```sql
--- approval rate + median wait per tier (the rubber-stamp detector, §7.1)
-SELECT tier,
-       COUNT(*) FILTER (WHERE verdict='approved')::float / COUNT(*) AS approval_rate,
-       percentile_disc(0.5) WITHIN GROUP (ORDER BY (verdict_time - request_time)) AS median_wait
-FROM approval_verdict v JOIN approval_request r ON r.key = v.key
-GROUP BY tier ORDER BY tier;
-
--- out-of-order approvals (verdict written after the action already touched things)
-SELECT * FROM approval_verdict v
-JOIN trajectory a ON a.payload->>'key' = v.key AND a.kind = 'action_started'
-WHERE v.recorded_at < a.recorded_at;
-```
+> 📄 **Example code:** [`examples/11-9-3-regression-suite.sql`](examples/11-9-3-regression-suite.sql)
 
 Add both to the nightly observability query catalog (→ 13 §6). Approval-rate drift is a
 first-class metric: a rising slope is the signal that fatigue has set in and evidence is
@@ -911,72 +673,7 @@ harness-level conclusions:
 
 ## 11. TypeScript Interfaces for Approval
 
-```typescript
-// ── The Gate ───────────────────────────────────────────────────────────────
-export type Tier = "read" | "write" | "elevated" | "prod-auth";
-export type Verdict = "approved" | "denied" | "expired";
-export type GateState =
-  | { status: "waiting" }
-  | { status: "settled"; verdict: Verdict; by: string; at: number };
-
-export interface Gate {
-  key: string;
-  taskId: string;            // plan graph node (→ 04)
-  runId: string;             // resume idempotency (→ 07 §13)
-  tier: Tier;
-  actorId: string;           // proposer — two-person rule anchor
-  summary: string;
-  diff: string;
-  blastRadius: string[];
-  dryRun: string;
-  rollback: string;
-  diffHash: string;
-  dryRunHash: string;
-  createdAt: number;
-  expiresAt: number;
-  state: GateState;
-}
-
-// ── Risk Registry ──────────────────────────────────────────────────────────
-export interface RiskTableEntry {
-  action: string;
-  defaultTier: Tier;
-  paths?: RegExp[];
-  noDryRunAllowlist?: boolean;
-}
-export interface RoleRiskMatrix {
-  role: string;               // → 12 §6 per-role policy
-  entries: RiskTableEntry[];
-  override?: { action: string; tier: Tier; reason: string; approvedBy: string; at: number };
-}
-
-// ── Gatekeeper ─────────────────────────────────────────────────────────────
-export interface Gatekeeper {
-  request(input: GateRequestInput): Gate;
-  settle(key: string, v: Verdict, by: string, reason?: string): boolean;
-  verdict(key: string): Verdict | undefined;
-  armed(key: string): boolean;
-}
-export interface GateEngineContract {
-  before(action: Step): Tier;              // enforcement at plan-time tag (§2.2)
-  request(input: GateRequestInput): Gate;  // throws PAUSED:<key> after checkpoint
-  onVerdict(key: string, v: Verdict): void; // approved→resume; denied/expired→replan
-}
-
-// ── Audit ──────────────────────────────────────────────────────────────────
-export interface ApprovalAuditEvent {
-  kind: "approval_request" | "approval_verdict" | "approval_policy" | "notification_sent";
-  payload: { key: string; tier: Tier; actorId: string; approver?: string;
-             verdict?: Verdict; reason?: string; diffHash?: string; dryRunHash?: string;
-             by?: string; at: number };
-  sessionId: string; taskId: string;     // join keys (→ 13 §4)
-  tokens: { in: number; out: number };
-}
-
-// ── Test surface ───────────────────────────────────────────────────────────
-export interface GateInvariant { name: string; assert(g: Gate): void }
-export interface FatigueMetric { tier: Tier; approvalRate: number; medianWaitMs: number }
-```
+> 📄 **Example code:** [`examples/12-11-typescript-interfaces-for-approval.ts`](examples/12-11-typescript-interfaces-for-approval.ts)
 
 ---
 

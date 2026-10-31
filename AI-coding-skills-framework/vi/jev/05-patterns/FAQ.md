@@ -21,16 +21,7 @@ Bạn đọc "năm kiểu mẫu áp dụng" và không biết bắt đầu từ 
 3. Đặt ngưỡng khác nhau cho hai câu: nhóm cần tự chuyển ở 0.8, mức ưu tiên ở 0.7.
 4. Chỉ gửi phần liệu liên quan — tiêu đề và phần đầu nội dung, đừng gửi cả chuỗi hội thoại.
 
-```python
-q = decide(state=ticket_text, questions={"queue":    {"type": "choice"},
-                                         "priority": {"type": "score"}})
-if q["queue_confidence"] >= 0.8 and q["priority_confidence"] >= 0.7:
-    auto_route(q["queue"], q["priority"])   # vùng cao: tự làm
-elif q["queue_confidence"] >= 0.5:
-    suggest_to_agent(q)                      # vùng vừa: gợi ý, người duyệt
-else:
-    human_triage(ticket_text, q)            # vùng thấp: người xử lý
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-toi-moi-bat-au-nen-ap-dung.py`](examples/01-q1-toi-moi-bat-au-nen-ap-dung.py)
 
 **Kiểm tra**
 
@@ -55,16 +46,7 @@ Phép tính đó dựa trên giá của một loại công cụ khác. Jev tính
 3. Ở bước gộp: chia nhóm theo độ tự tin (≥ 0.8 thì nhận luôn, dưới ngưỡng thì vào hàng chờ xem lại) và tính tỉ lệ phủ.
 4. Đặt trạng thái nhỏ cho mỗi bản ghi — không gộp cả tập dữ liệu vào một lượt gọi.
 
-```python
-async def classify_one(client, record):
-    r = await client.post(API, headers=HEADERS, json={
-        "model": "jev-1.13.0", "state": record["text"],
-        "questions": {"tag": {"type": "choice", "options": TAGS}}}, timeout=5)
-    a = r.json()["answers"]["tag"]
-    return {"id": record["id"], "tag": a["selected"], "confidence": a["confidence"]}
-
-# gọi song song theo lô 50, mỗi lượt vẫn 70–500ms
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-toi-co-100-000-ban-ghi-can.py`](examples/02-q2-toi-co-100-000-ban-ghi-can.py)
 
 **Kiểm tra**
 
@@ -89,16 +71,7 @@ Agent của bạn đề xuất lệnh xóa tệp dữ liệu trong thư mục pr
 3. Giữ nguyên lớp phân quyền thật là nguồn quyền cuối cùng. Jev chỉ là tín hiệu phân loại nhanh bổ sung cho những trường hợp luật tĩnh không phủ hết.
 4. Mô tả tiêu chí "khi nào được coi là có" ngay trong câu hỏi.
 
-```python
-def gate(conversation, tool_name, tool_args, p_threshold=0.6, conf_threshold=0.5):
-    ans = decide(state=f"{conversation}\nTool: {tool_name}\nArgs: {tool_args}",
-                 questions={"authorized": {"type": "noul"}})
-    p, conf = ans["p"], abs(ans["p"] - 0.5) * 2
-    if p >= p_threshold and conf >= conf_threshold:
-        return True                       # cho qua
-    request_human_approval(tool_name, tool_args, p, conf)   # chặn + hỏi người
-    return False
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-toi-muon-chan-agent-xoa-file-at.py`](examples/03-q3-toi-muon-chan-agent-xoa-file-at.py)
 
 **Kiểm tra**
 
@@ -123,16 +96,7 @@ Cách rẻ nhất là đảo chiều vai trò: **Jev đọc và phán, mô hình
 3. Cho qua khi xác suất ≥ 0.7 **và** độ chắc chắn ≥ 0.5; nếu không thì viết lại tối đa hai lần, hết lượt thì chuyển người.
 4. Khi độ chắc chắn thấp, coi như mô hình không biết → chuyển người, **không** bắt nó viết lại.
 
-```python
-def verify_draft(policy_text, draft):
-    ans = decide(state=f"Policy:\n{policy_text}\n\nDraft:\n{draft}", questions={
-        "grounded":  {"type": "noul"},
-        "severity":  {"type": "score",
-                      "levels": ["none", "minor", "major", "critical"]}})
-    p = ans["grounded"]["p"]; conf = abs(p - 0.5) * 2
-    return {"pass": p >= 0.7 and conf >= 0.5, "confidence": conf,
-            "severity": ans["severity"]["score"]}
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-toi-muon-kiem-tra-ket-qua-mo.py`](examples/04-q4-toi-muon-kiem-tra-ket-qua-mo.py)
 
 Có ba chỗ đặt cược bước kiểm tra này: sau mỗi kết quả công cụ và mỗi sản phẩm tạo ra trước khi đi bước sau; làm bộ lọc nhanh trước khi chạy bộ kiểm thử đầy đủ trong vòng lặp; và kiểm tra nội dung thay đổi trước khi hợp nhất. Một điều tuyệt đối đừng làm: đòi Jev giải thích vì sao bản nháp sai — nó chỉ trả điểm và xác suất, phần giải thích là việc của mô hình lớn.
 
@@ -159,12 +123,7 @@ Jev làm được, và hợp với hệ thống tìm kiếm dựa trên truy xu�
 3. Sắp xếp giảm dần theo điểm, rồi lọc bỏ ứng viên dưới ngưỡng tối thiểu.
 4. Giữ những ứng viên có độ tự tin thấp nhưng **đánh dấu lại** — điểm cao mà độ tự tin thấp thì thứ hạng rất dễ bị xếp sai.
 
-```python
-def rerank(query, passages, min_score=1.5):
-    scored = [dict(score_candidate(query, p), passage=p) for p in passages]
-    scored.sort(key=lambda r: r["score"], reverse=True)
-    return [r for r in scored if r["score"] >= min_score]
-```
+> 📄 **Code ví dụ:** [`examples/05-q5-toi-lay-20-oan-van-tu-he.py`](examples/05-q5-toi-lay-20-oan-van-tu-he.py)
 
 **Kiểm tra**
 

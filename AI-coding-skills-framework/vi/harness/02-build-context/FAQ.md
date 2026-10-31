@@ -30,12 +30,7 @@ cuối, lười đọc phần giữa. Nghiên cứu của Anthropic (2025) chỉ
    ở vị trí chiến lược.
 5. Khi cắt bớt, ghi rõ phần bị bỏ là gì — cắt im lặng khiến model tưởng đã đọc hết.
 
-```python
-ranked = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)
-context = (f"QUAN TRỌNG NHẤT: {ranked[0]}\n"
-           f"{[d for d, _ in ranked[1:-1]]}\n"
-           f"QUAN TRỌNG NHẤT: {ranked[-1]}")
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-cua-so-ngu-canh-200k-ma-bot.py`](examples/01-q1-cua-so-ngu-canh-200k-ma-bot.py)
 
 **Kiểm tra**
 
@@ -73,12 +68,7 @@ Tổng sức chứa không tự chia. Nếu không đặt trước số token ch
 3. Với câu hỏi đơn giản, dồn chỗ sang lịch sử; với câu hỏi tra cứu nặng, dồn sang tài liệu.
 4. Khi vượt hạn mức của một thành phần, cắt phần đó và ghi kèm dòng báo đã bỏ bao nhiêu.
 
-```python
-budget = ContextBudget(total_tokens=128000, reserve_output=4000)
-budget.adjust_for_query_type("retrieval")   # retrieved_context 70%
-budget.fit_text_to_budget(text, "retrieved_context")  # cắt kèm [...truncated...]
-budget.report()   # in ra: retrieved_context 84,700 token (70%)
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-toi-co-128-nghin-token-chia-cho.py`](examples/02-q2-toi-co-128-nghin-token-chia-cho.py)
 
 **Kiểm tra**
 
@@ -110,13 +100,7 @@ là giữ 10 tin gần nhất nguyên văn, phần cũ hơn gộp thành một �
 4. Bật bộ nhớ đệm ngữ cảnh (cache) với thời hạn sống 5 phút: câu hỏi lặp lại thì dùng lại
    kết quả, giảm 50–80% độ trễ và bỏ hẳn chi phí sinh vector.
 
-```python
-def compressHistory(self):
-    if self.messages.length > 20:
-        old = self.messages.slice(0, -10)
-        return self.summarize(old)   # Goal | Decisions | Open | Repro | Next
-    return "\n".join(f"{m.role}: {m.content}" for m in self.messages)
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-cu-20-tin-nhan-la-phai-nen.py`](examples/03-q3-cu-20-tin-nhan-la-phai-nen.py)
 
 **Kiểm tra**
 
@@ -151,11 +135,7 @@ dán chúng thẳng vào ngữ cảnh không có ranh giới nào, model không 
 5. Chạy song song nhiều nguồn với thời hạn 2.500 mili giây; nguồn nào hết giờ thì dùng tập
    một phần và ghi rõ `coverage:partial(missing:doc_search)` — không bao giờ chờ nguồn chậm nhất.
 
-```typescript
-const r = await withTimeout(fetchSource("docs", query), 2500, { source: "docs", docs: [] });
-merged.push(`<untrusted source="${r.source}">${d.slice(0, 2000)}</untrusted>`);
-return { merged, partial };  // partial = ["docs"]
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-noi-dung-toi-lay-tu-cong-cu.ts`](examples/04-q4-noi-dung-toi-lay-tu-cong-cu.ts)
 
 **Kiểm tra**
 

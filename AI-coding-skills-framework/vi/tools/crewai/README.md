@@ -56,39 +56,11 @@ Crew   →  Tập hợp agents + tasks + process (cách chúng phối hợp)
 
 ### Code Mẫu Từ HARNESS_ENGINEERING.md
 
-```python
-from crewai import Agent, Task, Crew
-
-# Multi-agent harness
-planner = Agent(role='Planner', goal='Create plan')
-executor = Agent(role='Executor', goal='Execute plan')
-reviewer = Agent(role='Reviewer', goal='Review output')
-
-harness = Crew(
-    agents=[planner, executor, reviewer],
-    tasks=[plan_task, execute_task, review_task]
-)
-```
+> 📄 **Code ví dụ:** [`examples/01-code-mau-tu-harness-engineering-md.py`](examples/01-code-mau-tu-harness-engineering-md.py)
 
 ### Process: Sequential vs Hierarchical
 
-```python
-# Sequential — pipeline tuyến tính: plan → execute → review
-harness = Crew(
-    agents=[planner, executor, reviewer],
-    tasks=[plan_task, execute_task, review_task],
-    process=Process.sequential
-)
-
-# Hierarchical — manager agent điều phối, assign tasks
-harness = Crew(
-    agents=[executor, reviewer],
-    tasks=[execute_task, review_task],
-    process=Process.hierarchical,
-    manager_agent=manager,  # bổ sung "harness manager"
-    manager_llm=llm
-)
-```
+> 📄 **Code ví dụ:** [`examples/02-process-sequential-vs-hierarchical.py`](examples/02-process-sequential-vs-hierarchical.py)
 
 Hiểu đơn giản: `Process.hierarchical` chính là **harness/09-multi-agent** — có một manager đứng ra điều phối như harness orchestrator. Còn `Process.sequential` thì ứng với pipeline **harness/07-workflow**.
 
@@ -129,31 +101,11 @@ Bước 5: Kết nối evaluation + observability (tools/evaluation, tools/obser
 
 ### 1. Code Review Crew
 
-```python
-planner = Agent(role='Planner', goal='Break down feature into tasks')
-coder = Agent(role='Coder', goal='Implement tasks', tools=[code_editor])
-reviewer = Agent(role='Reviewer', goal='Find bugs and security issues')
-
-plan_task = Task(description='Plan the login API', expected_output='Task list')
-code_task = Task(description='Implement per plan', expected_output='Working code')
-review_task = Task(description='Review code', expected_output='Review report')
-
-crew = Crew(
-    agents=[planner, coder, reviewer],
-    tasks=[plan_task, code_task, review_task],
-    process=Process.sequential  # plan → code → review → (reviewer feedback loop)
-)
-```
+> 📄 **Code ví dụ:** [`examples/03-1-code-review-crew.py`](examples/03-1-code-review-crew.py)
 
 ### 2. Human-in-the-Loop
 
-```python
-task = Task(
-    description="Deploy to production",
-    expected_output="Deployment confirmation",
-    human_input=True  # dừng lại chờ xác nhận trước khi deploy
-)
-```
+> 📄 **Code ví dụ:** [`examples/04-2-human-in-the-loop.py`](examples/04-2-human-in-the-loop.py)
 
 ## Tài Liệu Tham Khảo
 
@@ -188,9 +140,7 @@ CrewAI đã phát hành **v1.0.0 (10/2025)** và đạt **v1.15.x (2026)** — n
 
 **Lưu ý quan trọng:** CrewAI >= 1.0 yêu cầu **Python 3.10 – 3.13**.
 
-```bash
-pip install crewai>=1.0.0
-```
+> 📄 **Code ví dụ:** [`examples/05-cap-nhat-10-2026-crewai-v1-x-phien.sh`](examples/05-cap-nhat-10-2026-crewai-v1-x-phien.sh)
 
 Ref: https://docs.crewai.com/
 

@@ -21,11 +21,7 @@ So a wrong answer can be very confident, as long as the wrong answer sits *insid
 1. Treat confidence and correctness as **two separate checks**. Confidence is free and always available; correctness needs your own labelled data.
 2. Gate on both numbers, not one. Read the winner's probability out of the distribution as a proxy for "likely right", and require both to pass:
 
-```python
-winner_p = probabilities.get(answer, 0.0)
-if confidence >= HIGH_THRESHOLD and winner_p >= HIGH_THRESHOLD:
-    band = "auto_act"
-```
+> 📄 **Example code:** [`examples/01-q1-the-model-returned-confidence-0-95-and.py`](examples/01-q1-the-model-returned-confidence-0-95-and.py)
 
 3. On `Score` questions, remember the probability-weighted score can land *between* two levels, so a single integer thrown away the information you needed.
 4. Only labelled data can confirm the second half. Measure "correct given stated 0.8" and you own the real number.
@@ -89,13 +85,7 @@ The commonly quoted `0.6` — the Pydantic AI `typesafe_tool_call_threshold` —
 3. Set a posture per question type — low threshold for triage, high threshold for gating a destructive call, high to pass with a fallback on failure for verifying output.
 4. Change one threshold at a time, and replay logged decisions against the new value before shipping.
 
-```python
-HIGH, LOW = 0.85, 0.60          # gating a destructive tool call
-if confidence >= HIGH and winner_p >= HIGH:
-    band = "auto_act"
-elif confidence >= LOW:
-    band = "confirm"
-```
+> 📄 **Example code:** [`examples/02-q3-i-copied-the-0-6-threshold-everyone.py`](examples/02-q3-i-copied-the-0-6-threshold-everyone.py)
 
 **Verify**
 

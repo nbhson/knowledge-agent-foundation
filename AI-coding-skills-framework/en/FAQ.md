@@ -23,11 +23,7 @@ Tài liệu coi framework là "bộ não điều phối", còn mô hình AI ch�
 3. Bắt đầu bằng `harness/01-retrieve-memory-knowledge` và `harness/02-build-context`: ma trận Module → Project ghi chúng phục vụ lần lượt 15/20 và 12/20 dự án trong tài liệu.
 4. Chưa cần mua API: Ollama chạy local miễn phí, đủ để học hết Phase 1-6.
 
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-ollama pull gemma3:12b        # model sinh câu trả lời
-ollama pull nomic-embed-text  # model tạo vector, 768 chiều
-```
+> 📄 **Example code:** [`examples/01-q1-framework-nay-thuc-chat-la-cai-gi.sh`](examples/01-q1-framework-nay-thuc-chat-la-cai-gi.sh)
 
 **Verify**
 
@@ -52,11 +48,7 @@ Hai module đầu là đường ống lấy dữ liệu về — không có gì 
 3. Ghép sau: #1 + #2 = #6 Enterprise RAG Platform.
 4. Đo kết quả từng bước (số câu trả lời đúng) trước khi thêm module mới. Ở cấp trung bình, dự án #6 mới được ghi là 2-3 tuần cho bản MVP.
 
-```bash
-ollama serve                                     # chạy model local
-curl -s localhost:11434/api/embed \
-  -d '{"model":"nomic-embed-text","input":"deploy docker"}'
-```
+> 📄 **Example code:** [`examples/02-q2-moi-vao-toi-nen-bat-au-tu.sh`](examples/02-q2-moi-vao-toi-nen-bat-au-tu.sh)
 
 **Verify**
 
@@ -88,10 +80,7 @@ Hai hệ số cùng tồn tại: số `01`–`15` đánh số **module trong th�
 | Giữ context không phình vô hạn | `harness/14-compaction-context/` |
 | Xin người duyệt việc không đảo ngược | `harness/15-approval-gates/` |
 
-```bash
-ls harness | grep -c '^1[2-5]-'   # → 4: sandbox, trajectory, compaction, approval
-ls loop    | grep -c '^0'        # → 7: phần Loop Engineering
-```
+> 📄 **Example code:** [`examples/03-q3-module-12-la-sandbox-nhung-part-xii.sh`](examples/03-q3-module-12-la-sandbox-nhung-part-xii.sh)
 
 **Verify**
 
@@ -120,12 +109,7 @@ Framework chỉ cần đúng **hai loại model**: một embedding model để t
 | Embedding model | đổi text thành vector để tìm kiếm | `nomic-embed-text` | `text-embedding-3-small` |
 | LLM | sinh câu trả lời | `gemma3:12b` | `GPT-4o`, `Claude` |
 
-```python
-OLLAMA_URL = "http://localhost:11434"        # miễn phí
-MODEL = "gemma3:12b"                         # đổi sang "gpt-4o" = trả phí
-r = requests.post(f"{OLLAMA_URL}/api/generate",
-    json={"model": MODEL, "prompt": p, "stream": False})
-```
+> 📄 **Example code:** [`examples/04-q4-toi-co-phai-mua-model-at-tien.py`](examples/04-q4-toi-co-phai-mua-model-at-tien.py)
 
 **Verify**
 
@@ -158,11 +142,7 @@ Ba tầng **cộng dồn**, không thay thế. Tài liệu nói thẳng: vẫn c
 3. Nếu lỗi nằm ở nhóm local ("điều 5 hợp đồng X nói gì"), hãy sửa chunking thay vì mua database mới.
 4. Ghi lại câu hỏi nào graph **không** giải quyết được — phần đó vẫn thuộc về BM25 và vector.
 
-```python
-# multi-hop: "Ai duyệt dự án X, người đó báo cáo cho ai?"
-MATCH p = (X:Project {name:'X'})-[r*1..3]->(Y)
-RETURN p, r.confidence AS do_tin_cay
-```
+> 📄 **Example code:** [`examples/05-q1-toi-ang-o-tang-truy-xuat-nao.py`](examples/05-q1-toi-ang-o-tang-truy-xuat-nao.py)
 
 **Verify**
 
@@ -188,13 +168,7 @@ Tài liệu đặt luật số 1 là **Schema First, Data Second**: định ngh�
 4. Chặn quan hệ sai kiểu trước khi ghi: không cho `Person -[EATS]-> Project`.
 5. Ghi rõ nguồn của mỗi quan hệ ngay khi trích xuất, đừng đợi tới lúc trả lời.
 
-```yaml
-node_types: [Person, Project, Document]
-edge_types: [APPROVES, REPORTS_TO, BELONGS_TO]
-constraints:
-  - "Person -[REPORTS_TO]-> Person"
-  - "Project -[APPROVES]-> Person"
-```
+> 📄 **Example code:** [`examples/06-q2-toi-khong-biet-truoc-can-nhung-quan.yaml`](examples/06-q2-toi-khong-biet-truoc-can-nhung-quan.yaml)
 
 **Verify**
 
@@ -220,11 +194,7 @@ Nút thắt không phải nơi lưu, mà là **xây graph**: mỗi vòng trích 
 4. Chặn `max_hops` ở mức 2-3, nếu không truy vấn sẽ nổ.
 5. Bỏ qua `graph/07-gnn` lúc đầu — tài liệu coi đây là phần **học** trên đồ thị, không phải điều kiện để có câu trả lời đầu tiên.
 
-```bash
-docker compose up -d neo4j
-python scripts/extract_graph.py data/raw_docs/ --out data/graph.json
-python scripts/evaluate.py            # coverage, path_precision
-```
+> 📄 **Example code:** [`examples/07-q3-muon-thu-trong-mot-tuan-ma-chua.sh`](examples/07-q3-muon-thu-trong-mot-tuan-ma-chua.sh)
 
 **Verify**
 
@@ -279,14 +249,7 @@ Tài liệu dẫn kết quả đo được thay vì niềm tin: nghiên cứu SW
 2. Chặn ngay một điều khoản không đổi được: **không cho lưu file nếu linter báo lỗi**.
 3. Ghi lại 3 số từ ngày đầu: tỉ lệ thành công, thời gian xử lý một issue, số token mỗi lần chạy.
 
-```typescript
-const editTool = { execute: async (file, changes) => {
-  const next = applyChanges(file, changes);
-  const lint = await linter.check(next);       // kiểm tra ngay
-  if (lint.errors.length) return { success: false, errors: lint.errors };
-  await saveFile(file, next); return { success: true };
-}};
-```
+> 📄 **Example code:** [`examples/08-q1-them-harness-ton-cong-hon-khong-co.ts`](examples/08-q1-them-harness-ton-cong-hon-khong-co.ts)
 
 **Verify**
 
@@ -310,13 +273,7 @@ Tài liệu trả lời thẳng ở mục Key Insight: *"Prompt Engineering khô
 2. Chuyển phần quan trọng từ lời dặn sang hạ tầng: prompt nói "hãy cẩn thận", code thì **không cho phép** trả về code lỗi.
 3. Mỗi lần sửa prompt, chạy lại cùng bộ câu hỏi để biết sửa có ích không.
 
-```javascript
-harness.addTool({ name: "write_code", execute: async (code) => {
-  const lint = await linter.check(code);      // thay vì "nhờ" AI cẩn thận
-  return lint.hasErrors ? { status: "error", errors: lint.errors }
-                        : { status: "success", code };
-}});
-```
+> 📄 **Example code:** [`examples/09-q2-nghe-noi-prompt-engineering-a-chet-vay.js`](examples/09-q2-nghe-noi-prompt-engineering-a-chet-vay.js)
 
 **Verify**
 
@@ -341,13 +298,7 @@ Module 01–11 là các giai đoạn của đường ống: làm tuần tự và
 3. Bật `13-trajectory-observability` trước khi scale lên nhiều agent: không có log là không debug được.
 4. Đặt `15-approval-gates` cho đúng những việc không đảo ngược được (deploy, xoá dữ liệu, gửi email hàng loạt).
 
-```bash
-# 4 dòng này dựng xong một lần chạy RAG tối giản để bắt đầu
-ollama pull gemma3:12b
-ollama pull nomic-embed-text
-python scripts/extract.py docs/ --out kb.json
-python scripts/query.py "báo giá còn hạn bao lâu?"
-```
+> 📄 **Example code:** [`examples/10-q3-module-12-15-la-giai-oan-hay.sh`](examples/10-q3-module-12-15-la-giai-oan-hay.sh)
 
 **Verify**
 
@@ -377,14 +328,7 @@ Không có ai tự gọi code của bạn. Bạn phải đứng giữa: chặn (
 | Wrapper hàm | app Python do bạn tự viết | ⭐ |
 | Open WebUI | đã dùng Open WebUI | ⭐ không cần code |
 
-```python
-@app.route("/api/chat", methods=["POST"])
-def chat():
-    ctx = search_relevant(data.get("prompt", ""))          # tìm context
-    aug = f"Answer using:\n{chr(10).join(ctx)}\n\nQuestion: {prompt}"
-    return jsonify(requests.post(OLLAMA_URL, json={
-        "model": "gemma3:12b", "prompt": aug, "stream": False}).json())
-```
+> 📄 **Example code:** [`examples/11-q4-toi-a-co-code-tim-kiem-roi.py`](examples/11-q4-toi-a-co-code-tim-kiem-roi.py)
 
 **Verify**
 

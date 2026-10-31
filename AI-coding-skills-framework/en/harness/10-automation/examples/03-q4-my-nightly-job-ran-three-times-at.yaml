@@ -1,0 +1,4 @@
+concurrencyPolicy: Forbid
+activeDeadlineSeconds: 3600
+startingDeadlineSeconds: 300
+failedJobsHistoryLimit: 3

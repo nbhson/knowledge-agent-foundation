@@ -1,0 +1,3 @@
+- name: Bài test chưa ổn định (không chặn deploy)
+  continue-on-error: true
+  run: pytest -m flaky --junitxml=flaky.xml

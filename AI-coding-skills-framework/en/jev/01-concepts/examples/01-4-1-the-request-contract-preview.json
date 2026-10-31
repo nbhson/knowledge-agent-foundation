@@ -1,0 +1,9 @@
+{
+  "model": "jev-latest",
+  "state": "Ticket #4821: charged twice after plan upgrade, customer angry…",
+  "questions": {
+    "team":    { "type": "choice", "options": ["billing", "infra", "bug", "other"] },
+    "refund":  { "type": "noul",   "criteria": "the text explicitly asks for money back" },
+    "urgency": { "type": "score",  "levels": ["calm", "annoyed", "angry"] }
+  }
+}

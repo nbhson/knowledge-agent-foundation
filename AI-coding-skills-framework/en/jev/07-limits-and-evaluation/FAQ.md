@@ -107,12 +107,7 @@ The threshold is your risk policy expressed as a float. It was chosen on someone
 3. Run Jev, record `selected`, the probabilities, and confidence per question.
 4. Sweep the threshold and plot coverage against accuracy of the auto-acted decisions.
 
-```python
-for tau in [0.5, 0.6, 0.7, 0.8, 0.9]:
-    auto = [(p, ok) for p, ok in gate if p >= tau]
-    print(tau, len(auto)/len(gate),                      # coverage
-          sum(ok for _, ok in auto)/len(auto))          # accuracy when acting
-```
+> 📄 **Example code:** [`examples/01-q4-we-shipped-with-typesafe-tool-call-threshold.py`](examples/01-q4-we-shipped-with-typesafe-tool-call-threshold.py)
 
 5. Pick the value where your cost tradeoff holds — **per question**, not one global number. If a wrong auto-action is expensive (gating, charges), push it higher; if escalation is the expensive mistake (high-volume triage), lower it and build review tooling for what remains.
 6. Re-tune whenever the model version, the question wording, the state shape, or the traffic mix changes.

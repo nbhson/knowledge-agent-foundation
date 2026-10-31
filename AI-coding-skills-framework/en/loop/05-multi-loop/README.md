@@ -75,12 +75,7 @@ Every action loop should write `acting_on: branch-or-pr-id` in its state file. B
 
 **`loop-worktree` encodes this as an advisory lock** instead of a self-check convention:
 
-```bash
-# In the loop's control script, before spawning a worktree:
-npx @cobusgreyling/loop-worktree lock --paths <globs> --owner <pattern>
-# After finishing:
-npx @cobusgreyling/loop-worktree unlock --owner <pattern>
-```
+> 📄 **Example code:** [`examples/01-5-collision-detection.sh`](examples/01-5-collision-detection.sh)
 
 `loop-worktree create` does not check locks itself — these two commands are paired by convention in the control script.
 

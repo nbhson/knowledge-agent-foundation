@@ -81,31 +81,11 @@ Trong Minimal Mode, Agent chỉ được cung cấp đúng **2 công cụ chuẩ
 
 ### 1. `bash`
 Cho phép thi hành lệnh trong terminal của môi trường sandbox:
-```json
-{
-  "name": "bash",
-  "description": "Execute bash command in sandbox terminal",
-  "parameters": {
-    "command": { "type": "string", "description": "Command to run" }
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/01-1-bash.json`](examples/01-1-bash.json)
 
 ### 2. `editor`
 Cho phép xem và chỉnh sửa file tại các khoảng dòng chỉ định:
-```json
-{
-  "name": "editor",
-  "description": "View or edit file content",
-  "parameters": {
-    "command": { "type": "string", "enum": ["view", "create", "str_replace"] },
-    "path": { "type": "string" },
-    "file_text": { "type": "string" },
-    "old_str": { "type": "string" },
-    "new_str": { "type": "string" }
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-2-editor.json`](examples/02-2-editor.json)
 
 ---
 
@@ -113,74 +93,7 @@ Cho phép xem và chỉnh sửa file tại các khoảng dòng chỉ định:
 
 Dưới đây là mã nguồn của một **Minimal Benchmark Runner** cách ly hoàn toàn môi trường chạy:
 
-```typescript
-import { MinimalBashTool, MinimalEditorTool } from './minimal-tools';
-
-export interface BenchmarkTask {
-  id: string;
-  problemStatement: string;
-  repoPath: string;
-  testCommand: string;
-}
-
-export class MinimalBenchmarkRunner {
-  constructor(private llmClient: any) {}
-
-  public async runTask(task: BenchmarkTask, maxTurns: number = 20): Promise<{ solved: boolean; turns: number; log: any[] }> {
-    const bash = new MinimalBashTool(task.repoPath);
-    const editor = new MinimalEditorTool(task.repoPath);
-
-    // System Prompt tối giản < 100 tokens
-    const systemPrompt = `You are an expert software engineer. Solve the issue using bash and editor tools. When finished, output COMPLETE_TASK.`;
-
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: task.problemStatement }
-    ];
-
-    const log: any[] = [];
-    let turn = 0;
-
-    while (turn < maxTurns) {
-      turn++;
-      // Gọi LLM trực tiếp không qua RAG hay Memory Middleware
-      const response = await this.llmClient.chat({
-        messages,
-        tools: [bash.definition, editor.definition]
-      });
-
-      log.push({ turn, response });
-
-      if (response.content?.includes('COMPLETE_TASK')) {
-        break;
-      }
-
-      if (response.toolCalls) {
-        for (const call of response.toolCalls) {
-          let toolResult: any;
-          if (call.name === 'bash') {
-            toolResult = await bash.execute(call.args);
-          } else if (call.name === 'editor') {
-            toolResult = await editor.execute(call.args);
-          }
-
-          messages.push({
-            role: 'tool',
-            tool_call_id: call.id,
-            content: JSON.stringify(toolResult)
-          });
-        }
-      }
-    }
-
-    // Kiểm tra kết quả bằng test script khách quan
-    const evalResult = await bash.execute({ command: task.testCommand });
-    const solved = evalResult.exitCode === 0;
-
-    return { solved, turns: turn, log };
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/03-5-trien-khai-benchmark-runner-typescript-implementation.ts`](examples/03-5-trien-khai-benchmark-runner-typescript-implementation.ts)
 
 ---
 

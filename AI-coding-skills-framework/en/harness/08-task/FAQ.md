@@ -22,13 +22,7 @@ Because the request was never split. The whole request arrived as one unit, and 
 4. Mark sub-tasks that touch different files with `parallel=True` so they can run in the same batch.
 5. Give every sub-task a written check ("schema updated, migrations run") so "done" is not a guess.
 
-```python
-# One file = one sub-task, safe to run side by side
-SubTask(id=f"{task.id}-f01", order=1, parallel=True,
-        files_to_modify=["src/auth.py"],
-        estimated_tokens=1000,
-        verification_criteria="File src/auth.py updated correctly")
-```
+> 📄 **Example code:** [`examples/01-q1-i-said-refactor-the-auth-module-add.py`](examples/01-q1-i-said-refactor-the-auth-module-add.py)
 
 **Verify**
 

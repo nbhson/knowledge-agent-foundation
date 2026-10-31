@@ -66,11 +66,7 @@ Both agents share one working directory. When two agents edit the same file at t
 1. Give every agent a **dedicated working directory** — a git worktree, or an equivalent isolated checkout. Same history, separate working tree.
 2. **One worktree per attempt**, tracked in a manifest, and name it after the attempt so you can see history at a glance:
 
-```bash
-loop-worktree create --run-id <id> --pattern ci-sweeper
-# .worktrees/fix-1   attempt 1
-# .worktrees/fix-2   attempt 2 (after a REJECT)
-```
+> 📄 **Example code:** [`examples/01-q3-two-loops-started-editing-the-same-file.sh`](examples/01-q3-two-loops-started-editing-the-same-file.sh)
 
 3. **Clean up on reject or escalate.** This is the step everyone forgets. When the verifier rejects a patch, or the run escalates to a human, the worktree is deleted in the same step. Orphaned worktrees are how you end up with forty stale checkouts and no idea which one is live.
 4. When the verifier rejects, do not merge and do not retry forever — the engine records the attempt, and at the **hard cap of 3 attempts** it escalates with full context so you do not have to re-hunt for what it was doing.

@@ -25,10 +25,7 @@ Each pattern was built for one specific pain, so you do not need to understand a
 4. Dependabot or CVE (a published vulnerability) noise → Dependency Sweeper.
 5. Not sure at all → Daily Triage at L1 (report only, no code changes).
 
-```bash
-npx @cobusgreyling/loop init . --pattern daily-triage --tool grok
-npx @cobusgreyling/loop audit . --suggest
-```
+> 📄 **Example code:** [`examples/01-q1-there-are-seven-patterns-and-i-cannot.sh`](examples/01-q1-there-are-seven-patterns-and-i-cannot.sh)
 
 **Verify**
 
@@ -59,9 +56,7 @@ Cadence multiplies per-run cost. A no-op run is about 5k tokens; a full action r
 | Issue Triage | ~5k | ~40k |
 | CI Sweeper | ~5k | ~50k triage, ~200k fix |
 
-```bash
-npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
-```
+> 📄 **Example code:** [`examples/02-q2-i-started-a-loop-and-my-token.sh`](examples/02-q2-i-started-a-loop-and-my-token.sh)
 
 **Verify**
 
@@ -117,10 +112,7 @@ The README's golden rule is explicit: never skip to L3 for a new pattern on a pr
 4. Walk the upgrade path in `../04-operating/` before each level change.
 5. Set up scheduling (`/loop`, `scheduler_create`, GitHub Action, or Codex Automation).
 
-```bash
-npx @cobusgreyling/loop init . --pattern issue-triage --tool claude
-npx @cobusgreyling/loop audit . --suggest
-```
+> 📄 **Example code:** [`examples/03-q4-my-team-wants-to-jump-straight-to.sh`](examples/03-q4-my-team-wants-to-jump-straight-to.sh)
 
 **Verify**
 
@@ -179,9 +171,7 @@ Triage produces noise when the skill has no ignore list. It also burns money: a 
 3. Use `/loop 1d` for morning triage and `/loop 2h` only during an active sprint, for faster signal rather than louder signal.
 4. Write the post-run critique every cycle: false positives, repeated items, one adjustment for next time.
 
-```bash
-/loop 1d Run $loop-triage and update STATE.md. Do not auto-fix in the first week — report only.
-```
+> 📄 **Example code:** [`examples/04-q2-the-08-15-report-lists-30-items.sh`](examples/04-q2-the-08-15-report-lists-30-items.sh)
 
 **Verify**
 
@@ -234,9 +224,7 @@ A daily schedule is a sampling window, not a monitor. Between two ticks you are 
 3. No terminal interface (TUI)? Use the GitHub Action cron `0 8 * * 1-5`; `daily-triage.yml` updates `STATE.md` and `loop-run-log.md`.
 4. Check the projected cost before tightening the interval below 2h.
 
-```bash
-npx @cobusgreyling/loop cost --pattern daily-triage --cadence 1d --level L1
-```
+> 📄 **Example code:** [`examples/05-q4-the-loop-ran-at-08-00-and.sh`](examples/05-q4-the-loop-ran-at-08-00-and.sh)
 
 **Verify**
 
@@ -291,9 +279,7 @@ A 2-hour schedule meets a 500-issue backlog. A no-op run is ~5k tokens and a ful
 3. Run on `/loop 2h–1d`; go faster only if the backlog actually shrinks between runs.
 4. Reduce misclassification with evidence on every finding plus periodic human review.
 
-```bash
-npx @cobusgreyling/loop cost --pattern issue-triage --cadence 2h --level L1
-```
+> 📄 **Example code:** [`examples/06-q2-the-backlog-has-500-open-issues-and.sh`](examples/06-q2-the-backlog-has-500-open-issues-and.sh)
 
 **Verify**
 
@@ -349,9 +335,7 @@ Without a circuit breaker the sweeper keeps proposing minimal fixes for a failur
 3. Escalate with a pruned context summary, not the full log history.
 4. Pause the loop after N failures on a red main and batch the fixes instead.
 
-```bash
-/loop 15m Run ci-triage, then minimal-fix in a worktree. Run loop-guard before every retry.
-```
+> 📄 **Example code:** [`examples/07-q1-ci-is-red-and-the-loop-retried.sh`](examples/07-q1-ci-is-red-and-the-loop-retried.sh)
 
 **Verify**
 
@@ -473,9 +457,7 @@ The sweeper is not a bulk updater on purpose. Only **low-risk CVEs with a patch-
 3. Batch the long tail weekly instead of daily, so a week of patch bumps arrives as a reviewable pile rather than 30 single-line pull requests.
 4. Keep Dependabot as the discovery tool (it finds alerts) and let the sweeper own the patch + verify half of the job.
 
-```bash
-npx @cobusgreyling/loop cost --pattern dependency-sweeper --cadence 1d --level L2
-```
+> 📄 **Example code:** [`examples/08-q1-dependabot-shows-me-40-open-alerts-and.sh`](examples/08-q1-dependabot-shows-me-40-open-alerts-and.sh)
 
 **Verify**
 
@@ -745,9 +727,7 @@ No. This pattern is **level 1, draft only, and no auto-publish** — it is a rea
 3. Decide the version bump by hand, using the `Breaking` count as the deciding input.
 4. Keep the frequency low. One run is about 30k tokens; a no-op run with no new commits is about 3k, so an unnecessary daily schedule is the only real waste here.
 
-```bash
-npx @cobusgreyling/loop cost --pattern changelog-drafter --cadence 1d --level L1
-```
+> 📄 **Example code:** [`examples/09-q3-will-it-just-publish-to-github-releases.sh`](examples/09-q3-will-it-just-publish-to-github-releases.sh)
 
 **Verify**
 

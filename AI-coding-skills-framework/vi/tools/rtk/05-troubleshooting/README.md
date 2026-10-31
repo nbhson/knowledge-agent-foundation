@@ -24,11 +24,7 @@ Thêm lệnh vào `exclude_commands` nếu:
 - Lệnh đó **không nên bị rewrite** để tránh nguy hiểm (curl tải nhị phân, playwright).
 - Pipeline/script phụ thuộc format output gốc.
 
-```toml
-# ~/.config/rtk/config.toml
-[hooks]
-exclude_commands = ["curl", "playwright", "terraform plan"]
-```
+> 📄 **Code ví dụ:** [`examples/01-quy-tac-exclude-khi-nao-giu-lenh-goc.toml`](examples/01-quy-tac-exclude-khi-nao-giu-lenh-goc.toml)
 
 ## Lưu Ý An Toàn (liên kết harness Guardrails)
 
@@ -44,9 +40,7 @@ exclude_commands = ["curl", "playwright", "terraform plan"]
 - Lệnh có side-effects quan trọng mà bạn muốn thấy đầy đủ log.
 - Pipeline/CI script parse output theo định dạng gốc.
 
-```bash
-rtk init -g --uninstall   # Gỡ hoàn toàn hook
-```
+> 📄 **Code ví dụ:** [`examples/02-khi-nao-nen-tat-rtk.sh`](examples/02-khi-nao-nen-tat-rtk.sh)
 
 Hoặc dùng `exclude_commands` cho từng lệnh thay vì tắt hẳn.
 

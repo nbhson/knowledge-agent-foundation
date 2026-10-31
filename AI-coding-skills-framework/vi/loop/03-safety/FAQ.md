@@ -26,10 +26,7 @@ Danh sách cấm chỉ nằm trong hướng dẫn bằng lời thì chỉ là l�
 .terraform/**, k8s/production/**, **/migrations/**, auth/**, payments/**, billing/**
 ```
 
-```bash
-npx @cobusgreyling/loop gate check --action auto-merge --paths <các tệp đã đổi>
-# mã thoát 2 = leo thang cần người, mã thoát 0 = được đi tiếp
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-loop-cua-toi-tu-mo-file-env.sh`](examples/01-q1-loop-cua-toi-tu-mo-file-env.sh)
 
 **Kiểm tra**
 

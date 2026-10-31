@@ -301,17 +301,7 @@ Mỗi trường trong payload phải **suy ra từ bằng chứng**, chứ đừ
 
 Về mặt implementation, đây là hàm validate chạy *trước* khi `request()` được gọi:
 
-```typescript
-export function validatePayload(r: GateRequest): string[] {
-  const missing: string[] = [];
-  if (!r.diff)                  missing.push("diff");
-  if (r.blastRadius.length === 0) missing.push("blastRadius");
-  if (!r.dryRun)                missing.push("dryRun");      // bằng chứng, không phải tóm tắt
-  if (!r.rollback)              missing.push("rollback");
-  if (!r.expiresAt || r.expiresAt <= Date.now()) missing.push("expiresAt");
-  return missing;
-}
-```
+> 📄 **Code ví dụ:** [`examples/01-3-2-quy-tac-bang-chung-bat-buoc.ts`](examples/01-3-2-quy-tac-bang-chung-bat-buoc.ts)
 
 Một `request()` với mảng `missing` không rỗng sẽ ném lỗi; run **không thể** đi tiếp tới
 khi bằng chứng tồn tại. Các đội cho phép "approve anyway" trên payload sai consistently
@@ -347,16 +337,7 @@ State machine nhỏ và đóng; bất kỳ implementation nào "sinh ra" outcome
 - Đồng hồ hết hạn chạy trong *engine*, không phải trong phiên UI. Đóng laptop review
   không thể kéo dài đời sống của gate.
 
-```typescript
-// hậu quả fail-closed của việc hết hạn
-export function onExpire(key: string, g: Gate): void {
-  g.verdict = "expired";
-  traj.append({ kind: "approval_verdict", payload: { key, verdict: "expired",
-    reason: "ttl_elapsed", at: Date.now() } });
-  plan.markBlocked(g.taskId, "approval-timeout");
-  replanner.excludeBranch(g.taskId);   // → 04 §14.2
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-4-2-timeout-deny-fail-closed.ts`](examples/02-4-2-timeout-deny-fail-closed.ts)
 
 ### 4.3 Deny → Replan, Không Retry
 
@@ -387,29 +368,7 @@ export function onExpire(key: string, g: Gate): void {
 
 ### 5.1 API Gatekeeper
 
-```typescript
-type Verdict = "approved" | "denied" | "expired";
-interface GateRequest {
-  key: string; tier: "write" | "elevated" | "prod-auth";
-  summary: string; diff: string; blastRadius: string[];
-  dryRun: string; rollback: string; expiresAt: number;
-}
-export class Gatekeeper {
-  private gates = new Map<string, { req: GateRequest; verdict?: Verdict }>();
-  request(r: GateRequest): void {
-    ensureValid(r);                          // quy tắc bằng chứng bắt buộc (§3.2)
-    this.gates.set(r.key, { req: r });       // engine throws PAUSED:<key>
-    setTimeout(() => this.settle(r.key, "expired"), r.expiresAt - Date.now());
-  }
-  settle(key: string, v: Verdict, by = "human"): void {
-    const g = this.gates.get(key); if (!g || g.verdict) return;  // một verdict thắng
-    g.verdict = v; // audit: { key, v, by, at: Date.now() } → trajectory (→ 13)
-  }
-  verdict(key: string): Verdict | undefined { return this.gates.get(key)?.verdict; }
-}
-// Engine loop: trước khi chạy gated step → gatekeeper.request(...) → checkpoint
-// → throw PAUSED → verdict approved: resume; denied/expired: mark blocked → replan.
-```
+> 📄 **Code ví dụ:** [`examples/03-5-1-api-gatekeeper.ts`](examples/03-5-1-api-gatekeeper.ts)
 
 ### 5.2 Giao Thức PAUSED
 
@@ -458,17 +417,7 @@ resume(runId) ──▶ replay cache hit cho t1..t214 ──▶ t215 đi tiếp
 
 Gate `prod-auth` yêu cầu một đôi mắt human thứ hai có danh tính khác người đề xuất:
 
-```typescript
-// engine từ chối materialize action tới khi một human KHÁC approve
-export function tryApprove(key: string, approverId: string, reason?: string): boolean {
-  const g = gates.get(key); if (!g || g.verdict) return false;
-  if (g.req.actorId === approverId) {
-    traj.warn({ kind: "approval_policy", payload: { key, detail: "self_approval_rejected" } });
-    return false;                                  // proposer ≠ approver, cứng
-  }
-  gates.get(key)!.actorApproval = approverId;      // human độc lập thứ hai xác nhận
-}
-```
+> 📄 **Code ví dụ:** [`examples/04-5-4-enforce-two-person-rule.ts`](examples/04-5-4-enforce-two-person-rule.ts)
 
 Người đề xuất được ghi lúc `request()` (chính step sinh ra gate). Quy tắc được enforce
 *trong* `tryApprove`, nên không có đường mô hình vòng qua. Cố tự duyệt không im lặng —
@@ -556,152 +505,26 @@ là một claim kiểm chứng được, không phải lời bào chữa.
 
 ### 8.1 Types
 
-```typescript
-export type Tier = "read" | "write" | "elevated" | "prod-auth";
-export type Verdict = "approved" | "denied" | "expired";
-export type GateState =
-  | { status: "waiting" }
-  | { status: "settled"; verdict: Verdict; by: string; at: number };
-
-export interface Gate {
-  key: string;
-  taskId: string;                 // node plan graph (→ 04)
-  runId: string;                  // cho resume idempotency (→ 07 §13)
-  tier: Tier;
-  actorId: string;                // proposer (two-person rule)
-  summary: string;
-  diff: string;
-  blastRadius: string[];
-  dryRun: string;
-  rollback: string;
-  diffHash: string;
-  dryRunHash: string;
-  createdAt: number;
-  expiresAt: number;
-  state: GateState;
-}
-
-export interface RiskTableEntry {
-  action: string;                 // registry key, ví dụ "db.migrate"
-  defaultTier: Tier;
-  paths?: RegExp[];               // ví dụ force-push trên "release/*"
-  noDryRunAllowlist?: boolean;    // bản thân phải được duyệt policy
-}
-```
+> 📄 **Code ví dụ:** [`examples/05-8-1-types.ts`](examples/05-8-1-types.ts)
 
 ### 8.2 Gatekeeper Có Persist
 
 <details>
 <summary>TypeScript Code — Gatekeeper có persist + reload + audit (bấm để mở/thu gọn)</summary>
 
-```typescript
-import { randomBytes, createHash } from "node:crypto";
-
-export class Gatekeeper {
-  private gates = new Map<string, Gate>();
-  constructor(
-    private store: TrajectoryStore,          // audit/độ bền (→ 13)
-    private risk: RiskTableEntry[],          // registry tier
-  ) {
-    this.reloadOpen();                       // sống sót qua restart
-  }
-
-  private key(): string { return `gate_${randomBytes(4).toString("hex")}`; }
-
-  /** Validate tier + bằng chứng, persist, nạp đạn timer fail-closed. */
-  request(input: Omit<Gate, "key" | "state" | "createdAt" | "diffHash">
-      | { diff: string; dryRun: string }): Gate {
-    const missing = validatePayload(input);              // §3.2 bằng chứng bắt buộc
-    if (missing.length) throw new Error(`gate missing evidence: ${missing.join(",")}`);
-    const gate: Gate = {
-      ...input, key: this.key(), createdAt: Date.now(), state: { status: "waiting" },
-      diffHash: createHash("sha256").update(input.diff).digest("hex"),
-      dryRunHash: createHash("sha256").update(input.dryRun).digest("hex"),
-    };
-    this.gates.set(gate.key, gate);
-    this.store.append({ kind: "approval_request", payload: gate });
-    this.armTimer(gate);
-    return gate;
-  }
-
-  private armTimer(g: Gate): void {
-    const ms = g.expiresAt - Date.now();
-    setTimeout(() => this.settle(g.key, "expired", "timer"), Math.max(0, ms));
-  }
-
-  /** Một verdict thắng. Tự duyệt trên prod-auth bị từ chối và được audit. */
-  settle(key: string, v: Verdict, by: string, reason?: string): boolean {
-    const g = this.gates.get(key);
-    if (!g || g.state.status === "settled") return false;
-    if (v === "approved" && g.tier === "prod-auth" && by === g.actorId) {
-      this.store.append({ kind: "approval_policy", payload: { key, detail: "self_approval_rejected" } });
-      return false;
-    }
-    g.state = { status: "settled", verdict: v, by, at: Date.now() };
-    this.store.append({ kind: "approval_verdict",
-      payload: { key, verdict: v, by, reason, diffHash: g.diffHash, dryRunHash: g.dryRunHash } });
-    return true;
-  }
-
-  verdict(key: string): Verdict | undefined {
-    return this.gates.get(key)?.state.status === "settled"
-      ? (this.gates.get(key)!.state as { verdict: Verdict }).verdict : undefined;
-  }
-
-  private reloadOpen(): void {
-    for (const ev of this.store.query({ kind: "approval_request" })) {
-      if (!this.verdict(ev.payload.key)) {                    // gate đang mở → nạp lại timer
-        const g = ev.payload as Gate;
-        this.gates.set(g.key, g);
-        this.armTimer(g);
-      }
-    }
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/06-8-2-gatekeeper-co-persist.ts`](examples/06-8-2-gatekeeper-co-persist.ts)
 
 </details>
 
 ### 8.3 Tích Hợp Vòng Lặp Engine
 
-```typescript
-export async function runStep(step: Step, ctx: Ctx): Promise<void> {
-  const tier = resolveTier(step, ctx.risk);                  // §2.1 rule, không phải model
-  await checkpoint(ctx, step);                               // (→ 07 §13) TRƯỚC khi throw
-
-  if (tier === "read") { await step.run(ctx); return; }      // auto-approve, chỉ log
-
-  const gate = ctx.gates.request({ taskId: step.id, runId: ctx.runId, tier,
-    actorId: ctx.actorId, summary: step.summary, diff: step.renderDiff(),
-    blastRadius: step.blastRadius(ctx), dryRun: await step.dryRun(ctx),
-    rollback: step.rollback(ctx) });
-  await ctx.notify(gate);                                    // §7.2
-
-  throw new Paused(`PAUSED:${gate.key}`);                    // đóng băng, audit thấy nó
-
-  // được driver resume sau khi có verdict:
-  //   verdict=approved → hàm này trả về, step.run() thực thi đúng một lần
-  //   verdict=denied/expired → markBlocked → replanner.excludeBranch(step.id)
-}
-```
+> 📄 **Code ví dụ:** [`examples/07-8-3-tich-hop-vong-lap-engine.ts`](examples/07-8-3-tich-hop-vong-lap-engine.ts)
 
 Chỗ này engine **không chừa** cửa nào khác: không tồn tại nhánh kiểu model "hỏi cho tử tế" rồi đi tiếp. Con đường duy nhất qua được cú throw là verdict đã persist từ Gatekeeper — toàn bộ chuyện toàn vẹn nằm ở chỗ đó.
 
 ### 8.4 Two-Person Gatekeeper
 
-```typescript
-// wrap Gatekeeper cho prod-auth: hai human approve độc lập, persist
-export class TwoPersonGatekeeper {
-  constructor(private inner: Gatekeeper) {}
-  request(g: Omit<Gate, "key" | "state" | "createdAt" | "diffHash"
-        | "dryRunHash">): Gate {
-    const gate = this.inner.request(g);
-    return gate;   // approval yêu cầu MỘT actor khác: settle() enforce ≠ actor
-  }
-  // settle() trong Gatekeeper cơ sở đã từ chối actorId === approver cho prod-auth.
-  // Tất cả thay đổi nằm ở UI + TTL (4h) + page. Invariant ở một chỗ duy nhất.
-}
-```
+> 📄 **Code ví dụ:** [`examples/08-8-4-two-person-gatekeeper.ts`](examples/08-8-4-two-person-gatekeeper.ts)
 
 ---
 
@@ -709,23 +532,7 @@ export class TwoPersonGatekeeper {
 
 ### 9.1 Test Bất Biến
 
-```typescript
-export function assertGateInvariants(...gates: Gate[]): void {
-  for (const g of gates) {
-    // 1 — settled đúng một lần
-    if (g.state.status === "settled" && g.state.at < g.createdAt) throw new Error("verdict before creation");
-    // 2 — bằng chứng bắt buộc
-    if (g.state.status === "settled" && g.state.verdict === "approved" && !g.dryRunHash) throw new Error("approved without dry-run hash");
-    // 3 — fail closed
-    if (g.expiresAt < Date.now() && g.state.status === "waiting") throw new Error("expired gate still waiting (timer lost)");
-    // 4 — two-person rule
-    if (g.tier === "prod-auth" && g.state.status === "settled" && g.state.verdict === "approved"
-        && g.state.by === g.actorId) throw new Error("self-approval on prod-auth");
-    // 5 — mất thứ tự: verdict không được có trước bằng chứng đang được review
-    if (typeof g.diffHash === "string" && g.diffHash === "" ) throw new Error("empty diff hash");
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/09-9-1-test-bat-bien.ts`](examples/09-9-1-test-bat-bien.ts)
 
 Chạy nhóm này trên **mọi gate đã ghi trong production** (giống §9.1 của → 13): suite bất
 biến rẻ và bắt regression mà unit test không bao giờ bắt — ví dụ timer không sống sót qua
@@ -733,59 +540,14 @@ restart.
 
 ### 9.2 Contract Test
 
-```typescript
-describe("Gatekeeper contract", () => {
-  it("validate bằng chứng trước khi mở", () => {
-    expect(() => gates.request({ ...noDryRun })).toThrow(/missing evidence/);
-  });
-
-  it("settle đúng một lần", async () => {
-    const g = gates.request(validGate);
-    gates.settle(g.key, "approved", "alice");
-    gates.settle(g.key, "denied", "alice");                  // lời gọi thứ hai là no-op
-    expect(gates.verdict(g.key)).toBe("approved");
-  });
-
-  it("sống sót qua restart và nạp lại expiry", async () => {
-    const g = gates.request(validGate);
-    const fresh = new Gatekeeper(store, risk);               // nạp lại gate đang mở
-    expect(fresh.verdict(g.key)).toBeUndefined();
-    await vi.advanceTimersByTimeAsync(g.expiresAt - Date.now() + 1);
-    expect(fresh.verdict(g.key)).toBe("expired");            // fail closed
-  });
-
-  it("từ chối tự duyệt trên prod-auth", () => {
-    const g = gates.request(validGateProdAuth);
-    expect(gates.settle(g.key, "approved", g.actorId)).toBe(false);
-  });
-
-  it("phục hồi run sau approve và replan sau deny", async () => {
-    const approved = gates.request(gate1); gates.settle(approved.key, "approved", "bob");
-    const denied   = gates.request(gate2); gates.settle(denied.key, "denied", "bob", "not today");
-    expect(resume(runId, approved.key)).toExecExactlyOnce(stepAtKey(approved.key));
-    expect(plan.exclude).toHaveBeenCalledWith(denied.taskId);   // deny → replan, không retry
-  });
-});
-```
+> 📄 **Code ví dụ:** [`examples/10-9-2-contract-test.ts`](examples/10-9-2-contract-test.ts)
 
 Test restart là test đội thường bỏ, và nó chứng minh gate là *control bảo mật bền* chứ
 không phải một object memory.
 
 ### 9.3 Bộ Hồi Quy
 
-```sql
--- approval rate + wait trung vị theo tier (bộ phát hiện rubber-stamp, §7.1)
-SELECT tier,
-       COUNT(*) FILTER (WHERE verdict='approved')::float / COUNT(*) AS approval_rate,
-       percentile_disc(0.5) WITHIN GROUP (ORDER BY (verdict_time - request_time)) AS median_wait
-FROM approval_verdict v JOIN approval_request r ON r.key = v.key
-GROUP BY tier ORDER BY tier;
-
--- approval mất thứ tự (verdict ghi sau khi action đã chạm thứ gì đó)
-SELECT * FROM approval_verdict v
-JOIN trajectory a ON a.payload->>'key' = v.key AND a.kind = 'action_started'
-WHERE v.recorded_at < a.recorded_at;
-```
+> 📄 **Code ví dụ:** [`examples/11-9-3-bo-hoi-quy.sql`](examples/11-9-3-bo-hoi-quy.sql)
 
 Thêm cả hai vào catalog query ban đêm (→ 13 §6). Approval-rate drift là metric hạng
 nhất: slope tăng là tín hiệu fatigue đã xuất hiện và bằng chứng đang bị stamp máy móc —
@@ -863,72 +625,7 @@ harness:
 
 ## 11. TypeScript Interfaces Cho Approval
 
-```typescript
-// ── The Gate ───────────────────────────────────────────────────────────────
-export type Tier = "read" | "write" | "elevated" | "prod-auth";
-export type Verdict = "approved" | "denied" | "expired";
-export type GateState =
-  | { status: "waiting" }
-  | { status: "settled"; verdict: Verdict; by: string; at: number };
-
-export interface Gate {
-  key: string;
-  taskId: string;            // node plan graph (→ 04)
-  runId: string;             // resume idempotency (→ 07 §13)
-  tier: Tier;
-  actorId: string;           // proposer — neo của two-person rule
-  summary: string;
-  diff: string;
-  blastRadius: string[];
-  dryRun: string;
-  rollback: string;
-  diffHash: string;
-  dryRunHash: string;
-  createdAt: number;
-  expiresAt: number;
-  state: GateState;
-}
-
-// ── Risk Registry ──────────────────────────────────────────────────────────
-export interface RiskTableEntry {
-  action: string;
-  defaultTier: Tier;
-  paths?: RegExp[];
-  noDryRunAllowlist?: boolean;
-}
-export interface RoleRiskMatrix {
-  role: string;               // → 12 §6 policy per-role
-  entries: RiskTableEntry[];
-  override?: { action: string; tier: Tier; reason: string; approvedBy: string; at: number };
-}
-
-// ── Gatekeeper ─────────────────────────────────────────────────────────────
-export interface Gatekeeper {
-  request(input: GateRequestInput): Gate;
-  settle(key: string, v: Verdict, by: string, reason?: string): boolean;
-  verdict(key: string): Verdict | undefined;
-  armed(key: string): boolean;
-}
-export interface GateEngineContract {
-  before(action: Step): Tier;              // enforcement của tag-plan (§2.2)
-  request(input: GateRequestInput): Gate;  // throw PAUSED:<key> sau checkpoint
-  onVerdict(key: string, v: Verdict): void; // approved→resume; denied/expired→replan
-}
-
-// ── Audit ──────────────────────────────────────────────────────────────────
-export interface ApprovalAuditEvent {
-  kind: "approval_request" | "approval_verdict" | "approval_policy" | "notification_sent";
-  payload: { key: string; tier: Tier; actorId: string; approver?: string;
-             verdict?: Verdict; reason?: string; diffHash?: string; dryRunHash?: string;
-             by?: string; at: number };
-  sessionId: string; taskId: string;     // join keys (→ 13 §4)
-  tokens: { in: number; out: number };
-}
-
-// ── Test surface ───────────────────────────────────────────────────────────
-export interface GateInvariant { name: string; assert(g: Gate): void }
-export interface FatigueMetric { tier: Tier; approvalRate: number; medianWaitMs: number }
-```
+> 📄 **Code ví dụ:** [`examples/12-11-typescript-interfaces-cho-approval.ts`](examples/12-11-typescript-interfaces-cho-approval.ts)
 
 ---
 

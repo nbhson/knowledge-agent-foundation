@@ -23,10 +23,7 @@ The hook only runs on shell (Bash tool) calls. Claude Code's built-in `Read`, `G
 3. Or skip the agent's built-ins entirely and call `rtk read`, `rtk grep`, `rtk find` directly.
 4. Remember the second limit: RTK measures bash output reduction, not total token-bill reduction.
 
-```bash
-rtk read src/main.rs   # compressed read
-rtk grep "fn main"    # compressed search
-```
+> 📄 **Example code:** [`examples/01-q5-rtk-is-installed-but-the-agent-s.sh`](examples/01-q5-rtk-is-installed-but-the-agent-s.sh)
 
 **Verify**
 
@@ -51,10 +48,7 @@ RTK is **not a tokenizer**. It estimates tokens as `bytes / 4`. That estimate is
 3. Report RTK savings as "bash output reduction", never as "total bill reduction".
 4. Do not add RTK's absolute numbers to your context-budget spreadsheet as exact values.
 
-```bash
-git status | wc -c        # raw bytes
-rtk git status | wc -c   # compressed bytes
-```
+> 📄 **Example code:** [`examples/02-q6-rtk-claims-90-saved-but-the-dashboard.sh`](examples/02-q6-rtk-claims-90-saved-but-the-dashboard.sh)
 
 **Verify**
 
@@ -78,11 +72,7 @@ Compression is lossy by design, so RTK keeps a safety net. When a command fails,
 2. Keep the feature enabled with `mode = "failures"` (the default).
 3. Use `mode = "always"` while debugging noisy pipelines; use `"never"` only if disk usage matters more than recovery.
 
-```toml
-[tee]
-enabled = true
-mode = "failures"   # or "always" / "never"
-```
+> 📄 **Example code:** [`examples/03-q7-a-command-failed-and-the-useful-error.toml`](examples/03-q7-a-command-failed-and-the-useful-error.toml)
 
 **Verify**
 

@@ -40,9 +40,7 @@ Required:  block 169.254.169.254 (cloud metadata = IAM keys), block DNS-based ex
 
 **Layer 3 — time limits, and kill the whole process group.**
 Killing one process is not enough: `sleep 60 &` leaves a background child alive. Kill the group with `SIGKILL`, enable `--init` to reap orphans, and use `--rm` so the container's filesystem dies with it.
-```bash
---init --pids-limit=64 --memory=512m --rm
-```
+> 📄 **Example code:** [`examples/01-q1-your-question-the-sandbox-gets-breached-what.sh`](examples/01-q1-your-question-the-sandbox-gets-breached-what.sh)
 
 **Layer 4 — cap the output.**
 - Still writing and past 256KB → **kill it**. Do not truncate and let it keep running.
@@ -126,13 +124,7 @@ Test fixtures: baked into the image or an ephemeral volume, never fetched at run
 
 **What to do**
 
-```javascript
-// Put the child in its own process group, kill the whole group with SIGKILL
-const t = setTimeout(() => {
-  try { process.kill(-child.pid, "SIGKILL"); } catch {}
-  reject(new SandboxError("deadline-exceeded"));
-}, policy.timeoutMs);
-```
+> 📄 **Example code:** [`examples/02-q4-the-deadline-passes-but-child-processes-survive.js`](examples/02-q4-the-deadline-passes-but-child-processes-survive.js)
 Add the flags: `--init --pids-limit=64 --memory=512m --rm`. Add an idle timeout too: no output for 5 seconds counts as a hang.
 
 **Verify**: after the deadline, no process survives on the real host; the container is gone; the three matching drills pass.

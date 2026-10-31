@@ -69,12 +69,7 @@ Cordis là một framework micro-kernel siêu nhẹ dành cho TypeScript, sử d
 
 ## 3. Vòng Đời Của Plugin (Lifecycle Management)
 
-```typescript
-export interface Plugin<C = any> {
-  name: string;
-  apply(ctx: Context, config?: C): void | Promise<void>;
-}
-```
+> 📄 **Code ví dụ:** [`examples/01-3-vong-oi-cua-plugin-lifecycle-management.ts`](examples/01-3-vong-oi-cua-plugin-lifecycle-management.ts)
 
 Một Plugin trải qua 3 giai đoạn:
 1. **Mount (`apply`)**: Plugin được nạp vào Context, đăng ký các service hoặc event listeners.
@@ -121,76 +116,11 @@ Nạp Plugin `RuntimeInspectorPlugin`. Cung cấp giao diện trực quan để 
 
 Dưới đây là phiên bản đơn giản hóa của Cordis-style Micro-Kernel Engine:
 
-```typescript
-export class Context {
-  public services: Map<string, any> = new Map();
-  private events: Map<string, Function[]> = new Map();
-
-  // Đăng ký Service vào Kernel
-  public provide(name: string, service: any) {
-    this.services.set(name, service);
-  }
-
-  // Lấy Service ra dùng
-  public inject<T>(name: string): T {
-    const service = this.services.get(name);
-    if (!service) throw new Error(`Service ${name} not found in Kernel Context`);
-    return service as T;
-  }
-
-  // Event System cho Middleware
-  public on(event: string, handler: Function) {
-    const handlers = this.events.get(event) || [];
-    handlers.push(handler);
-    this.events.set(event, handlers);
-  }
-
-  public async emit(event: string, ...args: any[]) {
-    const handlers = this.events.get(event) || [];
-    for (const handler of handlers) {
-      await handler(...args);
-    }
-  }
-
-  // Nạp Plugin
-  public plugin(plugin: { name: string; apply: (ctx: Context) => void }) {
-    console.log(`[Kernel] Mounting Plugin: ${plugin.name}`);
-    plugin.apply(this);
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-5-trien-khai-minh-hoa-kernel-engine-typescript.ts`](examples/02-5-trien-khai-minh-hoa-kernel-engine-typescript.ts)
 
 ### Ví dụ đăng ký Plugin:
 
-```typescript
-// Plugin 1: Đăng ký Tool Service
-const MCPToolPlugin = {
-  name: 'mcp-tool-plugin',
-  apply: (ctx: Context) => {
-    ctx.provide('tools', {
-      executeTool: async (name: string, args: any) => {
-        console.log(`Executing MCP tool ${name}`, args);
-        return { success: true };
-      }
-    });
-  }
-};
-
-// Plugin 2: Log lại mọi lượt gọi Tool (Middleware Plugin)
-const LoggerPlugin = {
-  name: 'logger-plugin',
-  apply: (ctx: Context) => {
-    ctx.on('before-tool-call', (toolName: string) => {
-      console.log(`[Event Stream] About to call tool: ${toolName}`);
-    });
-  }
-};
-
-// Khởi chạy Kernel
-const kernel = new Context();
-kernel.plugin(MCPToolPlugin);
-kernel.plugin(LoggerPlugin);
-```
+> 📄 **Code ví dụ:** [`examples/03-vi-du-ang-ky-plugin.ts`](examples/03-vi-du-ang-ky-plugin.ts)
 
 ---
 

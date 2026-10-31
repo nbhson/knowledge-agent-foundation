@@ -109,20 +109,7 @@ Rule: without lease + deadline + own budget + own tool allow-list, it is not a s
 <details>
 <summary>Python — reject fake sub-agents</summary>
 
-```python
-def is_real_subagent(spec: dict) -> tuple[bool, str]:
-    for f in ("role", "goal", "context", "tools", "budget", "lease"):
-        if f not in spec:
-            return False, f"missing field: {f}"
-    if not spec["context"].get("files") and not spec["context"].get("parentSummary"):
-        return False, "context must be trimmed files[] + parentSummary, never full dump"
-    if spec["role"] in ("implementer",) and not spec.get("worktree"):
-        return False, "implementer requires isolated worktree"
-    lease = spec["lease"]
-    if not (lease.get("leaseId") and lease.get("deadlineMs") and lease.get("maxAttempts")):
-        return False, "lease requires leaseId + deadlineMs + maxAttempts"
-    return True, "ok"
-```
+> 📄 **Example code:** [`examples/01-1-2-sub-agent-contract-guard.py`](examples/01-1-2-sub-agent-contract-guard.py)
 
 </details>
 
@@ -152,31 +139,7 @@ Forbidden anti-pattern (`loop/06-anti-patterns`): same agent implements AND veri
 <details>
 <summary>Python — role specs with DoD</summary>
 
-```python
-ROLES = {
-    "implementer": {
-        "goal_example": "Fix auth refresh in src/auth/refresh.ts; AC: refresh succeeds after expiry, no other files touched",
-        "definition_of_done": ["diff limited to files[]", "build passes", "artifact PR-ready patch"],
-        "forbidden": ["merge", "self-verify", "touch files outside worktree"],
-    },
-    "verifier": {
-        "goal_example": "Verify patch ART-123 against rubric: build OK, tests OK, AC traced",
-        "definition_of_done": ["verdict ACCEPT/REJECT with evidence", "failing test names + logs"],
-        "default_stance": "REJECT until evidence sufficient",
-        "forbidden": ["edit code", "approve without test output"],
-    },
-    "reviewer": {
-        "goal_example": "Review diff for PR #1234; label Blocker/Major/Minor with file:line",
-        "definition_of_done": ["severity list", "at least one actionable comment per Blocker"],
-        "forbidden": ["run shell", "write files"],
-    },
-    "researcher": {
-        "goal_example": "Where is token refresh handled? Return 3 candidate files with file:line + 5-line context",
-        "definition_of_done": ["facts + citations", "no behavior change"],
-        "forbidden": ["write memory", "propose patch without asking"],
-    },
-}
-```
+> 📄 **Example code:** [`examples/02-2-2-detailed-role-definitions.py`](examples/02-2-2-detailed-role-definitions.py)
 
 </details>
 
@@ -223,40 +186,7 @@ spawn (with section-4 spec) → heartbeat 5s → progress stream
 <details>
 <summary>Python — lease + heartbeat + fencing</summary>
 
-```python
-import time, dataclasses
-
-@dataclasses.dataclass
-class Lease:
-    lease_id: int
-    deadline_ms: int = 300_000
-    max_attempts: int = 3
-    fencing_token: int = 0
-    last_heartbeat: float = dataclasses.field(default_factory=time.time)
-    last_progress: float = dataclasses.field(default_factory=time.time)
-
-    def state(self) -> str:
-        now = time.time()
-        if (now - self.last_heartbeat) * 1000 > 15_000:
-            return "DEAD"
-        if self._expired():
-            return "TIMED_OUT"
-        if now - self.last_progress > 60:
-            return "SUSPECT"
-        return "RUNNING"
-
-    def _expired(self) -> bool:
-        return False  # supervisor compares wall-clock deadlineMs
-
-    def requeue(self) -> "Lease":
-        return Lease(self.lease_id, self.deadline_ms, self.max_attempts,
-                     fencing_token=self.fencing_token + 1)
-
-def accept_result(token: int, current: int, attempt: int) -> bool:
-    if attempt > 3:
-        return False  # escalate / fail closed
-    return token == current  # stale token → discard (fencing)
-```
+> 📄 **Example code:** [`examples/03-3-2-heartbeat-supervisor.py`](examples/03-3-2-heartbeat-supervisor.py)
 
 </details>
 
@@ -272,62 +202,14 @@ def accept_result(token: int, current: int, attempt: int) -> bool:
 
 ### 4.1 Spawn Interface
 
-```typescript
-interface SubAgentSpec {
-  role: "implementer" | "verifier" | "reviewer" | "researcher";
-  taskId: string;
-  goal: string;              // narrow, single job, with definition of done
-  context: {                 // NEVER dump the full parent context
-    files: string[];
-    artifactRefs: { path: string; hash: string }[];
-    parentSummary: string;   // trimmed parent transcript, not raw log
-  };
-  tools: string[];           // narrowed allow-list from the role matrix in 12-sandbox section 6
-  worktree?: string;         // REQUIRED for code-editing sub-agents
-  budget: { maxTokens: number; maxSteps: number; timeoutMs: number };
-  lease: { leaseId: number; deadlineMs: number; maxAttempts: number };
-  secrets?: { scope: string; ttlMinutes: number }; // 5-15m, env injection, redact before logging
-}
-```
+> 📄 **Example code:** [`examples/04-4-1-spawn-interface.ts`](examples/04-4-1-spawn-interface.ts)
 
 ### 4.2 Spawn Validation and Examples
 
 <details>
 <summary>TypeScript — validate + two spawn examples</summary>
 
-```typescript
-function validateSpec(s: SubAgentSpec): string[] {
-  const errs: string[] = [];
-  if (!s.goal || s.goal.length < 20) errs.push("goal must be narrow + testable (>=20 chars)");
-  if (!s.context.files.length && !s.context.parentSummary) errs.push("need files[] or parentSummary");
-  if (s.role === "implementer" && !s.worktree) errs.push("implementer requires worktree");
-  if (s.role === "reviewer" && s.tools.includes("shell")) errs.push("reviewer must not have shell");
-  if (s.budget.maxTokens > 8000) errs.push("sub-agent budget too large; split task");
-  return errs;
-}
-
-const researcherSpawn: SubAgentSpec = {
-  role: "researcher", taskId: "T-101",
-  goal: "Locate token-refresh logic; return 3 files with file:line citations",
-  context: { files: ["src/auth/"], artifactRefs: [], parentSummary: "Parent: refresh fails after expiry; suspect interceptor." },
-  tools: ["fs.read", "code.search"],
-  budget: { maxTokens: 2000, maxSteps: 10, timeoutMs: 120_000 },
-  lease: { leaseId: 1, deadlineMs: Date.now() + 120_000, maxAttempts: 3 },
-};
-
-const implementerSpawn: SubAgentSpec = {
-  role: "implementer", taskId: "T-102",
-  goal: "Fix refresh in src/auth/refresh.ts per AC-3; do not touch other modules",
-  context: { files: ["src/auth/refresh.ts", "src/auth/interceptor.ts"],
-    artifactRefs: [{ path: "s3://artifacts/research-T101.md", hash: "sha256:abc" }],
-    parentSummary: "Research T-101: refresh() drops timer on 401; see artifact." },
-  tools: ["fs.read", "fs.write.scoped", "shell.sandboxed"],
-  worktree: "/tmp/wt/T-102",
-  budget: { maxTokens: 6000, maxSteps: 25, timeoutMs: 300_000 },
-  lease: { leaseId: 7, deadlineMs: Date.now() + 300_000, maxAttempts: 3 },
-  secrets: { scope: "ci:read", ttlMinutes: 10 },
-};
-```
+> 📄 **Example code:** [`examples/05-4-2-spawn-validation-and-examples.ts`](examples/05-4-2-spawn-validation-and-examples.ts)
 
 </details>
 
@@ -363,24 +245,7 @@ Spawn rules (`loop/04-operating`): cheap triage first, spawn only when state rep
 <details>
 <summary>Python — versioned blackboard with CAS</summary>
 
-```python
-class Blackboard:
-    def __init__(self):
-        self.store: dict[str, tuple[int, str]] = {}  # key -> (version, value)
-        self.owners: dict[str, str] = {}             # file/section -> agent_id
-    def claim(self, resource: str, agent_id: str) -> bool:
-        if resource in self.owners:
-            return False
-        self.owners[resource] = agent_id
-        return True
-    def write(self, key: str, value: str, expected_version: int, agent_id: str) -> bool:
-        ver, _ = self.store.get(key, (0, ""))
-        ns_ok = key.startswith(f"{agent_id}/") or key.startswith("shared/")
-        if not ns_ok or ver != expected_version:
-            return False  # stale version → re-read + merge, never blind overwrite
-        self.store[key] = (ver + 1, value)
-        return True
-```
+> 📄 **Example code:** [`examples/06-5-2-cas-single-writer-namespacing.py`](examples/06-5-2-cas-single-writer-namespacing.py)
 
 </details>
 
@@ -424,19 +289,7 @@ Good vs bad handoff:
 <details>
 <summary>Python — redact + scoped secret</summary>
 
-```python
-import re, os
-PATTERNS = [r"sk-[A-Za-z0-9]+", r"ghp_[A-Za-z0-9]+", r"AKIA[0-9A-Z]{16}"]
-def redact(text: str) -> str:
-    for p in PATTERNS:
-        text = re.sub(p, "[REDACTED]", text)
-    return text
-
-def inject_secret(scope: str, ttl_min: int) -> dict:
-    token = f"tmp-{scope}-{ttl_min}m"  # broker mints real token
-    os.environ["SUBAGENT_TOKEN"] = token
-    return {"scope": scope, "ttlMinutes": ttl_min, "via": "env"}
-```
+> 📄 **Example code:** [`examples/07-6-2-secret-leases-and-audit.py`](examples/07-6-2-secret-leases-and-audit.py)
 
 </details>
 
@@ -458,13 +311,7 @@ def inject_secret(scope: str, ttl_min: int) -> dict:
 <details>
 <summary>Python — quorum aggregator</summary>
 
-```python
-def aggregate(votes: list[str], artifacts: list[dict]) -> dict:
-    accepts = sum(1 for v in votes if v == "ACCEPT")
-    if accepts >= 2 and all(a.get("build") == "pass" for a in artifacts):
-        return {"verdict": "ACCEPT", "votes": votes}
-    return {"verdict": "REJECT", "votes": votes, "reason": "need 2 ACCEPT + green build"}
-```
+> 📄 **Example code:** [`examples/08-7-1-maker-checker-and-quorum.py`](examples/08-7-1-maker-checker-and-quorum.py)
 
 </details>
 
@@ -501,19 +348,7 @@ def aggregate(votes: list[str], artifacts: list[dict]) -> dict:
 <details>
 <summary>Python — budget guard</summary>
 
-```python
-class SpawnBudget:
-    def __init__(self, run_cap: int = 20_000, max_spawns: int = 3):
-        self.spent = 0
-        self.spawns = 0
-        self.run_cap, self.max_spawns = run_cap, max_spawns
-    def request(self, tokens: int) -> bool:
-        if self.spawns >= self.max_spawns or self.spent + tokens > self.run_cap:
-            return False
-        self.spawns += 1
-        self.spent += tokens
-        return True
-```
+> 📄 **Example code:** [`examples/09-8-budget-and-cost-guards.py`](examples/09-8-budget-and-cost-guards.py)
 
 </details>
 
@@ -542,17 +377,7 @@ class SpawnBudget:
 <details>
 <summary>Python — fencing + CAS test</summary>
 
-```python
-def test_fencing():
-    assert accept_result(token=5, current=6, attempt=1) is False
-    assert accept_result(token=6, current=6, attempt=1) is True
-    assert accept_result(token=6, current=6, attempt=4) is False
-
-def test_cas():
-    b = Blackboard()
-    assert b.write("a/T-1/x", "v1", 0, "a") is True
-    assert b.write("a/T-1/x", "v2-stale", 0, "a") is False
-```
+> 📄 **Example code:** [`examples/10-9-testing-sub-agents.py`](examples/10-9-testing-sub-agents.py)
 
 </details>
 
@@ -584,10 +409,7 @@ def test_cas():
 
 Claude Code's Explore agents are researchers: read-heavy, write-restricted, spawned for codebase Q&A. Lesson copied here: **narrow tools + trimmed context + independent aggregation** — the child never merges, the parent decides.
 
-```python
-# Pattern: researcher → implementer → verifier → quorum reviewer
-pipeline = ["researcher(T-101)", "implementer(T-102, worktree)", "verifier(T-102)", "reviewer-quorum(2-of-3)"]
-```
+> 📄 **Example code:** [`examples/11-11-1-claude-code-explore-subagents-anthropic-2025.py`](examples/11-11-1-claude-code-explore-subagents-anthropic-2025.py)
 
 ### 11.2 Nightly Triage Loop (`loop/05-multi-loop` style)
 

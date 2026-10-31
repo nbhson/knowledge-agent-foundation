@@ -24,10 +24,7 @@ Thử lại ngay lập tức và cố định không chỉ vô dụng mà còn g
 4. Khi hết số lần thử thì ném một lỗi riêng nói rõ "đã hết 3 lần, lỗi cuối cùng là gì", thay vì trả về lỗi cuối cùng trần trụi.
 5. Chỉ thử lại lỗi *tạm thời*. Lỗi sai tham số hay sai quyền thì thử lại 3 lần cũng vẫn hỏng.
 
-```python
-wait = backoff_factor * (2 ** (attempt - 1))
-wait = min(wait * (0.5 + random.random()), max_backoff)   # có nhiễu
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-chay-giua-chung-thi-loi-phai-lam.py`](examples/01-q1-chay-giua-chung-thi-loi-phai-lam.py)
 
 **Kiểm tra**
 
@@ -83,14 +80,7 @@ Không thể xoá được một giao dịch đã xảy ra với dịch vụ bê
 4. Bù cũng cần số lần thử riêng. Nếu bù hỏng, ghi lại rõ bước nào không hoàn tác được thay vì im lặng.
 5. Ghi rõ vào nhật ký từng lần bù: bước nào, hành động gì, kết quả ra sao.
 
-```python
-@dataclass
-class SagaStep:
-    name: str
-    action: Callable
-    compensation: Callable   # hàm hoàn tác, chạy khi bước sau hỏng
-    max_retries: int = 3
-```
+> 📄 **Code ví dụ:** [`examples/02-q3-buoc-4-hong-sau-khi-3-buoc.py`](examples/02-q3-buoc-4-hong-sau-khi-3-buoc.py)
 
 **Kiểm tra**
 
@@ -116,10 +106,7 @@ Workflow chạy trong bộ nhớ thì bị giết là mất trắng. Muốn ti�
 4. Giữ mã lần chạy (`runId`) **ổn định qua mọi lần khởi động lại**. Đổi mã là toàn bộ nhật ký cũ mất hiệu lực.
 5. Kết quả một bước vượt 64KB thì không nhét vào nhật ký — lưu ra kho kết quả riêng và chỉ ghi mã tham chiếu.
 
-```typescript
-this.ckpt({ runId, key, status: "ok",
-            val: JSON.stringify(out).slice(0, 64_000), at: Date.now() });
-```
+> 📄 **Code ví dụ:** [`examples/03-q4-khoi-ong-lai-may-la-agent-mat.ts`](examples/03-q4-khoi-ong-lai-may-la-agent-mat.ts)
 
 **Kiểm tra**
 
@@ -146,11 +133,7 @@ Hai triệu chứng xuất hiện cùng lúc. Một: bạn chạy lại một b�
 5. Khi hàng đợi đầy, ném lỗi chuyên biệt để bên gọi biết phải thử lại sau — **không** được tăng hàng đợi vô hạn, đó chính là cách tự giết mình.
 6. Mỗi lần chạy có **một** mốc hết giờ duy nhất. Mỗi bước nhận phần thời gian còn lại trừ chút đệm, và truyền xuống qua `AbortSignal.timeout`. Tuyệt đối không âm thầm nới thêm.
 
-```python
-key = f"{runId}:{step.id}:{hashlib.sha256(json.dumps(inputs).encode()).hexdigest()}"
-if cached is not None:
-    return cached                      # đã làm rồi, trả lại kết quả cũ
-```
+> 📄 **Code ví dụ:** [`examples/04-q5-chay-lai-mot-buoc-la-ghi-trung.py`](examples/04-q5-chay-lai-mot-buoc-la-ghi-trung.py)
 
 **Kiểm tra**
 
@@ -176,11 +159,7 @@ Nhật ký dạng văn bản tự do không lọc được. Ba loại dữ liệ
 4. Ghi mỗi bước **hai dòng**: một dòng `start`, một dòng kết quả (`success` hoặc `error` kèm thông điệp lỗi). Nhờ vậy bước chết treo cũng lộ ra.
 5. Tính độ trễ theo ba mốc chứ không chỉ trung bình: p50, p95, p99. Trung bình che mất đúng cái đuôi chậm — p95 mới là trải nghiệm thật.
 
-```python
-summary = {"p50": sorted_vals[n // 2],
-           "p95": sorted_vals[int(n * 0.95)],
-           "p99": sorted_vals[int(n * 0.99)]}
-```
+> 📄 **Code ví dụ:** [`examples/05-q6-workflow-30-buoc-chay-xong-khong-biet.py`](examples/05-q6-workflow-30-buoc-chay-xong-khong-biet.py)
 
 **Kiểm tra**
 
@@ -206,12 +185,7 @@ Dừng giữa chừng theo kiểu "thoát ra rồi quay lại" là mất trắng
 4. Chạy lại bằng **cùng `runId`** để các bước đã xong được bỏ qua và bước đang chờ được mở lại.
 5. Ghi lại cả yêu cầu duyệt lẫn phán quyết, ai quyết, lúc nào, với nội dung gì.
 
-```typescript
-if (s.needsApproval && this.approvals.get(key) !== "ok") {
-  this.ckpt({ runId, key, status: "waiting_approval", at: Date.now() });
-  throw new Error(`PAUSED:${s.id}: awaiting approval`);
-}
-```
+> 📄 **Code ví dụ:** [`examples/06-q7-muon-dung-lai-cho-nguoi-duyet-giua.ts`](examples/06-q7-muon-dung-lai-cho-nguoi-duyet-giua.ts)
 
 **Kiểm tra**
 
@@ -237,15 +211,7 @@ Khi nghiệp vụ nằm trực tiếp trong lõi, mọi tính năng mới đều
 4. Đặt trạng thái vào lõi qua `ctx.provide()` chứ đừng dùng biến toàn cục — nếu không hai plugin sẽ tranh nhau ghi đè.
 5. Khi gỡ một plugin, lõi phải tự dọn các hàm lắng nghe và giải phóng tài nguyên đã khai trong `apply`.
 
-```typescript
-const LoggerPlugin = {
-  name: 'logger-plugin',
-  apply: (ctx: Context) => {
-    ctx.on('before-tool-call', (toolName: string) =>
-      console.log(`[Event Stream] About to call tool: ${toolName}`));
-  }
-};
-```
+> 📄 **Code ví dụ:** [`examples/07-q8-code-cua-toi-moi-lan-sua-mot.ts`](examples/07-q8-code-cua-toi-moi-lan-sua-mot.ts)
 
 **Kiểm tra**
 
@@ -275,10 +241,7 @@ Vì cùng một mô hình có thể tốt ở một chế độ và tệ ở ch�
 4. Nguyên tắc chung: nếu không nói rõ chế độ nào được dùng thì kết quả không so sánh được với ai.
 5. Ghi tên chế độ vào kết quả chạy. Bản báo cáo không ghi chế độ là bằng chứng không dùng được.
 
-```typescript
-// Cấu trúc thư mục phản ánh đúng triết lý: mỗi chế độ là một plugin
-packages/{core, dsh, runtime-standard, runtime-code, runtime-minimal, web-ui}
-```
+> 📄 **Code ví dụ:** [`examples/08-q9-muon-chay-thu-agent-ma-khong-cho.ts`](examples/08-q9-muon-chay-thu-agent-ma-khong-cho.ts)
 
 **Kiểm tra**
 

@@ -1,0 +1,8 @@
+{
+  "type": "command",
+  "bash": "./scripts/log-prompt.sh",
+  "powershell": "./scripts/log-prompt.ps1",
+  "cwd": "scripts",
+  "env": { "LOG_LEVEL": "INFO" },
+  "timeoutSec": 10
+}

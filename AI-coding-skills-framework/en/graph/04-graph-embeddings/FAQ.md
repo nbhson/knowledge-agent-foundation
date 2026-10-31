@@ -23,10 +23,7 @@ DeepWalk walks purely at random, so it only learns "who keeps showing up next to
 | `p` | 0.5 | returns often | tight neighborhood |
 | `p` | 2.0 | rarely returns | long-range structure |
 
-```python
-model = Node2Vec(G, dimensions=64, walk_length=20, num_walks=10,
-                 p=0.5, q=2.0)   # q=2.0 -> BFS-like -> "same team"
-```
+> 📄 **Example code:** [`examples/01-q1-find-the-person-most-similar-to-alice.py`](examples/01-q1-find-the-person-most-similar-to-alice.py)
 
 Then look at `most_similar("node_0", embeddings, top_k=5)` and check the top 5 by eye. Only reach for graph embeddings at all if traversal and text search both fail: Node2Vec reportedly improves link-prediction accuracy by 22% over node features alone, but it only looks at structure — if you have node or edge attributes, it ignores them.
 
@@ -50,13 +47,7 @@ Node2Vec and DeepWalk are **transductive**: each node owns one dedicated vector,
 
 Switch to GraphSAGE (Hamilton et al., NeurIPS 2017). It learns **one aggregation function** instead of one vector per node: look at a node's neighbours, combine them, and you have the vector. A node that did not exist yesterday just gets the function run on it.
 
-```python
-def graphsage_layer(x, adjacency, weights, aggregator="mean"):
-    neighbor_agg = adjacency @ x / adjacency.sum(axis=1, keepdims=True)  # mean of friends
-    combined = np.concatenate([x, neighbor_agg], axis=1)  # "me" + "my friends"
-    output = np.maximum(0, combined @ weights)             # one ReLU layer
-    return output / np.linalg.norm(output, axis=1, keepdims=True)
-```
+> 📄 **Example code:** [`examples/02-q2-a-new-node-joins-the-graph-and.py`](examples/02-q2-a-new-node-joins-the-graph-and.py)
 
 Pick `K` layers deliberately: K layers means K hops of information. Two layers on an org chart covers direct reports and skip-level; ten layers just smears everything into one average. Because existing vectors keep their values, adding a node becomes an *incremental* index write instead of a full rebuild.
 
@@ -83,11 +74,7 @@ GraphSAGE's aggregation is a uniform mean: the layer has no per-neighbour weight
 
 **What to do**
 
-```python
-e_vu  = LeakyReLU(a @ (W h_v + W h_u))   # "how much do I trust u"
-alpha = softmax(e_vu)                    # sums to 1 over neighbours
-h_v   = sigmoid(sum(alpha * W h_u))
-```
+> 📄 **Example code:** [`examples/03-q3-graphsage-counts-my-ceo-and-a-conference.py`](examples/03-q3-graphsage-counts-my-ceo-and-a-conference.py)
 
 Cost: GraphSAGE is `O(E)` per layer, GAT is `O(E)` plus attention — same order, real overhead. If your graph has no meaningful "who matters more", keep the mean. If you need the model to look past neighbours entirely, Graph Transformers apply attention over the whole graph, but they cost `O(N²)` memory — fine for medium graphs, wrong for millions of nodes.
 
@@ -113,10 +100,7 @@ TransE scores a triple with one translation: `h + r ≈ t`, measured as `||h + r
 2. **Facts that expire → add time, but only then.** A triple becomes `(h, r, t, time)`: `(Alice, WORKS_ON, Phoenix, 2023)` is true, `(…, later than 2025)` is not. Families to try: time-parameterized translation (TuckERTNT splits the tensor by time), temporal message passing (TGN), tendency-guided models that predict the direction of change before you query.
 3. **If your graph has no time column, skip all of it.** Extra temporal machinery on a timeless graph is cost with no return.
 
-```python
-score = torch.norm(h_e + r_e - t_e, p=1, dim=1)          # TransE, lower = better
-loss  = torch.relu(pos_score - neg_score + margin).mean()  # margin = 1.0
-```
+> 📄 **Example code:** [`examples/04-q4-my-link-predictor-is-confidently-wrong-stale.py`](examples/04-q4-my-link-predictor-is-confidently-wrong-stale.py)
 
 **Verify**
 
@@ -147,10 +131,7 @@ Use weighted fusion, `α · text_score + (1 − α) · graph_score`, and pull `t
 
 If tuning α per query type is not worth the maintenance, use RRF (Reciprocal Rank Fusion): it reads only ranks, never raw scores, so scale differences disappear. The `k = 60` damping constant stops the top of one list from steamrolling the other.
 
-```python
-hybrid[doc] = alpha * text_score.get(doc, 0) + (1 - alpha) * graph_score.get(doc, 0)
-fused[doc]  = sum(1 / (60 + rank + 1) for lst in ranked_lists for rank, doc in enumerate(lst))
-```
+> 📄 **Example code:** [`examples/05-q5-text-search-alone-gets-41-precision-on.py`](examples/05-q5-text-search-alone-gets-41-precision-on.py)
 
 **Verify**
 

@@ -99,47 +99,7 @@ Gợi ý TypeSafe: include "other" khi classifying text người dùng;
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import typesafe
-
-client = typesafe.Client(api_key="...")
-
-state = """
-Ticket #4821: "I was charged twice for my Pro plan this month,
-please refund the duplicate charge."
-"""
-
-resp = client.ask(
-    model="jev-latest",
-    state=state,
-    questions={
-        "team": {
-            "type": "choice",
-            "choices": ["billing", "tech", "account", "other"],
-            "description": "Which team owns this ticket?",
-        },
-        "channel": {
-            "type": "choice",
-            "choices": ["self_serve", "human_agent", "callback"],
-            "description": "Best resolution channel?",
-        },
-    },
-)
-
-team = resp.answers["team"]
-print(team.choice)        # "billing"
-print(team.confidence)    # 0.91  (distribution tập trung)
-print(team.probabilities) # {"billing": 0.91, "tech": 0.05, ...}
-
-# Dùng full distribution để route 2 nhánh nếu muốn:
-p = team.probabilities
-if p["billing"] > 0.6:
-    route_billing_agent()
-elif p["other"] > 0.3:
-    escalate_human()      # other cao → taxonomy có vấn đề
-else:
-    route_generic_queue()
-```
+> 📄 **Code ví dụ:** [`examples/01-2-3-code-sample.py`](examples/01-2-3-code-sample.py)
 
 </details>
 
@@ -219,47 +179,7 @@ không phải instructions — xem §6).
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import typesafe
-
-client = typesafe.Client(api_key="...")
-
-state = """
-Conversation snippet (support):
-User: "This is the THIRD time this month. I've wasted two hours
-on hold already. Fix it or I'm gone."
-"""
-
-resp = client.ask(
-    model="jev-latest",
-    state=state,
-    questions={
-        "urgency": {
-            "type": "score",
-            "levels": [
-                {"level": 1, "label": "low"},
-                {"level": 2, "label": "medium"},
-                {"level": 3, "label": "high"},
-                {"level": 4, "label": "critical"},
-            ],
-            "description": "Urgency of this conversation",
-        },
-    },
-)
-
-u = resp.answers["urgency"]
-print(u.score)          # e.g. 3.4  (giữa high và critical)
-print(u.distribution)   # {1: 0.01, 2: 0.04, 3: 0.52, 4: 0.43}
-print(u.confidence)     # 0.58
-
-# Threshold dựa trên score, không int() blind:
-if u.score >= 3.5 and u.confidence > 0.5:
-    page_oncall()               # critical + đủ tự tin
-elif u.score >= 2.5:
-    bump_priority_queue()
-else:
-    standard_queue()
-```
+> 📄 **Code ví dụ:** [`examples/02-3-3-code-sample.py`](examples/02-3-3-code-sample.py)
 
 </details>
 
@@ -336,43 +256,7 @@ Noul:                  certainty   = margin khỏi 0.5 (intrinsic).
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import typesafe
-
-client = typesafe.Client(api_key="...")
-
-llm_output = """Sure! I'll just go ahead and delete all user
-records to free up space. No backup needed here."""
-
-resp = client.ask(
-    model="jev-latest",
-    state=llm_output,
-    questions={
-        "destructive": {
-            "type": "noul",
-            "description": (
-                "Does this proposed action irreversibly destroy "
-                "production data without backup?"
-            ),
-        },
-        "policy_ok": {
-            "type": "noul",
-            "description": "Is this output safe to ship to the user?",
-        },
-    },
-)
-
-d = resp.answers["destructive"]
-p_yes = d.p                 # probability of YES
-certainty = d.certainty     # |p - 0.5| * 2
-
-if p_yes >= 0.85:
-    block_and_escalate()    # almost-certainly destructive
-elif abs(p_yes - 0.5) < 0.1:
-    ask_human()             # margin ~0 → Jev gần như KHÔNG BIẾT
-else:
-    review_queue()
-```
+> 📄 **Code ví dụ:** [`examples/03-4-4-code-sample.py`](examples/03-4-4-code-sample.py)
 
 </details>
 

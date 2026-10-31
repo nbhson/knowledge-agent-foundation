@@ -23,21 +23,9 @@ Không ai quy định "ai được sửa file này", và lệnh ghi file không 
 2. **Ghi kèm số phiên bản.** Mỗi lần ghi phải khai "tôi đọc bản số 10". Nếu bản số 10 đã thành 11, lệnh ghi bị từ chối, agent buộc đọc lại rồi gộp ý của mình vào — không được đè mù.
 3. **Mỗi agent một thư mục riêng** (`git worktree`), không ai sửa trực tiếp trên nhánh chính. Xong việc thì xuất patch, người (hoặc agent kiểm tra) duyệt rồi mới gộp.
 
-```python
-# trước khi spawn
-if file_đã_có_chủ:
-    xếp_hàng_cho_chạy_sau   # không spawn song song
-    return
-gán_chủ(file, agent_id)
-spawn(agent_id)
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-hai-agent-cung-sua-mot-file-code.py`](examples/01-q1-hai-agent-cung-sua-mot-file-code.py)
 
-```python
-# khi agent ghi file
-if version_hiện_tại != version_agent_đọc:
-    return "STALE — đọc lại rồi gộp, không được đè"
-ghi_file()
-```
+> 📄 **Code ví dụ:** [`examples/02-q1-hai-agent-cung-sua-mot-file-code.py`](examples/02-q1-hai-agent-cung-sua-mot-file-code.py)
 
 **Kiểm tra**
 
@@ -69,12 +57,7 @@ Quy tắc chờ đủ cả ba phiếu mới quyết định. Một người hỏ
    - Còn sống nhưng không tiến triển (60 giây không có gì mới) → gọi thử một lần, không phản hồi thì coi như quá giờ.
 4. **Thiếu phiếu thì mặc định là KHÔNG duyệt.** Không bao giờ mặc định duyệt khi thiếu bằng chứng.
 
-```python
-if số_phiếu_đồng_ý >= 2 and build_xanh:
-    kết_quả = "ACCEPT"
-else:
-    kết_quả = "REJECT"
-```
+> 📄 **Code ví dụ:** [`examples/03-q2-ba-agent-bo-phieu-mot-agent-treo.py`](examples/03-q2-ba-agent-bo-phieu-mot-agent-treo.py)
 
 **Kiểm tra**: giết 1 voter giữa chừng → vẫn ra kết quả trong khoảng 35 giây.
 
@@ -145,11 +128,7 @@ Lệnh ghi phải kèm "tôi đọc bản số mấy". Nếu bản đó đã b�
 **Lớp 3 — đánh dấu lượt chạy (fencing).**
 Mỗi lần giao lại công việc, tăng một con số phiên bản lên. Kết quả mang số cũ (tức là do một lượt chạy đã chết) thì bỏ, dù nội dung nhìn có vẻ đúng.
 
-```python
-def nhận_kết_quả(so_phiên_ban, so_phiên_hiện_tại, so_lan):
-    if so_lan > 3: return False      # quá giới hạn → báo người
-    return so_phiên_ban == so_phiên_hiện_tại   # cũ hơn → bỏ
-```
+> 📄 **Code ví dụ:** [`examples/04-q5-cau-hoi-cua-ban-nhieu-agent-cung.py`](examples/04-q5-cau-hoi-cua-ban-nhieu-agent-cung.py)
 
 **Kiểm tra**: giết đột ngột một agent con giữa chừng rồi chạy lại; test bốn tình huống trong `SUBAGENT.md` §9 (giết giữa chừng, kết quả cũ tới muộn, hai người ghi cùng lúc, người kiểm tra sửa code). Làm hằng tuần một lần.
 

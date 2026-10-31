@@ -1,0 +1,14 @@
+--init                                  # reap orphans
+--read-only                             # immutable rootfs
+--tmpfs /tmp:rw,noexec,nosuid,size=64m  # scratch space, no exec, no suid
+--cap-drop=ALL                          # zero ambient capabilities
+--security-opt=no-new-privileges        # no setuid escalation
+--pids-limit=64                         # fork-bomb bound
+--memory=512m --memory-swap=512m        # no swap escape
+--cpus=1.0 --cpu-quota=100000           # CPU bound
+--network=none                          # no egress
+--ulimit nofile=1024:1024               # FD bomb
+--ulimit core=0                          # no core dumps leaking memory
+--user 1000:1000                        # non-root inside
+-v "$WORKDIR:/work:rw"                  # the ONLY writable host path
+IMAGE@sha256:<digest>                   # immutable identity

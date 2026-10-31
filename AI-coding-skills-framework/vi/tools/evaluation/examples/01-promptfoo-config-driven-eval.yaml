@@ -1,0 +1,17 @@
+# promptfooconfig.yaml
+prompts:
+  - "Summarize: {{input}}"
+  - "Provide a concise summary: {{input}}"
+
+providers:
+  - openai:gpt-4
+  - anthropic:claude-3-5-sonnet
+
+tests:
+  - vars:
+      input: "Long technical document..."
+    assert:
+      - type: contains
+        value: "key concept"
+      - type: cost
+        threshold: 0.05  # mỗi prompt ≤ $0.05

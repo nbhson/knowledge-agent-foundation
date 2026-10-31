@@ -20,16 +20,7 @@ You swap "you are a helpful assistant" for "you are a senior engineer". Replies 
 2. Write both prompts in one file so the tool scores them side by side.
 3. Add a cost assertion so "better" cannot quietly mean "ten times more expensive".
 
-```yaml
-prompts:
-  - "You are a helpful assistant: {{input}}"
-  - "You are a senior engineer: {{input}}"
-providers:
-  - openai:gpt-4
-tests:
-  - vars: { input: "Long technical document..." }
-    assert: [ { type: cost, threshold: 0.05 } ]
-```
+> 📄 **Example code:** [`examples/01-q1-i-changed-the-system-prompt-and-it.yaml`](examples/01-q1-i-changed-the-system-prompt-and-it.yaml)
 
 **Verify**
 
@@ -63,11 +54,7 @@ They answer different questions.
 4. Add LangSmith when the system runs in production and you want to eval on real traces, not synthetic datasets.
 5. Add Giskard when you need pre-deployment safety checks — bias, hallucination, prompt injection robustness.
 
-```python
-from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevancy, context_precision
-results = evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_precision])
-```
+> 📄 **Example code:** [`examples/02-q2-which-tool-fits-promptfoo-deepeval-ragas-langsmith.py`](examples/02-q2-which-tool-fits-promptfoo-deepeval-ragas-langsmith.py)
 
 **Verify**
 
@@ -113,10 +100,7 @@ The roadmap's answer is deliberately small: **20 to 50 cases** for the main task
 2. Freeze them as the baseline — this file changes only on purpose.
 3. Run the suite on every prompt change in CI, and fail the build on a drop.
 
-```bash
-promptfoo eval --share        # run the suite
-promptfoo regression-check    # compare against the baseline
-```
+> 📄 **Example code:** [`examples/03-q4-how-big-should-the-first-test-set.sh`](examples/03-q4-how-big-should-the-first-test-set.sh)
 
 **Verify**
 

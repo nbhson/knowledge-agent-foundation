@@ -57,40 +57,13 @@ User → UserProxyAgent → AssistantAgent (gọi tool) → UserProxyAgent (ch�
 
 ### Code Mẫu Từ HARNESS_ENGINEERING.md
 
-```python
-from autogen import AssistantAgent, UserProxyAgent
-
-assistant = AssistantAgent(
-    name="assistant",
-    llm_config={"model": "gpt-4"},
-    system_message="You are a helpful assistant"
-)
-
-# UserProxyAgent đóng vai harness — điều phối, chạy code, kiểm soát
-harness = UserProxyAgent(
-    name="harness",
-    human_input_mode="NEVER",
-    max_consecutive_auto_reply=10,
-    code_execution_config={"work_dir": "coding"}
-)
-```
+> 📄 **Code ví dụ:** [`examples/01-code-mau-tu-harness-engineering-md.py`](examples/01-code-mau-tu-harness-engineering-md.py)
 
 Để `human_input_mode="NEVER"` là UserProxyAgent trở thành một **harness tự chạy**: tự gọi tools, tự đón kết quả, tự đi tiếp cho tới khi xong việc hoặc chạm trần `max_consecutive_auto_reply`.
 
 ### GroupChat — Nhiều Agent
 
-```python
-from autogen import GroupChat, GroupChatManager
-
-agents = [planner, assistant, critic, executor]
-group_chat = GroupChat(
-    agents=agents,
-    messages=[],
-    max_round=20,
-    speaker_selection_method="auto"  # hoặc "round_robin", "vote"
-)
-manager = GroupChatManager(groupchat=group_chat, llm_config=llm_config)
-```
+> 📄 **Code ví dụ:** [`examples/02-groupchat-nhieu-agent.py`](examples/02-groupchat-nhieu-agent.py)
 
 Nói ngắn gọn, đây chính là **harness/09-multi-agent** viết thành code — một manager đứng ra chia lượt xem ai nói khi nào, giống như harness điều phối mấy worker vậy.
 
@@ -131,29 +104,13 @@ Bước 5: Kết nối memory + evaluation (xem tools/observability, tools/evalu
 
 ### 1. Code Review Pipeline (Planner → Coder → Critic)
 
-```python
-planner  = AssistantAgent(name="planner",  system_message="Tạo kế hoạch chi tiết")
-coder    = AssistantAgent(name="coder",    system_message="Viết code theo plan")
-critic   = AssistantAgent(name="critic",   system_message="Review lỗi logic & an toàn")
-
-group_chat = GroupChat(agents=[planner, coder, critic], max_round=15)
-manager = GroupChatManager(groupchat=group_chat)
-
-# Harness khởi động hội đồng
-result = manager.run(task="Implement login API with rate limiting")
-```
+> 📄 **Code ví dụ:** [`examples/03-1-code-review-pipeline-planner-coder-critic.py`](examples/03-1-code-review-pipeline-planner-coder-critic.py)
 
 Luồng chạy cũng dễ hình dung: planner lên ý tưởng → coder viết theo → critic soi lỗi → quay lại coder sửa → ... cứ thế cho tới khi critic gật đầu — đúng kiểu **loop/05-multi-loop** nhưng viết thành code.
 
 ### 2. Human-in-the-Loop Cho Phép Thay Đổi Nhạy Cảm
 
-```python
-sensitive_harness = UserProxyAgent(
-    name="harness",
-    human_input_mode="TERMINATE",  # chỉ dừng khi cần xác nhận
-    code_execution_config=False
-)
-```
+> 📄 **Code ví dụ:** [`examples/04-2-human-in-the-loop-cho-phep-thay.py`](examples/04-2-human-in-the-loop-cho-phep-thay.py)
 
 ## Tài Liệu Tham Khảo
 
@@ -181,17 +138,7 @@ AutoGen đã được **archive** và thay thế bởi **Microsoft Agent Framewo
 - MAF = sự hợp nhất AutoGen + Semantic Kernel
 - API hoàn toàn mới: `agents/`, không còn `ConversableAgent`
 
-```python
-# MAF mới (2025+)
-from agent_framework import ChatAgent
-from agent_framework.openai import OpenAIChatClient
-
-agent = OpenAIChatClient(model_id="gpt-4o").create_agent(
-    name="assistant",
-    instructions="You are a helpful assistant",
-)
-result = await agent.run("Hello!")
-```
+> 📄 **Code ví dụ:** [`examples/05-cap-nhat-10-2026-autogen-microsoft-agent-framework.py`](examples/05-cap-nhat-10-2026-autogen-microsoft-agent-framework.py)
 
 **Di chuyển project cũ:** https://learn.microsoft.com/en-us/agent-framework/migration-guide/from-autogen/
 **MAF mới:** https://github.com/microsoft/agent-framework

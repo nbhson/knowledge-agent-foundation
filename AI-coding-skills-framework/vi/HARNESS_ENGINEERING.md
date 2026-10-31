@@ -146,21 +146,7 @@ Kiểm tra kỹ trước khi trả về. Nếu có lỗi, hãy sửa..."
 <details>
 <summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
 
-```javascript
-// Tích hợp linter vào harness
-harness.addTool({
-  name: "write_code",
-  execute: async (code) => {
-    // Tự động check syntax
-    const lintResult = await linter.check(code);
-    if (lintResult.hasErrors) {
-      // Tự động reject và yêu cầu sửa
-      return { status: "error", errors: lintResult.errors };
-    }
-    return { status: "success", code };
-  }
-});
-```
+> 📄 **Code ví dụ:** [`examples/01-vi-du-minh-hoa.js`](examples/01-vi-du-minh-hoa.js)
 
 </details>
 
@@ -223,14 +209,7 @@ User: "Here are some examples: ..."
 <details>
 <summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
 
-```javascript
-// Retrieve relevant context
-const relevantDocs = await vectorDB.search(query);
-const context = relevantDocs.map(doc => doc.content).join('\n');
-
-// Add to prompt
-const prompt = `Context: ${context}\n\nQuestion: ${query}`;
-```
+> 📄 **Code ví dụ:** [`examples/02-3-2-context-engineering-2025.js`](examples/02-3-2-context-engineering-2025.js)
 
 </details>
 
@@ -263,26 +242,7 @@ const prompt = `Context: ${context}\n\nQuestion: ${query}`;
 <details>
 <summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
 
-```javascript
-const harness = new AIHarness({
-  model: "claude-3-opus",
-  tools: [codeExecutor, fileManager, webSearch],
-  memory: {
-    shortTerm: conversationHistory,
-    longTerm: vectorStore,
-    workingMemory: currentContext
-  },
-  guardrails: {
-    maxTokens: 100000,
-    allowedDomains: ["github.com", "stackoverflow.com"],
-    securityRules: [noSensitiveData, validateOutputs]
-  },
-  feedback: {
-    onError: autoRetry,
-    onSuccess: logMetrics
-  }
-});
-```
+> 📄 **Code ví dụ:** [`examples/03-3-3-harness-engineering-2026.js`](examples/03-3-3-harness-engineering-2026.js)
 
 </details>
 
@@ -399,13 +359,7 @@ Cùng một mô hình Claude 3.5 Sonnet:
 <details>
 <summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
 
-```javascript
-// ❌ Không thể kiểm soát
-const response = await ai.chat("Fix this bug...");
-// Bạn không biết AI sẽ làm gì
-// Bạn không thể đảm bảo output
-// Bạn khó debug khi có lỗi
-```
+> 📄 **Code ví dụ:** [`examples/04-4-3-kiem-soat-va-ang-tin-cay.js`](examples/04-4-3-kiem-soat-va-ang-tin-cay.js)
 
 </details>
 
@@ -414,27 +368,7 @@ const response = await ai.chat("Fix this bug...");
 <details>
 <summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
 
-```javascript
-// ✅ Kiểm soát hoàn toàn
-const harness = new AIHarness({
-  tools: {
-    'file_edit': {
-      validator: (path) => path.startsWith('/safe/dir'),
-      maxSize: 10000,
-      allowedExtensions: ['.js', '.ts', '.py']
-    }
-  },
-  outputValidation: {
-    checkSyntax: true,
-    checkSecurity: true,
-    runTests: true
-  }
-});
-
-// Bạn biết chính xác AI có thể làm gì
-// Bạn đảm bảo output luôn valid
-// Bạn có logs chi tiết để debug
-```
+> 📄 **Code ví dụ:** [`examples/05-4-3-kiem-soat-va-ang-tin-cay.js`](examples/05-4-3-kiem-soat-va-ang-tin-cay.js)
 
 </details>
 
@@ -459,17 +393,7 @@ Bạn có 10 AI agents trong hệ thống. Bạn phát hiện một lỗi bảo 
 <details>
 <summary><b>JavaScript Code (Click to expand/collapse)</b></summary>
 
-```javascript
-// Fix tại 1 nơi trong harness
-harness.addSecurityRule({
-  name: 'no-sensitive-data',
-  validate: (output) => !containsSensitiveData(output)
-});
-
-// Tất cả agents tự động có rule này
-// Test 1 lần
-// Deploy trong vài phút
-```
+> 📄 **Code ví dụ:** [`examples/06-4-4-scalability-va-maintainability.js`](examples/06-4-4-scalability-va-maintainability.js)
 
 </details>
 
@@ -589,45 +513,7 @@ Một harness đầy đủ gồm 7 mảnh ghép. Bạn cứ hình dung chúng nh
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-interface Tool {
-  name: string;
-  description: string;
-  parameters: JSONSchema;
-  execute: (params: any) => Promise<ToolResult>;
-  validation?: {
-    preExecution?: (params: any) => boolean;
-    postExecution?: (result: any) => boolean;
-  };
-}
-
-// Example: File Editor Tool
-const fileEditorTool: Tool = {
-  name: "edit_file",
-  description: "Edit a file with specified changes",
-  parameters: {
-    type: "object",
-    properties: {
-      path: { type: "string" },
-      changes: { type: "array" }
-    }
-  },
-  execute: async (params) => {
-    // Implementation
-    return { success: true, content: "..." };
-  },
-  validation: {
-    preExecution: (params) => {
-      // Check if path is safe
-      return params.path.startsWith('/safe/');
-    },
-    postExecution: (result) => {
-      // Validate syntax
-      return linter.check(result.content);
-    }
-  }
-};
-```
+> 📄 **Code ví dụ:** [`examples/07-5-1-tools-cong-cu-tay-chan.ts`](examples/07-5-1-tools-cong-cu-tay-chan.ts)
 
 </details>
 
@@ -649,30 +535,7 @@ const fileEditorTool: Tool = {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-interface MemorySystem {
-  // 1. Short-term Memory (Conversation)
-  shortTerm: {
-    maxMessages: number;
-    messages: Message[];
-    compress: () => void;
-  };
-  
-  // 2. Long-term Memory (Knowledge)
-  longTerm: {
-    vectorStore: VectorDB;
-    add: (content: string, metadata: any) => void;
-    search: (query: string) => Promise<Document[]>;
-  };
-  
-  // 3. Working Memory (Current Task)
-  workingMemory: {
-    currentTask: Task;
-    subTasks: Task[];
-    context: Map<string, any>;
-  };
-}
-```
+> 📄 **Code ví dụ:** [`examples/08-5-2-memory-bo-nho-nao.ts`](examples/08-5-2-memory-bo-nho-nao.ts)
 
 </details>
 
@@ -681,45 +544,7 @@ interface MemorySystem {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-class HarnessMemory implements MemorySystem {
-  shortTerm = {
-    maxMessages: 20,
-    messages: [],
-    compress: () => {
-      // Summarize old messages when hitting limit
-      if (this.messages.length > this.maxMessages) {
-        const old = this.messages.slice(0, -10);
-        const summary = this.summarize(old);
-        this.messages = [
-          { role: 'system', content: summary },
-          ...this.messages.slice(-10)
-        ];
-      }
-    }
-  };
-  
-  longTerm = {
-    vectorStore: new ChromaDB(),
-    add: async (content, metadata) => {
-      await this.vectorStore.add({
-        content,
-        metadata,
-        embedding: await this.embed(content)
-      });
-    },
-    search: async (query) => {
-      return await this.vectorStore.search(query, { limit: 5 });
-    }
-  };
-  
-  workingMemory = {
-    currentTask: null,
-    subTasks: [],
-    context: new Map()
-  };
-}
-```
+> 📄 **Code ví dụ:** [`examples/09-5-2-memory-bo-nho-nao.ts`](examples/09-5-2-memory-bo-nho-nao.ts)
 
 </details>
 
@@ -740,46 +565,7 @@ class HarnessMemory implements MemorySystem {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-interface ContextManager {
-  // Level 1: System Instructions
-  systemContext: {
-    identity: string;
-    capabilities: string[];
-    limitations: string[];
-  };
-  
-  // Level 2: Task Context
-  taskContext: {
-    goal: string;
-    constraints: string[];
-    currentStep: number;
-  };
-  
-  // Level 3: Domain Knowledge
-  domainContext: {
-    codebase: CodebaseInfo;
-    documentation: Document[];
-    conventions: Convention[];
-  };
-  
-  // Level 4: Conversation History
-  conversationContext: {
-    history: Message[];
-    summary: string;
-  };
-  
-  // Level 5: Immediate Context
-  immediateContext: {
-    currentFile: string;
-    recentChanges: Change[];
-    openFiles: string[];
-  };
-  
-  // Build final context for AI
-  buildContext(): string;
-}
-```
+> 📄 **Code ví dụ:** [`examples/10-5-3-context-management-quan-ly-ngu-canh.ts`](examples/10-5-3-context-management-quan-ly-ngu-canh.ts)
 
 </details>
 
@@ -788,45 +574,7 @@ interface ContextManager {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-class SmartContextManager {
-  async buildOptimizedContext(query: string): Promise<string> {
-    // 1. Always include system & task
-    const core = this.getSystemAndTaskContext();
-    
-    // 2. Retrieve relevant domain knowledge
-    const relevant = await this.retrieveRelevant(query);
-    
-    // 3. Add compressed conversation history
-    const history = this.compressHistory();
-    
-    // 4. Include immediate context
-    const immediate = this.getImmediateContext();
-    
-    // 5. Ensure under token limit
-    return this.fitToLimit([core, relevant, history, immediate]);
-  }
-  
-  private fitToLimit(contexts: string[]): string {
-    const limit = 100000; // tokens
-    let total = '';
-    let tokenCount = 0;
-    
-    for (const ctx of contexts) {
-      const tokens = this.countTokens(ctx);
-      if (tokenCount + tokens < limit) {
-        total += ctx;
-        tokenCount += tokens;
-      } else {
-        // Truncate or skip
-        break;
-      }
-    }
-    
-    return total;
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/11-5-3-context-management-quan-ly-ngu-canh.ts`](examples/11-5-3-context-management-quan-ly-ngu-canh.ts)
 
 </details>
 
@@ -869,47 +617,7 @@ Câu hỏi của bạn: **"Làm sao can thiệp vào giữa prompt và LLM?"**
 <details>
 <summary><b>Coding mẫu — 10 dòng là xong (Click để xem)</b></summary>
 
-```python
-import requests
-
-OLLAMA_URL = "http://localhost:11434"
-
-# 1. User gõ prompt
-user_prompt = "BHYT có chi trả bệnh tim không?"
-
-# 2. INTERCEPT: embed prompt → search vector DB
-def search_relevant_chunks(query):
-    # Embed query
-    resp = requests.post(f"{OLLAMA_URL}/api/embed", json={
-        "model": "nomic-embed-text",
-        "input": query
-    })
-    query_vector = resp.json()["embeddings"][0]
-    
-    # Search ChromaDB/FAISS (giả lập kết quả)
-    results = [
-        "BHYT chi trả từ 80% đến 100% chi phí tùy tuyến.",
-        "Bệnh tim mạch thuộc danh mục bảo hiểm y tế chi trả.",
-    ]
-    return results
-
-# 3. GHÉP context vào prompt
-context = search_relevant_chunks(user_prompt)
-final_prompt = f"""Dùng thông tin sau để trả lời câu hỏi:
-
-{chr(10).join(f'• {c}' for c in context)}
-
-Câu hỏi: {user_prompt}"""
-
-# 4. Gửi prompt ĐÃ AUGMENT tới LLM
-response = requests.post(f"{OLLAMA_URL}/api/generate", json={
-    "model": "gemma3:12b",
-    "prompt": final_prompt,
-    "stream": False
-})
-
-print(response.json()["response"])
-```
+> 📄 **Code ví dụ:** [`examples/12-vay-can-thiep-vao-au.py`](examples/12-vay-can-thiep-vao-au.py)
 </details>
 
 Chốt lại: **Bạn không sửa LLM, bạn sửa PROMPT trước khi gửi.**
@@ -940,51 +648,7 @@ App Chat (bất kỳ) ──► PROXY BẠN VIẾT ──► Ollama API
 <details>
 <summary><b>Code mẫu — proxy server bằng Flask (Click để xem)</b></summary>
 
-```python
-from flask import Flask, request, jsonify
-import requests
-
-app = Flask(__name__)
-OLLAMA_URL = "http://localhost:11434"
-
-def search_relevant(query):
-    """Search Vector DB - thay bằng code thật của bạn"""
-    resp = requests.post(f"{OLLAMA_URL}/api/embed", json={
-        "model": "nomic-embed-text", "input": query
-    })
-    # Giả lập kết quả - thay bằng ChromaDB/Qdrant thật
-    return [
-        "BHYT chi trả từ 80% đến 100% chi phí tùy tuyến.",
-        "Bệnh tim mạch thuộc danh mục bảo hiểm y tế chi trả.",
-    ]
-
-@app.route("/api/chat", methods=["POST"])
-def chat():
-    data = request.json
-    user_prompt = data.get("prompt", "")
-    
-    # INTERCEPT: retrieve context
-    context = search_relevant(user_prompt)
-    
-    # GHÉP context vào prompt
-    augmented_prompt = f"""Dùng thông tin sau để trả lời:
-
-{chr(10).join(f'• {c}' for c in context)}
-
-Câu hỏi: {user_prompt}"""
-    
-    # Gửi tới LLM
-    resp = requests.post(f"{OLLAMA_URL}/api/generate", json={
-        "model": data.get("model", "gemma3:12b"),
-        "prompt": augmented_prompt,
-        "stream": data.get("stream", False)
-    })
-    
-    return jsonify(resp.json())
-
-if __name__ == "__main__":
-    app.run(port=5000)
-```
+> 📄 **Code ví dụ:** [`examples/13-lam-sao-e-oan-code-o-tu-ong.py`](examples/13-lam-sao-e-oan-code-o-tu-ong.py)
 
 **Cách dùng:** Trong app chat, thay vì gọi `localhost:11434`, bạn gọi `localhost:5000/api/chat`. Tự động có RAG.
 </details>
@@ -1001,29 +665,7 @@ Nếu bạn tự viết app Python, chỉ cần wrap hàm gọi LLM:
 <details>
 <summary><b>Python Code (Click to expand/collapse)</b></summary>
 
-```python
-# BÌNH THƯỜNG:
-def ask_llm(prompt):
-    return requests.post("http://localhost:11434/api/generate", json={
-        "model": "gemma3:12b", "prompt": prompt
-    }).json()["response"]
-
-# CÓ RETRIEVE:
-def ask_llm_with_rag(prompt):
-    # Bước 1: retrieve context
-    context = search_relevant_chunks(prompt)  # hàm bạn đã viết
-    
-    # Bước 2: ghép context vào prompt
-    augmented = f"Context:\n{chr(10).join(context)}\n\nQuestion: {prompt}"
-    
-    # Bước 3: gọi LLM với prompt đã augment
-    return requests.post("http://localhost:11434/api/generate", json={
-        "model": "gemma3:12b", "prompt": augmented
-    }).json()["response"]
-
-# Dùng y hệt:
-print(ask_llm_with_rag("BHYT có chi trả bệnh tim không?"))
-```
+> 📄 **Code ví dụ:** [`examples/14-lam-sao-e-oan-code-o-tu-ong.py`](examples/14-lam-sao-e-oan-code-o-tu-ong.py)
 
 </details>
 </details>
@@ -1048,29 +690,7 @@ Hoặc dùng tính năng **Pipeline** của Open WebUI để viết filter middl
 <details>
 <summary><b>Code mẫu — LangChain (Click để xem)</b></summary>
 
-```python
-from langchain_community.llms import Ollama
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain.chains import RetrievalQA
-
-# Load vector DB đã có sẵn
-vector_store = Chroma(
-    embedding_function=OllamaEmbeddings(model="nomic-embed-text"),
-    persist_directory="./chroma_db"
-)
-
-# Tạo chain: tự động retrieve + augment + generate
-qa_chain = RetrievalQA.from_chain_type(
-    llm=Ollama(model="gemma3:12b"),
-    retriever=vector_store.as_retriever(),
-    chain_type="stuff"  # stuff = nhồi context vào prompt
-)
-
-# Dùng: tự động chạy retrieve → augment → LLM
-result = qa_chain.invoke("BHYT có chi trả bệnh tim không?")
-print(result)
-```
+> 📄 **Code ví dụ:** [`examples/15-lam-sao-e-oan-code-o-tu-ong.py`](examples/15-lam-sao-e-oan-code-o-tu-ong.py)
 </details>
 
 ---
@@ -1104,38 +724,7 @@ print(result)
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-interface GuardrailSystem {
-  // Input Guardrails
-  inputGuardrails: {
-    contentFilter: (input: string) => ValidationResult;
-    promptInjectionDetection: (input: string) => boolean;
-    rateLimiting: RateLimiter;
-  };
-  
-  // Output Guardrails
-  outputGuardrails: {
-    sensitiveDataDetection: (output: string) => boolean;
-    toxicityFilter: (output: string) => ToxicityScore;
-    factualityCheck: (output: string) => Promise<boolean>;
-  };
-  
-  // Behavioral Guardrails
-  behavioralGuardrails: {
-    maxIterations: number;
-    timeoutMs: number;
-    allowedDomains: string[];
-    forbiddenActions: string[];
-  };
-  
-  // Security Guardrails
-  securityGuardrails: {
-    sandboxing: boolean;
-    fileAccessControl: AccessControl;
-    networkRestrictions: NetworkPolicy;
-  };
-}
-```
+> 📄 **Code ví dụ:** [`examples/16-5-4-guardrails-rao-can-he-mien-dich.ts`](examples/16-5-4-guardrails-rao-can-he-mien-dich.ts)
 
 </details>
 
@@ -1144,48 +733,7 @@ interface GuardrailSystem {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-class GuardrailLayer {
-  async validateInput(input: string): Promise<ValidationResult> {
-    // Check for prompt injection
-    if (this.detectPromptInjection(input)) {
-      return { valid: false, reason: 'Prompt injection detected' };
-    }
-    
-    // Check for inappropriate content
-    const toxicity = await this.checkToxicity(input);
-    if (toxicity.score > 0.8) {
-      return { valid: false, reason: 'Inappropriate content' };
-    }
-    
-    return { valid: true };
-  }
-  
-  async validateOutput(output: string): Promise<ValidationResult> {
-    // Check for sensitive data leaks
-    if (this.containsSensitiveData(output)) {
-      return { valid: false, reason: 'Sensitive data detected' };
-    }
-    
-    // Check output quality
-    if (!this.meetsQualityStandards(output)) {
-      return { valid: false, reason: 'Quality check failed' };
-    }
-    
-    return { valid: true };
-  }
-  
-  private detectPromptInjection(input: string): boolean {
-    const patterns = [
-      /ignore previous instructions/i,
-      /system prompt/i,
-      /you are now/i,
-      // ... more patterns
-    ];
-    return patterns.some(p => p.test(input));
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/17-5-4-guardrails-rao-can-he-mien-dich.ts`](examples/17-5-4-guardrails-rao-can-he-mien-dich.ts)
 
 </details>
 
@@ -1198,29 +746,7 @@ class GuardrailLayer {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-interface FeedbackSystem {
-  // Automatic feedback
-  onSuccess: (task: Task, result: any) => void;
-  onError: (task: Task, error: Error) => void;
-  onTimeout: (task: Task) => void;
-  
-  // Metrics tracking
-  metrics: {
-    successRate: number;
-    avgResponseTime: number;
-    tokenUsage: number;
-    errorTypes: Map<string, number>;
-  };
-  
-  // Auto-optimization
-  optimizer: {
-    analyzePatterns: () => Insights;
-    suggestImprovements: () => Suggestion[];
-    autoAdjust: (metric: string) => void;
-  };
-}
-```
+> 📄 **Code ví dụ:** [`examples/18-5-5-feedback-loops-vong-lap-phan-hoi.ts`](examples/18-5-5-feedback-loops-vong-lap-phan-hoi.ts)
 
 </details>
 
@@ -1229,37 +755,7 @@ interface FeedbackSystem {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-class FeedbackLoop {
-  async handleTaskCompletion(task: Task, result: TaskResult) {
-    // 1. Log metrics
-    await this.logMetrics({
-      taskType: task.type,
-      duration: result.duration,
-      tokensUsed: result.tokensUsed,
-      success: result.success
-    });
-    
-    // 2. Analyze for patterns
-    if (result.success) {
-      await this.memory.longTerm.add(
-        `Successful ${task.type}: ${result.approach}`,
-        { type: 'success_pattern', task: task.type }
-      );
-    } else {
-      await this.memory.longTerm.add(
-        `Failed ${task.type}: ${result.error}`,
-        { type: 'failure_pattern', task: task.type }
-      );
-    }
-    
-    // 3. Auto-adjust if needed
-    if (this.metrics.successRate < 0.7) {
-      await this.optimizer.suggestImprovements();
-    }
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/19-5-5-feedback-loops-vong-lap-phan-hoi.ts`](examples/19-5-5-feedback-loops-vong-lap-phan-hoi.ts)
 
 </details>
 
@@ -1272,35 +768,7 @@ class FeedbackLoop {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-interface PermissionSystem {
-  // Resource permissions
-  resources: {
-    files: FilePermissions;
-    network: NetworkPermissions;
-    system: SystemPermissions;
-  };
-  
-  // Time-based permissions
-  temporal: {
-    allowedHours: TimeRange[];
-    maxDuration: number;
-  };
-  
-  // Context-based permissions
-  contextual: {
-    requireApproval: (action: Action) => boolean;
-    escalationRules: EscalationRule[];
-  };
-}
-
-interface FilePermissions {
-  read: string[];      // Allowed paths to read
-  write: string[];     // Allowed paths to write
-  delete: string[];    // Allowed paths to delete
-  maxFileSize: number; // Max file size in bytes
-}
-```
+> 📄 **Code ví dụ:** [`examples/20-5-6-permissions-quyen-han-xuong.ts`](examples/20-5-6-permissions-quyen-han-xuong.ts)
 
 </details>
 
@@ -1313,41 +781,7 @@ interface FilePermissions {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-class HarnessOrchestrator {
-  async execute(userRequest: string): Promise<Result> {
-    // 1. Validate input
-    const inputCheck = await this.guardrails.validateInput(userRequest);
-    if (!inputCheck.valid) {
-      return { error: inputCheck.reason };
-    }
-    
-    // 2. Build context
-    const context = await this.contextManager.buildContext(userRequest);
-    
-    // 3. Check permissions
-    const action = await this.planner.plan(userRequest);
-    if (!this.permissions.allows(action)) {
-      return { error: 'Permission denied' };
-    }
-    
-    // 4. Execute with tools
-    const result = await this.agent.execute(action, context);
-    
-    // 5. Validate output
-    const outputCheck = await this.guardrails.validateOutput(result);
-    if (!outputCheck.valid) {
-      return await this.retry(action); // Retry logic
-    }
-    
-    // 6. Update memory & feedback
-    await this.memory.update(result);
-    await this.feedback.log(action, result);
-    
-    return result;
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/21-5-7-orchestration-ieu-phoi-he-than-kinh.ts`](examples/21-5-7-orchestration-ieu-phoi-he-than-kinh.ts)
 
 </details>
 
@@ -1358,49 +792,7 @@ class HarnessOrchestrator {
 <details>
 <summary><b>Tích Hợp Tất Cả (Click to expand/collapse)</b></summary>
 
-```typescript
-// Complete Harness Example
-const harness = new AIHarness({
-  model: "claude-3.5-sonnet",
-  
-  tools: [fileEditor, codeRunner, webSearch],
-  
-  memory: {
-    shortTerm: { maxMessages: 20 },
-    longTerm: { vectorStore: chromaDB },
-    workingMemory: { maxSize: 10000 }
-  },
-  
-  contextManager: {
-    levels: 5,
-    optimization: "smart",
-    tokenLimit: 100000
-  },
-  
-  guardrails: {
-    input: [promptInjectionFilter, toxicityFilter],
-    output: [sensitiveDataFilter, qualityChecker],
-    behavioral: { maxIterations: 10, timeoutMs: 30000 }
-  },
-  
-  feedback: {
-    autoLog: true,
-    metricsTracking: true,
-    autoOptimize: true
-  },
-  
-  permissions: {
-    files: {
-      read: ["/project/**"],
-      write: ["/project/src/**"],
-      delete: []
-    },
-    network: {
-      allowedDomains: ["github.com", "stackoverflow.com"]
-    }
-  }
-});
-```
+> 📄 **Code ví dụ:** [`examples/22-tich-hop-tat-ca.ts`](examples/22-tich-hop-tat-ca.ts)
 
 </details>
 
@@ -1787,61 +1179,7 @@ const memoryManager = {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-// Kiến trúc 3 Agent
-class MultiAgentHarness {
-  agents = {
-    planner: new PlannerAgent(),
-    generator: new GeneratorAgent(),
-    evaluator: new EvaluatorAgent()
-  };
-  
-  async execute(task: string): Promise<Result> {
-    // 1. PLANNER: Lập kế hoạch
-    const plan = await this.agents.planner.createPlan(task);
-    /*
-    Output example:
-    {
-      steps: [
-        "1. Create game canvas",
-        "2. Implement player movement",
-        "3. Add collision detection",
-        "4. Implement scoring system"
-      ],
-      estimatedComplexity: "medium"
-    }
-    */
-    
-    // 2. GENERATOR: Thực thi từng bước
-    const results = [];
-    for (const step of plan.steps) {
-      const result = await this.agents.generator.generate(step);
-      results.push(result);
-      
-      // 3. EVALUATOR: Đánh giá sau mỗi bước
-      const evaluation = await this.agents.evaluator.evaluate(result, step);
-      
-      if (!evaluation.passed) {
-        // Retry with feedback
-        const retry = await this.agents.generator.generate(
-          step,
-          { previousAttempt: result, feedback: evaluation.feedback }
-        );
-        results[results.length - 1] = retry;
-      }
-    }
-    
-    // 4. FINAL EVALUATION
-    const finalEval = await this.agents.evaluator.evaluateFinal(results);
-    
-    return {
-      success: finalEval.passed,
-      output: results,
-      quality: finalEval.quality
-    };
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/23-6-2-anthropic-multi-agent-architecture.ts`](examples/23-6-2-anthropic-multi-agent-architecture.ts)
 
 </details>
 
@@ -1850,51 +1188,7 @@ class MultiAgentHarness {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-// PLANNER AGENT
-class PlannerAgent {
-  systemPrompt = `
-    You are a planning specialist.
-    Break down complex tasks into clear, actionable steps.
-    Consider dependencies and order.
-    Output: JSON with steps array.
-  `;
-  
-  tools = []; // No tools, pure planning
-}
-
-// GENERATOR AGENT
-class GeneratorAgent {
-  systemPrompt = `
-    You are a code generator.
-    Implement exactly what is asked in the step.
-    Use provided tools to write and test code.
-  `;
-  
-  tools = [
-    writeFile,
-    readFile,
-    executeCode,
-    installPackage
-  ];
-}
-
-// EVALUATOR AGENT
-class EvaluatorAgent {
-  systemPrompt = `
-    You are a quality evaluator.
-    Check if the implementation meets requirements.
-    Test for bugs, edge cases, and completeness.
-    Decide: PASS or FAIL with specific feedback.
-  `;
-  
-  tools = [
-    runTests,
-    checkSyntax,
-    analyzeCode
-  ];
-}
-```
+> 📄 **Code ví dụ:** [`examples/24-6-2-anthropic-multi-agent-architecture.ts`](examples/24-6-2-anthropic-multi-agent-architecture.ts)
 
 </details>
 
@@ -1919,50 +1213,7 @@ class EvaluatorAgent {
 <details>
 <summary><b>A. Quản lý Context 5 Cấp Độ (Click to expand/collapse)</b></summary>
 
-```typescript
-class ClaudeContextManager {
-  buildContext(query: string): Context {
-    return {
-      // Level 1: System Identity
-      system: {
-        role: "AI Coding Assistant",
-        version: "Claude 3.5",
-        capabilities: [...],
-        limitations: [...]
-      },
-      
-      // Level 2: Task Context
-      task: {
-        currentGoal: this.getCurrentGoal(),
-        progressSoFar: this.getProgress(),
-        remainingSteps: this.getRemainingSteps()
-      },
-      
-      // Level 3: Domain Knowledge (Codebase)
-      domain: {
-        projectStructure: this.getProjectStructure(),
-        conventions: this.getCodeConventions(),
-        dependencies: this.getDependencies()
-      },
-      
-      // Level 4: Conversation History (Compressed)
-      conversation: {
-        recentMessages: this.getRecentMessages(10),
-        summary: this.getSummary(),
-        keyDecisions: this.getKeyDecisions()
-      },
-      
-      // Level 5: Immediate Context
-      immediate: {
-        currentFile: this.getCurrentFile(),
-        openFiles: this.getOpenFiles(),
-        recentEdits: this.getRecentEdits(),
-        cursorPosition: this.getCursorPosition()
-      }
-    };
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/25-a-quan-ly-context-5-cap-o.ts`](examples/25-a-quan-ly-context-5-cap-o.ts)
 
 </details>
 
@@ -1971,51 +1222,7 @@ class ClaudeContextManager {
 <details>
 <summary><b>B. Bộ Nhớ 3 Tầng với Auto-Optimization (Click to expand/collapse)</b></summary>
 
-```typescript
-class ClaudeMemorySystem {
-  // Tier 1: Hot Memory (RAM)
-  hotMemory = {
-    currentConversation: [],
-    maxSize: 20,
-    // Tự động compress khi đầy
-    autoCompress: true
-  };
-  
-  // Tier 2: Warm Memory (Vector DB)
-  warmMemory = {
-    vectorStore: new ChromaDB(),
-    recentQueries: new LRUCache(100),
-    // Cache các truy vấn phổ biến
-    queryCache: new Map()
-  };
-  
-  // Tier 3: Cold Memory (Long-term Storage)
-  coldMemory = {
-    database: new PostgreSQL(),
-    // Lưu trữ patterns, learnings lâu dài
-    successPatterns: [],
-    failurePatterns: []
-  };
-  
-  // AUTO DREAM: Chạy ngầm để tối ưu memory
-  async autoDream() {
-    // Chạy trong idle time
-    setInterval(async () => {
-      // 1. Analyze patterns
-      const patterns = await this.analyzePatterns();
-      
-      // 2. Move rarely used to cold storage
-      await this.archiveOldMemories();
-      
-      // 3. Optimize vector embeddings
-      await this.warmMemory.vectorStore.optimize();
-      
-      // 4. Update query cache
-      await this.updateQueryCache();
-    }, 60000); // Mỗi phút
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/26-b-bo-nho-3-tang-voi-auto-optimization.ts`](examples/26-b-bo-nho-3-tang-voi-auto-optimization.ts)
 
 </details>
 
@@ -2024,58 +1231,7 @@ class ClaudeMemorySystem {
 <details>
 <summary><b>C. Phân Quyền Tool Chặt Chẽ (Click to expand/collapse)</b></summary>
 
-```typescript
-class ClaudeToolPermissions {
-  // Mỗi tool có permission riêng
-  toolPermissions = {
-    'read_file': {
-      allowedPaths: ['/workspace/**'],
-      deniedPaths: ['/workspace/.env', '/workspace/secrets/**'],
-      requireApproval: false
-    },
-    
-    'write_file': {
-      allowedPaths: ['/workspace/src/**', '/workspace/test/**'],
-      deniedPaths: ['/workspace/config/**'],
-      requireApproval: true, // Cần user confirm
-      maxFileSize: 100000 // 100KB
-    },
-    
-    'execute_command': {
-      allowedCommands: ['npm', 'git', 'python', 'node'],
-      deniedCommands: ['rm -rf', 'sudo', 'chmod'],
-      requireApproval: true,
-      timeout: 30000 // 30s
-    },
-    
-    'web_search': {
-      allowedDomains: ['github.com', 'stackoverflow.com', 'docs.*'],
-      rateLimitperHour: 50
-    }
-  };
-  
-  async checkPermission(tool: string, params: any): Promise<PermissionResult> {
-    const perm = this.toolPermissions[tool];
-    
-    // Check path restrictions
-    if (tool.includes('file')) {
-      if (!this.isPathAllowed(params.path, perm)) {
-        return { allowed: false, reason: 'Path not allowed' };
-      }
-    }
-    
-    // Check if needs approval
-    if (perm.requireApproval) {
-      const approved = await this.requestUserApproval(tool, params);
-      if (!approved) {
-        return { allowed: false, reason: 'User denied' };
-      }
-    }
-    
-    return { allowed: true };
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/27-c-phan-quyen-tool-chat-che.ts`](examples/27-c-phan-quyen-tool-chat-che.ts)
 
 </details>
 
@@ -2084,41 +1240,7 @@ class ClaudeToolPermissions {
 <details>
 <summary><b>D. Tone Detection với Regex (!) (Click to expand/collapse)</b></summary>
 
-```typescript
-class ClaudeToneDetector {
-  // Phát hiện sự ức chế/không hài lòng của user
-  frustrationPatterns = [
-    /why (is|are) (you|this)/i,
-    /stop doing/i,
-    /i (told|said) you/i,
-    /for the (\d+)(st|nd|rd|th) time/i,
-    /just do it/i,
-    /seriously\?/i
-  ];
-  
-  detectFrustration(message: string): boolean {
-    return this.frustrationPatterns.some(p => p.test(message));
-  }
-  
-  adjustTone(message: string): ToneAdjustment {
-    if (this.detectFrustration(message)) {
-      return {
-        tone: 'apologetic',
-        verbosity: 'concise',
-        explanation: 'minimal',
-        action: 'immediate' // Làm ngay, giải thích sau
-      };
-    }
-    
-    return {
-      tone: 'helpful',
-      verbosity: 'balanced',
-      explanation: 'detailed',
-      action: 'thoughtful'
-    };
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/28-d-tone-detection-voi-regex.ts`](examples/28-d-tone-detection-voi-regex.ts)
 
 </details>
 
@@ -2139,84 +1261,7 @@ class ClaudeToneDetector {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-class CursorHarness {
-  // 1. CONTEXT AWARE - Biết bạn đang làm gì
-  async buildContext(): Promise<Context> {
-    return {
-      // File đang mở
-      currentFile: editor.getCurrentFile(),
-      
-      // Code đang select
-      selectedCode: editor.getSelection(),
-      
-      // Cursor position
-      cursorLine: editor.getCursorLine(),
-      
-      // Recent edits (để hiểu intent)
-      recentEdits: this.getRecentEdits(5),
-      
-      // Related files (import/export)
-      relatedFiles: await this.findRelatedFiles(),
-      
-      // Git context
-      gitBranch: await git.getCurrentBranch(),
-      uncommittedChanges: await git.getUncommittedChanges()
-    };
-  }
-  
-  // 2. SMART SUGGESTIONS
-  async getSuggestions(context: Context): Promise<Suggestion[]> {
-    // Dựa trên context, đưa ra suggestions phù hợp
-    const suggestions = [];
-    
-    if (context.selectedCode) {
-      suggestions.push({
-        type: 'refactor',
-        action: 'Refactor this code',
-        confidence: 0.9
-      });
-      
-      suggestions.push({
-        type: 'explain',
-        action: 'Explain this code',
-        confidence: 0.95
-      });
-    }
-    
-    if (context.cursorLine.includes('TODO')) {
-      suggestions.push({
-        type: 'implement',
-        action: 'Implement this TODO',
-        confidence: 0.85
-      });
-    }
-    
-    return suggestions.sort((a, b) => b.confidence - a.confidence);
-  }
-  
-  // 3. INCREMENTAL EDITS
-  async applyEdit(edit: Edit): Promise<void> {
-    // Không replace toàn bộ file
-    // Chỉ thay đổi phần cần thiết
-    await editor.replaceRange(
-      edit.startLine,
-      edit.endLine,
-      edit.newContent
-    );
-    
-    // Auto format
-    await editor.formatDocument();
-    
-    // Run linter
-    const lintResult = await linter.check();
-    if (lintResult.errors.length > 0) {
-      // Show inline errors
-      editor.showErrors(lintResult.errors);
-    }
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/29-6-4-cursor-ide-harness-toi-uu-cho.ts`](examples/29-6-4-cursor-ide-harness-toi-uu-cho.ts)
 
 </details>
 
@@ -2348,52 +1393,7 @@ DeepSeek Harness thiết kế 4 môi trường thực thi chuyên biệt phù h�
 <details>
 <summary><b>7.3. The Harness Design Pattern (Click to expand/collapse)</b></summary>
 
-```typescript
-// Template for designing any harness
-class HarnessDesignPattern {
-  // 1. Define what AI CAN do
-  defineCapabilities() {
-    return {
-      tools: [...],
-      permissions: {...}
-    };
-  }
-  
-  // 2. Define what AI CANNOT do
-  defineConstraints() {
-    return {
-      guardrails: [...],
-      validators: [...]
-    };
-  }
-  
-  // 3. Define what AI SHOULD remember
-  defineMemory() {
-    return {
-      shortTerm: {...},
-      longTerm: {...},
-      working: {...}
-    };
-  }
-  
-  // 4. Define how AI SHOULD learn
-  defineFeedback() {
-    return {
-      onSuccess: () => {},
-      onError: () => {},
-      metrics: [...]
-    };
-  }
-  
-  // 5. Define how components WORK TOGETHER
-  defineOrchestration() {
-    return {
-      workflow: [...],
-      errorHandling: {...}
-    };
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/30-7-3-the-harness-design-pattern.ts`](examples/30-7-3-the-harness-design-pattern.ts)
 
 </details>
 
@@ -2463,37 +1463,7 @@ class HarnessDesignPattern {
 <details>
 <summary><b>8.5. Testing Harness (Click to expand/collapse)</b></summary>
 
-```typescript
-// Test suite for harness
-describe('Harness Tests', () => {
-  test('Tool validation works', async () => {
-    const result = await harness.executeTool('write_file', {
-      path: '/unsafe/path'
-    });
-    expect(result.error).toBe('Path not allowed');
-  });
-  
-  test('Context limits respected', async () => {
-    const context = await harness.buildContext(largeQuery);
-    const tokens = countTokens(context);
-    expect(tokens).toBeLessThan(100000);
-  });
-  
-  test('Guardrails catch sensitive data', async () => {
-    const output = "API_KEY=sk_12345";
-    const validation = await harness.validateOutput(output);
-    expect(validation.valid).toBe(false);
-  });
-  
-  test('Memory compression works', async () => {
-    // Add 50 messages
-    for (let i = 0; i < 50; i++) {
-      await harness.addMessage({ content: `Message ${i}` });
-    }
-    expect(harness.memory.shortTerm.messages.length).toBeLessThan(25);
-  });
-});
-```
+> 📄 **Code ví dụ:** [`examples/31-8-5-testing-harness.ts`](examples/31-8-5-testing-harness.ts)
 
 </details>
 
@@ -2508,21 +1478,7 @@ describe('Harness Tests', () => {
 <details>
 <summary><b>TypeScript Code (Click to expand/collapse)</b></summary>
 
-```typescript
-import { ChatOpenAI } from "@langchain/openai";
-import { DynamicStructuredTool } from "@langchain/core/tools";
-
-const harness = {
-  llm: new ChatOpenAI({ model: "gpt-4" }),
-  tools: [
-    new DynamicStructuredTool({
-      name: "search",
-      description: "Search the web",
-      func: async (input) => { /* ... */ }
-    })
-  ]
-};
-```
+> 📄 **Code ví dụ:** [`examples/32-9-1-frameworks-pho-bien.ts`](examples/32-9-1-frameworks-pho-bien.ts)
 
 </details>
 
@@ -2531,22 +1487,7 @@ const harness = {
 <details>
 <summary><b>Python Code (Click to expand/collapse)</b></summary>
 
-```python
-from autogen import AssistantAgent, UserProxyAgent
-
-assistant = AssistantAgent(
-    name="assistant",
-    llm_config={"model": "gpt-4"},
-    system_message="You are a helpful assistant"
-)
-
-harness = UserProxyAgent(
-    name="harness",
-    human_input_mode="NEVER",
-    max_consecutive_auto_reply=10,
-    code_execution_config={"work_dir": "coding"}
-)
-```
+> 📄 **Code ví dụ:** [`examples/33-9-1-frameworks-pho-bien.py`](examples/33-9-1-frameworks-pho-bien.py)
 
 </details>
 
@@ -2555,19 +1496,7 @@ harness = UserProxyAgent(
 <details>
 <summary><b>Python Code (Click to expand/collapse)</b></summary>
 
-```python
-from crewai import Agent, Task, Crew
-
-# Multi-agent harness
-planner = Agent(role='Planner', goal='Create plan')
-executor = Agent(role='Executor', goal='Execute plan')
-reviewer = Agent(role='Reviewer', goal='Review output')
-
-harness = Crew(
-    agents=[planner, executor, reviewer],
-    tasks=[plan_task, execute_task, review_task]
-)
-```
+> 📄 **Code ví dụ:** [`examples/34-9-1-frameworks-pho-bien.py`](examples/34-9-1-frameworks-pho-bien.py)
 
 </details>
 
@@ -2604,62 +1533,7 @@ harness = Crew(
 <details>
 <summary><b>9.3. Starter Template (Click to expand/collapse)</b></summary>
 
-```typescript
-// Complete starter template
-import { ChatAnthropic } from "@langchain/anthropic";
-import { ChromaDB } from "chromadb";
-
-class ProductionHarness {
-  constructor(config) {
-    this.model = new ChatAnthropic({
-      model: "claude-3.5-sonnet",
-      temperature: 0
-    });
-    
-    this.tools = this.initializeTools();
-    this.memory = this.initializeMemory();
-    this.guardrails = this.initializeGuardrails();
-    this.logger = this.initializeLogger();
-  }
-  
-  async execute(userInput) {
-    try {
-      // 1. Validate input
-      await this.guardrails.validateInput(userInput);
-      
-      // 2. Build context
-      const context = await this.buildContext(userInput);
-      
-      // 3. Execute with tools
-      const result = await this.model.invoke(context, {
-        tools: this.tools
-      });
-      
-      // 4. Validate output
-      await this.guardrails.validateOutput(result);
-      
-      // 5. Log metrics
-      await this.logger.log({
-        input: userInput,
-        output: result,
-        tokens: result.usage
-      });
-      
-      return result;
-    } catch (error) {
-      await this.handleError(error);
-      throw error;
-    }
-  }
-}
-
-// Usage
-const harness = new ProductionHarness({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
-
-const result = await harness.execute("Build me a todo app");
-```
+> 📄 **Code ví dụ:** [`examples/35-9-3-starter-template.ts`](examples/35-9-3-starter-template.ts)
 
 </details>
 

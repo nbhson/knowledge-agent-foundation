@@ -26,14 +26,7 @@ README gọi trạng thái đó là "đơn khối": một agent ôm đồng th�
 1. Liệt kê các việc agent của bạn đang làm, rồi gán mỗi việc cho một agent riêng.
 2. Làm `UserProxyAgent` đóng vai harness: tự gọi công cụ, tự nhận kết quả, tự đi tiếp.
 
-```python
-harness = UserProxyAgent(
-    name="harness",
-    human_input_mode="NEVER",
-    max_consecutive_auto_reply=10,
-    code_execution_config={"work_dir": "coding"},
-)
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-mot-agent-om-het-viec-cung-chay.py`](examples/01-q1-mot-agent-om-het-viec-cung-chay.py)
 
 3. Thêm `CriticAgent` để bắt lỗi thay vì để agent tự chấm điểm cho mình.
 4. Nhiều agent hơn thì gom vào `GroupChat` — xem Q3.
@@ -60,14 +53,7 @@ Hai agent cứ ping qua lọt lại: assistant sinh code, harness chạy code, c
 2. Bắt đầu từ con số nhỏ: `max_consecutive_auto_reply=10`, `max_round=20` như README dùng. Tăng dần khi thấy task thật cần nhiều hơn.
 3. Với task sửa lỗi, đặt trần thấp hơn và thêm điều kiện dừng riêng: "critic nói hài lòng thì dừng".
 
-```python
-group_chat = GroupChat(
-    agents=[planner, assistant, critic, executor],
-    messages=[],
-    max_round=20,
-    speaker_selection_method="auto",
-)
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-cac-agent-noi-chuyen-voi-nhau-mai.py`](examples/02-q2-cac-agent-noi-chuyen-voi-nhau-mai.py)
 
 4. Nếu lượt nói tăng không dừng, xem lại xem agent nào không có đầu ra rõ ràng để lượt sau biết mình xong chưa.
 
@@ -115,13 +101,7 @@ Hai dòng cấu hình chỉ khác một từ, nhưng hành vi khác hẳn. Một
 1. Mặc định `"NEVER"` cho phần viết code, chạy test, đọc file.
 2. Dùng `"TERMINATE"` cho bất kỳ bước nào đụng production, phát hành, xoá, hoặc gửi ra ngoài.
 
-```python
-sensitive_harness = UserProxyAgent(
-    name="harness",
-    human_input_mode="TERMINATE",  # chỉ dừng khi cần xác nhận
-    code_execution_config=False     # tắt chạy code luôn
-)
-```
+> 📄 **Code ví dụ:** [`examples/03-q4-human-input-mode-never-voi-terminate-khac.py`](examples/03-q4-human-input-mode-never-voi-terminate-khac.py)
 
 3. Kết hợp `code_execution_config=False` ở agent nhạy cảm: agent đó chỉ được đề xuất, không được tự chạy.
 4. Ghi lại ở bản ghi kiểm toán lúc nào đã hỏi, ai trả lời gì.
@@ -167,17 +147,7 @@ AutoGen đã được **archive** và thay thế bởi **Microsoft Agent Framewo
 - MAF = sự hợp nhất AutoGen + Semantic Kernel
 - API hoàn toàn mới: `agents/`, không còn `ConversableAgent`
 
-```python
-# MAF mới (2025+)
-from agent_framework import ChatAgent
-from agent_framework.openai import OpenAIChatClient
-
-agent = OpenAIChatClient(model_id="gpt-4o").create_agent(
-    name="assistant",
-    instructions="You are a helpful assistant",
-)
-result = await agent.run("Hello!")
-```
+> 📄 **Code ví dụ:** [`examples/04-cap-nhat-10-2026-autogen-microsoft-agent-framework.py`](examples/04-cap-nhat-10-2026-autogen-microsoft-agent-framework.py)
 
 **Di chuyển project cũ:** https://learn.microsoft.com/en-us/agent-framework/migration-guide/from-autogen/
 **MAF mới:** https://github.com/microsoft/agent-framework

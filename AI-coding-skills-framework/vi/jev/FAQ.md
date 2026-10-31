@@ -21,14 +21,7 @@ Bạn đang thuê một nhà văn để điền vào ô checkbox. Việc này l�
 3. Gom nhiều câu hỏi vào **một** lần gọi — chúng được chấm song song nên gần như không tăng độ trễ.
 4. Đặt ngưỡng ở 0.8: khoảng 80% câu được chấm điểm 0.8 thật sự đúng.
 
-```python
-resp = client.ask(model="jev-1.13.0", state=ticket_text, questions={
-    "team":   {"type": "choice", "choices": ["billing", "tech", "account", "other"]},
-    "refund": {"type": "noul", "description": "Khách có yêu cầu hoàn tiền không?"},
-})
-if resp.answers["refund"].p >= 0.85:
-    open_refund_flow()
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-toi-ang-goi-mo-hinh-lon-chi.py`](examples/01-q1-toi-ang-goi-mo-hinh-lon-chi.py)
 
 **Kiểm tra**
 
@@ -82,15 +75,7 @@ Có hai thứ hay bị gộp làm một. Thứ nhất là **an toàn kiểu**: c
 3. Không bỏ bước kiểm tra chỉ vì "kết quả có kiểu đúng rồi".
 4. Luôn có nhánh chuyển người khi độ tự tin thấp — kể cả khi nó không thấp.
 
-```python
-probs = answer["probabilities"]
-top = max(probs.values())
-second = sorted(probs.values())[-2]
-if top - second < 0.15:      # gần hòa → đừng tự quyết
-    escalate_to_human(probs)
-else:
-    route(answer["selected"])
-```
+> 📄 **Code ví dụ:** [`examples/02-q3-jev-co-ang-tin-khong-no-co.py`](examples/02-q3-jev-co-ang-tin-khong-no-co.py)
 
 **Kiểm tra**
 

@@ -20,12 +20,7 @@ Many loops in one repository is not bad by itself. It becomes dangerous only whe
 2. Before spawning a fix, read **all other** pattern state files. If another loop's `acting_on` matches, skip and log the skip to `loop-run-log.md`.
 3. Better than self-discipline, use real advisory locks in the control script:
 
-```bash
-# before spawning a worktree
-npx @cobusgreyling/loop-worktree lock --paths <globs> --owner <pattern>
-# after finishing
-npx @cobusgreyling/loop-worktree unlock --owner <pattern>
-```
+> 📄 **Example code:** [`examples/01-q1-i-turned-on-a-second-loop-and.sh`](examples/01-q1-i-turned-on-a-second-loop-and.sh)
 
 4. Know the gap: `loop-worktree create` does **not** check locks itself — the lock/unlock pairing is a convention you enforce in the control script. For one-shot sandboxed runs, `loop-sandbox --lock-paths` follows the same convention.
 

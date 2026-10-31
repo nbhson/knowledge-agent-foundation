@@ -28,11 +28,7 @@ Node2Vec và DeepWalk gán **mỗi node một vector riêng**, đúng như một
 | Cần thuộc tính node | Không | Có | Có |
 | Cách gộp bạn bè | Không rõ | Trung bình | Tự học trọng số |
 
-```python
-model = GraphSAGE(in_channels=16, hidden_channels=32, out_channels=8)
-emb_cu = model(x_cu, edge_index_cu)      # node mới chưa từng huấn luyện
-emb_cu = emb_cu / emb_cu.norm(dim=1, keepdim=True)   # chuẩn hoá để so cosin
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-them-mot-node-moi-thi-phai-huan.py`](examples/01-q1-them-mot-node-moi-thi-phai-huan.py)
 
 **Kiểm tra**
 
@@ -60,11 +56,7 @@ Node2Vec không đi bộ hoàn toàn ngẫu nhiên. Hai tham số điều khiể
 4. Đừng kỳ vọng dùng được thuộc tính: Node2Vec chỉ nhìn cấu trúc, nên "giống Alice" nghĩa là *vị trí trong đồ thị* giống, không phải *mô tả chức vụ* giống. Muốn dùng cả thuộc tính thì chuyển sang GraphSAGE.
 5. Kiểm tra chất lượng bằng cách nhìn kết quả theo cụm: vẽ bằng t-SNE và xem các node cùng team có nằm cạnh nhau không.
 
-```python
-walks = [get_random_walk(G, n, walk_length=20) for n in G for _ in range(10)]
-model = Word2Vec(walks, vector_size=64, window=5, sg=1, min_count=0, epochs=5)
-sim = cosine(model.wv["node_0"], model.wv["node_7"])   # càng cao càng giống
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-tim-nguoi-giong-alice-ve-vai-tro.py`](examples/02-q2-tim-nguoi-giong-alice-ve-vai-tro.py)
 
 **Kiểm tra**
 
@@ -90,12 +82,7 @@ TransE học theo nguyên tắc **dịch chuyển**: `vector(Alice) + vector(WOR
 4. Đánh giá cả hai mô hình trên dữ liệu của bạn: che một phần quan hệ đã biết, hỏi mô hình dự đoán, đo tỉ lệ đúng.
 5. Nhóm mô hình mới (Graph Transformer) nhìn được toàn đồ thị nhưng tốn bộ nhớ theo bậc hai số node; hàng triệu node vẫn nên dùng mô hình truyền tin theo hàng xóm.
 
-```python
-model = TransE(num_entities=1000, num_relations=10, dim=100)
-score = torch.norm(h_e + r_e - t_e, p=1, dim=1)   # thấp = đúng, cao = sai
-top = torch.topk(model.predict_tail(alice_id, works_on_id, 1000), k=5, largest=False)
-# (Alice, WORKS_ON, ?) → 5 entity có điểm thấp nhất
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-quan-he-trong-graph-cua-toi-co.py`](examples/03-q3-quan-he-trong-graph-cua-toi-co.py)
 
 **Kiểm tra**
 
@@ -129,14 +116,7 @@ Hai bộ vector bắt được hai thứ khác nhau: text bắt "nói gì", grap
 4. Chọn RRF khi bạn có 3 nguồn trở lên (vector + duyệt đồ thị + tìm toàn văn) và không muốn tinh chỉnh trọng số.
 5. Nhớ lấy gấp đôi số kết quả từ mỗi bộ rồi mới pha, vì bộ nào bị lọc sớm thì mất luôn ứng viên.
 
-```python
-# RRF — không cần chuẩn hoá điểm, k = 60
-fused = {}
-for lst in [vector_rank, graph_rank, fulltext_rank]:
-    for rank, item in enumerate(lst, start=1):
-        fused[item] = fused.get(item, 0.0) + 1.0 / (60 + rank)
-final = sorted(fused.items(), key=lambda x: -x[1])[:10]
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-co-vector-cua-van-ban-lan-vector.py`](examples/04-q4-co-vector-cua-van-ban-lan-vector.py)
 
 **Kiểm tra**
 

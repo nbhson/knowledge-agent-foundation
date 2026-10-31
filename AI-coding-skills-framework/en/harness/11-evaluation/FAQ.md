@@ -23,11 +23,7 @@ HumanEval asks for one self-contained Python function. SWE-bench asks the agent 
 3. Report resolve rate **and** cost per task together. Cheap models win on value: DeepSeek V3 reaches 92% of GPT-4o's quality at 11% of the cost.
 4. Never mix benchmarks into one "composite" number — different question sets, different scales.
 
-```python
-summary = suite.run(agent_func)
-print(summary["success_rate"], summary["avg_tokens"], summary["avg_attempts"])
-# 0.45  21500  2.4   <- resolve rate, tokens, attempts
-```
+> 📄 **Example code:** [`examples/01-q1-my-new-model-scores-92-on-humaneval.py`](examples/01-q1-my-new-model-scores-92-on-humaneval.py)
 
 **Verify**
 
@@ -156,11 +152,7 @@ The harness file lists this as an anti-pattern: putting problem-solution informa
 4. Load **zero injected memory** — no data from previous sessions.
 5. Assert the tool allowlist in code, so a leaked tool fails loudly instead of quietly helping.
 
-```typescript
-if (!['bash', 'editor'].includes(call.type)) {
-  throw new Error(`Tool ${call.type} not allowed in minimal harness`);
-}
-```
+> 📄 **Example code:** [`examples/02-q6-i-added-a-hint-and-a-search.ts`](examples/02-q6-i-added-a-hint-and-a-search.ts)
 
 **Verify**
 

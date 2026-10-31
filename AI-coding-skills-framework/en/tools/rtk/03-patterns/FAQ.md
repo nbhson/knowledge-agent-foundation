@@ -88,11 +88,7 @@ RTK assumes most command output is low-signal noise. That assumption is wrong fo
 4. Re-run the excluded command yourself and read it before the agent acts on it.
 5. If excluding one string is not enough, exclude the whole family (`git diff`) rather than every git command.
 
-```toml
-# ~/.config/rtk/config.toml
-[hooks]
-exclude_commands = ["git diff", "curl", "playwright", "terraform plan"]
-```
+> 📄 **Example code:** [`examples/01-q15-the-hook-rewrote-a-command-i-needed.toml`](examples/01-q15-the-hook-rewrote-a-command-i-needed.toml)
 
 **Verify**
 
@@ -160,12 +156,7 @@ You ask the agent to fix a bug in `src/harness/context.ts`. It runs `git diff`, 
 4. Do not turn off the whole hook for this — `git status` (~80%), `git log` (~70%), and `git push` (~93%) still save on every single call.
 5. Give the agent a rule in the task prompt: "locate with `rtk git diff`, edit with plain `git diff -- <path>`".
 
-```bash
-# map: compressed, cheap
-rtk git diff
-# act: raw diff for the one file being edited
-git diff -- src/harness/context.ts
-```
+> 📄 **Example code:** [`examples/02-q17-the-agent-edited-the-wrong-lines-after.sh`](examples/02-q17-the-agent-edited-the-wrong-lines-after.sh)
 
 **Verify**
 
@@ -190,11 +181,7 @@ RTK keeps three fields for log: hash, author, subject. That is enough to answer 
 3. If file names in history are a daily need, add `git log` to `exclude_commands` rather than paying for it every single time.
 4. To diff two commits directly, use `rtk diff file1 file2` — condensed diff, ~75% smaller, exit code 1 when the files differ.
 
-```bash
-rtk git log -n 10                 # hash + author + subject
-git log --stat -n 10              # adds the changed-file list
-rtk diff a.rs b.rs                # condensed diff; exit 1 if different
-```
+> 📄 **Example code:** [`examples/03-q18-rtk-git-log-n-10-gave-me.sh`](examples/03-q18-rtk-git-log-n-10-gave-me.sh)
 
 **Verify**
 
@@ -277,10 +264,7 @@ Those three linters already have a machine-readable format, and RTK parses that 
 3. If a downstream script or editor plugin parses the original text, add that command to `exclude_commands`.
 4. Remember which gain each one should reach: `golangci-lint run` ~85%, `eslint` ~80%, `ruff check` ~80%, `rubocop` ~60%+.
 
-```bash
-ruff check . --output-format json   # RTK parses this and groups it
-ruff check .                         # human output, when you read it
-```
+> 📄 **Example code:** [`examples/04-q21-rtk-turned-my-linter-output-into-json.sh`](examples/04-q21-rtk-turned-my-linter-output-into-json.sh)
 
 **Verify**
 
@@ -308,10 +292,7 @@ You ask the agent to change `fn compress`. It runs `rtk read src/harness/context
 4. Keep the search cheap too: `rtk find "*.rs" .` (~70%), `rtk grep "pattern" .` (~75%), `rtk diff file1 file2` (~75%, exit code 1 when the files differ).
 5. Give the pattern a name so it survives: "locate with `rtk read`, read the body before editing".
 
-```bash
-rtk read src/harness/context.rs            # where is it?  (cheap)
-cat src/harness/context.rs                 # exact text for editing
-```
+> 📄 **Example code:** [`examples/05-q22-the-agent-used-rtk-read-then-edited.sh`](examples/05-q22-the-agent-used-rtk-read-then-edited.sh)
 
 **Verify**
 
@@ -418,9 +399,7 @@ Passing tests are collapsed into a single number because `... ok` repeated 13 ti
 3. For `go test`, RTK parses NDJSON (one JSON object per line) — failures only.
 4. If a script counts tests by parsing the original output, exclude the command instead.
 
-```bash
-cat ~/.local/share/rtk/tee/1707753600_cargo_test.log   # full raw output
-```
+> 📄 **Example code:** [`examples/06-q25-my-test-suite-went-from-200-lines.sh`](examples/06-q25-my-test-suite-went-from-200-lines.sh)
 
 **Verify**
 
@@ -474,10 +453,7 @@ Your Python and JavaScript suites drop to a fraction of their size: a failing `c
 3. Check the exit code either way — that is what tells you the suite actually failed.
 4. Re-check after a `.rspec` or `spec_helper` change; the formatter setting is the only thing that moved.
 
-```bash
-rspec --format json     # or set it in .rspec / spec_helper
-rtk rspec               # now groups failures like the other runners
-```
+> 📄 **Example code:** [`examples/07-q27-rtk-rspec-only-saved-60-while-rtk.sh`](examples/07-q27-rtk-rspec-only-saved-60-while-rtk.sh)
 
 **Verify**
 

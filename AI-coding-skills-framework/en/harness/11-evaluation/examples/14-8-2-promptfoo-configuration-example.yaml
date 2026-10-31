@@ -1,0 +1,57 @@
+# promptfooconfig.yaml
+# Configuration for PromptFoo evaluation
+
+description: "AI Coding Agent Evaluation"
+
+providers:
+  - id: "openai:gpt-4o"
+    config:
+      temperature: 0
+  - id: "anthropic:messages:claude-3.5-sonnet"
+    config:
+      temperature: 0
+
+prompts:
+  - file://prompts/v1.txt
+  - file://prompts/v2.txt
+
+tests:
+  - description: "Fix null pointer bug"
+    vars:
+      task: "Fix the null pointer in UserService.getProfile"
+      file_content: "{{fixture.userservice}}"
+    assert:
+      - type: contains
+        value: "null check"
+      - type: llm-rubric
+        value: "Code handles null case properly, no runtime errors"
+  
+  - description: "Add pagination"
+    vars:
+      task: "Add pagination to ProductController.list"
+      file_content: "{{fixture.productcontroller}}"
+    assert:
+      - type: contains
+        value: "offset"
+      - type: contains
+        value: "limit"
+      - type: llm-rubric
+        value: "Pagination is correctly implemented with proper defaults"
+
+  - description: "Security fix"
+    vars:
+      task: "Fix SQL injection in UserDAO.findByEmail"
+      file_content: "{{fixture.userdao}}"
+    assert:
+      - type: llm-rubric
+        value: "Uses parameterized queries, no string concatenation for SQL"
+
+metrics:
+  correctness:
+    weight: 0.3
+  quality:
+    weight: 0.25
+  safety:
+    weight: 0.25
+  efficiency:
+    weight: 0.2

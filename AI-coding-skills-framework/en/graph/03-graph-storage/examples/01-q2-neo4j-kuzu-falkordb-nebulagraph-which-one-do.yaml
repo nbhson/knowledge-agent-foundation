@@ -1,0 +1,3 @@
+image: neo4j:5-community
+ports: ["7474:7474", "7687:7687"]   # Browser UI / Bolt protocol
+NEO4J_PLUGINS: '["apoc","graph-data-science"]'

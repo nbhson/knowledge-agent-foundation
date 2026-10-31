@@ -151,93 +151,12 @@ Kết quả: Node nào hay "xuất hiện cùng nhau trên các con đường ng
 
 > **Điểm mới so với DeepWalk:** Thêm 2 tham số `p` và `q` để **kiểu soát hướng đi** — thay vì đi hoàn toàn ngẫu nhiên, bạn quyết định "đi xa" hay "đi gần".
 
-```python
-# p và q hoạt động như thế nào:
-
-p = return parameter (xác suất quay lại node vừa rời đi):
-  - p nhỏ (0.5): hay quay lại → khám phá neighborhood chặt
-  - p lớn (2.0): ít quay lại → đi xa hơn
-
-q = in-out parameter (xác suất đi ra xa hay quay lại):
-  - q nhỏ (0.5): dễ đi xa (DFS-like) → khám phá cấu trúc xa
-  - q lớn (2.0): dễ đi gần (BFS-like) → khám phá community.local
-
-# Hiểu đơn giản nhất:
-# q < 1 (DFS-like): "Tôi muốn tìm người có CÙNG ROLE" dù ở khác team
-# q > 1 (BFS-like): "Tôi muốn tìm người trong CÙNG TEAM"
-```
+> 📄 **Code ví dụ:** [`examples/01-2-2-node2vec-biased-random-walk-them-kiem.py`](examples/01-2-2-node2vec-biased-random-walk-them-kiem.py)
 
 <details>
 <summary>Python Code — Node2Vec với NetworkX (Click để xem)</summary>
 
-```python
-import networkx as nx
-import numpy as np
-from gensim.models import Word2Vec
-import random
-
-def get_random_walk(graph, start_node: str, walk_length: int = 10) -> list[str]:
-    walk = [start_node]
-    current = start_node
-    for _ in range(walk_length - 1):
-        neighbors = list(graph.neighbors(current))
-        if not neighbors:
-            break
-        current = random.choice(neighbors)
-        walk.append(current)
-    return walk
-
-def deepwalk_embeddings(
-    graph: nx.Graph,
-    num_walks: int = 10,
-    walk_length: int = 20,
-    embedding_dim: int = 64,
-    window: int = 5,
-) -> dict[str, np.ndarray]:
-    """Tạo embeddings bằng random walks + Word2Vec."""
-    # Tạo corpus: nhiều random walks
-    walks = []
-    nodes = list(graph.nodes())
-    for _ in range(num_walks):
-        for node in nodes:
-            walks.append(get_random_walk(graph, node, walk_length))
-    
-    print(f"Generated {len(walks)} walks, avg length {sum(len(w) for w in walks)/len(walks):.1f}")
-    
-    # Train Word2Vec
-    model = Word2Vec(
-        walks,
-        vector_size=embedding_dim,
-        window=window,
-        min_count=0,
-        sg=1,  # Skip-gram
-        workers=4,
-        epochs=5,
-    )
-    
-    # Trả về dict node -> vector
-    return {node: model.wv[node] for node in graph.nodes() if node in model.wv}
-
-# Usage
-G = nx.karate_club_graph()
-# Đổi node labels thành strings cho Word2Vec
-G_labeled = nx.relabel_nodes(G, {n: f"node_{n}" for n in G.nodes()})
-embeddings = deepwalk_embeddings(G_labeled, num_walks=10, walk_length=20, embedding_dim=64)
-
-# Tìm nodes giống nhau
-def most_similar(target: str, embeddings: dict, top_k: int = 5) -> list:
-    target_vec = embeddings[target]
-    scores = []
-    for node, vec in embeddings.items():
-        if node == target:
-            continue
-        sim = float(np.dot(target_vec, vec) / (np.linalg.norm(target_vec) * np.linalg.norm(vec)))
-        scores.append((node, sim))
-    scores.sort(key=lambda x: x[1], reverse=True)
-    return scores[:top_k]
-
-print(most_similar("node_0", embeddings, top_k=5))
-```
+> 📄 **Code ví dụ:** [`examples/02-2-2-node2vec-biased-random-walk-them-kiem.py`](examples/02-2-2-node2vec-biased-random-walk-them-kiem.py)
 
 </details>
 
@@ -289,26 +208,7 @@ K layers = K vòng "hỏi bạn bè" — node cuối cùng biết thông tin cá
   Layer 3: biết bạn bè của bạn bè của bạn bè (3 hops)
 ```
 
-```python
-# Pseudocode: GraphSAGE forward
-def graphsage_layer(node_features, adjacency, weights, aggregator="mean"):
-    """
-    node_features: (N, D) — features của N nodes
-    adjacency: (N, N) — adjacency matrix
-    """
-    # Aggregate neighbors
-    if aggregator == "mean":
-        neighbor_agg = adjacency @ node_features / adjacency.sum(axis=1, keepdims=True)
-    
-    # Concat self + neighbors
-    combined = np.concatenate([node_features, neighbor_agg], axis=1)
-    
-    # Transform
-    output = np.maximum(0, combined @ weights)  # ReLU
-    # Normalize
-    output = output / np.linalg.norm(output, axis=1, keepdims=True)
-    return output
-```
+> 📄 **Code ví dụ:** [`examples/03-3-1-graphsage-inductive-node-embeddings.py`](examples/03-3-1-graphsage-inductive-node-embeddings.py)
 
 ### 3.2 GAT — Graph Attention Networks
 
@@ -336,36 +236,7 @@ Ví dụ trực quan:
 <details>
 <summary>Python Code — GraphSAGE với PyG (Click để xem)</summary>
 
-```python
-# pip install torch torch-geometric
-
-import torch
-from torch_geometric.nn import SAGEConv
-from torch_geometric.data import Data
-
-class GraphSAGE(torch.nn.Module):
-    def __init__(self, in_channels: int, hidden_channels: int, out_channels: int):
-        super().__init__()
-        self.conv1 = SAGEConv(in_channels, hidden_channels)
-        self.conv2 = SAGEConv(hidden_channels, out_channels)
-    
-    def forward(self, x, edge_index):
-        x = self.conv1(x, edge_index)
-        x = x.relu()
-        x = self.conv2(x, edge_index)
-        return x  # (N, out_channels) embeddings
-
-# Tạo graph data
-# edge_index: (2, E) — danh sách edges
-edge_index = torch.tensor([[0, 1, 1, 2, 2, 3],
-                           [1, 0, 2, 1, 3, 2]], dtype=torch.long)
-x = torch.randn(4, 16)  # 4 nodes, 16 features mỗi node
-
-model = GraphSAGE(in_channels=16, hidden_channels=32, out_channels=8)
-embeddings = model(x, edge_index)
-print(f"Embeddings shape: {embeddings.shape}")  # (4, 8)
-print(f"Embedding node 0: {embeddings[0]}")
-```
+> 📄 **Code ví dụ:** [`examples/04-3-2-gat-graph-attention-networks.py`](examples/04-3-2-gat-graph-attention-networks.py)
 
 </details>
 
@@ -440,67 +311,7 @@ r là vector phức với |r_i| = 1 (đơn vị) → quay h để gần t
 <details>
 <summary>Python Code — TransE Training Loop (Click để xem)</summary>
 
-```python
-import torch
-import torch.nn as nn
-
-class TransE(nn.Module):
-    def __init__(self, num_entities: int, num_relations: int, dim: int = 100):
-        super().__init__()
-        self.entity_emb = nn.Embedding(num_entities, dim)
-        self.relation_emb = nn.Embedding(num_relations, dim)
-        nn.init.xavier_uniform_(self.entity_emb.weight)
-        nn.init.xavier_uniform_(self.relation_emb.weight)
-    
-    def forward(self, h: torch.Tensor, r: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
-        """Score triples — thấp = đúng."""
-        h_e = self.entity_emb(h)  # (batch, dim)
-        r_e = self.relation_emb(r)
-        t_e = self.entity_emb(t)
-        # L1 distance: ||h + r - t||
-        score = torch.norm(h_e + r_e - t_e, p=1, dim=1)
-        return score  # (batch,)
-    
-    def predict_tail(self, h: int, r: int, all_entities: int) -> torch.Tensor:
-        """Cho (h, r, ?), rank tất cả entities theo score."""
-        h_e = self.entity_emb(torch.tensor([h]))
-        r_e = self.relation_emb(torch.tensor([r]))
-        all_t = self.entity_emb.weight  # (num_entities, dim)
-        scores = torch.norm(h_e + r_e - all_t, p=1, dim=1)
-        return scores  # thấp nhất = dự đoán tốt nhất
-
-# Training
-model = TransE(num_entities=1000, num_relations=10, dim=100)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-
-for epoch in range(100):
-    # Positive triples: (h, r, t) đúng
-    h_pos = torch.randint(0, 1000, (32,))
-    r_pos = torch.randint(0, 10, (32,))
-    t_pos = torch.randint(0, 1000, (32,))
-    
-    # Negative triples: corrupt tail
-    t_neg = torch.randint(0, 1000, (32,))
-    
-    pos_score = model(h_pos, r_pos, t_pos)
-    neg_score = model(h_pos, r_pos, t_neg)
-    
-    # Margin ranking loss: pos_score + margin < neg_score
-    margin = 1.0
-    loss = torch.relu(pos_score - neg_score + margin).mean()
-    
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    
-    if epoch % 20 == 0:
-        print(f"Epoch {epoch}: loss={loss.item():.4f}")
-
-# Predict: Alice WORKS_ON ?
-# alice_id = entity_to_id["Alice"], works_on_id = relation_to_id["WORKS_ON"]
-# scores = model.predict_tail(alice_id, works_on_id, num_entities=1000)
-# top_k = torch.topk(scores, k=5, largest=False)  # 5 projects có score thấp nhất
-```
+> 📄 **Code ví dụ:** [`examples/05-4-2-rotate-rotation-in-complex-space.py`](examples/05-4-2-rotate-rotation-in-complex-space.py)
 
 </details>
 
@@ -544,70 +355,7 @@ Graph embeddings không thay thế text embeddings — chúng **bổ sung** cho 
 <details>
 <summary>Python Code — Hybrid Search (RRF + Weighted) (Click để xem)</summary>
 
-```python
-import numpy as np
-from typing import List, Dict
-
-def reciprocal_rank_fusion(
-    ranked_lists: List[List[str]],
-    k: int = 60,
-) -> Dict[str, float]:
-    """RRF: gộp nhiều ranked lists thành 1 score."""
-    scores: Dict[str, float] = {}
-    for ranked_list in ranked_lists:
-        for rank, doc_id in enumerate(ranked_list):
-            scores[doc_id] = scores.get(doc_id, 0) + 1 / (k + rank + 1)
-    return scores
-
-def hybrid_search(
-    query_text: str,
-    query_vector: List[float],
-    text_index,       # Vector DB cho text embeddings
-    graph_embeddings: Dict[str, np.ndarray],
-    top_k: int = 10,
-    alpha: float = 0.6,  # weight cho text search
-) -> List[Dict]:
-    """
-    Hybrid: α * text_score + (1-α) * graph_score
-    
-    alpha=1.0 → chỉ text search
-    alpha=0.0 → chỉ graph search
-    alpha=0.6 → cân bằng (khuyến nghị)
-    """
-    # 1. Text search (semantic)
-    text_results = text_index.search(query_vector, top_k=top_k * 2)
-    # text_results = [{"id": "doc_1", "score": 0.92}, ...]
-    
-    # 2. Graph search (structural)
-    query_graph_vec = embed(query_text)  # hoặc query entity embedding
-    graph_scores = []
-    for node_id, node_vec in graph_embeddings.items():
-        sim = float(np.dot(query_graph_vec, node_vec) / 
-                    (np.linalg.norm(query_graph_vec) * np.linalg.norm(node_vec)))
-        graph_scores.append((node_id, sim))
-    graph_scores.sort(key=lambda x: x[1], reverse=True)
-    graph_ranked = [node_id for node_id, _ in graph_scores[:top_k * 2]]
-    
-    # 3a. Fusion bằng Weighted Score
-    text_score_map = {r["id"]: r["score"] for r in text_results}
-    graph_score_map = {node_id: score for node_id, score in graph_scores}
-    
-    all_ids = set(text_score_map.keys()) | set(graph_score_map.keys())
-    hybrid_scores = {}
-    for doc_id in all_ids:
-        t_score = text_score_map.get(doc_id, 0)
-        g_score = graph_score_map.get(doc_id, 0)
-        hybrid_scores[doc_id] = alpha * t_score + (1 - alpha) * g_score
-    
-    ranked = sorted(hybrid_scores.items(), key=lambda x: x[1], reverse=True)
-    return [{"id": doc_id, "score": score} for doc_id, score in ranked[:top_k]]
-
-# 3b. Fusion bằng RRF (không cần tune alpha)
-def hybrid_search_rrf(text_ranked: List[str], graph_ranked: List[str], top_k: int = 10):
-    fused = reciprocal_rank_fusion([text_ranked, graph_ranked])
-    ranked = sorted(fused.items(), key=lambda x: x[1], reverse=True)
-    return ranked[:top_k]
-```
+> 📄 **Code ví dụ:** [`examples/06-5-1-ky-thuat-fusion.py`](examples/06-5-1-ky-thuat-fusion.py)
 
 </details>
 

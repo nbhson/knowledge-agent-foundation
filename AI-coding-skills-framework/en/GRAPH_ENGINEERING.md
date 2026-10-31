@@ -313,22 +313,7 @@ Documents ──► LLM Entity/Relation Extraction ──► Knowledge Graph
 
 The most common production stack:
 
-```python
-# Construction
-from langchain_experimental.graph_transformers import LLMGraphTransformer
-transformer = LLMGraphTransformer(llm=ChatOpenAI(model="gpt-4o"))
-graph_docs = await transformer.convert_to_graph_documents(raw_docs)
-
-# Storage
-from langchain_community.graphs import Neo4jGraph
-graph = Neo4jGraph(url="bolt://localhost:7687", username="neo4j", password="***")
-graph.add_graph_documents(graph_docs)
-
-# Retrieval
-from langchain_community.chains import GraphCypherQAChain
-chain = GraphCypherQAChain.from_llm(llm=ChatOpenAI(model="gpt-4o"), graph=graph)
-answer = chain.invoke("Who approved project X?")
-```
+> 📄 **Example code:** [`examples/01-7-2-neo4j-langchain-enterprise-knowledge-graph.py`](examples/01-7-2-neo4j-langchain-enterprise-knowledge-graph.py)
 
 ### 7.3. DeepSeek Harness — Trajectory as Graph
 
@@ -367,32 +352,7 @@ DeepSeek stores agent trajectories **not** as flat logs, but as an **event graph
 
 ### 8.3. Graph Design Pattern
 
-```python
-# Complete Graph Engineering Example
-from graph_engine import GraphHarness
-
-graph = GraphHarness(
-    ontology={
-        "node_types": ["Person", "Project", "Document", "Organization"],
-        "edge_types": ["APPROVES", "REPORTS_TO", "BELONGS_TO", "REFERENCES"],
-        "constraints": ["Person -[REPORTS_TO]-> Person", "Project -[APPROVES]-> Person"]
-    },
-    storage="neo4j://localhost:7687",
-    embeddings={"model": "nomic-embed-text", "dim": 768},
-    retrieval={
-        "strategy": "hybrid",  # vector + graph traversal
-        "max_hops": 3,
-        "community_search": True,
-    },
-    reasoning={
-        "path_finding": "shortest_path",
-        "community_detection": "leiden",
-    },
-    evaluation={
-        "metrics": ["coverage", "hallucination_rate", "path_precision"]
-    }
-)
-```
+> 📄 **Example code:** [`examples/02-8-3-graph-design-pattern.py`](examples/02-8-3-graph-design-pattern.py)
 
 ---
 

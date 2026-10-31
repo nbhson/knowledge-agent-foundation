@@ -187,46 +187,7 @@ Read as a sentence:
 <details>
 <summary>Python Code — GCN Layer From Scratch (Click to view)</summary>
 
-```python
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-class GCNLayer(nn.Module):
-    def __init__(self, in_dim: int, out_dim: int):
-        super().__init__()
-        self.linear = nn.Linear(in_dim, out_dim)
-    
-    def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
-        """
-        x: (N, in_dim) — node features
-        adj: (N, N) — adjacency matrix (normalized)
-        """
-        # Aggregate: adj @ x → each node takes the average of neighbors
-        agg = adj @ x  # (N, in_dim)
-        # Transform + activation
-        out = self.linear(agg)  # (N, out_dim)
-        return F.relu(out)
-
-def normalize_adjacency(adj: torch.Tensor) -> torch.Tensor:
-    """Normalize: D^{-1/2} (A + I) D^{-1/2}"""
-    n = adj.shape[0]
-    adj_hat = adj + torch.eye(n)  # add self-loop
-    degree = adj_hat.sum(dim=1)
-    d_inv_sqrt = torch.diag(torch.pow(degree, -0.5))
-    d_inv_sqrt[torch.isinf(d_inv_sqrt)] = 0
-    return d_inv_sqrt @ adj_hat @ d_inv_sqrt
-
-# Usage
-N, in_dim, out_dim = 4, 8, 16
-x = torch.randn(N, in_dim)
-adj = torch.tensor([[0,1,1,0],[1,0,1,0],[1,1,0,1],[0,0,1,0]], dtype=torch.float32)
-adj_norm = normalize_adjacency(adj)
-
-gcn = GCNLayer(in_dim, out_dim)
-h = gcn(x, adj_norm)
-print(f"GCN output: {h.shape}")  # (4, 16)
-```
+> 📄 **Example code:** [`examples/01-2-1-the-gcn-formula-kipf-welling-2017.py`](examples/01-2-1-the-gcn-formula-kipf-welling-2017.py)
 
 </details>
 
@@ -235,43 +196,7 @@ print(f"GCN output: {h.shape}")  # (4, 16)
 <details>
 <summary>Python Code — 2-Layer GCN (Click to view)</summary>
 
-```python
-class GCN(nn.Module):
-    def __init__(self, in_dim: int, hidden_dim: int, out_dim: int, dropout: float = 0.5):
-        super().__init__()
-        self.gc1 = GCNLayer(in_dim, hidden_dim)
-        self.gc2 = GCNLayer(hidden_dim, out_dim)
-        self.dropout = dropout
-    
-    def forward(self, x, adj):
-        x = self.gc1(x, adj)
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.gc2(x, adj)
-        return F.log_softmax(x, dim=1)  # (N, num_classes)
-
-# Training
-model = GCN(in_dim=8, hidden_dim=16, out_dim=3)  # 3 classes
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-
-# Labels: only a few nodes have labels (semi-supervised)
-labels = torch.tensor([0, 1, -1, -1])  # -1 = unlabeled
-train_mask = labels != -1
-
-for epoch in range(200):
-    model.train()
-    out = model(x, adj_norm)
-    loss = F.nll_loss(out[train_mask], labels[train_mask])
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    if epoch % 50 == 0:
-        print(f"Epoch {epoch}: loss={loss.item():.4f}")
-
-# Predict unlabeled
-model.eval()
-pred = model(x, adj_norm).argmax(dim=1)
-print(f"Predictions: {pred}")
-```
+> 📄 **Example code:** [`examples/02-2-2-2-layer-gcn-for-node-classification.py`](examples/02-2-2-2-layer-gcn-for-node-classification.py)
 
 </details>
 
@@ -335,58 +260,7 @@ Multi-head (multiple "viewpoints"):
 <details>
 <summary>Python Code — GAT with PyG (Click to view)</summary>
 
-```python
-# pip install torch torch-geometric
-
-import torch
-from torch_geometric.nn import GATConv, SAGEConv
-from torch_geometric.data import Data
-
-# Prepare data
-edge_index = torch.tensor([[0,1,1,2,2,3,0,2],
-                           [1,0,2,1,3,2,2,0]], dtype=torch.long)
-x = torch.randn(4, 8)  # 4 nodes, 8 features
-y = torch.tensor([0, 1, 0, 1])  # labels
-
-data = Data(x=x, edge_index=edge_index, y=y)
-
-# GraphSAGE model
-class GraphSAGEModel(torch.nn.Module):
-    def __init__(self, in_c, hid_c, out_c):
-        super().__init__()
-        self.conv1 = SAGEConv(in_c, hid_c)
-        self.conv2 = SAGEConv(hid_c, out_c)
-    def forward(self, x, edge_index):
-        x = self.conv1(x, edge_index).relu()
-        x = self.conv2(x, edge_index)
-        return x
-
-# GAT model
-class GATModel(torch.nn.Module):
-    def __init__(self, in_c, hid_c, out_c, heads=4):
-        super().__init__()
-        self.conv1 = GATConv(in_c, hid_c, heads=heads, dropout=0.6)
-        # GATConv with heads: output = hid_c * heads
-        self.conv2 = GATConv(hid_c * heads, out_c, heads=1, concat=False, dropout=0.6)
-    def forward(self, x, edge_index):
-        x = self.conv1(x, edge_index).relu()
-        x = F.dropout(x, p=0.6, training=self.training)
-        x = self.conv2(x, edge_index)
-        return x
-
-# Train
-for name, ModelClass in [("GraphSAGE", GraphSAGEModel), ("GAT", GATModel)]:
-    model = ModelClass(8, 16, 2)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    for epoch in range(100):
-        model.train()
-        out = model(data.x, data.edge_index)
-        loss = F.cross_entropy(out, data.y)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-    print(f"{name} final loss: {loss.item():.4f}")
-```
+> 📄 **Example code:** [`examples/03-3-2-gat-attention.py`](examples/03-3-2-gat-attention.py)
 
 </details>
 
@@ -413,83 +287,13 @@ for name, ModelClass in [("GraphSAGE", GraphSAGEModel), ("GAT", GATModel)]:
 <details>
 <summary>Python Code — Link Prediction (Click to view)</summary>
 
-```python
-import torch
-import torch.nn.functional as F
-from torch_geometric.nn import GCNConv
-from torch_geometric.utils import negative_sampling
-
-class LinkPredictor(torch.nn.Module):
-    def __init__(self, in_dim, hidden_dim, out_dim):
-        super().__init__()
-        self.conv1 = GCNConv(in_dim, hidden_dim)
-        self.conv2 = GCNConv(hidden_dim, out_dim)
-    
-    def encode(self, x, edge_index):
-        x = self.conv1(x, edge_index).relu()
-        x = self.conv2(x, edge_index)
-        return x  # (N, out_dim) embeddings
-    
-    def decode(self, z, edge_label_index):
-        """Score edges by dot product."""
-        src = z[edge_label_index[0]]  # (E, out_dim)
-        dst = z[edge_label_index[1]]
-        return (src * dst).sum(dim=-1)  # (E,) scores
-    
-    def forward(self, x, edge_index, edge_label_index):
-        z = self.encode(x, edge_index)
-        return self.decode(z, edge_label_index)
-
-# Data
-edge_index = torch.tensor([[0,1,1,2,2,3],[1,0,2,1,3,2]], dtype=torch.long)
-x = torch.randn(4, 8)
-# Positive edges (existing) + negative sampling
-pos_edges = edge_index
-neg_edges = negative_sampling(edge_index, num_nodes=4, num_neg_samples=4)
-
-model = LinkPredictor(8, 16, 8)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-
-for epoch in range(200):
-    model.train()
-    # Positive scores
-    pos_score = model(x, edge_index, pos_edges)
-    neg_score = model(x, edge_index, neg_edges)
-    
-    # BCE loss: pos → 1, neg → 0
-    pos_loss = F.binary_cross_entropy_with_logits(pos_score, torch.ones_like(pos_score))
-    neg_loss = F.binary_cross_entropy_with_logits(neg_score, torch.zeros_like(neg_score))
-    loss = pos_loss + neg_loss
-    
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    if epoch % 50 == 0:
-        print(f"Epoch {epoch}: loss={loss.item():.4f}")
-
-# Predict: which node will Alice(0) connect to?
-model.eval()
-z = model.encode(x, edge_index)
-for target in range(4):
-    if target == 0:
-        continue
-    score = model.decode(z, torch.tensor([[0],[target]]))
-    prob = torch.sigmoid(score).item()
-    print(f"  Alice -> node_{target}: prob={prob:.3f}")
-```
+> 📄 **Example code:** [`examples/04-4-1-link-prediction-what-will-alice-works.py`](examples/04-4-1-link-prediction-what-will-alice-works.py)
 
 </details>
 
 ### 4.2 Node Classification — "Which team is this person on?"
 
-```python
-# Already covered in §2.2 — 2-layer GCN with cross-entropy loss
-# Add: class imbalance handling
-
-# If team A has 100 people and team B has 10 → weighted loss
-class_weights = torch.tensor([1.0, 10.0])  # weight for the minority class
-loss = F.cross_entropy(out[train_mask], labels[train_mask], weight=class_weights)
-```
+> 📄 **Example code:** [`examples/05-4-2-node-classification-which-team-is-this.py`](examples/05-4-2-node-classification-which-team-is-this.py)
 
 ---
 
@@ -508,29 +312,7 @@ h_v^{(l+1)} = σ( Σ_{r∈R} Σ_{u∈N_r(v)} (1/c_{v,r}) W_r^{(l)} h_u^{(l)} + W
   W_0 = self-loop weights
 ```
 
-```python
-from torch_geometric.nn import RGCNConv
-
-class RGCN(torch.nn.Module):
-    def __init__(self, in_dim, hidden_dim, out_dim, num_relations):
-        super().__init__()
-        self.conv1 = RGCNConv(in_dim, hidden_dim, num_relations)
-        self.conv2 = RGCNConv(hidden_dim, out_dim, num_relations)
-    
-    def forward(self, x, edge_index, edge_type):
-        x = self.conv1(x, edge_index, edge_type).relu()
-        x = self.conv2(x, edge_index, edge_type)
-        return x
-
-# edge_type: (E,) — relation type for each edge
-edge_index = torch.tensor([[0,1,2,0],[1,2,3,2]], dtype=torch.long)
-edge_type = torch.tensor([0, 1, 0, 1])  # 0=MANAGES, 1=WORKS_ON
-x = torch.randn(4, 8)
-
-model = RGCN(8, 16, 8, num_relations=2)
-out = model(x, edge_index, edge_type)
-print(f"R-GCN output: {out.shape}")  # (4, 8)
-```
+> 📄 **Example code:** [`examples/06-5-1-r-gcn-relational-gcn.py`](examples/06-5-1-r-gcn-relational-gcn.py)
 
 ### 5.2 Scoring Functions for KG Completion
 
@@ -594,16 +376,7 @@ Once you have embeddings from R-GCN, use a scoring function to predict missing t
 >
 > **Temporal GNN (TGN)** = an extension for **graphs that change over time** (event logs, transactions). Instead of a static snapshot, TGN processes an **event stream** per timestamp — each event "knocks" on a node, and the node updates its memory. Combined with temporal embeddings (Module 04) it becomes a complete time-aware prediction pipeline.
 
-```python
-# Pseudocode — HGT: attention per (node_type, edge_type) pair
-def hgt_message(head, rel, tail):
-    # Project already has a different node type than Person → use dedicated matrices
-    W_head = weight_matrix[head.node_type]
-    W_edge = weight_matrix[rel.edge_type]
-    W_tail = weight_matrix[tail.node_type]
-    attn = attention(W_head @ head.h, W_edge @ rel.h, W_tail @ tail.h)
-    return attn * (W_head @ head.h)
-```
+> 📄 **Example code:** [`examples/07-7-heterogeneous-temporal-gnn.py`](examples/07-7-heterogeneous-temporal-gnn.py)
 
 ---
 
@@ -612,64 +385,7 @@ def hgt_message(head, rel, tail):
 <details>
 <summary>Python Code — Complete Training Pipeline (Click to view)</summary>
 
-```python
-import torch
-import torch.nn.functional as F
-from torch_geometric.nn import GCNConv
-from torch_geometric.data import Data
-from torch_geometric.utils import train_test_split_edges
-
-# 1. Prepare data
-edge_index = torch.tensor([
-    [0,1,1,2,2,3,3,0,0,2],
-    [1,0,2,1,3,2,0,3,2,0]
-], dtype=torch.long)
-x = torch.randn(4, 16)
-y = torch.tensor([0, 0, 1, 1])  # 2 classes
-
-data = Data(x=x, edge_index=edge_index, y=y, num_nodes=4)
-# Split edges for link prediction
-# data = train_test_split_edges(data)  # for large graphs
-
-# 2. Model
-class GNN(torch.nn.Module):
-    def __init__(self, in_c, hid_c, out_c):
-        super().__init__()
-        self.conv1 = GCNConv(in_c, hid_c)
-        self.conv2 = GCNConv(hid_c, out_c)
-        self.classifier = torch.nn.Linear(out_c, 2)
-    
-    def forward(self, x, edge_index, task="classify"):
-        x = self.conv1(x, edge_index).relu()
-        x = F.dropout(x, p=0.5, training=self.training)
-        x = self.conv2(x, edge_index)
-        if task == "classify":
-            return self.classifier(x)
-        return x  # embeddings for link prediction
-
-model = GNN(16, 32, 16)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-
-# 3. Training loop
-for epoch in range(200):
-    model.train()
-    out = model(data.x, data.edge_index, task="classify")
-    loss = F.cross_entropy(out, data.y)
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    if epoch % 50 == 0:
-        pred = out.argmax(dim=1)
-        acc = (pred == data.y).float().mean().item()
-        print(f"Epoch {epoch}: loss={loss.item():.4f}, acc={acc:.2f}")
-
-# 4. Evaluation
-model.eval()
-with torch.no_grad():
-    out = model(data.x, data.edge_index, task="classify")
-    pred = out.argmax(dim=1)
-    print(f"Final predictions: {pred.tolist()}, true: {y.tolist()}")
-```
+> 📄 **Example code:** [`examples/08-8-implementation-with-pyg.py`](examples/08-8-implementation-with-pyg.py)
 
 </details>
 

@@ -21,11 +21,7 @@ Job cuối cùng báo `success`, Slack gửi "✅ Deployed" — nhưng vài phú
 3. Deploy theo kiểu canary: mới cho 10% lưu lượng người dùng, giữ nguyên 90% còn lại. Trong 5 phút quan sát tỉ lệ lỗi và độ trễ, hỏng thì tự quay về bản cũ.
 4. Cổng chặn (gate) phải là điều kiện bắt buộc, không phải ghi chú. Trong workflow mẫu, deploy chỉ chạy khi `github.ref == 'refs/heads/main'`; sai nhánh thì không deploy dù test xanh.
 
-```bash
-sleep 30
-curl -f https://staging.example.com/health || exit 1
-npm run test:e2e -- --baseUrl=https://staging.example.com
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-pipeline-cua-toi-bao-xanh-nhung-deploy.sh`](examples/01-q1-pipeline-cua-toi-bao-xanh-nhung-deploy.sh)
 
 **Kiểm tra**
 
@@ -51,14 +47,7 @@ Vòng lặp tự phục hồi là một hệ quy trình với vốn hạn mức:
 4. Deploy cũng phải có cổng canary gắn số liệu thật, không phụ thuộc mắt người: lỗi tăng quá 2 điểm phần trăm liên tục 3 phút, hoặc độ trễ p99 vượt mục tiêu quá 5 phút → dừng và lùi.
 5. Diễn tập việc rollback hằng tháng (gọi là game day) để biết nút lùi thật sự chạy.
 
-```python
-def decide(baseline: dict, canary: dict) -> str:
-    if canary["smoke_failures"] > 0 or canary["sev1_firing"]:
-        return "ROLLBACK: smoke/sev1"
-    if canary["error_rate"] > 0.02:
-        return "ROLLBACK: error_rate"
-    return "PROMOTE"
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-cho-ai-tu-sua-loi-roi-tu.py`](examples/02-q2-cho-ai-tu-sua-loi-roi-tu.py)
 
 **Kiểm tra**
 
@@ -84,10 +73,7 @@ Secret hay bị dán vào code cấu hình, nằm trong cấu hình riêng trên
 4. Xoay vòng tự động mỗi 30–90 ngày, và xoay ngay khi xảy ra sự cố. Có phiên bản `vN` và cửa sổ hỗ trợ kép để không làm hỏng hệ thống đang chạy.
 5. Ghi lại mỗi lần đọc (ai đọc, đọc gì, lúc nào) và che giá trị trong log.
 
-```bash
-# Che mọi giá trị có hình dạng khoá trong log CI
---mask "gh[pousr]_[A-Za-z0-9]{20,}" --mask "AKIA[0-9A-Z]{16}"
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-secret-cua-toi-bi-in-ra-log.sh`](examples/03-q3-secret-cua-toi-bi-in-ra-log.sh)
 
 **Kiểm tra**
 
@@ -112,13 +98,7 @@ Lịch (cron) chỉ nói *khi nào bắt đầu*, không nói *lần chạy trư
 3. Đặt `activeDeadlineSeconds` và `startingDeadlineSeconds` để job kẹt không dồn đống, bị giết theo hạn và lần sau không gánh quá khứ.
 4. Cho phép bù lỡ (`failedJobsHistoryLimit: 3`) nhưng khoang window bị lỡ chỉ chạy lại nếu được đánh dấu rõ `backfill: true`.
 
-```python
-key = f"{task_name}#{window_start.isoformat()}"   # nightly-e2e#2026-09-28
-if key in done_store:          # đã chạy rồi → bỏ qua, không chạy lại lần nữa
-    return "skipped"
-run()
-done_store.add(key)
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-job-chay-inh-ky-cua-toi-bi.py`](examples/04-q4-job-chay-inh-ky-cua-toi-bi.py)
 
 **Kiểm tra**
 
@@ -144,11 +124,7 @@ Hai nguyên nhân độc lập cộng lại. Thứ nhất là pipeline quá dài
 4. Dậy test không ổn định trước khi nó làm hỏng uy tín: cô lập phụ thuộc ngoài (giả lập, chặn), dùng dữ liệu cố định, thêm độ trễ ngẫu nhiên nhỏ khi thử lại mạng.
 5. Tách bài flaky sang làn riêng cho tới khi sửa xong, và đánh dấu trong báo cáo thay vì cho nó chặn cả pipeline.
 
-```yaml
-- name: Bài test chưa ổn định (không chặn deploy)
-  continue-on-error: true
-  run: pytest -m flaky --junitxml=flaky.xml
-```
+> 📄 **Code ví dụ:** [`examples/05-q5-test-cua-toi-chay-hon-30-phut.yaml`](examples/05-q5-test-cua-toi-chay-hon-30-phut.yaml)
 
 **Kiểm tra**
 

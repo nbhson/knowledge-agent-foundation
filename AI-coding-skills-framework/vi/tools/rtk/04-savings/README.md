@@ -34,22 +34,9 @@ Bash output ──► Input tokens ──► Hóa đơn
 
 ## Ví Dụ Báo Cáo
 
-```bash
-$ rtk gain
-Commands run: 342
-Raw bytes avoided: 1.2 MB
-Estimated tokens saved: ~300k
-Reduction: 82%
-```
+> 📄 **Code ví dụ:** [`examples/01-vi-du-bao-cao.sh`](examples/01-vi-du-bao-cao.sh)
 
-```bash
-$ rtk discover
-Found 5 commands with 0% reduction:
-  - terraform plan      (12 calls)
-  - kubectl apply       (8 calls)
-  - ansible-playbook    (6 calls)
-Consider `rtk init` for these or add custom TOML filters.
-```
+> 📄 **Code ví dụ:** [`examples/02-vi-du-bao-cao.sh`](examples/02-vi-du-bao-cao.sh)
 
 ## Liên Kết Với Harness Evaluation
 

@@ -20,11 +20,7 @@ Without a trace you cannot tell "more tokens" from "more steps". One real case: 
 2. Read the trace per attempt and find the repeated tool call.
 3. Fix the prompt, then re-measure. That one fix cut the loop's tokens by 40%.
 
-```bash
-export OPENAI_API_BASE="https://oai.helicone.ai/v1"
-export HELICONE_API_KEY="sk-helicone-..."
-# every LLM call is now logged and metered
-```
+> 📄 **Example code:** [`examples/01-q1-a-nightly-loop-jumped-from-10-000.sh`](examples/01-q1-a-nightly-loop-jumped-from-10-000.sh)
 
 **Verify**
 
@@ -62,11 +58,7 @@ Since 2025, OpenTelemetry has a dedicated spec for LLM calls: spans named `genai
 4. Your company already runs OpenTelemetry → OpenLLMetry, one `Traceloop.init()` call.
 5. Do not send every vendor the same data; start with one.
 
-```python
-from traceloop.sdk import Traceloop
-Traceloop.init(app_name="my_harness")
-# LangChain, LlamaIndex, OpenAI SDK... all trace automatically
-```
+> 📄 **Example code:** [`examples/02-q2-which-tool-do-i-pick-langsmith-langfuse.py`](examples/02-q2-which-tool-do-i-pick-langsmith-langfuse.py)
 
 **Verify**
 
@@ -90,11 +82,7 @@ The tool registry in `harness/06` already tracks three numbers per tool — `avg
 2. Set two alerts: latency above a threshold, and success rate below a threshold.
 3. Compare tools, not averages — one slow tool hides inside a fast total.
 
-```python
-tool.update_metrics(latency_ms=1200, success=True)
-# alert if vector_search.avg_latency_ms > 2000
-# alert if execute_python.success_rate < 0.95
-```
+> 📄 **Example code:** [`examples/03-q3-a-tool-gets-slow-how-do-i.py`](examples/03-q3-a-tool-gets-slow-how-do-i.py)
 
 **Verify**
 

@@ -78,42 +78,11 @@ Embedding models mới (2026): OpenAI text-embedding-3-large, BGE-M3 (flag_embed
 
 ### Chroma — Khởi Đầu Nhanh (Local)
 
-```python
-import chromadb
-
-client = chromadb.PersistentClient(path="./memory")   # harness/03 memory store
-collection = client.get_or_create_collection("project_memory")
-
-# Lưu memory (upsert — harness/03)
-collection.upsert(
-    ids=["doc-1"],
-    documents=["BHYT cho người lao động: mức đóng 4.5% từ 2026"],
-    metadatas=[{"topic": "insurance", "tier": "warm"}]   # Tier 2 Warm Memory
-)
-
-# Retrieve (harness/01) — semantic search
-results = collection.query(
-    query_texts=["chế độ bảo hiểm lao động"],
-    n_results=3  # top-k → harness/02 build context
-)
-```
+> 📄 **Code ví dụ:** [`examples/01-chroma-khoi-au-nhanh-local.py`](examples/01-chroma-khoi-au-nhanh-local.py)
 
 ### Vector DB trong Tool Registry (harness/06)
 
-```python
-registry.register(ToolDefinition(
-    name="vector_search",
-    description="Tìm kiếm ngữ nghĩa trong cơ sở dữ liệu vector",
-    parameters={
-        "query": {"type": "string", "required": True},
-        "top_k": {"type": "integer", "default": 5},
-        "collection": {"type": "string"},
-        "filters": {"type": "object"},
-    },
-    category="search",
-    tags=["semantic", "vector", "embedding"],
-))
-```
+> 📄 **Code ví dụ:** [`examples/02-vector-db-trong-tool-registry-harness-06.py`](examples/02-vector-db-trong-tool-registry-harness-06.py)
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 

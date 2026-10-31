@@ -63,15 +63,7 @@ You stored the edge as **undirected** when the real relationship is **directed**
 2. If an edge has a number on it, store the number: `KNOWS {weight: 0.92}` from extraction is what lets you later say "knows well" versus "barely acquainted".
 3. If you have two kinds of entities and only cross-links — users and movies — that is a **bipartite** graph: users never link to users.
 
-```python
-G = nx.Graph()                        # ❌ direction discarded
-G.add_edge("Alice", "Bob", relation="REPORTS_TO")
-
-G = nx.DiGraph()                      # ✅ A→B ≠ B→A
-G.add_edge("Alice", "Bob", relation="REPORTS_TO")
-list(G.successors("Alice"))   # ['Bob'] — Alice reports to Bob
-list(G.predecessors("Bob"))   # ['Alice']
-```
+> 📄 **Example code:** [`examples/01-q2-i-asked-who-reports-to-whom-and.py`](examples/01-q2-i-asked-who-reports-to-whom-and.py)
 
 **Verify**
 
@@ -89,11 +81,7 @@ Someone asks who manages Team B. Your graph confidently answers Alice. She moved
 
 You stored the relationship as a plain fact instead of a **temporal** fact. A temporal edge carries a validity period, usually written as a half-open interval: `valid_from` inclusive, `valid_until` exclusive. In the README's own data shape, Alice has two `WORKS_AT` edges — `[2020, 2024)` and `[2024, now)`. Both are true records. Only one is true *today*.
 
-```python
-{"from":"Alice","to":"CompanyX","type":"WORKS_AT","valid":"[2020, 2024)"},
-{"from":"Alice","to":"CompanyY","type":"WORKS_AT","valid":"[2024, now)"},
-# Alice works at exactly one company today, not two
-```
+> 📄 **Example code:** [`examples/02-q3-the-answer-is-three-years-out-of.py`](examples/02-q3-the-answer-is-three-years-out-of.py)
 
 **What to do**
 
@@ -101,13 +89,7 @@ You stored the relationship as a plain fact instead of a **temporal** fact. A te
 2. Filter on the way in, not at the end. Every traversal asks "is this edge active as of today?"
 3. Write the filter once, in one shared place, so no query can forget it.
 
-```python
-def is_active(edge, today):
-    start, end = edge["valid"]
-    return start <= today and (end == "now" or today < end)
-
-live = [e for e in edges if is_active(e, "2026-10-03")]
-```
+> 📄 **Example code:** [`examples/03-q3-the-answer-is-three-years-out-of.py`](examples/03-q3-the-answer-is-three-years-out-of.py)
 
 **Verify**
 
@@ -139,13 +121,7 @@ The Neo4j benchmark in the README's evidence table: property graphs are **3–5�
 1. For this framework, use a property graph — Neo4j, Kuzu, or NetworkX. RDF only earns its place with linked open data or when you genuinely need OWL reasoning.
 2. Write the edge property, not a side table. In a triple store, an attribute on a relationship needs **reification** — extra triples to describe a triple, and your 2-hop query gets heavy.
 
-```cypher
-CREATE (a:Person {name:'Alice', role:'CTO'})
-CREATE (p:Project {name:'Phoenix', budget:500000})
-CREATE (a)-[:MANAGES {since:'2024-01-01', confidence:0.95}]->(p)
-MATCH (person:Person)-[:MANAGES*1..2]->(proj:Project {name:'Phoenix'})
-RETURN person.name
-```
+> 📄 **Example code:** [`examples/04-q4-neo4j-or-a-triple-store-and-what.cypher`](examples/04-q4-neo4j-or-a-triple-store-and-what.cypher)
 
 **Verify**
 
@@ -169,13 +145,7 @@ Metrics are measuring tools, not trophies — pick the one that answers your act
 2. Use diameter and average path length to set your traversal budget — that is your `max_hops`.
 3. Check homophily before training. If neighbours rarely share labels, use a heterophilous model instead.
 
-```python
-G = nx.karate_club_graph()          # 34 nodes — the standard smoke test
-nx.average_clustering(G)            # ≈0.57 -> are friends also friends?
-nx.diameter(G)                      # 5     -> set max_hops from this
-top = sorted(nx.betweenness_centrality(G).items(),
-             key=lambda kv: -kv[1])[:3]
-```
+> 📄 **Example code:** [`examples/05-q5-which-metric-do-i-actually-report-and.py`](examples/05-q5-which-metric-do-i-actually-report-and.py)
 
 **Verify**
 

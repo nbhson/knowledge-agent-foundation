@@ -1,0 +1,6 @@
+[hooks]
+exclude_commands = ["curl", "playwright"]  # skip rewrite cho các lệnh này
+
+[tee]
+enabled = true          # lưu raw output khi fail (default: true)
+mode = "failures"       # "failures", "always", hoặc "never"

@@ -23,16 +23,7 @@ Mỗi người trích từ một đoạn văn bản khác nhau, không ai thấy
 5. **Sửa cả quan hệ theo bảng ánh xạ** trước khi ghi. Sau khi gộp, một số quan hệ tự thành quan hệ với chính nó — loại bỏ.
 6. Luôn để đường lui: cho phép tách lại (split) nếu phát hiện gộp nhầm.
 
-```python
-def dedup(entities, threshold=0.85):
-    canon, mapping = [], {}
-    for e in entities:                      # e = {"name", "type"}
-        hit = next((c for c in canon if c["type"] == e["type"]
-                    and cosine_sim(embed(e["name"]), embed(c["name"])) >= threshold), None)
-        mapping[e["name"]] = hit["name"] if hit else e["name"]
-        if not hit: canon.append(e)
-    return canon, mapping
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-3-nguoi-oc-1-000-tai-lieu.py`](examples/01-q1-3-nguoi-oc-1-000-tai-lieu.py)
 
 **Kiểm tra**
 
@@ -58,16 +49,7 @@ Lần gọi một (single-pass) có độ bao phủ cao nhưng độ chính xác
 4. Chặn trùng ngay trong vòng lặp bằng khoá tên đã thấy (chuẩn hoá lowercase + bỏ khoảng trắng thừa).
 5. Chạy qua Ollama ở `http://localhost:11434`, yêu cầu trả về đúng định dạng JSON để không phải tự cắt chuỗi.
 
-```python
-def extract_entities(text, model="gemma3:12b", max_gleanings=2):
-    seen, all_ents = set(), []
-    for r in range(max_gleanings + 1):
-        p = f"Trích entities (Person, Project, Document, Organization).\n{text}\nĐã trích: {sorted(seen)}\nTrả JSON list."
-        added = [e for e in llm_json(p, model) if e["name"].lower().strip() not in seen]  # format=json
-        seen |= {e["name"].lower().strip() for e in added}; all_ents += added
-        if added == 0: break                        # hết ý, dừng sớm
-    return all_ents
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-goi-llm-trich-mot-lan-thi-bo.py`](examples/02-q2-goi-llm-trich-mot-lan-thi-bo.py)
 
 **Kiểm tra**
 
@@ -124,16 +106,7 @@ Knowledge graph production thay đổi hằng ngày. Cách duy nhất để khô
 4. Với mỗi tài liệu mới, chạy đúng chuỗi: trích thực thể → trích quan hệ → gộp trùng lặp → sửa quan hệ theo bảng ánh xạ → ghi.
 5. Luôn in dòng kết quả để đối chiếu: `Ingested doc #42: 18 entities, 31 relations`.
 
-```python
-def upsert_entity(self, e):
-    self.graph.run("MERGE (n:Person {name:$name}) "
-                   "SET n.role=$role, n.updated_at=datetime()", e)
-
-def soft_delete(self, name):
-    self.graph.run("MATCH (n {name:$name}) SET n.deleted=true, "
-                   "n.deleted_at=datetime()", {"name": name})
-# MERGE chạy lại ba lần vẫn cho đúng một node — đây là điểm mấu chốt
-```
+> 📄 **Code ví dụ:** [`examples/03-q4-graph-a-co-5-000-node-co.py`](examples/03-q4-graph-a-co-5-000-node-co.py)
 
 **Kiểm tra**
 

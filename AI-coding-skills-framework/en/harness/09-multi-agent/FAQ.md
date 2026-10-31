@@ -23,21 +23,9 @@ Nobody decided "who may edit this file", and the write command never checks "did
 2. **Attach a version number to every write.** A write says "I read version 10". If version 10 is already 11, the write is rejected; the agent must re-read and merge — never overwrite blindly.
 3. **One working directory per agent** (`git worktree`). Nobody touches the main branch. On completion each emits a patch, which gets reviewed before merge.
 
-```python
-# before spawning
-if file_has_owner:
-    queue_for_next_run     # no parallel spawn
-    return
-assign_owner(file, agent_id)
-spawn(agent_id)
-```
+> 📄 **Example code:** [`examples/01-q1-two-agents-edit-one-file-and-one.py`](examples/01-q1-two-agents-edit-one-file-and-one.py)
 
-```python
-# when an agent writes
-if current_version != version_the_agent_read:
-    return "STALE — re-read and merge, do not overwrite"
-write_file()
-```
+> 📄 **Example code:** [`examples/02-q1-two-agents-edit-one-file-and-one.py`](examples/02-q1-two-agents-edit-one-file-and-one.py)
 
 **Verify**
 
@@ -72,12 +60,7 @@ The rule requires all three votes. One broken participant means a broken system 
 | Timed out | past deadline | stop, requeue; after 3 tries escalate to a human |
 | Alive but stuck | alive, no progress > 60s | ping once; no response → treat as timed out |
 
-```python
-if approvals >= 2 and build_green:
-    verdict = "ACCEPT"
-else:
-    verdict = "REJECT"
-```
+> 📄 **Example code:** [`examples/03-q2-three-agents-vote-one-hangs-does-the.py`](examples/03-q2-three-agents-vote-one-hangs-does-the.py)
 
 **Verify**: kill one voter mid-run — the verdict still arrives within ~35 seconds.
 
@@ -148,11 +131,7 @@ Every write declares the version it was based on. If that version moved on, the 
 **Layer 3 — fencing.**
 Each requeue increments a token. A result carrying an old token (from a dead run) is discarded even if it looks correct.
 
-```python
-def accept_result(token, current_token, attempt):
-    if attempt > 3: return False      # too many tries → escalate
-    return token == current_token     # stale → discard
-```
+> 📄 **Example code:** [`examples/04-q5-your-question-many-agents-editing-code-at.py`](examples/04-q5-your-question-many-agents-editing-code-at.py)
 
 **Verify**: kill a child mid-run and restart; run the four scenarios in `SUBAGENT.md` §9 (mid-run kill, late stale result, two writers racing, checker editing code). Do it weekly as a chaos drill.
 

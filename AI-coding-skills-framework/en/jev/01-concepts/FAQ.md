@@ -20,12 +20,7 @@ Jev is a transformer, but it was never trained to emit text or tokens. You hold 
 2. Route on question shape: a finite answer set that repeats → Jev; sentences or open invention → the LLM; arithmetic, counting, dates → plain code.
 3. Say it out loud in your design review so nobody files the "just use the LLM" ticket: you are choosing an engine, not a brand.
 
-```json
-{ "model": "jev-latest",
-  "state": "Ticket #4821: charged twice after plan upgrade…",
-  "questions": { "team": { "type": "choice",
-    "options": ["billing","infra","bug","other"] } } }
-```
+> 📄 **Example code:** [`examples/01-q1-the-endpoint-looks-exactly-like-an-llm.json`](examples/01-q1-the-endpoint-looks-exactly-like-an-llm.json)
 
 **Verify**
 
@@ -49,10 +44,7 @@ Jev is explicitly **not reliable at arithmetic, counting, or date comparison.** 
 2. If you need both, split the request: code computes the count, Jev rates whether that count is alarming.
 3. Never widen the state hoping the model will notice a pattern the code already knows exactly.
 
-```python
-changed = subprocess.run(["git","diff","--name-only"]).stdout.split()
-# judgment (semantic) -> Jev  |  counting, dates, diffs -> code
-```
+> 📄 **Example code:** [`examples/02-q2-jev-answered-my-math-wrong-i-asked.py`](examples/02-q2-jev-answered-my-math-wrong-i-asked.py)
 
 **Verify**
 
@@ -76,10 +68,7 @@ On a large language model, a schema is a *hope* — you prompt for it, constrain
 2. Define your levels/options as data and reuse the exact same scale on every request, so comparisons across runs are valid.
 3. Ask only for what a distribution can hold — a level or a probability, never an adjective plus an exclamation mark.
 
-```json
-"urgency": { "type": "score",
-             "levels": ["calm","annoyed","angry","blocked"] }
-```
+> 📄 **Example code:** [`examples/03-q3-at-2-a-m-the-llm-returned.json`](examples/03-q3-at-2-a-m-the-llm-returned.json)
 
 **Verify**
 
@@ -103,10 +92,7 @@ You believed more context helps, so you dumped the entire incident log into the 
 2. Strip identity noise, but keep the phrasing the decision turns on ("charged twice", "explicitly asks for money back").
 3. Cut `state` first when latency or cost grows; add lines back one at a time only if a test proves they help.
 
-```python
-state = f"{ticket.subject}\n{ticket.last_3_messages}"
-# ~400 chars, not 40 MB — then ask "team" / "urgency" / "refund"
-```
+> 📄 **Example code:** [`examples/04-q4-i-pasted-our-whole-40mb-log-file.py`](examples/04-q4-i-pasted-our-whole-40mb-log-file.py)
 
 **Verify**
 

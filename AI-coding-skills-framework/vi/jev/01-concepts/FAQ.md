@@ -78,13 +78,7 @@ Có hai lý do tách biệt. Thứ nhất, khoảng 70–500ms là dải đo đ�
 3. Gom mọi câu hỏi của một bước vào một lượt gọi.
 4. Khi gặp `max_tokens_exceeded`, giảm trạng thái — **đừng thử lại mù**.
 
-```python
-r = requests.post(API, headers=HEADERS, json={
-    "model": "jev-1.13.0",
-    "state": core,                       # đã cắt còn phần liên quan
-    "questions": questions,              # tất cả trong 1 pass
-}, timeout=5)
-```
+> 📄 **Code ví dụ:** [`examples/01-q3-jev-ap-ung-trong-70-500ms-tai.py`](examples/01-q3-jev-ap-ung-trong-70-500ms-tai.py)
 
 **Kiểm tra**
 
@@ -142,10 +136,7 @@ Bạn tìm trên mạng và không thấy tệp trọng số (weights) của Jev
 3. Bọc toàn bộ lời gọi trong một module nội bộ duy nhất của dự án, để khi giao diện đổi bạn chỉ sửa một chỗ.
 4. Ghi lại phiên bản mô hình vào nhật ký quyết định, không chỉ ghi "jev-latest".
 
-```python
-MODEL = "jev-1.13.0"   # ghim phiên bản, không dùng alias trong production
-resp = client.ask(model=MODEL, state=core, questions=questions)
-```
+> 📄 **Code ví dụ:** [`examples/02-q5-toi-co-tu-chay-uoc-jev-tren.py`](examples/02-q5-toi-co-tu-chay-uoc-jev-tren.py)
 
 **Kiểm tra**
 

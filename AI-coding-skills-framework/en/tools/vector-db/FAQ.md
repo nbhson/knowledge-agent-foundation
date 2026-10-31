@@ -20,14 +20,7 @@ Keyword memory needs the exact words. Vector memory compares *meaning*. Text is 
 2. Create a collection and `upsert` your documents with metadata (topic, tier).
 3. Query with the user's own sentence, not with keywords.
 
-```python
-collection.upsert(
-    ids=["doc-1"],
-    documents=["Health insurance for workers: 4.5% contribution rate"],
-    metadatas=[{"topic": "insurance", "tier": "warm"}],
-)
-results = collection.query(query_texts=["worker insurance"], n_results=3)
-```
+> 📄 **Example code:** [`examples/01-q1-a-user-asked-about-worker-insurance-terms.py`](examples/01-q1-a-user-asked-about-worker-insurance-terms.py)
 
 **Verify**
 
@@ -84,13 +77,7 @@ The whole point of retrieval is to hand the model **only the most relevant pages
 2. Start with `top_k=5`, then try 3 — if accuracy holds, keep 3 and pay less.
 3. Use metadata filters to narrow the search space before ranking.
 
-```python
-results = collection.query(
-    query_texts=["worker insurance benefits"],
-    n_results=5,                       # top-k into harness/02 build context
-    where={"topic": "insurance"},
-)
-```
+> 📄 **Example code:** [`examples/02-q3-how-many-chunks-should-i-put-in.py`](examples/02-q3-how-many-chunks-should-i-put-in.py)
 
 **Verify**
 
@@ -114,15 +101,7 @@ Retrieval has two faces. It is the main component in `harness/01-retrieve-memory
 2. Tag it `semantic`, `vector`, `embedding` so routing can find it.
 3. Keep writes in `harness/03` and context assembly in `harness/02` — the tool only searches.
 
-```python
-registry.register(ToolDefinition(
-    name="vector_search",
-    description="Semantic search in the vector database",
-    parameters={"query": {"type": "string", "required": True},
-                "top_k": {"type": "integer", "default": 5}},
-    category="search", tags=["semantic", "vector", "embedding"],
-))
-```
+> 📄 **Example code:** [`examples/03-q4-where-do-i-register-this-as-a.py`](examples/03-q4-where-do-i-register-this-as-a.py)
 
 **Verify**
 

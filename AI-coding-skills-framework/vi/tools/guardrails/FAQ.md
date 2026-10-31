@@ -29,14 +29,7 @@ Vì ba thứ này bảo vệ ba lớp khác nhau. Guardrails AI là bộ quy t�
 3. Chỉ khi hai lớp trên đã xong mới cân nhắc NeMo cho các luồng nhạy cảm (hỏi về bí mật, tiền, dữ liệu cá nhân).
 4. LlamaGuard đặt ở đầu vào prompt và đầu ra câu trả lời, dùng để đo xem có bao nhiêu lần suýt lọt.
 
-```python
-from guardrails import Guard
-from guardrails.hub import RegexMatch
-
-guard = Guard().use(RegexMatch("^[a-zA-Z0-9_./-]+$"))
-guard.validate("hacker/path/../etc/passwd")  # fail
-guard.validate("src/main.py")                 # pass
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-guardrails-ai-nemo-llamaguard-nen-chon-cai.py`](examples/01-q1-guardrails-ai-nemo-llamaguard-nen-chon-cai.py)
 
 **Kiểm tra**
 
@@ -50,10 +43,7 @@ Chạy thử `guard.validate` với một đường dẫn chứa `..` và một 
 
 Hai lệnh gần như giống nhau, một bị chặn một bị cho qua:
 
-```python
-guard.validate(path="/etc/hosts")    # REJECT
-guard.validate(path="src/main.py")   # ALLOW
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-agent-ghi-file-vao-cho-no-khong.py`](examples/02-q2-agent-ghi-file-vao-cho-no-khong.py)
 
 Không có guardrail thì lệnh đầu đã chạy rồi — `/etc/hosts` bị ghi đè. Đường dẫn đi qua mô tả `write_file`, qua bộ chọn công cụ, qua bộ trích tham số, và chỉ chạm guardrail ở bước `GUARDRAILS CHECK` trước lúc thực thi. Kiểm tra đúng chỗ đó thì chưa đủ: phải kiểm tra **tên tham số**, không phải câu lệnh tự do.
 
@@ -69,14 +59,7 @@ Vì mô hình sinh ra text, nó không có khái niệm "tác dụng phụ khôn
 4. Chạy kiểm tra này ngay trước lúc ghi, không phải lúc sinh prompt.
 5. Kiểm tra luôn đầu ra của công cụ trước khi trả về ngữ cảnh — dữ liệu bên ngoài cũng cần đi qua đây.
 
-```python
-from guardrails import Guard
-from guardrails.hub import RegexMatch
-
-guard = Guard().use(RegexMatch("^[a-zA-Z0-9_./-]+$"))
-result = guard.validate("/etc/hosts")   # REJECT
-result = guard.validate("src/main.py")  # ALLOW
-```
+> 📄 **Code ví dụ:** [`examples/03-q2-agent-ghi-file-vao-cho-no-khong.py`](examples/03-q2-agent-ghi-file-vao-cho-no-khong.py)
 
 **Kiểm tra**
 
@@ -90,12 +73,7 @@ result = guard.validate("src/main.py")  # ALLOW
 
 Trong danh bạ công cụ, mỗi công cụ có sẵn bốn con số:
 
-```python
-requires_permission: str = "standard"   # standard, elevated, admin
-rate_limit_per_minute: int = 60
-timeout_seconds: int = 30
-max_retries: int = 3
-```
+> 📄 **Code ví dụ:** [`examples/04-q3-requires-permission-elevated-voi-rate-limit-per.py`](examples/04-q3-requires-permission-elevated-voi-rate-limit-per.py)
 
 Rồi trước lúc chạy có một cổng kiểm tra: nếu `requires_permission` là `elevated` thì hỏi người xác nhận, trả lời không là dừng. Nếu đã vượt giới hạn tần suất thì dừng, không cần hỏi ai.
 
@@ -112,12 +90,7 @@ Mức độ cần thiết: `elevated` là bắt buộc cho mọi thao tác ghi/x
 3. Nối `elevated` lên cổng duyệt của người, không tự quyết.
 4. Khi người từ chối thì trả về lý do rõ ràng để agent biết dừng hướng đó, đừng thử lại khác cách.
 
-```python
-if tool.requires_permission == "elevated":
-    if not human_approve(params): return False
-if exceeded_rate_limit(tool): return False
-return True
-```
+> 📄 **Code ví dụ:** [`examples/05-q3-requires-permission-elevated-voi-rate-limit-per.py`](examples/05-q3-requires-permission-elevated-voi-rate-limit-per.py)
 
 **Kiểm tra**
 

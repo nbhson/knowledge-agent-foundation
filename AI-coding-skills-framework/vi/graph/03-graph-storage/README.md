@@ -110,33 +110,7 @@ Knowledge Graph (từ 02)
 
 ### 1.2 Decision Matrix
 
-```python
-def choose_graph_db(requirements: dict) -> str:
-    """
-    Chọn DB dựa trên yêu cầu.
-    
-    requirements = {
-        "scale": "small" | "medium" | "large" | "trillion",
-        "deployment": "local" | "self-hosted" | "managed",
-        "latency": "realtime" | "interactive" | "batch",
-        "team_size": int,
-    }
-    """
-    if requirements["scale"] == "small" and requirements["deployment"] == "local":
-        return "Kuzu (embedded, zero-ops) hoặc NetworkX (prototyping)"
-    
-    if requirements["scale"] in ["large", "trillion"]:
-        return "NebulaGraph hoặc Neo4j Enterprise Cluster"
-    
-    if requirements["latency"] == "realtime":
-        return "FalkorDB hoặc Memgraph (in-memory)"
-    
-    if requirements["deployment"] == "managed":
-        return "Neo4j Aura hoặc Amazon Neptune"
-    
-    # Default: production balanced
-    return "Neo4j Community (self-hosted) — khuyến nghị cho hầu hết dự án"
-```
+> 📄 **Code ví dụ:** [`examples/01-1-2-decision-matrix.py`](examples/01-1-2-decision-matrix.py)
 
 **Khuyến nghị cho Framework này:**
 
@@ -177,48 +151,7 @@ def choose_graph_db(requirements: dict) -> str:
 <details>
 <summary>Cypher Code — CRUD (Click để xem)</summary>
 
-```cypher
-// ============ CREATE ============
-
-// Tạo node
-CREATE (a:Person {name: 'Alice', role: 'CTO', age: 35})
-CREATE (b:Person {name: 'Bob', role: 'Engineer'})
-CREATE (p:Project {name: 'Phoenix', budget: 500000})
-
-// Tạo edge
-MATCH (a:Person {name: 'Alice'}), (b:Person {name: 'Bob'})
-CREATE (a)-[:MANAGES {since: '2024-01-01'}]->(b)
-
-MATCH (b:Person {name: 'Bob'}), (p:Project {name: 'Phoenix'})
-CREATE (b)-[:WORKS_ON {role: 'Lead', allocation: 0.8}]->(p)
-
-// ============ READ ============
-
-// Tìm tất cả Person
-MATCH (n:Person) RETURN n.name, n.role
-
-// Tìm với filter
-MATCH (p:Project) WHERE p.budget > 300000 RETURN p
-
-// ============ UPDATE ============
-
-// Cập nhật property
-MATCH (p:Person {name: 'Bob'}) SET p.role = 'Senior Engineer' RETURN p
-
-// Thêm label
-MATCH (n {name: 'Phoenix'}) SET n:ActiveProject RETURN n
-
-// ============ DELETE ============
-
-// Xóa edge
-MATCH (a:Person {name: 'Alice'})-[r:MANAGES]->(b:Person {name: 'Bob'}) DELETE r
-
-// Xóa node (phải xóa edges trước)
-MATCH (n:Person {name: 'Bob'}) DETACH DELETE n
-
-// Soft delete (khuyến nghị cho KG)
-MATCH (n:Person {name: 'Bob'}) SET n.deleted = true, n.deleted_at = datetime()
-```
+> 📄 **Code ví dụ:** [`examples/02-2-1-crud-co-ban.cypher`](examples/02-2-1-crud-co-ban.cypher)
 
 </details>
 
@@ -227,39 +160,7 @@ MATCH (n:Person {name: 'Bob'}) SET n.deleted = true, n.deleted_at = datetime()
 <details>
 <summary>Cypher Code — Traversal Patterns (Click để xem)</summary>
 
-```cypher
-// 1. ONE-HOP: Ai làm việc trên Phoenix?
-MATCH (person:Person)-[:WORKS_ON]->(p:Project {name: 'Phoenix'})
-RETURN person.name
-
-// 2. VARIABLE-LENGTH: Tìm qua 1-3 hops REPORTS_TO/MANAGES
-MATCH path = (junior:Person)-[:REPORTS_TO|MANAGES*1..3]->(senior:Person {name: 'Alice'})
-RETURN junior.name, length(path) as hops, [n in nodes(path) | n.name] as path
-
-// 3. SHORTEST PATH: Đường ngắn nhất giữa 2 người
-MATCH (a:Person {name: 'Bob'}), (b:Person {name: 'Carol'})
-MATCH path = shortestPath((a)-[:REPORTS_TO|MANAGES*]-(b))
-RETURN path, length(path)
-
-// 4. SUBGRAPH: Lấy toàn bộ subgraph quanh 1 node (1-hop neighbors)
-MATCH (center:Project {name: 'Phoenix'})-[r]-(neighbor)
-RETURN center, r, neighbor
-
-// 5. SUBGRAPH 2-HOPS: Mở rộng 2 hops
-MATCH (center:Project {name: 'Phoenix'})-[r1]-(n1)-[r2]-(n2)
-RETURN center, r1, n1, r2, n2
-LIMIT 50
-
-// 6. AGGREGATION: Đếm số projects mỗi person tham gia
-MATCH (person:Person)-[:WORKS_ON]->(project:Project)
-RETURN person.name, count(project) as project_count
-ORDER BY project_count DESC
-
-// 7. FILTER TRÊN PATH: Chỉ lấy path có confidence cao
-MATCH path = (a:Person)-[r:WORKS_ON*1..2]->(p:Project)
-WHERE all(rel in relationships(path) WHERE rel.confidence > 0.8)
-RETURN path
-```
+> 📄 **Code ví dụ:** [`examples/03-2-2-traversal-suc-manh-cua-graph.cypher`](examples/03-2-2-traversal-suc-manh-cua-graph.cypher)
 
 </details>
 
@@ -267,28 +168,7 @@ RETURN path
 
 Neo4j hỗ trợ hybrid: graph traversal + full-text + vector index trên cùng DB.
 
-```cypher
-// Tạo full-text index
-CREATE FULLTEXT INDEX personNameFTS FOR (n:Person) ON EACH [n.name]
-
-// Full-text search
-CALL db.index.fulltext.queryNodes("personNameFTS", "Alice") YIELD node, score
-RETURN node.name, score
-
-// Tạo vector index (Neo4j 5+)
-CREATE VECTOR INDEX personEmbedding FOR (n:Person) ON n.embedding
-OPTIONS {dimension: 768, similarityFunction: 'cosine'}
-
-// Vector search
-CALL db.index.vector.queryNodes("personEmbedding", 5, $queryVector) YIELD node, score
-RETURN node.name, score
-
-// HYBRID: Vector search + Graph traversal
-CALL db.index.vector.queryNodes("personEmbedding", 10, $queryVector) YIELD node, score
-MATCH (node)-[:WORKS_ON]->(project:Project)
-RETURN node.name, project.name, score
-ORDER BY score DESC
-```
+> 📄 **Code ví dụ:** [`examples/04-2-3-full-text-vector-search-trong-graph.cypher`](examples/04-2-3-full-text-vector-search-trong-graph.cypher)
 
 ---
 
@@ -322,35 +202,11 @@ ORDER BY score DESC
 
 ### 3.2 Query Optimization
 
-```python
-# ❌ Chậm: không dùng index, scan toàn bộ
-# MATCH (n:Person) WHERE n.name = 'Alice' RETURN n
-
-# ✅ Nhanh: dùng index
-# CREATE INDEX FOR (n:Person) ON (n.name)  -- tạo 1 lần
-# MATCH (n:Person {name: 'Alice'}) RETURN n  -- tự động dùng index
-
-# ❌ Chậm: không giới hạn hops, explosion
-# MATCH (a)-[*]->(b) RETURN a, b
-
-# ✅ Nhanh: giới hạn hops + limit
-# MATCH (a:Person)-[:MANAGES*1..3]->(b:Person) RETURN a, b LIMIT 100
-
-# ❌ Chậm: trả về toàn bộ graph
-# MATCH (n) RETURN n
-
-# ✅ Nhanh: chỉ lấy cần thiết
-# MATCH (p:Person {name: 'Alice'})-[:WORKS_ON]->(proj) RETURN proj.name
-```
+> 📄 **Code ví dụ:** [`examples/05-3-2-query-optimization.py`](examples/05-3-2-query-optimization.py)
 
 ### 3.3 Profiling
 
-```cypher
-// Xem query plan
-PROFILE MATCH (a:Person {name: 'Alice'})-[:MANAGES*1..3]->(b:Person) RETURN b
-
-// Output cho biết: có dùng index không, số db hits, memory
-```
+> 📄 **Code ví dụ:** [`examples/06-3-3-profiling.cypher`](examples/06-3-3-profiling.cypher)
 
 ---
 
@@ -374,61 +230,7 @@ PROFILE MATCH (a:Person {name: 'Alice'})-[:MANAGES*1..3]->(b:Person) RETURN b
 <details>
 <summary>Python Code — Batch Ingest với MERGE (Click để xem)</summary>
 
-```python
-from neo4j import GraphDatabase
-
-class GraphIngestor:
-    def __init__(self, uri: str, user: str, password: str):
-        self.driver = GraphDatabase.driver(uri, auth=(user, password))
-    
-    def ingest_batch(self, entities: list, relations: list, batch_size: int = 1000):
-        """Batch ingest — idempotent nhờ MERGE."""
-        with self.driver.session() as session:
-            # Batch entities
-            for i in range(0, len(entities), batch_size):
-                batch = entities[i:i + batch_size]
-                session.execute_write(self._merge_entities, batch)
-                print(f"Ingested entities batch {i//batch_size + 1}: {len(batch)} nodes")
-            
-            # Batch relations
-            for i in range(0, len(relations), batch_size):
-                batch = relations[i:i + batch_size]
-                session.execute_write(self._merge_relations, batch)
-                print(f"Ingested relations batch {i//batch_size + 1}: {len(batch)} edges")
-    
-    @staticmethod
-    def _merge_entities(tx, batch):
-        # UNWIND = loop trong Cypher, hiệu quả hơn gọi nhiều lần
-        query = """
-        UNWIND $batch as row
-        MERGE (n:Entity {name: row.name})
-        SET n.type = row.type,
-            n.description = row.description,
-            n.updated_at = datetime()
-        """
-        tx.run(query, batch=batch)
-    
-    @staticmethod
-    def _merge_relations(tx, batch):
-        query = """
-        UNWIND $batch as row
-        MATCH (a:Entity {name: row.source})
-        MATCH (b:Entity {name: row.target})
-        MERGE (a)-[r:RELATED {type: row.type}]->(b)
-        SET r.confidence = row.confidence,
-            r.evidence = row.evidence,
-            r.updated_at = datetime()
-        """
-        tx.run(query, batch=batch)
-    
-    def close(self):
-        self.driver.close()
-
-# Usage
-ingestor = GraphIngestor("bolt://localhost:7687", "neo4j", "password")
-ingestor.ingest_batch(entities, relations, batch_size=500)
-ingestor.close()
-```
+> 📄 **Code ví dụ:** [`examples/07-4-2-batch-ingest-idempotent.py`](examples/07-4-2-batch-ingest-idempotent.py)
 
 **Key pattern:** `MERGE` thay vì `CREATE` → idempotent, chạy lại không tạo duplicate.
 
@@ -440,112 +242,22 @@ ingestor.close()
 
 ### 5.1 Neo4j với Docker
 
-```yaml
-# docker-compose.yml
-version: '3.8'
-services:
-  neo4j:
-    image: neo4j:5-community
-    ports:
-      - "7474:7474"  # Browser
-      - "7687:7687"  # Bolt
-    environment:
-      NEO4J_AUTH: neo4j/password
-      NEO4J_PLUGINS: '["apoc", "graph-data-science"]'
-    volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
-    healthcheck:
-      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "RETURN 1"]
-      interval: 10s
-      retries: 5
+> 📄 **Code ví dụ:** [`examples/08-5-1-neo4j-voi-docker.yaml`](examples/08-5-1-neo4j-voi-docker.yaml)
 
-volumes:
-  neo4j_data:
-  neo4j_logs:
-```
-
-```bash
-# Khởi động
-docker compose up -d neo4j
-# Mở browser: http://localhost:7474
-
-# Kiểm tra
-docker exec -it <container> cypher-shell -u neo4j -p password "MATCH (n) RETURN count(n)"
-```
+> 📄 **Code ví dụ:** [`examples/09-5-1-neo4j-voi-docker.sh`](examples/09-5-1-neo4j-voi-docker.sh)
 
 ### 5.2 Kuzu (Embedded, Python-Native)
 
 <details>
 <summary>Python Code — Kuzu Embedded (Click để xem)</summary>
 
-```python
-import kuzu
-
-# Tạo DB in-process (không cần Docker)
-db = kuzu.Database("./kuzu_db")
-conn = kuzu.Connection(db)
-
-# Tạo schema
-conn.execute("CREATE NODE TABLE Person(name STRING, role STRING, PRIMARY KEY(name))")
-conn.execute("CREATE NODE TABLE Project(name STRING, budget INT64, PRIMARY KEY(name))")
-conn.execute("CREATE REL TABLE WORKS_ON(FROM Person TO Project, role STRING, confidence DOUBLE)")
-conn.execute("CREATE REL TABLE MANAGES(FROM Person TO Person, since STRING)")
-
-# Insert
-conn.execute('CREATE (a:Person {name: "Alice", role: "CTO"})')
-conn.execute('CREATE (a:Person {name: "Bob", role: "Engineer"})')
-conn.execute('CREATE (a:Project {name: "Phoenix", budget: 500000})')
-
-# Query
-result = conn.execute("""
-    MATCH (p:Person)-[r:WORKS_ON]->(proj:Project)
-    RETURN p.name, proj.name, r.role
-""")
-while result.has_next():
-    print(result.get_next())
-
-# Hybrid: Kuzu cũng hỗ trợ vector search (extension)
-# conn.execute("INSTALL vector; LOAD EXTENSION vector;")
-```
+> 📄 **Code ví dụ:** [`examples/10-5-2-kuzu-embedded-python-native.py`](examples/10-5-2-kuzu-embedded-python-native.py)
 
 </details>
 
 ### 5.3 NetworkX (Prototyping, Không Cần DB)
 
-```python
-import networkx as nx
-
-# Nhanh nhất để prototype — không cần install DB
-G = nx.DiGraph()
-
-# Add nodes
-G.add_node("Alice", label="Person", role="CTO")
-G.add_node("Phoenix", label="Project", budget=500000)
-
-# Add edges
-G.add_edge("Alice", "Phoenix", type="WORKS_ON", confidence=0.9)
-
-# Query: BFS traversal
-from collections import deque
-
-def bfs_traversal(graph, start: str, max_hops: int = 2) -> list:
-    visited = set([start])
-    queue = deque([(start, 0)])
-    result = []
-    while queue:
-        node, hops = queue.popleft()
-        if hops >= max_hops:
-            continue
-        for neighbor in graph.successors(node):
-            if neighbor not in visited:
-                visited.add(neighbor)
-                result.append((node, neighbor, graph[node][neighbor]))
-                queue.append((neighbor, hops + 1))
-    return result
-
-print(bfs_traversal(G, "Alice", max_hops=2))
-```
+> 📄 **Code ví dụ:** [`examples/11-5-3-networkx-prototyping-khong-can-db.py`](examples/11-5-3-networkx-prototyping-khong-can-db.py)
 
 ---
 

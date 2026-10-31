@@ -1,0 +1,7 @@
+tests:
+  - vars: { input: "Long technical document..." }
+    assert:
+      - type: contains
+        value: "key concept"
+      - type: cost
+        threshold: 0.05

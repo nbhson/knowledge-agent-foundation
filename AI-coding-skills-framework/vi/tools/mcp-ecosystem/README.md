@@ -71,18 +71,7 @@ Harness Tool Pipeline (harness/06):
 
 Repo này đã cấu hình sẵn GitHub MCP server tại `MCP_SETUP.md`:
 
-```json
-{
-  "mcpServers": {
-    "github.com/github/github-mcp-server": {
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "disabled": false,
-      "autoApprove": []
-    }
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/01-github-mcp-server-tu-mcp-setup-md.json`](examples/01-github-mcp-server-tu-mcp-setup-md.json)
 
 **Khả năng**: quản lý repository, issues & PRs, GitHub Actions, code security, projects, discussions, gists, notifications...
 
@@ -95,19 +84,7 @@ Ví dụ:
 
 ### Nhanh Chóng Thêm MCP Server Khác
 
-```jsonc
-// cline_mcp_settings.json — thêm server mới
-{
-  "mcpServers": {
-    "github.com/github/github-mcp-server": { /* ... đã có ... */ },
-    "my-custom-tool": {
-      "command": "npx",
-      "args": ["-y", "@my-org/my-mcp-server"],
-      "env": { "API_KEY": "${API_KEY}" }
-    }
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-nhanh-chong-them-mcp-server-khac.json`](examples/02-nhanh-chong-them-mcp-server-khac.json)
 
 ## Lộ Trình Học (Cấu Trúc Thư Mục)
 
@@ -158,17 +135,7 @@ Loop "issue-triage" (từ loop/02-patterns):
 
 ### 2. Registry Kết Hợp Built-in + MCP
 
-```python
-registry.register(ToolDefinition(
-    name="github_search_code",
-    source="mcp:github",          # đến từ MCP server
-    description="Tìm code trong GitHub repos",
-    parameters={"query": {"type": "string", "required": True}},
-    category="search",
-    requires_permission="standard",  # guardrails áp dụng như tool thường
-    rate_limit_per_minute=30,
-))
-```
+> 📄 **Code ví dụ:** [`examples/03-2-registry-ket-hop-built-in-mcp.py`](examples/03-2-registry-ket-hop-built-in-mcp.py)
 
 ## Tài Liệu Tham Khảo
 

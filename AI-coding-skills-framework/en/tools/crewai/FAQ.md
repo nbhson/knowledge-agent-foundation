@@ -21,13 +21,7 @@ Because `Task` is not enforced as a contract; it is **a string handed to a model
 3. Write `backstory` as a boundary, not a biography: "you never write or modify files; you only report".
 4. Split one crew, not one agent. If you need review *and* a fix in the same step, that is two tasks with an explicit hand-off.
 
-```python
-reviewer = Agent(role='Reviewer', goal='Find bugs and security issues',
-                 backstory='You never modify code, you only report findings',
-                 tools=[])
-review_task = Task(description='Review the login API code',
-                   expected_output='Numbered list of file:line findings')
-```
+> 📄 **Example code:** [`examples/01-q1-my-agents-keep-doing-each-other-s.py`](examples/01-q1-my-agents-keep-doing-each-other-s.py)
 
 **Verify**
 
@@ -90,13 +84,7 @@ Because `human_input` is **per task, and defaults to off**. A crew is a list of 
 4. Keep read-only tasks (`Plan the login API`, `Review code`) without the flag, or the crew will stop constantly and nobody will read the pauses.
 5. Write the expected output so the pause shows the human what will happen: "Deployment confirmation listing the exact commit".
 
-```python
-deploy_task = Task(
-    description="Deploy the reviewed commit to production",
-    expected_output="Deployment confirmation with the commit SHA",
-    human_input=True,
-)
-```
+> 📄 **Example code:** [`examples/02-q3-the-crew-will-deploy-to-production-can.py`](examples/02-q3-the-crew-will-deploy-to-production-can.py)
 
 **Verify**
 

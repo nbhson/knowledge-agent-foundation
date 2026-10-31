@@ -106,78 +106,7 @@
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import requests
-from dataclasses import dataclass, field
-from typing import Any, Dict
-
-API = "https://api.typesafe.ai/v1/systemone"
-HEADERS = {"Authorization": "Bearer <KEY>", "Content-Type": "application/json"}
-
-MODEL_TIERS = {
-    "simple":   "cheap-fast-model",     # VD: small/haiku-class
-    "moderate": "mid-model",
-    "complex":  "strong-model",         # VD: opus/ frontier-class
-}
-
-
-@dataclass
-class AgentState:
-    """Agent state — probabilities được GIỮ ĐÂY cho các bước sau."""
-    data: Dict[str, Any] = field(default_factory=dict)
-
-    def set_routing(self, difficulty: str, probs: Dict[str, float],
-                    confidence: float, request_id: str):
-        self.data["routing"] = {
-            "difficulty": difficulty,
-            "probs": probs,
-            "confidence": confidence,
-            "request_id": request_id,
-        }
-
-
-def route_request(user_request: str, state: AgentState) -> str:
-    """Gắn từ ĐẦU pipeline: Jev chọn tier → trả về model name."""
-    resp = requests.post(
-        API,
-        headers=HEADERS,
-        json={
-            "model": "jev-1.13.0",
-            "state": user_request,
-            "questions": {
-                "difficulty": {
-                    "type": "choice",
-                    "options": ["simple", "moderate", "complex"],
-                }
-            },
-        },
-        timeout=5,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    ans = data["answers"]["difficulty"]
-    confidence = ans.get("confidence", 0.0)
-
-    state.set_routing(
-        difficulty=ans["selected"],
-        probs=ans.get("probabilities", {}),
-        confidence=confidence,
-        request_id=data.get("request_id", ""),
-    )
-
-    # Band LOW → không tin routing → mặc định model mạnh (an toàn)
-    if confidence < 0.5:
-        return MODEL_TIERS["complex"]
-    return MODEL_TIERS[ans["selected"]]
-
-
-def handle(user_request: str) -> str:
-    state = AgentState()
-    model = route_request(user_request, state)       # Jev decide (rẻ, nhanh)
-    draft = call_llm(model, user_request)            # LLM viết (cần text)
-    return draft
-# state.data["routing"] giờ chứa probs + confidence — các bước sau đọc lại
-```
+> 📄 **Code ví dụ:** [`examples/01-2-1-kien-truc-routing-middleware.py`](examples/01-2-1-kien-truc-routing-middleware.py)
 
 </details>
 
@@ -231,47 +160,7 @@ def handle(user_request: str) -> str:
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import requests
-
-API = "https://api.typesafe.ai/v1/systemone"
-HEADERS = {"Authorization": "Bearer <KEY>", "Content-Type": "application/json"}
-
-
-def tool_call_gateway(context: str, tool: dict,
-                      p_threshold: float = 0.6) -> tuple[bool, dict]:
-    """
-    Trả về (allowed, meta).
-    allowed=False → chuyển approval flow, KHÔNG chạy tool.
-    """
-    state = (
-        f"Context:\n{context}\n\n"
-        f"Tool: {tool['name']}\nArgs: {tool.get('args', {})}"
-    )
-    resp = requests.post(
-        API,
-        headers=HEADERS,
-        json={
-            "model": "jev-1.13.0",
-            "state": state,
-            "questions": {"authorized": {"type": "noul"}},
-        },
-        timeout=5,
-    )
-    resp.raise_for_status()
-    ans = resp.json()["answers"]["authorized"]
-    p_yes = ans.get("p_yes", 0.5)
-    conf = abs(p_yes - 0.5) * 2
-    meta = {"p_yes": p_yes, "confidence": conf,
-            "request_id": resp.json().get("request_id")}
-
-    if p_yes >= p_threshold and conf >= 0.5:
-        return True, meta                      # allow → tool chạy
-
-    # block → approval flow (auth layer thật quyết định tiếp)
-    approval_request(tool, meta)               # human / policy engine
-    return False, meta
-```
+> 📄 **Code ví dụ:** [`examples/02-3-1-gateway-pipeline.py`](examples/02-3-1-gateway-pipeline.py)
 
 </details>
 
@@ -314,41 +203,7 @@ def tool_call_gateway(context: str, tool: dict,
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-# Pydantic AI + TypeSafe integration (minh hoạ kiến trúc)
-from pydantic_ai import Agent
-# from pydantic_ai.models.typesafe import TypeSafeModel
-# from pydantic_ai.models.fallback import FallbackModel
-
-# --- Cấu hình kiến trúc ---
-# primary   = TypeSafeModel('jev-1.13.0')      # Jev decide trước
-# fallback  = FallbackModel('some-llm')          # LLM nhận cả bước khi Jev kẹt
-# agent     = Agent(model=primary + fallback)    # (giả định) composition
-#
-# typesafe_tool_call_threshold = 0.6            # mặc định — TUNE từ labelled data
-
-
-# --- Tool KHÔNG args: Jev pick và gọi ---
-@agent.tool_plain
-def refresh_dashboard() -> str:
-    """Không tham số — Jev chọn tool này (hoặc tool khác) từ danh sách,
-    nếu confidence ≥ 0.6 thì gọi thẳng, KHÔNG cần LLM sinh args."""
-    return render_dashboard()
-
-
-# --- Tool CÓ args: Jev không sinh args được ---
-@agent.tool_plain
-def search_docs(query: str, top_k: int = 5) -> list[str]:
-    """Có args → Jev không generate được text args.
-    Flow: ToolCallProposed → ModelAPIError → FallbackModel (LLM)
-    LLM (fallback) đảm nhận CẢ BƯỚC: đọc context, sinh query, gọi tool."""
-    return vector_search(query, top_k)
-
-
-# --- Điều chỉnh threshold từ labelled data của bạn ---
-# Cao hơn → ít handoff sang LLM hơn, nhưng đúng hơn KHI handoff xảy ra.
-# agent/settings.typesafe_tool_call_threshold = 0.75   # sau khi tune
-```
+> 📄 **Code ví dụ:** [`examples/03-4-2-vi-du-code.py`](examples/03-4-2-vi-du-code.py)
 
 **Đọc flow lại một lần:**
 
@@ -419,51 +274,7 @@ Input ──► TypeSafeModel (Jev)
 <details>
 <summary>Python Code (Click to expand/collapse)</summary>
 
-```python
-import requests
-
-API = "https://api.typesafe.ai/v1/systemone"
-HEADERS = {"Authorization": "Bearer <KEY>", "Content-Type": "application/json"}
-
-
-def decide_tools(harness_context: str, available_tools: list[str]) -> dict:
-    """Harness step: Jev chọn tool set (Choice) thay vì LLM đọc & chọn."""
-    resp = requests.post(
-        API,
-        headers=HEADERS,
-        json={
-            "model": "jev-1.13.0",
-            "state": harness_context,
-            "questions": {
-                "tool_choice": {"type": "choice", "options": available_tools},
-            },
-        },
-        timeout=5,
-    )
-    resp.raise_for_status()
-    ans = resp.json()["answers"]["tool_choice"]
-    if ans.get("confidence", 0) < 0.5:
-        return {"action": "escalate", "reason": "low confidence tool select"}
-    return {"action": "use", "tool": ans["selected"],
-            "probs": ans.get("probabilities", {})}
-
-
-def workflow_gate(step_result: str, policy: str) -> bool:
-    """Harness step: Noul gate — bước sau có được chạy không."""
-    resp = requests.post(
-        API,
-        headers=HEADERS,
-        json={
-            "model": "jev-1.13.0",
-            "state": f"Policy:\n{policy}\n\nStep result:\n{step_result}",
-            "questions": {"ready_for_next": {"type": "noul"}},
-        },
-        timeout=5,
-    )
-    resp.raise_for_status()
-    p = resp.json()["answers"]["ready_for_next"].get("p_yes", 0.5)
-    return p >= 0.7 and abs(p - 0.5) * 2 >= 0.5
-```
+> 📄 **Code ví dụ:** [`examples/04-5-1-jev-tai-cac-iem-quyet-inh.py`](examples/04-5-1-jev-tai-cac-iem-quyet-inh.py)
 
 </details>
 
@@ -571,23 +382,7 @@ Jev **không đọc graph, không traverse** — nó phân loại *metadata / co
 
 ### 7.3 Mã Hóa Anti-Pattern #3/#4 — Fallback Bắt Buộc
 
-```python
-# Mẫu nhỏ nhấn mạnh: confidence cao VẪN cần đường fallback tổng thể
-def decide_or_fallback(state: str, questions: dict) -> dict:
-    result = jev_decide(state, questions)          # 70–500ms, rẻ
-    ans = result["answers"]["queue"]
-    conf = ans.get("confidence", 0)
-
-    if conf >= 0.8:
-        return {"by": "jev", "value": ans["selected"], "conf": conf}
-    if conf >= 0.5:
-        return {"by": "jev", "value": ans["selected"],
-                "conf": conf, "needs_confirm": True}
-
-    # LOW band — KHÔNG tin Jev ở đây → fallback LLM / human
-    return {"by": "llm_or_human", "value": llm_decide(state, questions),
-            "conf": None, "reason": "low confidence band"}
-```
+> 📄 **Code ví dụ:** [`examples/05-7-3-ma-hoa-anti-pattern-3-4.py`](examples/05-7-3-ma-hoa-anti-pattern-3-4.py)
 
 ---
 

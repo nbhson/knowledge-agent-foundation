@@ -1,0 +1,7 @@
+# ~/.config/rtk/config.toml (macOS: ~/Library/Application Support/rtk/config.toml)
+[hooks]
+exclude_commands = ["curl", "playwright"]  # skip rewrite cho các lệnh này
+
+[tee]
+enabled = true
+mode = "failures"

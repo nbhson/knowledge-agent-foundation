@@ -26,15 +26,7 @@ LLM không thiếu khả năng — nó thiếu *đường đi*. Cho cả 50 đ�
 4. Đánh dấu công cụ nguy hiểm ngay từ lúc đăng ký: `sql_query`, `execute_python`, `write_file` đều để `requires_permission="elevated"`.
 5. Ghi lại tỉ lệ thành công và độ trễ sau mỗi lần gọi, rồi xếp hạng theo `success_rate / avg_latency_ms`.
 
-```python
-registry.register(ToolDefinition(
-    name="vector_search",
-    description="Tìm kiếm ngữ nghĩa trong cơ sở dữ liệu vector",
-    parameters={"query": {"type": "string", "required": True},
-                "top_k": {"type": "integer", "default": 5}},
-    category="search", tags=["semantic", "vector"],
-))
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-agent-toi-co-50-cong-cu-no.py`](examples/01-q1-agent-toi-co-50-cong-cu-no.py)
 
 **Kiểm tra**
 
@@ -62,13 +54,7 @@ Tài liệu bày ba tầng: dò từ khoá (nhanh, rẻ), gọi mô hình để 
 4. Ghi lại điểm của *mọi* nhóm chứ không chỉ nhóm thắng. Khi có người kêu sai, bạn thấy ngay nhóm nào bị chấm sai.
 5. Nếu tầng gọi mô hình trả về JSON hỏng, rơi về tầng dò từ khoá thay vì báo lỗi.
 
-```python
-rule = self.classify_rule_based(query)
-if rule["confidence"] >= 0.7:
-    return rule
-llm = self.classify_llm_based(query)
-return llm if llm.get("confidence", 0) > rule["confidence"] else rule
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-cung-mot-cau-hoi-oi-khi-goi.py`](examples/02-q2-cung-mot-cau-hoi-oi-khi-goi.py)
 
 **Kiểm tra**
 
@@ -137,11 +123,7 @@ Phân quyền theo vai trò (RBAC — cơ chế cho phép mỗi vai trò đượ
 4. Ghi vào sổ kiểm toán *mọi* lần quyết định, kể cả lần cho phép: ai hỏi, cần quyền gì, vai trò gì, kết quả, thời điểm.
 5. Khi cần nâng quyền, cấp riêng cho đúng người (`grant_permission`) thay vì nới cả vai trò.
 
-```python
-role = self.user_roles.get(user_id, "guest")
-perms = set(ROLE_PERMISSIONS.get(role, ["public"]) + custom.get(user_id, []))
-return {"allowed": required_permission in perms}
-```
+> 📄 **Code ví dụ:** [`examples/03-q4-no-xoa-file-nham-ghi-e-code.py`](examples/03-q4-no-xoa-file-nham-ghi-e-code.py)
 
 **Kiểm tra**
 
@@ -167,12 +149,7 @@ Giới hạn tần suất không phải tuỳ chọn trang trí — nó là phao
 4. Ở cổng MCP từ xa, chặn thêm: mỗi lần gọi tối đa **30 giây**, kết quả tối đa **128KB**, tham số gửi đi tối đa **32KB**.
 5. Cài nhớ kết quả: cùng công cụ, cùng tham số, trong 60 giây thì trả lại kết quả đã lưu. Lấy mã băm của tham số làm khoá.
 
-```python
-records = [t for t in records if now - t < 60]   # cửa sổ trượt
-if len(records) >= limit:
-    return {"allowed": False,
-            "retry_after": round(60 - (now - records[0]), 1)}
-```
+> 📄 **Code ví dụ:** [`examples/04-q5-no-goi-cong-cu-lien-tuc-lam.py`](examples/04-q5-no-goi-cong-cu-lien-tuc-lam.py)
 
 **Kiểm tra**
 
@@ -198,15 +175,7 @@ Khi mỗi công cụ có nhiều khai báo rải rác ở các module khác nhau
 4. Giữ một điểm vào duy nhất cho mọi lần gọi: kiểm tra quyền → kiểm tra tần suất → thực thi → ghi số liệu. Không để đường tắt nào bỏ qua bước đầu.
 5. Bắt đầu từ bộ công cụ mặc định có sẵn rồi thêm của bạn, đừng viết lại từ đầu.
 
-```typescript
-interface ToolDefinition {
-  name: string; description: string;
-  parameters: Record<string, ParameterDef>;
-  requiresPermission: string;
-  rateLimitPerMinute: number; timeoutSeconds: number;
-  maxRetries: number; costPerCall: number;
-}
-```
+> 📄 **Code ví dụ:** [`examples/05-q6-them-mot-cong-cu-moi-thi-phai.ts`](examples/05-q6-them-mot-cong-cu-moi-thi-phai.ts)
 
 **Kiểm tra**
 
@@ -232,11 +201,7 @@ Hồ sơ công cụ đã lưu `success_rate` và `avg_latency_ms`, cả hai đư
 4. Cho điểm trượt dần, không nhảy đột ngột: cập nhật độ trễ trung bình theo hệ số 0,1 cho lần mới.
 5. Dùng cùng cách tính đó cho hàm tìm kiếm của registry để thứ hạng nhất quán ở cả hai nơi.
 
-```python
-rate = s["success_count"] / s["total_count"]
-penalty = min(s["avg_latency"] / 1000, 1)
-score = rate * (1 - penalty) if s["total_count"] else 0.5
-```
+> 📄 **Code ví dụ:** [`examples/06-q7-chay-ca-tuan-agent-van-hay-chon.py`](examples/06-q7-chay-ca-tuan-agent-van-hay-chon.py)
 
 **Kiểm tra**
 
@@ -262,15 +227,7 @@ Một việc rất cơ bản: tìm tất cả file `.ts`, đọc từng file, th
 4. Bắt mọi dòng `console.log` trong mã thành nhật ký, để bạn thấy nó làm gì thay vì một màn hình trắng.
 5. Tóm tắt: tài liệu ước lượng giảm khoảng **80%** độ trễ và chi phí token; phần case study nói **70-90%**.
 
-```typescript
-import { tools } from '@deepseek-ai/dsh';
-const files = await tools.findFiles('src/**/*.ts');
-for (const file of files) {
-  const c = await tools.readFile(file);
-  if (c.includes('legacyFetch'))
-    await tools.writeFile(file, c.replace(/legacyFetch/g, 'modernFetch'));
-}
-```
+> 📄 **Code ví dụ:** [`examples/07-q8-mot-viec-5-buoc-phai-cho-10.ts`](examples/07-q8-mot-viec-5-buoc-phai-cho-10.ts)
 
 **Kiểm tra**
 
@@ -297,11 +254,7 @@ Code mode là cách **đóng gói**, không phải ranh giới an toàn. Nó gom
 5. Khi mã gặp thao tác không thể đảo ngược, nó phải dừng lại và hỏi, chứ không tự quyết. Cơ chế tạm dừng dùng thông điệp `PAUSED:`.
 6. Yêu cầu mọi bước quan trọng đều có `console.log` để lần sau còn truy vết được.
 
-```typescript
-const ctx = vm.createContext({ dsh: this.sdk, console, setTimeout });
-const s = new vm.Script(`(async () => { ${code} })();`);
-return s.runInContext(ctx, { timeout: 30000 });
-```
+> 📄 **Code ví dụ:** [`examples/08-q9-cho-mo-hinh-tu-viet-code-goi.ts`](examples/08-q9-cho-mo-hinh-tu-viet-code-goi.ts)
 
 **Kiểm tra**
 

@@ -1,0 +1,54 @@
+# ontology.yaml — Schema for an Enterprise KG
+
+node_types:
+  Person:
+    properties:
+      name: {type: string, required: true, unique: true}
+      role: {type: string, enum: [CTO, Engineer, Manager, Intern]}
+      email: {type: string, format: email}
+    indexes: [name]
+
+  Project:
+    properties:
+      name: {type: string, required: true}
+      budget: {type: number, min: 0}
+      status: {type: string, enum: [Active, Completed, Cancelled]}
+    indexes: [name, status]
+
+  Document:
+    properties:
+      title: string
+      doc_type: {type: string, enum: [Contract, Report, Email]}
+      created_at: {type: datetime}
+
+edge_types:
+  MANAGES:
+    from: Person
+    to: Person
+    properties:
+      since: {type: date}
+      confidence: {type: float, min: 0, max: 1}
+    temporal: true  # has valid_from / valid_until
+
+  APPROVES:
+    from: Person
+    to: Document
+    properties:
+      approved_at: date
+      confidence: float
+
+  WORKS_ON:
+    from: Person
+    to: Project
+    properties:
+      role: string
+      allocation: {type: float, min: 0, max: 1}  # % of time
+
+  BELONGS_TO:
+    from: Document
+    to: Project
+
+constraints:
+  - "Person -[MANAGES]-> Person (cannot manage yourself)"
+  - "Project.budget > 0"
+  - "APPROVES.confidence >= 0.7 to be considered valid"

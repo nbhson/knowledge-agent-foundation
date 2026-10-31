@@ -256,29 +256,7 @@ Pin set trả lời đúng một câu hỏi: "mất nó thì run có làm sai kh
 
 ### 3.2 Pin Set
 
-```typescript
-export interface PinSet {
-  tenantId: string;                   // khoá định tuyến + nhất quán (→ 05 §17.5)
-  system: true;                       // luôn luôn
-  goal: true;                         // task spec + definition of done
-  invariants: string[];               // ≤5 ràng buộc từ plan (→ 05 §17.5)
-  activeDiffPaths: string[];          // file có edit chưa commit
-  lastUserMessage: true;              // chỉ dẫn gần nhất thắng
-  activeLoopFailure?: { cmd: string; error: string };   // chỉ khi loop chưa xong
-  pendingApprovals: string[];         // gate key đang chờ verdict (→ 15)
-  schema: true;                       // hình dạng câu trả lời cuối
-}
-
-export function isPinned(span: ContextSpan, pins: PinSet, planState: PlanState): boolean {
-  if (span.role === "system" || span.kind === "goal" || span.kind === "schema") return true;
-  if (span.kind === "user" && span.id === pins.lastUserMessage) return true;
-  if (span.kind === "invariant") return true;
-  if (span.kind === "diff" && pins.activeDiffPaths.includes(span.path!)) return true;
-  if (span.kind === "failure" && planState.activeLoopUnresolved) return true;
-  if (span.kind === "approval" && pins.pendingApprovals.includes(span.gateKey!)) return true;
-  return false;
-}
-```
+> 📄 **Code ví dụ:** [`examples/01-3-2-pin-set.ts`](examples/01-3-2-pin-set.ts)
 
 **Quy tắc gọn nhẹ: pin set là thứ suy ra tự động, đừng gõ tay.** Nó tính từ plan, loop đang chạy và danh sách gate đang chờ — nên công việc xong tới đâu là nó tự co lại tới đó, thay vì phình ra mãi.
 
@@ -318,20 +296,7 @@ utility = 0.30·recency + 0.40·structural_reachability + 0.30·failure_signal
 
 Rồi loại dần theo utility từ thấp lên cao, không bao giờ lấn vào ngân sách. Điểm mấu chốt là **thứ tự này chạy trên plan graph, chứ không phải trên danh sách message** — đó là lý do nó cần `08` và `04` chống lưng mới phát huy tác dụng.
 
-```typescript
-/** Cài đặt tham chiếu: §8.3. Tín hiệu lỗi cuối của loop đáng 0.30 — thiếu nó, một
- *  run mắc kẹt trong vòng retry sẽ chấm mọi span điểm giống nhau. */
-export function utility(span: ContextSpan, plan: PlanGraph, loop: ActiveLoop | null, now: number): number {
-  const recency = Math.exp(-(now - span.turn) / 12);
-  const serves = span.producedFor ?? [];
-  const reachable = serves.length === 0 ? 0.4
-    : serves.some(t => plan.pendingIds.includes(t))      ? 1.0    // vẫn cần
-    : serves.every(t => plan.completedIds.includes(t))    ? 0.1    // nhánh đã xong
-    : 0.4;                                                       // song song / chưa rõ
-  const failure = loop?.unresolved && span.text?.includes(firstLine(loop.error)) ? 1 : 0;
-  return 0.30 * recency + 0.40 * reachable + 0.30 * failure;
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-4-2-cham-utility-nhan-thuc-trajectory.ts`](examples/02-4-2-cham-utility-nhan-thuc-trajectory.ts)
 
 ### 4.3 Thu Gọn, Đừng Xoá
 
@@ -376,16 +341,7 @@ và `Evicted[]` để write-back vào memory và phát event audit. Văn xuôi t
 
 Một resume block đạt chuẩn khi một **agent mới toanh với context trống trơn** vẫn đọc xong mà biết phải làm bước kế tiếp là gì. Cách test chuẩn nhất cũng là cách đó:
 
-```typescript
-/** Bài test chấp nhận cho một resume block: agent lạnh có đi tiếp được không? */
-export function resumeIsSufficient(block: ResumeBlock, nextAction: string): boolean {
-  return block.goal.length > 0                                    // không mục đích thì không có nhiệm vụ
-      && block.open.length > 0                                    // phải biết còn việc gì
-      && block.repro.command.length > 0                           // phải lặp lại được lỗi
-      && block.next.length > 0                                    // phải biết làm gì tiếp
-      && countTokens(block) <= 300;                               // ngân sách cứng
-}
-```
+> 📄 **Code ví dụ:** [`examples/03-5-2-chuan-chat-luong.ts`](examples/03-5-2-chuan-chat-luong.ts)
 
 Một block ghi "chúng ta đang refactor authentication và gặp vài vấn đề" fail mọi dòng
 trên. Nó *có vẻ* giàu thông tin và vô dụng — đây là cách phổ biến nhất để compaction âm
@@ -484,206 +440,28 @@ trị thô; để phần tóm tắt giải thích quanh nó.
 
 ### 8.1 Types
 
-```typescript
-export interface ContextSpan {
-  id: string;                    // span_01H…  — đơn vị bị loại
-  kind: "system" | "goal" | "schema" | "invariant" | "user" | "assistant"
-      | "tool_output" | "diff" | "failure" | "approval" | "chitchat" | "branch";
-  role: "system" | "user" | "assistant" | "tool";
-  turn: number;
-  tokens: number;
-  text?: string;
-  path?: string;                 // cho span diff
-  tool?: string;
-  gateKey?: string;              // cho span approval
-  producedFor?: string[];        // các task id span này phục vụ (plan graph, → 08)
-  keep?: boolean;                // pin cứng, thắng điểm chấm
-}
-
-export interface ResumeBlock {
-  goal: string;
-  decisions: string[];           // ≤5
-  open: { taskId: string; title: string }[];
-  repro: { command: string; error: string };
-  next: string;
-  invariants: string[];
-  evicted: string[];             // span id
-}
-```
+> 📄 **Code ví dụ:** [`examples/04-8-1-types.ts`](examples/04-8-1-types.ts)
 
 ### 8.2 shouldCompact + compact()
 
 <details>
 <summary>TypeScript Code — trigger + pin + prune theo utility + resume (Click để mở rộng/thu gọn)</summary>
 
-```typescript
-export const COMPACT_AT = 0.70, RESUME_BUDGET = 300, MAX_TURNS = 20;
-
-export function shouldCompact(used: number, budget: number, turns: number): boolean {
-  return used / budget > COMPACT_AT || turns > MAX_TURNS;
-}
-
-export interface CompactOutcome {
-  kept: ContextSpan[]; resume: ResumeBlock;
-  ratio: number; dropped: string[]; writeBack: DurableExtract;
-}
-
-export function compact(
-  spans: ContextSpan[], budget: number, goal: string,
-  pins: PinSet, plan: PlanGraph, activeLoop: ActiveLoop | null,
-): CompactOutcome {
-  // 1. Pin set trước — không bao giờ là ứng viên bị loại, bất kể điểm số.
-  const pinned = spans.filter(s => isPinned(s, pins, plan.state));
-  const now = maxTurn(spans);
-  const activeTask = plan.activeTask ?? null;   // task mà resume block phải tiếp tục
-
-  // 2. Phần còn lại xếp theo utility nhận thức trajectory, cao xuống thấp.
-  const rest = spans.filter(s => !isPinned(s, pins, plan.state))
-    .map(s => ({ s, u: utility(s, plan, activeLoop, now) }))
-    .sort((a, b) => b.u - a.u);
-
-  // 3. Lấp ngân sách từ trên xuống.
-  let used = pinned.reduce((n, s) => n + s.tokens, 0) + RESUME_BUDGET;
-  const kept = [...pinned];
-  for (const { s } of rest) if (used + s.tokens <= budget) { kept.push(s); used += s.tokens; }
-
-  // 4. Gộp retry giống hệt thay vì bỏ hẳn.
-  const { kept: collapsed, resumeHints } = collapseRetries(kept);
-
-  // 5. Trích nội dung bền từ những gì sắp đi.
-  const dropped = spans.filter(s => !collapsed.some(k => k.id === s.id));
-  const writeBack = extractDurable(dropped, goal);
-
-  // 6. Resume block có cấu trúc, dựng từ nội dung bền + trạng thái plan.
-  const resume: ResumeBlock = {
-    goal,
-    decisions: writeBack.decisions.slice(0, 5),
-    open: plan.pending(activeTask).map(t => ({ taskId: t.id, title: t.title })),
-    repro: activeLoop
-      ? { command: activeLoop.command, error: firstLine(activeLoop.error) }
-      : { command: plan.reproCommand(activeTask), error: plan.lastError(activeTask) },
-    next: plan.nextAction(activeTask),
-    invariants: pins.invariants,
-    evicted: dropped.map(s => s.id),
-  };
-  resumeHints.forEach(h => resume.decisions.push(h));   // "retry 6×, last_err: …"
-
-  return {
-    kept: collapsed, resume, writeBack,
-    dropped: dropped.map(s => s.id),
-    ratio: totalTokens(spans) / (used || 1),
-  };
-}
-```
+> 📄 **Code ví dụ:** [`examples/05-8-2-shouldcompact-compact.ts`](examples/05-8-2-shouldcompact-compact.ts)
 
 </details>
 
 ### 8.3 Bộ Chấm Utility Theo Trajectory
 
-```typescript
-export interface ActiveLoop { command: string; error: string; unresolved: boolean }
-
-/** 0.30 recency + 0.40 structural reachability + 0.30 failure signal.
- *  Thành phần giữa là lý do compaction cần plan graph (→ 04/08): nó biết
- *  span nào vẫn đang nuôi một node *đang chờ*. */
-export function utility(s: ContextSpan, plan: PlanGraph, loop: ActiveLoop | null, now: number): number {
-  const recency = Math.exp(-(now - s.turn) / 12);
-
-  const serves = s.producedFor ?? [];
-  const reachable = serves.length === 0 ? 0.4
-    : serves.some(t => plan.pendingIds.includes(t))      ? 1.0    // vẫn cần
-    : serves.every(t => plan.completedIds.includes(t))    ? 0.1    // nhánh đã xong
-    : 0.4;                                                       // song song / chưa biết
-
-  const failure = loop?.unresolved && s.text?.includes(firstLine(loop.error)) ? 1 : 0;
-
-  return 0.30 * recency + 0.40 * reachable + 0.30 * failure;
-}
-
-/** N lần gọi thất bại giống hệt → 1 dòng. 18k token → 24. */
-export function collapseRetries(spans: ContextSpan[]): { kept: ContextSpan[]; resumeHints: string[] } {
-  const groups = new Map<string, ContextSpan[]>();
-  for (const s of spans.filter(s => s.kind === "tool_output" || s.kind === "failure")) {
-    const key = `${s.tool}:${s.kind}`;
-    (groups.get(key) ?? groups.set(key, []).get(key)!).push(s);
-  }
-  const hints: string[] = [];
-  const drop = new Set<string>();
-  for (const [, g] of groups) {
-    if (g.length < 3) continue;
-    const last = g[g.length - 1]!;
-    drop.add(last.id);
-    for (const s of g.slice(0, -1)) drop.add(s.id);
-    hints.push(`retry ${g.length}× (${g[0]!.turn}→${last.turn}): ${firstLine(last.text ?? "")}`);
-  }
-  return { kept: spans.filter(s => !drop.has(s.id)), resumeHints: hints };
-}
-```
+> 📄 **Code ví dụ:** [`examples/06-8-3-bo-cham-utility-theo-trajectory.ts`](examples/06-8-3-bo-cham-utility-theo-trajectory.ts)
 
 ### 8.4 Builder Cho Resume Block
 
-```typescript
-export function buildResume(o: {
-  goal: string; decisions: string[]; pending: Task[]; lastCmd: string; lastErr: string;
-  invariants: string[]; evicted: string[];
-}): ResumeBlock {
-  const b: ResumeBlock = {
-    goal: o.goal.slice(0, 200),
-    decisions: o.decisions.slice(0, 5).map(d => d.slice(0, 200)),
-    open: o.pending.map(t => ({ taskId: t.id, title: t.title.slice(0, 80) })),
-    repro: { command: o.lastCmd.slice(0, 200), error: firstLine(o.lastErr).slice(0, 200) },
-    next: o.pending[0] ? `Tiếp tục với ${o.pending[0].id}: ${o.pending[0].title}` : "Tóm tắt và bàn giao",
-    invariants: o.invariants.slice(0, 5),
-    evicted: o.evicted,
-  };
-  const t = countTokens(b);
-  if (t > RESUME_BUDGET) {                                  // ngân sách cứng, được ép
-    b.decisions = b.decisions.slice(0, 3);
-    b.invariants = b.invariants.slice(0, 3);
-    b.open = b.open.slice(0, 8);
-    b.evicted = b.evicted.slice(0, 40);
-  }
-  return b;
-}
-
-export function renderResume(b: ResumeBlock): string {
-  return [
-    `Goal: ${b.goal}`,
-    `Decisions: ${b.decisions.map(d => `[${d}]`).join("") || "[không có]"}`,
-    `Open: ${b.open.map(t => `[${t.taskId}: ${t.title}]`).join("") || "[không có]"}`,
-    `Repro: ${b.repro.command} → ${b.repro.error}`,
-    `Next: ${b.next}`,
-    `Invariants: ${b.invariants.join(" | ")} || "(chưa khai báo)"}`,
-    `Evicted: [${b.evicted.join(",")}]`,
-  ].join("\n");
-}
-```
+> 📄 **Code ví dụ:** [`examples/07-8-4-builder-cho-resume-block.ts`](examples/07-8-4-builder-cho-resume-block.ts)
 
 ### 8.5 Write-Back Vào Memory
 
-```typescript
-/** PHẢI chạy trước khi các span bị loại được bỏ đi. Lỗi ở đây phải huỷ
- *  compaction — một run lặng lẽ mất quyết định tệ hơn một run dừng lại
- *  với một lỗi rõ ràng. */
-export async function writeBackAndCompact(
-  spans: ContextSpan[], budget: number, memory: MemoryStore, traj: TrajectorySink,
-  pins: PinSet, plan: PlanGraph, loop: ActiveLoop | null, goal: string,
-): Promise<CompactOutcome> {
-  const o = compact(spans, budget, goal, pins, plan, loop);
-
-  const facts = o.writeBack.facts.map(f => ({ ...f, tenantId: pins.tenantId, taskId: plan.activeTask }));
-  await memory.persist(facts, { fsync: true });          // bền TRƯỚC khi loại
-
-  await traj.append({                                       // → 13
-    kind: "compaction", parentTaskId: plan.activeTask,
-    payload: { keptIds: o.kept.map(s => s.id), evictedIds: o.dropped, ratio: o.ratio,
-               resumeHash: hash(renderResume(o.resume)), factsWritten: facts.length },
-    tokens: { in: totalTokens(spans), out: countTokens(o.resume) },
-  });
-
-  return o;
-}
-```
+> 📄 **Code ví dụ:** [`examples/08-8-5-write-back-vao-memory.ts`](examples/08-8-5-write-back-vao-memory.ts)
 
 ---
 
@@ -691,44 +469,14 @@ export async function writeBackAndCompact(
 
 ### 9.1 Test Bất Biến
 
-```typescript
-export function assertInvariants(o: CompactOutcome, budget: number): void {
-  const keptIds = new Set(o.kept.map(s => s.id));
-
-  for (const p of PINNED_KINDS)                                            // (1) pin sống
-    if (o.dropped.some(id => kindOf(id) === p)) throw new Error(`đã loại span pinned ${p}`);
-
-  if (totalTokens(o.kept) > budget) throw new Error("vượt ngân sách");   // (2) vừa ngân sách
-  if (countTokens(o.resume) > RESUME_BUDGET) throw new Error("resume quá lớn");
-  if (!resumeIsSufficient(o.resume, o.resume.next)) throw new Error("resume không đủ");
-  if (o.resume.evicted.length !== o.dropped.length) throw new Error("lệch danh sách audit");
-  if (o.ratio < 1.2) throw new Error(`ratio yếu ${o.ratio.toFixed(2)}`); // (3) có compact thật
-  for (const s of o.kept) if (!keptIds.has(s.id)) throw new Error("kept/evicted chồng nhau");
-}
-```
+> 📄 **Code ví dụ:** [`examples/09-9-1-test-bat-bien.ts`](examples/09-9-1-test-bat-bien.ts)
 
 Chạy các test này cho **mọi** trajectory đã ghi có compaction, trong CI đêm. Trajectory
 thật bắt được các trường hợp biên mà dữ liệu tổng hợp không bao giờ bắt.
 
 ### 9.2 Contract Test Quan Trọng Nhất
 
-```typescript
-/** Nếu memory chết, compaction KHÔNG ĐƯỢC âm thầm tiếp tục. */
-it("từ chối loại quyết định chưa lưu", async () => {
-  const spans = realTrajectorySpans();                     // 40 message gồm 4 quyết định
-  const memory = brokenMemoryStore();                     // persist() luôn ném lỗi
-  await expect(writeBackAndCompact(spans, 12_000, memory, sink, pins, plan, null, goal))
-    .rejects.toThrow(/memory unavailable/);
-  expect(spans.length).toBe(40);                           // không có gì bị loại
-});
-
-it("agent lạnh đi tiếp được chỉ từ resume block", async () => {
-  const o = await writeBackAndCompact(realTrajectorySpans(), 12_000, mem, sink, pins, plan, loop, goal);
-  const cold = await runAgent({ context: [systemPrompt, renderResume(o.resume)], tools });
-  const warm = await runAgent({ context: originalSpans, tools });
-  expect(await nextActionOf(cold)).toBe(await nextActionOf(warm));   // cùng hành động kế
-});
-```
+> 📄 **Code ví dụ:** [`examples/10-9-2-contract-test-quan-trong-nhat.ts`](examples/10-9-2-contract-test-quan-trong-nhat.ts)
 
 Test thứ hai là tiêu chuẩn nghiệm thu thực sự của cả module. Nó cũng là test mà phần
 lớn đội bỏ qua, và là test đã bắt được sự cố lượt 47 ở phần đầu tài liệu.
@@ -738,14 +486,7 @@ lớn đội bỏ qua, và là test đã bắt được sự cố lượt 47 ở
 Theo dõi, mỗi lần compaction, run có còn thành công không. Nếu chất lượng giảm sau
 compaction, pin set sai — và đây chính là phép đo tìm ra điều đó:
 
-```sql
-SELECT s.kind, AVG(e.payload->>'score') AS score_after_compaction, COUNT(*) AS runs
-FROM trajectory c
-JOIN trajectory e ON e.session_id = c.session_id AND e.kind = 'eval'
-JOIN trajectory s ON s.session_id = c.session_id AND s.kind = 'session_start'
-WHERE c.kind = 'compaction'
-GROUP BY s.kind ORDER BY score_after_compaction;
-```
+> 📄 **Code ví dụ:** [`examples/11-9-3-bo-hoi-quy-chat-luong.sql`](examples/11-9-3-bo-hoi-quy-chat-luong.sql)
 
 Một run cụ thể chỉ fail khi có compaction ngay trước thất bại là tín hiệu mạnh nhất
 cho thấy pin set đang thiếu thứ gì đó.
@@ -830,78 +571,7 @@ tiếp tục từ agent lạnh, không phải bằng cách đọc nó.
 
 ## 11. TypeScript Interfaces Cho Compaction
 
-```typescript
-// ── Context ────────────────────────────────────────────────────────────────
-export interface ContextSpan {
-  id: string;
-  kind: "system" | "goal" | "schema" | "invariant" | "user" | "assistant"
-      | "tool_output" | "diff" | "failure" | "approval" | "chitchat" | "branch";
-  role: "system" | "user" | "assistant" | "tool";
-  turn: number; tokens: number;
-  text?: string; path?: string; tool?: string; gateKey?: string;
-  producedFor?: string[];      // các task id được phục vụ (plan graph, → 08)
-  keep?: boolean;              // pin cứng
-}
-
-// ── Policy ─────────────────────────────────────────────────────────────────
-export interface CompactionPolicy {
-  triggerRatio: number;        // 0.70
-  maxTurns: number;            // 20
-  resumeBudgetTokens: number;  // 300
-  minRatio: number;            // 1.2 — dưới ngưỡng này coi như compaction "hỏng"
-  weights: { recency: number; reachability: number; failure: number };
-  collapseRetryThreshold: number;  // 3
-}
-export const DEFAULT_POLICY: CompactionPolicy = {
-  triggerRatio: 0.70, maxTurns: 20, resumeBudgetTokens: 300, minRatio: 1.2,
-  weights: { recency: 0.30, reachability: 0.40, failure: 0.30 },
-  collapseRetryThreshold: 3,
-};
-
-// ── Pin set ────────────────────────────────────────────────────────────────
-export interface PinSet {
-  tenantId: string; system: true; goal: true; schema: true;
-  lastUserMessage: true; invariants: string[];
-  activeDiffPaths: string[]; pendingApprovals: string[];   // → 15
-}
-
-// ── Resume ─────────────────────────────────────────────────────────────────
-export interface ResumeBlock {
-  goal: string; decisions: string[];
-  open: { taskId: string; title: string }[];
-  repro: { command: string; error: string };
-  next: string; invariants: string[]; evicted: string[];
-}
-
-// ── Outcome ────────────────────────────────────────────────────────────────
-export interface DurableExtract {
-  facts: { key: string; value: string; kind: "decision" | "constraint" | "preference" | "todo" }[];
-}
-export interface CompactOutcome {
-  kept: ContextSpan[]; resume: ResumeBlock; ratio: number;
-  dropped: string[]; writeBack: DurableExtract;
-}
-
-// ── Compactor ──────────────────────────────────────────────────────────────
-export interface Compactor {
-  shouldCompact(used: number, budget: number, turns: number): boolean;
-  compact(spans: ContextSpan[], budget: number, goal: string, pins: PinSet,
-          plan: PlanGraph, loop: ActiveLoop | null): CompactOutcome;
-  buildResume(input: ResumeInput): ResumeBlock;
-  render(b: ResumeBlock): string;
-  /** PHẢI persist trước khi trả về. Lỗi ở đây phải huỷ compaction. */
-  writeBackAndCompact(spans: ContextSpan[], budget: number, memory: MemoryStore,
-                      traj: TrajectorySink, pins: PinSet, plan: PlanGraph,
-                      loop: ActiveLoop | null, goal: string): Promise<CompactOutcome>;
-}
-
-// ── Test surface ───────────────────────────────────────────────────────────
-export interface CompactionInvariant { name: string; assert(o: CompactOutcome, budget: number): void }
-export interface ColdStartTest {
-  name: string; spans: ContextSpan[]; budget: number;
-  expectSameNextAction: boolean;
-}
-```
+> 📄 **Code ví dụ:** [`examples/12-11-typescript-interfaces-cho-compaction.ts`](examples/12-11-typescript-interfaces-cho-compaction.ts)
 
 ---
 
@@ -1152,46 +822,7 @@ xong nó thành "không cần nữa" và rơi vào nhóm bỏ được.
 <details>
 <summary>Python Code — should_compact + compact với giữ 5 files gần nhất (Click to mở rộng/thu gọn)</summary>
 
-```python
-COMPACT_RATIO = 0.70          # trigger: 70% ngân sách
-MAX_RECENT_FILES = 5          # giữ 5 file gần nhất được truy cập (Claude Code)
-RESUME_BUDGET = 300           # token cho resume block
-
-def should_compact(tokens_used: int, limit: int) -> bool:
-    """Trigger compaction khi sử dụng > 70% ngân sách."""
-    return (tokens_used / limit) > COMPACT_RATIO
-
-
-def compact(messages: list[dict], recent_files: list[str] | None = None) -> str:
-    """Tóm tắt lịch sử hội thoại, giữ 5 file gần nhất.
-
-    Args:
-        messages: lịch sử hội thoại
-        recent_files: danh sách file gần nhất được truy cập (mặc định giữ 5)
-    Returns:
-        Resume block dạng text, ≤ RESUME_BUDGET tokens
-    """
-    if recent_files is None:
-        recent_files = []
-    recent_files = recent_files[-MAX_RECENT_FILES:]
-
-    # 1. Filter: tool results cũ deep trong history
-    kept = [m for m in messages if m.get("role") != "tool" or m.get("keep")]
-
-    # 2. Gộp lại messages còn lại (nếu nhiều → summarize)
-    total = sum(len(str(m.get("content", ""))) for m in kept)
-    if total > RESUME_BUDGET * 4:   # rough: ~4 chars/token
-        # Ưu tiên: goal + quyết định + unresolved + next + recent_files
-        summary_parts = [
-            "Goal: [trích nhiệm vụ hiện tại từ system/goal messages]",
-            "Decisions: [các quyết định đã đưa ra]",
-            "Open issues: [bug/task chưa giải quyết]",
-            "Next: [bước kế tiếp]",
-            f"Recent files: {', '.join(recent_files)}",
-        ]
-        return "\n".join(summary_parts)
-    return "\n".join(str(m.get("content", "")) for m in kept[-10:])
-```
+> 📄 **Code ví dụ:** [`examples/13-5-code-mau-should-compact-compact.py`](examples/13-5-code-mau-should-compact-compact.py)
 
 </details>
 

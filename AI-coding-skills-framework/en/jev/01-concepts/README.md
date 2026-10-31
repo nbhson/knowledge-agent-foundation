@@ -178,17 +178,7 @@ Named after Daniel Kahneman's **Thinking, Fast and Slow**: System 1 = fast, intu
 
 ### 4.1 The Request Contract (Preview)
 
-```json
-{
-  "model": "jev-latest",
-  "state": "Ticket #4821: charged twice after plan upgrade, customer angry…",
-  "questions": {
-    "team":    { "type": "choice", "options": ["billing", "infra", "bug", "other"] },
-    "refund":  { "type": "noul",   "criteria": "the text explicitly asks for money back" },
-    "urgency": { "type": "score",  "levels": ["calm", "annoyed", "angry"] }
-  }
-}
-```
+> 📄 **Example code:** [`examples/01-4-1-the-request-contract-preview.json`](examples/01-4-1-the-request-contract-preview.json)
 
 Three questions, **one** HTTP call, **one** model pass. Details in [02-primitives](../02-primitives/) and [03-api](../03-api/).
 

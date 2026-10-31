@@ -28,12 +28,7 @@ Vì hook chỉ ảnh hành lên lệnh chạy qua bash. Sau `rtk init` mà khôn
 3. Nếu báo thiếu `rg`, cài ripgrep bằng trình quản lý gói của hệ điều hành.
 4. Muốn công cụ tích hợp cũng được nén, hãy chuyển sang dùng lệnh shell hoặc gọi trực tiếp `rtk read` / `rtk grep`.
 
-```bash
-brew install ripgrep                            # macOS
-winget install BurntSushi.ripgrep.MSVC          # Windows
-rtk init -g        # sau đó PHẢI restart AI tool
-rtk git status     # gõ tay để đối chiếu
-```
+> 📄 **Code ví dụ:** [`examples/01-q13-chay-rtk-init-roi-ma-lenh-khong.sh`](examples/01-q13-chay-rtk-init-roi-ma-lenh-khong.sh)
 
 **Kiểm tra**
 
@@ -59,9 +54,7 @@ Vì trên crates.io có **trùng tên**: gói `rtk` đã tồn tại và thuộc
 4. Nếu vẫn lỗi, kiểm tra đường dẫn binary đang được gọi có trỏ tới kho git mới không — có thể bản cũ vẫn nằm trước trong PATH.
 5. Nếu lệnh quan trọng vẫn bị nén quá mức, thêm vào `exclude_commands` thay vì cài lại.
 
-```bash
-cargo install --git https://github.com/rtk-ai/rtk
-```
+> 📄 **Code ví dụ:** [`examples/02-q14-cargo-install-rtk-xong-roi-rtk-gain.sh`](examples/02-q14-cargo-install-rtk-xong-roi-rtk-gain.sh)
 
 **Kiểm tra**
 
@@ -86,15 +79,9 @@ Vì nén là biến đổi, còn một số việc cần bản gốc tuyệt đ�
 3. Thêm vào `exclude_commands` khi pipeline hoặc script của bạn phụ thuộc định dạng output gốc.
 4. Chỉ tháo hook khi bạn đang debug output chính xác của một tool và cần bản raw; hoặc lệnh có tác dụng phụ quan trọng mà bạn muốn thấy đủ log.
 
-```toml
-# ~/.config/rtk/config.toml
-[hooks]
-exclude_commands = ["curl", "playwright", "terraform plan"]
-```
+> 📄 **Code ví dụ:** [`examples/03-q15-khi-nao-nen-them-lenh-vao-exclude.toml`](examples/03-q15-khi-nao-nen-them-lenh-vao-exclude.toml)
 
-```bash
-rtk init -g --uninstall   # chỉ khi thật sự cần gỡ hoàn toàn
-```
+> 📄 **Code ví dụ:** [`examples/04-q15-khi-nao-nen-them-lenh-vao-exclude.sh`](examples/04-q15-khi-nao-nen-them-lenh-vao-exclude.sh)
 
 **Kiểm tra**
 

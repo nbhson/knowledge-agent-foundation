@@ -1,0 +1,4 @@
+# ~/.config/rtk/config.toml
+# macOS: ~/Library/Application Support/rtk/config.toml
+[hooks]
+exclude_commands = ["curl", "playwright"]

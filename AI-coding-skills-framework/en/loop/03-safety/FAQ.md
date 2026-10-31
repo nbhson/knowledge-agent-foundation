@@ -26,10 +26,7 @@ auth/**, payments/**, billing/**
 
 2. Enforce it **mechanically** from `gate.yaml`, not from the prompt. The `loop-gate` tool checks the changed file list and returns an exit code — 2 means escalate, 0 means proceed:
 
-```bash
-npx @cobusgreyling/loop gate check --action auto-merge --paths <changed files>
-# exit 2 = escalate to a human, exit 0 = proceed
-```
+> 📄 **Example code:** [`examples/01-q1-my-cleanup-loop-auto-merged-at-2am.sh`](examples/01-q1-my-cleanup-loop-auto-merged-at-2am.sh)
 
 3. Write the allowlist down as **policy-as-code**: versioned, reviewed, and checked by `gate check` before any merge. Keep it in `AGENTS.md` or `loop-auto-merge-allowlist.md`.
 4. Keep the allowlist narrow — typos in comments and docs, lint auto-fixes in test files only, import ordering, config inside allowlisted `docs/` paths. Never: behavior changes, dependency version bumps, lockfile changes, anything on the denylist.

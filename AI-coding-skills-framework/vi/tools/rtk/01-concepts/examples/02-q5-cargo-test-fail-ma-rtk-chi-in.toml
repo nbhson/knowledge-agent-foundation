@@ -1,0 +1,5 @@
+# ~/.config/rtk/config.toml
+# macOS: ~/Library/Application Support/rtk/config.toml
+[tee]
+enabled = true      # lưu raw output khi fail (mặc định: true)
+mode = "failures"   # "failures", "always", hoặc "never"

@@ -22,10 +22,7 @@ Bash output is the quiet context glutton. Every shell call pours hundreds of lin
 2. Let it apply its four compression strategies: smart filtering (`git push` → `ok main`), grouping (`ls` → a tree with file counts), truncation (`git diff` → headers dropped), deduplication (`docker logs` → `×42 repeated line`).
 3. Keep raw output recoverable: on failure, RTK saves the whole log to disk so nothing is lost.
 
-```bash
-git status     # agent asks for this
-rtk git status # what actually runs; output is filtered first
-```
+> 📄 **Example code:** [`examples/01-q1-my-agent-keeps-missing-the-one-error.sh`](examples/01-q1-my-agent-keeps-missing-the-one-error.sh)
 
 **Verify**
 

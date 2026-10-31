@@ -22,14 +22,7 @@ Untrusted text was interpolated raw. Anything from a user, a file, a web page, o
 4. Enforce a schema gate before the call — the template declares `required_sections` and `build()` throws if `goal`, `constraints`, or `output_schema` are missing.
 5. Still filter on the way out. Output filtering is the only layer that helps when the model already saw the secret.
 
-```python
-REDACT = [(re.compile(r'AKIA[0-9A-Z]{16}'), 'AWS_KEY'),
-          (re.compile(r'ghp_[A-Za-z0-9]{36}'), 'GH_TOKEN'),
-          (re.compile(r'-----BEGIN .*?PRIVATE KEY-----'), 'PRIVKEY')]
-def delimit(text, source):
-    esc = text.replace('</untrusted>', '<\\/untrusted>')
-    return f'<untrusted source="{source}" len="{len(esc)}">{esc}</untrusted>'
-```
+> 📄 **Example code:** [`examples/01-q1-my-api-key-ended-up-inside-the.py`](examples/01-q1-my-api-key-ended-up-inside-the.py)
 
 **Verify**
 
@@ -95,14 +88,7 @@ A prompt edit is a code edit with no version control behind it. `PromptRegistry.
 4. Compare before shipping — `compare()` returns added and removed lines alongside both sides' metrics.
 5. Roll back by version name, never by retyping the prompt from memory.
 
-```python
-vm.create_version("1.0.0", tpl_v1, author="ngan", changelog="original")
-vm.create_version("2.0.0", tpl_v2, author="ngan", changelog="shorter rules")
-test.add_variant("control", tpl_v1, traffic_pct=50)
-test.add_variant("variant_a", tpl_v2, traffic_pct=50)
-print(test.analyze()["improvement_pct"])
-vm.rollback("1.0.0")   # 30 seconds, nothing lost
-```
+> 📄 **Example code:** [`examples/02-q3-i-improved-the-prompt-accuracy-dropped-and.py`](examples/02-q3-i-improved-the-prompt-accuracy-dropped-and.py)
 
 **Verify**
 
@@ -128,13 +114,7 @@ Context was appended and never budgeted. The source's own warning: past roughly 
 4. Restate the non-negotiable rules in 5 lines or fewer at **both** the top and the bottom, so compaction cannot eat them.
 5. Log `prompt_fingerprint + tier + token_est` on every run, so a replay after compaction stays auditable.
 
-```python
-TIERS = [("fast", 4000, 8000), ("balanced", 12000, 20000), ("max", 32000, 60000)]
-def select_tier(needed, deadline_ms):
-    for name, tok, ms in TIERS:
-        if needed <= tok and deadline_ms <= ms: return name
-    raise ValueError(f"needs {needed}tok/{deadline_ms}ms: exceeds all tiers; compact first")
-```
+> 📄 **Example code:** [`examples/03-q4-the-prompt-got-so-big-that-cost.py`](examples/03-q4-the-prompt-got-so-big-that-cost.py)
 
 **Verify**
 
@@ -160,13 +140,7 @@ Few-shot selection is a decision, not a default. `random` gives you no reproduci
 4. Cache the selection with `FewShotCache`, keyed on query + count + strategy, with a 3600-second time-to-live.
 5. Keep one canonical example next to the output schema. Never rely on the middle of the prompt surviving compaction.
 
-```python
-cache = FewShotCache(ttl_seconds=3600)
-key = (query, k, "diversity")
-picked = cache.get(*key) or builder.select(query, k, strategy="diversity")
-cache.set(*key, picked)
-print(builder.format(picked, format_type="xml"))
-```
+> 📄 **Example code:** [`examples/04-q5-the-same-question-picks-different-examples-every.py`](examples/04-q5-the-same-question-picks-different-examples-every.py)
 
 **Verify**
 

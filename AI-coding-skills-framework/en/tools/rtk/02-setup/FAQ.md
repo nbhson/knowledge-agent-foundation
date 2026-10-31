@@ -22,10 +22,7 @@ There is a **name collision**: a different project called "rtk" (Rust Type Kit) 
 2. With cargo, always install from the Git repository, not from crates.io by name.
 3. Use the quick-install script only if you prefer it; it installs into `~/.local/bin`, so add that to your PATH.
 
-```bash
-cargo install --git https://github.com/rtk-ai/rtk
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-```
+> 📄 **Example code:** [`examples/01-q9-rtk-gain-fails-right-after-install-did.sh`](examples/01-q9-rtk-gain-fails-right-after-install-did.sh)
 
 **Verify**
 
@@ -49,11 +46,7 @@ Three usual causes: you did not restart the AI tool after `rtk init`; you used t
 2. For rule-based tools (Cline/Roo Code, Kimi, Hermes, Kilo Code, Antigravity) drop `-g` so the rules land in the project.
 3. Restart the AI tool, then test.
 
-```bash
-rtk init -g                 # Claude Code / Copilot default
-rtk init --agent cline       # project-scoped, writes .clinerules
-git status                  # should be rewritten to "rtk git status"
-```
+> 📄 **Example code:** [`examples/02-q10-i-ran-rtk-init-but-the-agent.sh`](examples/02-q10-i-ran-rtk-init-but-the-agent.sh)
 
 **Verify**
 
@@ -77,10 +70,7 @@ Some filters invoke **ripgrep** (the fast search tool named `rg` on the command 
 2. Confirm `rg --version` works in the same shell the AI tool launches.
 3. On Windows, re-run `rtk init -g` to migrate away from the legacy script.
 
-```bash
-brew install ripgrep
-rg --version
-```
+> 📄 **Example code:** [`examples/03-q11-every-command-fails-with-binary-rg-not.sh`](examples/03-q11-every-command-fails-with-binary-rg-not.sh)
 
 **Verify**
 
@@ -105,10 +95,7 @@ Two independent controls exist. Global flags change how much RTK prints; the con
 3. List commands to skip under `exclude_commands`.
 4. To remove everything later, run `rtk init -g --uninstall` and remove the binary with `brew uninstall rtk` or `cargo uninstall rtk`.
 
-```toml
-[hooks]
-exclude_commands = ["curl", "playwright"]
-```
+> 📄 **Example code:** [`examples/04-q12-output-is-still-longer-than-i-want.toml`](examples/04-q12-output-is-still-longer-than-i-want.toml)
 
 **Verify**
 

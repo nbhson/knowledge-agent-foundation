@@ -21,14 +21,7 @@ Jev cố tình chỉ có **một** điểm giao diện: `POST https://api.typesa
 3. Trong production, **ghim** `jev-1.13.0` thay vì dùng bí danh `jev-latest`, để không bị nâng cấp âm thầm.
 4. Ghi nhận `request_id` trả về cùng mọi quyết định — không có nó thì không truy vết được sự cố.
 
-```bash
-curl -X POST https://api.typesafe.ai/v1/systemone \
-  -H "Authorization: Bearer $TYPESAFE_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"model":"jev-1.13.0","state":"Ticket: bị tính phí 2 lần.",
-       "questions":{"team":{"type":"choice",
-       "choices":["billing","tech","account","other"]}}}'
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-goi-jev-lan-au-thi-lam-gi.sh`](examples/01-q1-goi-jev-lan-au-thi-lam-gi.sh)
 
 Hai mã lỗi xác thực bạn sẽ gặp sớm: **401** là sai hoặc thiếu khóa, **403** là khóa không có quyền hoặc mô hình chưa được bật. Sửa bằng cách kiểm tra lại phần đầu `Authorization`.
 
@@ -55,14 +48,7 @@ Trong Pydantic AI, bạn định nghĩa một mô hình kết quả có trườn
 3. Đặt câu hỏi vào mô tả trường, đặt khung chung vào phần chỉ dẫn — đừng trộn hai thứ.
 4. Danh sách trường sẽ tự động lan toả: mỗi phần tử của một danh sách trở thành một câu hỏi riêng, chạy song song.
 
-```python
-class Triage(BaseModel):
-    """Phân loại theo đội sở hữu chính, không theo nhắc đầu tiên."""
-    team: Team = Field(description="Team nào sở hữu ticket này?")
-    refund_requested: bool = Field(
-        description="Khách có yêu cầu hoàn tiền không?"   # bắt buộc với bool
-    )
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-toi-khai-mot-truong-boolean-khong-kem.py`](examples/02-q2-toi-khai-mot-truong-boolean-khong-kem.py)
 
 **Kiểm tra**
 
@@ -87,10 +73,7 @@ Request của bạn thất bại với `ModelHTTPError` và mã `max_tokens_exce
 3. Rút gọn câu hỏi dài bất thường.
 4. Khi vẫn lỗi, **giảm trạng thái**, tuyệt đối không retry mù.
 
-```python
-core = f"{ticket['subject']}\n{ticket['body'][:1500]}"   # cắt trước khi gửi
-resp = client.ask(model="jev-1.13.0", state=core, questions=questions)
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-toi-gap-modelhttperror-max-tokens-exceeded-sua.py`](examples/03-q3-toi-gap-modelhttperror-max-tokens-exceeded-sua.py)
 
 Kèm theo đó, hãy ghi nhớ những việc Jev cố ý không làm, để không mất thời gian thử lại: không sinh văn bản, không viết tham số cho công cụ, không tự đọc tệp, không so sánh ngày hay tính toán. Phép tính và so sánh ngày nên để trong code. Lỗi khác ít gặp hơn: lỗi `ToolCallProposed` là dấu hiệu bạn đang để Jev viết tham số cho công cụ — đó là việc của mô hình lớn phía sau.
 
@@ -117,11 +100,7 @@ Jev đã có sẵn trên nhà cung cấp trung gian đó qua một điểm giao 
 3. Chọn đường này khi bạn muốn **một** khóa cho mọi mô hình.
 4. Chọn gọi thẳng khi cần độ trễ và tính hành trực tốt nhất, cùng khả năng ghim phiên bản mô hình chặt chẽ hơn.
 
-```bash
-export TYPESAFE_API_KEY=<khóa_của_bạn>
-export TYPESAFE_BASE_URL=https://openrouter.ai/api/alpha
-# tên mô hình: "typesafe/jev-1.13"
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-toi-a-co-mot-khoa-cho-nhieu.sh`](examples/04-q4-toi-a-co-mot-khoa-cho-nhieu.sh)
 
 **Kiểm tra**
 
@@ -146,10 +125,7 @@ Mọi lựa chọn đều bọc cùng một điểm giao diện; khác nhau ở 
 3. LangChain (`TypeSafeClassifier`) khi đã có chuỗi hoặc tầng trung gian và chỉ cần thay phần phân loại.
 4. Spice AI khi quyết định nằm ngay trong truy vấn cơ sở dữ liệu, không cần vòng qua tầng dịch vụ.
 
-```python
-from pydantic_ai.models.typesafe import TypeSafeModel
-agent = Agent(TypeSafeModel("jev-1.13.0"), output_type=Triage)
-```
+> 📄 **Code ví dụ:** [`examples/05-q5-toi-nen-dung-thu-vien-nao-python.py`](examples/05-q5-toi-nen-dung-thu-vien-nao-python.py)
 
 Trước khi lên production, đi qua danh sách kiểm tra: đã ghim phiên bản chưa; phần trạng thái đã sạch chưa; mọi trường boolean đã có mô tả chưa; ngưỡng đã định nghĩa và có kiểm thử chưa; nhánh độ tự tin thấp có đường chuyển người chưa; đường xử lý lỗi quá kích thước đã có chưa.
 

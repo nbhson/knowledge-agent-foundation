@@ -1,0 +1,5 @@
+node_types: [Person, Project, Document]
+edge_types: [APPROVES, REPORTS_TO, BELONGS_TO]
+constraints:
+  - "Person -[REPORTS_TO]-> Person"
+  - "Project -[APPROVES]-> Person"

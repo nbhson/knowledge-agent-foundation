@@ -1,0 +1,21 @@
+{
+  "answers": {
+    "team": {
+      "choice": "billing",
+      "probabilities": { "billing": 0.93, "tech": 0.04, "account": 0.02, "other": 0.01 },
+      "confidence": 0.87
+    },
+    "refund_requested": {
+      "noul": true,
+      "p": 0.96,
+      "certainty": 0.92
+    },
+    "urgency": {
+      "score": 3.4,
+      "legend": { "1": "low", "2": "medium", "3": "high", "4": "critical" },
+      "distribution": { "1": 0.01, "2": 0.05, "3": 0.51, "4": 0.43 },
+      "confidence": 0.55
+    }
+  },
+  "usage": { "input_tokens": 214, "output_tokens": 0 }
+}

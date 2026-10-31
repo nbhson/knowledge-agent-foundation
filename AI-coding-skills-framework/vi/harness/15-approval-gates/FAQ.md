@@ -55,15 +55,7 @@ Vì nếu hết hạn được hiểu là "cho qua", thì gate chỉ là một g
 5. Nếu gate mức `elevated` treo quá 15 phút trong giờ production thì gọi người trực. Run đứng yên nguyên vẹn tại checkpoint — chính cái đứng yên đó làm cho việc gọi người gần như miễn phí.
 6. Ghi từng chặng của chuỗi chuyển báo: `paged_oncall` → `delegated_to:alice` → `approved`. Chuỗi đó là thứ khiến câu hỏi "thực sự ai đã quyết?" trả lời được.
 
-```typescript
-export function onExpire(key: string, g: Gate): void {
-  g.verdict = "expired";
-  traj.append({ kind: "approval_verdict",
-    payload: { key, verdict: "expired", reason: "ttl_elapsed", at: Date.now() } });
-  plan.markBlocked(g.taskId, "approval-timeout");
-  replanner.excludeBranch(g.taskId);
-}
-```
+> 📄 **Code ví dụ:** [`examples/01-q2-e-ngo-khong-tra-loi-co-nen.ts`](examples/01-q2-e-ngo-khong-tra-loi-co-nen.ts)
 
 **Kiểm tra**
 
@@ -114,15 +106,7 @@ Vì cách làm sai phổ biến là engine "chờ": nó giữ một biến trong
 5. Action được gate chạy **đúng một lần** sau khi duyệt — vì checkpoint nằm *trước* action, nên resume chạy lại action chứ không băng qua ranh giới.
 6. Ghi verdict trùng key hai lần là no-op: bấm đúp không được chạy migration hai lần.
 
-```typescript
-private reloadOpen(): void {
-  for (const ev of this.store.query({ kind: "approval_request" }))
-    if (!this.verdict(ev.payload.key)) {
-      this.gates.set(ev.payload.key, ev.payload);
-      this.armTimer(ev.payload);            // nạp lại đồng hồ hết hạn
-    }
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-q4-gate-mo-luc-22h-may-restart-sang.ts`](examples/02-q4-gate-mo-luc-22h-may-restart-sang.ts)
 
 **Kiểm tra**
 

@@ -68,9 +68,7 @@ Last run: 2026-06-09 09:00 UTC
 
 **Cadence**: 1d or tag · **Tier**: low · **Suggested daily cap**: 50k tokens
 
-```bash
-npx @cobusgreyling/loop cost --pattern changelog-drafter --cadence 1d --level L1
-```
+> 📄 **Example code:** [`examples/01-cost-profile.sh`](examples/01-cost-profile.sh)
 
 ## Success Metrics
 

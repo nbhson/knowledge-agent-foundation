@@ -72,16 +72,7 @@ Nếu không có trajectory, coi như bạn đang mò mẫm trong bóng tối. T
 
 Có trajectory, cùng câu hỏi đó mất mười một giây và một query:
 
-```sql
-SELECT seq, kind, payload->>'tool' AS tool, payload->>'path' AS path
-FROM trajectory
-WHERE session_id = 'ses_44a' AND payload->>'path' LIKE '%middleware%'
-ORDER BY seq;
--- seq 31: read_file  src/auth/middleware.ts  → 4.1KB
--- seq 32: edit_file  (patch applied)
--- seq 33: write_file  ← lệnh xoá
--- seq 34: eval        "tests pass" (thật — không còn gì import nó)
-```
+> 📄 **Code ví dụ:** [`examples/01-opening-story.sql`](examples/01-opening-story.sql)
 
 **Và cái hay là các câu hỏi tiếp theo tự trả lời lẫn nhau.** Tại sao nó lại xoá? Nhìn `seq 29: prompt` là thấy ngay — mô hình thấy mấy export không ai dùng nên chọn cách xoá thay vì để lại code chết. Có cứu được không? `seq 33` có ghi `git worktree`, nên cứu được, bản patch cuối nằm ở `seq 51`. Chuyện này có đáng phải qua cổng duyệt không? Blast radius chỉ là một file — dưới ngưỡng `write` — nhưng khổ nỗi file đó được **3 file khác import mà agent chưa từng mở ra đọc**. Thế là từ một câu hỏi kỹ thuật, ta có luôn câu trả lời cho chính sách.
 
@@ -179,35 +170,7 @@ Observability = kỷ luật truy vấn bằng chứng đó trước khi hình th
 
 Một shape duy nhất, mọi module cùng emit, mọi công cụ cùng đọc. Đây là món "hợp đồng" quan trọng nhất trong cả tầng observability — cả nhà dùng chung một khuôn thì mới nói chuyện được với nhau.
 
-```typescript
-export type EventKind =
-  | "session_start" | "session_end"
-  | "context_assembly" | "prompt"
-  | "plan" | "plan_revision"
-  | "tool_call" | "tool_result" | "sandbox"
-  | "memory_read" | "memory_write"
-  | "delegate" | "message"
-  | "approval_request" | "approval_verdict"
-  | "compaction" | "checkpoint" | "eval" | "error";
-
-export interface TrajectoryEvent {
-  id: string;             // evt_01HZX… — sắp xếp được theo lexicographic (ULID/KSUID)
-  seq: number;            // 0-based, liền mạch, tăng đơn điệu trong session
-  sessionId: string;      // một user request = một session
-  parentTaskId?: string;  // → 08-task TaskNode.id
-  runId?: string;         // một lần engine chạy; một session có thể có nhiều lần
-  ts: number;             // ms epoch
-  kind: EventKind;
-  actor: string;          // "agent:coder" | "human:alice" | "system" | "judge"
-  payload: EventPayload;  // đã redact; ≤64KB; quá lớn → { ref }
-  tokens?: { in: number; out: number; cached?: number };
-  latencyMs?: number;
-  model?: string;         // tier nào phục vụ step này → quy chi phí
-  costUsd?: number;       // tính lúc emit, không tính lại lúc query
-  error?: { code: string; retryable: boolean };
-  fingerprint?: string;   // hash prompt → dedupe replay, audit compaction
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-1-1-schema-cot-loi.ts`](examples/02-1-1-schema-cot-loi.ts)
 
 **Mỗi trường đều có việc để làm:**
 
@@ -242,30 +205,7 @@ export interface TrajectoryEvent {
 
 ### 1.3 Validate & Phiên Bản Hoá
 
-```typescript
-import { z } from "zod";
-
-export const TrajectoryEventSchema = z.object({
-  id: z.string().regex(/^evt_[0-9A-HJKMNP-TV-Z]{26}$/),  // ULID
-  seq: z.number().int().nonnegative(),
-  sessionId: z.string().min(1),
-  parentTaskId: z.string().optional(),
-  runId: z.string().optional(),
-  ts: z.number().int(),
-  kind: z.enum([/* … */]),
-  actor: z.string().min(1),
-  payload: z.unknown(),
-  tokens: z.object({ in: z.number(), out: z.number(), cached: z.number().optional() }).optional(),
-  latencyMs: z.number().nonnegative().optional(),
-  model: z.string().optional(),
-  costUsd: z.number().nonnegative().optional(),
-  error: z.object({ code: z.string(), retryable: z.boolean() }).optional(),
-  fingerprint: z.string().optional(),
-}).superRefine((e, ctx) => {
-  if (e.kind !== "session_start" && !e.parentTaskId)
-    ctx.addIssue({ code: "custom", message: "orphan event: parentTaskId required" });
-});
-```
+> 📄 **Code ví dụ:** [`examples/03-1-3-validate-phien-ban-hoa.ts`](examples/03-1-3-validate-phien-ban-hoa.ts)
 
 **Hãy version cả schema, đừng version từng trường riêng lẻ.** Thêm `v: 2` và giữ reader đọc được cả bản cũ lẫn mới. Một trajectory viết từ sáu tháng trước vẫn phải đọc được — giữ được lịch sử đọc được chính là lý do ta lưu nó. Đổi tên trường trong im lặng chẳng khác nào xé mất trang duy nhất ghi lại sự thật.
 
@@ -306,41 +246,17 @@ Không phải event nào cũng đáng để `fsync` ngay. Hãy xếp hạng theo
 | `tool_call` / `tool_result` | flush ≤100 ms | Cần để debug, chấp nhận mất 100 ms cuối |
 | `prompt` / `context_assembly` | buffered | Dựng lại được từ chính run |
 
-```bash
-# Mỗi session một file. Chỉ-append, JSON newline-delimited.
-./trajectories/ses_44a.jsonl
-./trajectories/ses_44b.jsonl
-```
+> 📄 **Code ví dụ:** [`examples/04-2-2-uong-ghi-cac-tang-ben-vung.sh`](examples/04-2-2-uong-ghi-cac-tang-ben-vung.sh)
 
 **Sao lại là JSONL mà không phải bảng SQL?** Vì ghi kiểu nối đuôi thì khỏi cần khoá trong trường hợp thường, `grep` phát ăn ngay, mang đi đâu cũng tiện, replay cũng dễ. Còn index là chuyện *tính sau*; cần phân tích thì nạp vào DuckDB/SQLite. Nếu ngay từ đầu đã lưu dạng bảng, mỗi event thành một giao dịch nằm ngay trên đường chạy nóng — bạn phải trả "thuế độ trễ" cho vòng lặp agent, chỉ để đổi lấy một câu query mỗi tuần mới chạy một lần.
 
 ### 2.3 Đường Đọc & Tail Trực Tiếp
 
-```bash
-# 1. Điều gì đã xảy ra, theo thứ tự?
-jq -r '[.seq, .kind, .actor, (.payload.tool // "-")] | @tsv' ses_44a.jsonl
-
-# 2. Tìm step đắt nhất
-jq -s 'sort_by(-(.latencyMs // 0))[:10] | .[] | {seq, kind, latencyMs, model}' ses_44a.jsonl
-
-# 3. Tìm tool_call không có tool_result (phát hiện treo)
-jq -s '[.[] | select(.kind=="tool_call") | .seq] as $c
-       | [.[] | select(.kind=="tool_result") | .seq] as $r
-       | ($c - $r)' ses_44a.jsonl
-
-# 4. Tail trực tiếp
-tail -f ses_44a.jsonl | jq -c '{seq, kind, tool: .payload.tool}'
-```
+> 📄 **Code ví dụ:** [`examples/05-2-3-uong-oc-tail-truc-tiep.sh`](examples/05-2-3-uong-oc-tail-truc-tiep.sh)
 
 Nạp vào DuckDB cho mọi thứ nặng hơn:
 
-```sql
-INSTALL httpfs; LOAD httpfs;
-SELECT model, COUNT(*) AS steps, SUM(tokens.in + tokens.out) AS total_tokens,
-       SUM(costUsd) AS usd
-FROM read_json_auto('trajectories/*.jsonl')
-GROUP BY model ORDER BY usd DESC;
-```
+> 📄 **Code ví dụ:** [`examples/06-2-3-uong-oc-tail-truc-tiep.sql`](examples/06-2-3-uong-oc-tail-truc-tiep.sql)
 
 ---
 
@@ -361,72 +277,7 @@ GROUP BY model ORDER BY usd DESC;
 <details>
 <summary>TypeScript Code — fork / replay / resume (Click để mở rộng/thu gọn)</summary>
 
-```typescript
-import { createHash } from "node:crypto";
-import { createInterface } from "node:readline";
-import { createReadStream } from "node:fs";
-import { ulid } from "ulid";
-
-export interface Session {
-  sessionId: string;
-  forkedFrom?: { sessionId: string; atSeq: number; by: string };
-  events: TrajectoryEvent[];
-}
-
-export async function loadSession(path: string): Promise<TrajectoryEvent[]> {
-  const out: TrajectoryEvent[] = [];
-  const rl = createInterface({ input: createReadStream(path), crlfDelay: Infinity });
-  for await (const line of rl) if (line.trim()) out.push(JSON.parse(line));
-  return assertGapless(out);
-}
-
-/** seq liền mạch chứng minh không mất lần ghi nào. Có lỗ hổng nghĩa là log
- *  không đầy đủ — mọi kết luận suy ra (cost, replay) khi đó đáng ngờ. */
-function assertGapless(evts: TrajectoryEvent[]): TrajectoryEvent[] {
-  evts.sort((a, b) => a.seq - b.seq);
-  for (let i = 1; i < evts.length; i++)
-    if (evts[i].seq !== evts[i - 1].seq + 1)
-      throw new Error(`trajectory gap: seq ${evts[i - 1].seq} → ${evts[i].seq}`);
-  return evts;
-}
-
-/** FORK — clone tiền tố, tạo danh tính mới, đi tiếp theo hướng khác. */
-export function fork(src: Session, atSeq: number, by: string): Session {
-  const prefix = src.events.filter(e => e.seq <= atSeq);
-  const clone: Session = {
-    sessionId: `ses_${ulid()}`,
-    forkedFrom: { sessionId: src.sessionId, atSeq, by },
-    events: prefix.map(e => ({ ...e })),      // id mới khi ghi, seq giữ nguyên
-  };
-  return clone;
-}
-
-export interface ReplayDiff { step: number; kind: string; drift: "none" | "output" | "error" | "latency" }
-
-/** REPLAY — so một lần chạy mới với lần đã ghi. */
-export function diffRun(recorded: TrajectoryEvent[], fresh: TrajectoryEvent[]): ReplayDiff[] {
-  const diffs: ReplayDiff[] = [];
-  const n = Math.max(recorded.length, fresh.length);
-  for (let i = 0; i < n; i++) {
-    const a = recorded[i], b = fresh[i];
-    if (!a || !b) { diffs.push({ step: i, kind: a?.kind ?? b?.kind ?? "?", drift: "output" }); continue; }
-    if (a.kind !== b.kind) { diffs.push({ step: i, kind: a.kind, drift: "output" }); continue; }
-    if (hash(a.payload) !== hash(b.payload)) diffs.push({ step: i, kind: a.kind, drift: "output" });
-    else if ((a.latencyMs ?? 0) > (b.latencyMs ?? 0) * 3 + 500) diffs.push({ step: i, kind: a.kind, drift: "latency" });
-  }
-  return diffs;
-}
-const hash = (o: unknown) => createHash("sha256").update(JSON.stringify(o)).digest("hex").slice(0, 16);
-
-/** RESUME — idempotency key làm cho chạy lại sau crash an toàn. */
-export function stepsToSkip(events: TrajectoryEvent[], done: Set<string>): string[] {
-  return events.filter(e => e.kind === "tool_call" && done.has(idempotencyKeyOf(e)))
-               .map(e => e.payload.callId as string);
-}
-export function idempotencyKeyOf(e: TrajectoryEvent): string {
-  return `${e.parentTaskId}:${e.payload.tool}:${e.payload.argvHash}`;  // → 07 §13.3
-}
-```
+> 📄 **Code ví dụ:** [`examples/07-3-2-implementation.ts`](examples/07-3-2-implementation.ts)
 
 </details>
 
@@ -467,17 +318,7 @@ Mỗi dòng trên là một câu hỏi mà kiểu gì người dùng cũng sẽ 
 
 ### 4.2 Năm Câu Hỏi Một Query Trả Lời
 
-```sql
--- "Sao retrieval được trích dẫn mà không dùng?" — join context_assembly → prompt → eval
-SELECT c.session_id,
-       c.payload->>'chunkIds'    AS retrieved,
-       p.payload->>'chunkIds'    AS used,
-       e.payload->>'score'       AS judge_score
-FROM trajectory c
-JOIN trajectory p ON p.session_id = c.session_id AND p.kind='prompt'
-JOIN trajectory e ON e.session_id = c.session_id AND e.kind='eval'
-WHERE c.kind='context_assembly';
-```
+> 📄 **Code ví dụ:** [`examples/08-4-2-nam-cau-hoi-mot-query-tra.sql`](examples/08-4-2-nam-cau-hoi-mot-query-tra.sql)
 
 Join key biến "mô hình trả lời sai" thành "nó lấy 12 chunk, dùng 4, và 3 chunk điểm
 cao nhất đã cũ" — một kết luận có chủ sở hữu và có cách sửa.
@@ -487,12 +328,7 @@ cao nhất đã cũ" — một kết luận có chủ sở hữu và có cách s
 Một event không có `parentTaskId` (hoặc task không tồn tại) là lỗi đấu nối. Chạy
 liên tục:
 
-```sql
-SELECT kind, COUNT(*) AS orphans, MIN(ts) AS first_seen
-FROM trajectory
-WHERE parent_task_id IS NULL AND kind NOT IN ('session_start','session_end')
-GROUP BY kind;
-```
+> 📄 **Code ví dụ:** [`examples/09-4-3-phat-hien-event-mo-coi.sql`](examples/09-4-3-phat-hien-event-mo-coi.sql)
 
 Khác 0 là phải page. Event mồ côi là cách một harness kết thúc với một dashboard
 âm thầm thiếu 12% chi phí trong tám tháng.
@@ -518,31 +354,11 @@ lớn chiếm phần lớn dung lượng byte và ít giá trị nhất sáu tu�
 
 Redaction phải làm **ngay lúc ghi**, đừng để tới lúc đọc. Redact lúc đọc là thua chắc, vì kiểu gì cũng có query ad-hoc chọc thẳng vào bảng thô — mà bảng thô thì lúc nào cũng bị người ta lôi ra soi.
 
-```typescript
-const PII = [
-  /sk-[A-Za-z0-9_-]{20,}/g,                 // API key
-  /gh[pousr]_\w{20,}/g,                     // GitHub token
-  /AKIA[0-9A-Z]{16}/g,                      // AWS access key id
-  /-----BEGIN [A-Z ]*PRIVATE KEY-----/g,     // private key
-  /[\w.+-]+@[\w-]+\.[\w.]{2,}/g,             // email
-  /\b(?:\d[ -]?){13,19}\b/g,                 // số thẻ
-];
-
-export function redactPayload<T>(payload: T): { payload: T; redactions: number } {
-  let s = JSON.stringify(payload), n = 0;
-  for (const re of PII) s = s.replace(re, () => { n++; return "[REDACTED]"; });
-  return { payload: JSON.parse(s), redactions: n };
-}
-```
+> 📄 **Code ví dụ:** [`examples/10-5-2-redaction-luc-emit.ts`](examples/10-5-2-redaction-luc-emit.ts)
 
 Lưu `redactions` thành một trường của event. Rồi:
 
-```sql
--- Kiểm chứng hàng quý: không còn chuỗi hình dạng secret trong warm store
-SELECT COUNT(*) FROM read_json_auto('trajectories-warm/*.jsonl')
-WHERE payload::TEXT ~ 'sk-[A-Za-z0-9]{20}';
--- phải bằng 0. Khác 0 = incident.
-```
+> 📄 **Code ví dụ:** [`examples/11-5-2-redaction-luc-emit.sql`](examples/11-5-2-redaction-luc-emit.sql)
 
 ### 5.3 Cô Lập Tenant & Receipt Xoá
 
@@ -550,11 +366,7 @@ WHERE payload::TEXT ~ 'sk-[A-Za-z0-9]{20}';
 - **Row-level security hoặc bucket riêng cho từng tenant.** Rò rỉ chéo tenant trong trajectory store là một sự cố dữ liệu theo nghĩa đen.
 - **Xoá theo GDPR** gỡ: event trajectory, aggregate cold, báo cáo dẫn xuất, và mọi projection đã cache — rồi phát một receipt:
 
-```json
-{ "kind": "deletion_receipt", "tenantId": "acme",
-  "sessionsDeleted": 1841, "eventsDeleted": 214883, "coldAggregatesPurged": true,
-  "ref": "receipts/acme-2026-07-19.json", "at": 1752900000000 }
-```
+> 📄 **Code ví dụ:** [`examples/12-5-3-co-lap-tenant-receipt-xoa.json`](examples/12-5-3-co-lap-tenant-receipt-xoa.json)
 
 Bản receipt cũng được lưu bất biến. "Chúng tôi đã xoá nó" phải kiểm chứng được mà
 không cần tin vào chính hệ thống đã xoá.
@@ -567,49 +379,11 @@ không cần tin vào chính hệ thống đã xoá.
 
 Mọi metric đều là một query trên cùng một bảng. Đây chính là phần thưởng xứng đáng cho công sức thiết kế schema tử tế từ đầu.
 
-```sql
--- Hiệu quả step (→ 11 §15.1)
-SELECT AVG(steps) AS avg_steps, AVG(tokens_out) AS avg_out
-FROM (SELECT session_id, COUNT(*) AS steps, MAX(tokens_out) AS tokens_out
-      FROM trajectory WHERE kind IN ('tool_call','prompt') GROUP BY session_id);
-
--- Tool precision: hữu ích ÷ tổng (gắn nhãn hữu ích ở tầng tool)
-SELECT payload->>'tool' AS tool,
-       COUNT(*) AS calls,
-       AVG(CASE WHEN payload->>'useful'='true' THEN 1.0 ELSE 0.0 END) AS precision
-FROM trajectory WHERE kind='tool_call' GROUP BY tool ORDER BY calls DESC;
-
--- Recovery rate: những run gặp lỗi nhưng vẫn hoàn thành
-SELECT COUNT(*) FILTER (WHERE err THEN 1)/COUNT(*)::float AS recovered
-FROM (SELECT session_id, BOOL_OR(kind='error') AS err
-      FROM trajectory GROUP BY session_id);
-
--- Phát hiện lặp: cùng argvHash 3+ lần trong một session
-SELECT session_id, payload->>'argvHash' AS h, COUNT(*) AS n
-FROM trajectory WHERE kind='tool_call'
-GROUP BY session_id, h HAVING COUNT(*) >= 3 ORDER BY n DESC;
-
--- Sức khoẻ compaction (→ 14)
-SELECT AVG((payload->>'ratio')::float) AS avg_ratio,
-       AVG((payload->>'dropped')::int)  AS avg_dropped
-FROM trajectory WHERE kind='compaction';
-
--- Tỉ lệ fallback (→ 01): các đường retrieval bị suy giảm
-SELECT AVG(CASE WHEN payload->>'degraded'='true' THEN 1.0 ELSE 0.0 END)
-FROM trajectory WHERE kind='context_assembly';
-```
+> 📄 **Code ví dụ:** [`examples/13-6-1-catalog-query.sql`](examples/13-6-1-catalog-query.sql)
 
 ### 6.2 Quy Kết Chi Phí
 
-```sql
--- Cost theo task, theo model, theo tenant — ba câu hỏi finance hay hỏi
-SELECT t.session_id, e.model,
-       SUM(e.cost_usd) AS usd, SUM(e.tokens_out) AS out_tok
-FROM trajectory e JOIN trajectory t ON t.session_id = e.session_id AND t.kind='session_start'
-WHERE e.cost_usd IS NOT NULL
-GROUP BY t.session_id, e.model
-ORDER BY usd DESC LIMIT 20;
-```
+> 📄 **Code ví dụ:** [`examples/14-6-2-quy-ket-chi-phi.sql`](examples/14-6-2-quy-ket-chi-phi.sql)
 
 Phát hiện phổ biến nhất: **chi phí không nằm ở prompt, mà ở vòng retry và các step
 dùng frontier tier mà không cần thiết.** Một dashboard cost dựa trên query này
@@ -633,20 +407,7 @@ Trả lời câu 2 và 3 trước câu 4 — đó là kỷ luật. Rất nhiều
 
 ### 7.2 So Sánh Hai Run
 
-```typescript
-export function diffSessions(a: TrajectoryEvent[], b: TrajectoryEvent[]): string {
-  const A = new Map(a.map(e => [e.seq, e])), B = new Map(b.map(e => [e.seq, e]));
-  const lines: string[] = [];
-  for (const seq of new Set([...A.keys(), ...B.keys()]).values()) {
-    const x = A.get(seq), y = B.get(seq);
-    if (!x) { lines.push(`+${seq} ${y!.kind} ${y!.payload.tool ?? ""}`); continue; }
-    if (!y) { lines.push(`-${seq} ${x.kind} ${x.payload.tool ?? ""}`); continue; }
-    if (JSON.stringify(x.payload) !== JSON.stringify(y.payload))
-      lines.push(`~${seq} ${x.kind} ${x.payload.tool ?? ""} (${x.latencyMs}ms → ${y.latencyMs}ms)`);
-  }
-  return lines.join("\n");
-}
-```
+> 📄 **Code ví dụ:** [`examples/15-7-2-so-sanh-hai-run.ts`](examples/15-7-2-so-sanh-hai-run.ts)
 
 Dùng cho A/B test prompt, nâng cấp model, và các report kiểu "hôm qua còn chạy". Dòng
 `~` đầu tiên gần như luôn là dòng thú vị.
@@ -676,98 +437,17 @@ Luôn giữ **counter ở 100%** kể cả khi bỏ payload. Log đã sample nh�
 <details>
 <summary>TypeScript Code — store chỉ-append với các tầng bền vững (Click để mở rộng/thu gọn)</summary>
 
-```typescript
-import { appendFile, open, mkdir } from "node:fs/promises";
-import { join } from "node:path";
-import { ulid } from "ulid";
-import { redactPayload, TrajectoryEventSchema } from "./schema";
-
-const FSYNC_KINDS = new Set(["approval_verdict", "memory_write", "eval", "session_start", "session_end"]);
-const MAX_PAYLOAD = 64_000;
-
-export class TrajectoryStore {
-  private seq = 0;
-  private buffer: string[] = [];
-  private timer?: NodeJS.Timeout;
-  dropped = 0; lastError?: unknown; currentSession = "";
-
-  constructor(private root: string) {}
-
-  /** Mọi module gọi hàm này. Không bao giờ throw vào vòng lặp agent —
-   *  một lỗi telemetry không được làm hỏng task. Lỗi được đếm và báo. */
-  async append(e: Omit<TrajectoryEvent, "id" | "seq">): Promise<void> {
-    try {
-      const { payload, redactions } = redactPayload(e.payload);
-      const ev = TrajectoryEventSchema.parse({
-        ...e, id: `evt_${ulid()}`, seq: this.seq++, redactions,
-        payload: JSON.stringify(payload).length > MAX_PAYLOAD ? { ref: blobRef(payload) } : payload,
-      });
-      const line = JSON.stringify(ev) + "\n";
-      if (FSYNC_KINDS.has(ev.kind)) {
-        await this.flush();
-        const fh = await open(this.path(ev.sessionId), "a");
-        await fh.appendFile(line); await fh.sync(); await fh.close();
-      } else {
-        this.buffer.push(line);
-        this.timer ??= setTimeout(() => void this.flush(), 100);
-      }
-    } catch (err) { this.dropped++; this.lastError = err; }
-  }
-
-  async flush(): Promise<void> {
-    clearTimeout(this.timer); this.timer = undefined;
-    if (!this.buffer.length) return;
-    const b = this.buffer; this.buffer = [];
-    await mkdir(this.root, { recursive: true });
-    await appendFile(this.path(this.currentSession), b.join(""), "utf8");
-  }
-
-  async close(): Promise<void> { await this.flush(); }
-  path(sessionId: string) { return join(this.root, `${sessionId}.jsonl`); }
-}
-```
+> 📄 **Code ví dụ:** [`examples/16-8-1-trajectorystore.ts`](examples/16-8-1-trajectorystore.ts)
 
 </details>
 
 ### 8.2 Projector Tiến Độ Trực Tiếp
 
-```typescript
-/** Chiếu event stream thành trạng thái UI sống. Cùng một stream, khác cái nhìn —
- *  UI là một phép gấp trên trajectory, không phải nguồn sự thật thứ hai. */
-export interface RunProgress {
-  sessionId: string; currentTask?: string; stepsDone: number;
-  tokens: number; costUsd: number; lastError?: string; status: "running" | "waiting" | "done" | "failed";
-}
-
-export function project(e: TrajectoryEvent, prev: RunProgress): RunProgress {
-  const next = { ...prev, stepsDone: prev.stepsDone + (e.kind === "tool_result" ? 1 : 0) };
-  if (e.tokens) next.tokens += e.tokens.in + e.tokens.out;
-  next.costUsd += e.costUsd ?? 0;
-  if (e.kind === "plan") next.currentTask = (e.payload as any).firstPendingTask;
-  if (e.kind === "approval_request") next.status = "waiting";
-  if (e.kind === "approval_verdict") next.status = "running";
-  if (e.kind === "error") next.lastError = e.error?.code;
-  if (e.kind === "session_end")
-    next.status = (e.payload as any).tasksDone === (e.payload as any).tasksTotal ? "done" : "failed";
-  return next;
-}
-```
+> 📄 **Code ví dụ:** [`examples/17-8-2-projector-tien-o-truc-tiep.ts`](examples/17-8-2-projector-tien-o-truc-tiep.ts)
 
 ### 8.3 Debug Logger Adapter
 
-```typescript
-/** Một dòng dễ đọc cho các run có DEBUG=agent. Cùng event, chỉ khác định dạng. */
-export function formatEvent(e: TrajectoryEvent): string {
-  const t = `${String(e.seq).padStart(3, "0")} ${e.kind.padEnd(16)} ${e.actor.padEnd(12)}`;
-  const detail = e.kind === "tool_call" ? `${e.payload.tool} ${JSON.stringify(e.payload.args).slice(0, 60)}`
-    : e.kind === "tool_result" ? `exit=${e.payload.exitCode} ${e.latencyMs}ms ${e.payload.bytes}B`
-    : e.kind === "eval" ? `score=${e.payload.score}`
-    : e.kind === "compaction" ? `ratio=${e.payload.ratio} dropped=${e.payload.dropped}`
-    : "";
-  const cost = e.costUsd ? ` $${e.costUsd.toFixed(4)}` : "";
-  return `${t} ${detail}${cost}`;
-}
-```
+> 📄 **Code ví dụ:** [`examples/18-8-3-debug-logger-adapter.ts`](examples/18-8-3-debug-logger-adapter.ts)
 
 ---
 
@@ -778,37 +458,14 @@ export function formatEvent(e: TrajectoryEvent): string {
 Chạy trong CI. Đây là bắt lớp bug khi một module mới emit một event phá vỡ mọi query
 phía dưới.
 
-```typescript
-import { TrajectoryEventSchema } from "./schema";
-
-export function validateEmitter(name: string, evts: unknown[]): void {
-  for (const e of evts) {
-    const r = TrajectoryEventSchema.safeParse(e);
-    if (!r.success) throw new Error(`${name} emitted invalid event: ${r.error.message}`);
-  }
-  const seqs = evts.map((e: any) => e.seq).sort((a: number, b: number) => a - b);
-  seqs.forEach((s, i) => { if (s !== i) throw new Error(`${name} produced a seq gap at ${i}`); });
-}
-```
+> 📄 **Code ví dụ:** [`examples/19-9-1-contract-test.ts`](examples/19-9-1-contract-test.ts)
 
 Cũng assert: mọi `tool_call` có `tool_result` tương ứng; mọi `tool_result.parentTaskId`
 tồn tại trong plan; không payload nào chứa pattern secret.
 
 ### 9.2 Bộ Test Replay
 
-```typescript
-/** Step tất định phải giống byte. Step LLM so bằng fingerprint + dung sai score.
- *  Bất cứ thứ gì khác là bug của harness. */
-export async function replayTest(cases: ReplayCase[]): Promise<{ name: string; drift: ReplayDiff[] }[]> {
-  const out: { name: string; drift: ReplayDiff[] }[] = [];
-  for (const c of cases) {
-    const recorded = await loadSession(c.path);
-    const fresh = await c.run();
-    out.push({ name: c.name, drift: diffRun(recorded, fresh) });
-  }
-  return out;
-}
-```
+> 📄 **Code ví dụ:** [`examples/20-9-2-bo-test-replay.ts`](examples/20-9-2-bo-test-replay.ts)
 
 **Lịch:** mỗi đêm replay 20 trajectory production hàng đầu với một model đã ghim. Drift
 ở step tất định là fail cứng. Drift ở step LLM vượt ±0.1 score là tín hiệu cần điều
@@ -852,16 +509,7 @@ Vì sao quan trọng: nếu bạn emit thuộc tính `gen_ai.*`, trace của b�
 miễn phí. Cái giá của việc không chấp nhận conventions là phải tự xây dashboard mãi
 mãi.
 
-```typescript
-span.setAttributes({
-  "gen_ai.system": "anthropic",
-  "gen_ai.request.model": "claude-sonnet-4-5",
-  "gen_ai.usage.input_tokens": 12_480,
-  "gen_ai.usage.output_tokens": 1_120,
-  "gen_ai.agent.id": "agent:coder",
-  "gen_ai.trajectory.session_id": "ses_44a",
-});
-```
+> 📄 **Code ví dụ:** [`examples/21-10-3-opentelemetry-genai-conventions.ts`](examples/21-10-3-opentelemetry-genai-conventions.ts)
 
 ### 10.4 OpenHands — Runtime Event Stream
 
@@ -889,69 +537,7 @@ thực hành đáng học:
 
 ## 11. TypeScript Interfaces Cho Observability
 
-```typescript
-// ── Event ─────────────────────────────────────────────────────────────────
-export type EventKind =
-  | "session_start" | "session_end" | "context_assembly" | "prompt"
-  | "plan" | "plan_revision" | "tool_call" | "tool_result" | "sandbox"
-  | "memory_read" | "memory_write" | "delegate" | "message"
-  | "approval_request" | "approval_verdict" | "compaction" | "checkpoint"
-  | "eval" | "error";
-
-export interface TrajectoryEvent {
-  id: string; seq: number; sessionId: string; parentTaskId?: string; runId?: string;
-  ts: number; kind: EventKind; actor: string; payload: unknown;
-  tokens?: { in: number; out: number; cached?: number };
-  latencyMs?: number; model?: string; costUsd?: number;
-  error?: { code: string; retryable: boolean };
-  fingerprint?: string; redactions?: number; tenantId: string;
-}
-
-export type NewEvent = Omit<TrajectoryEvent, "id" | "seq" | "redactions">;
-
-// ── Store ──────────────────────────────────────────────────────────────────
-export interface TrajectoryStore {
-  append(e: NewEvent): Promise<void>;
-  flush(): Promise<void>;
-  load(sessionId: string): Promise<TrajectoryEvent[]>;
-  tail(sessionId: string, fromSeq: number): AsyncIterable<TrajectoryEvent>;
-}
-
-// ── Derived views ──────────────────────────────────────────────────────────
-export interface RunProgress {
-  sessionId: string; currentTask?: string; stepsDone: number;
-  tokens: number; costUsd: number; lastError?: string;
-  status: "running" | "waiting" | "done" | "failed";
-}
-
-// ── Fork / replay ──────────────────────────────────────────────────────────
-export interface Session {
-  sessionId: string;
-  forkedFrom?: { sessionId: string; atSeq: number; by: string };
-  events: TrajectoryEvent[];
-}
-export type ReplayDrift = "none" | "output" | "error" | "latency";
-export interface ReplayDiff { step: number; kind: EventKind | string; drift: ReplayDrift }
-
-// ── Redaction ──────────────────────────────────────────────────────────────
-export interface RedactionResult<T> { payload: T; redactions: number }
-export interface Redactor { redact(s: string): RedactionResult<string> }
-
-// ── Retention ──────────────────────────────────────────────────────────────
-export type RetentionTier = "hot" | "warm" | "cold" | "purged";
-export interface RetentionPolicy {
-  hotDays: number; warmDays: number; coldDays: number;
-  inlineMaxBytes: number;             // > ngưỡng này → { ref } ở tầng warm
-  tenantTtlDays?: number;             // GDPR
-}
-
-// ── Test surface ───────────────────────────────────────────────────────────
-export interface ReplayCase {
-  name: string; path: string;
-  run(): Promise<TrajectoryEvent[]>;
-  expectDeterministic: EventKind[];
-}
-```
+> 📄 **Code ví dụ:** [`examples/22-11-typescript-interfaces-cho-observability.ts`](examples/22-11-typescript-interfaces-cho-observability.ts)
 
 ---
 
@@ -1120,56 +706,14 @@ là mẫu phát hiện được. Hộp đen là cách bạn tìm ra chuyến bay
 
 ### 1. TrajectoryEvent + JSONL Append-Only (Python)
 
-```python
-from dataclasses import dataclass, field, asdict
-from collections import defaultdict
-from pathlib import Path
-import json, time
-
-@dataclass
-class TrajectoryEvent:
-    session_id: str
-    kind: str                      # prompt | tool_call | tool_result | eval | ...
-    payload: dict                  # đã redact; ≤64KB — quá lớn thì thay bằng {"ref": ...}
-    id: str = ""                   # ULID — sắp xếp được theo lexicographic (§1.1)
-    tokens_in: int = 0
-    tokens_out: int = 0
-    latency_ms: int = 0
-    ts: int = field(default_factory=lambda: int(time.time() * 1000))
-
-class TrajectoryStore:
-    """JSONL append-only, một file / session. Dòng đã ghi không bao giờ sửa."""
-    def __init__(self, root: str):
-        self.root = Path(root); self.root.mkdir(parents=True, exist_ok=True)
-
-    def append(self, e: TrajectoryEvent) -> None:
-        if not e.id:
-            e.id = f"evt_{time.time_ns():024d}"          # thay bằng ULID ở production
-        with (self.root / f"{e.session_id}.jsonl").open("a", encoding="utf-8") as f:
-            f.write(json.dumps(asdict(e), ensure_ascii=False) + "\n")
-
-    def tail(self, session_id: str, n: int = 20) -> list[TrajectoryEvent]:
-        p = self.root / f"{session_id}.jsonl"
-        lines = p.read_text(encoding="utf-8").splitlines() if p.exists() else []
-        return [TrajectoryEvent(**json.loads(l)) for l in lines[-n:]]
-```
+> 📄 **Code ví dụ:** [`examples/23-1-trajectoryevent-jsonl-append-only-python.py`](examples/23-1-trajectoryevent-jsonl-append-only-python.py)
 
 Hai bất biến giữ nguyên như bản TypeScript: **chỉ-append** (sổ cái không xóa) và
 **mỗi event mang `session_id`** (không event mồ côi — §4.3).
 
 ### 2. Cost-per-Run: Phát Hiện Run Đắt Bất Thường
 
-```python
-def cost_per_run(events: list[TrajectoryEvent]) -> dict[str, dict]:
-    """Tổng tokens / latency per run, group theo task type.
-    Run vượt p95 của task type × 3 → flag điều tra, đừng đoán."""
-    agg: dict[str, dict] = defaultdict(lambda: {"tokens": 0, "latency_ms": 0, "steps": 0})
-    for e in events:
-        a = agg[e.payload.get("task_type", "unknown")]
-        a["tokens"] += e.tokens_in + e.tokens_out
-        a["latency_ms"] += e.latency_ms; a["steps"] += 1
-    return dict(agg)
-```
+> 📄 **Code ví dụ:** [`examples/24-2-cost-per-run-phat-hien-run-at.py`](examples/24-2-cost-per-run-phat-hien-run-at.py)
 
 Vì sao metric này đáng xây đầu tiên: phân tích của Anthropic (06/2025) cho thấy
 **token usage giải thích ~80% variance hiệu năng** giữa các run agent — run chậm,

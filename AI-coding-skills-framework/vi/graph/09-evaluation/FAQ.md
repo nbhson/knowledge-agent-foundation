@@ -21,11 +21,7 @@ Nếu chỉ đo điểm câu trả lời cuối, bạn phải chỉnh mù. Chỉ
 3. Với câu hỏi nhiều bước, thêm **độ chính xác đường đi**: có bao nhiêu đường trả về đúng so với đường chuẩn.
 4. Chạy cả hai bộ chỉ số trên cùng một bộ câu hỏi đối chiếu chuẩn, tách theo từng câu chứ không gộp chung một điểm.
 
-```python
-# retrieved = [doc_1, doc_3, doc_5, doc_7, doc_9], relevant = [doc_1, doc_5, doc_10]
-P@5 = 2/5 = 0.40      R@5 = 2/3 = 0.67      MRR = 1.00  # doc_1 ở hạng 1
-paths = [["Alice","Bob","Phoenix"], ["Alice","Dave","Atlas"]]  # 1/2 đúng → 0.50
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-bot-tra-loi-sai-ma-khong-biet.py`](examples/01-q1-bot-tra-loi-sai-ma-khong-biet.py)
 
 **Kiểm tra**
 
@@ -50,14 +46,7 @@ Quy ước đã gọi cho trường hợp này là rác vào — rác ra. Đo ph
 3. Khi kiểm tra phủ, đừng so chuỗi ký tự: "Alice" và "Alice Nguyen" phải được coi là có thể cùng một người, nếu không bạn sẽ tưởng mình thiếu dữ liệu.
 4. Chạy phép so sánh độ liên thông trên đồ thị hướng bằng cách coi cạnh là không chiều.
 
-```python
-metrics = evaluate_graph_quality(G_labeled)
-# {'nodes':34,'edges':78,'density':0.139,'avg_degree':4.59,
-#  'connectivity':1.0,'isolated_rate':0.0}
-evaluate_coverage(["Alice","Bob","Phoenix","Alice Nguyen"],
-                  ["Alice","Bob","Phoenix","Atlas"])
-# precision 0.75, recall 0.75, missed:['atlas'], hallucinated:['alice nguyen']
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-graph-co-5-000-node-roi-ma.py`](examples/02-q2-graph-co-5-000-node-roi-ma.py)
 
 **Kiểm tra**
 
@@ -82,12 +71,7 @@ Có hai nhóm lỗi riêng biệt: graph bị trích sai quan hệ, và phần t
 3. Tỉ lệ bịa = 1 − điểm trung thành. Yêu cầu mô hình trả về đúng định dạng JSON.
 4. Kiểm tra thêm phần trích dẫn: mỗi đường dẫn nêu trong câu trả lời có thật trong graph không.
 
-```python
-resp = requests.post("http://localhost:11434/api/generate",
-    json={"model":"gemma3:12b","prompt":prompt,"format":"json"})
-result["hallucination_rate"] = 1.0 - result.get("faithfulness", 0)
-# claims: [{"claim":"Phoenix ngân sách 700 triệu","supported":false}, ...]
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-bot-noi-phoenix-700-trieu-trong-khi.py`](examples/03-q3-bot-noi-phoenix-700-trieu-trong-khi.py)
 
 **Kiểm tra**
 
@@ -137,12 +121,7 @@ Bài toán này không phải phân loại hai lớp (đúng/sai) nên không d�
 4. Ngưỡng tham khảu: Hits@10 > 0.5, MRR > 0.3, MR < 100, AUC > 0.8.
 5. Mẫu số liệu từ một lần chạy: Hits@1 = 0.15, Hits@10 = 0.45, MRR = 0.28, MR = 85.3 — đối chiếu đúng với kỳ vọng.
 
-```python
-sorted_indices = torch.argsort(scores)
-rank = (sorted_indices == t_true).nonzero(as_tuple=True)[0].item() + 1
-mrr += 1.0 / rank
-# {'Hits@1':0.15,'Hits@10':0.45,'MRR':0.28,'MR':85.3,'num_test':100}
-```
+> 📄 **Code ví dụ:** [`examples/04-q5-mo-hinh-du-oan-quan-he-thieu.py`](examples/04-q5-mo-hinh-du-oan-quan-he-thieu.py)
 
 **Kiểm tra**
 

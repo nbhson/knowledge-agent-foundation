@@ -1,0 +1,2 @@
+"urgency": { "type": "score",
+             "levels": ["calm","annoyed","angry","blocked"] }

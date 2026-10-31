@@ -75,12 +75,7 @@ Mỗi action loop nên ghi `acting_on: branch-or-pr-id` vào state file. Trướ
 
 **`loop-worktree` biến quy ước này thành advisory lock** thay vì chỉ trông chờ tự giác:
 
-```bash
-# Control script của loop, trước khi spawn worktree:
-npx @cobusgreyling/loop-worktree lock --paths <globs> --owner <pattern>
-# Sau khi xong:
-npx @cobusgreyling/loop-worktree unlock --owner <pattern>
-```
+> 📄 **Code ví dụ:** [`examples/01-5-collision-detection.sh`](examples/01-5-collision-detection.sh)
 
 Lệnh `loop-worktree create` không tự kiểm tra lock — cặp `lock/unlock` này đi chung với nhau theo quy ước trong control script.
 

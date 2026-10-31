@@ -58,12 +58,7 @@ A second, sneakier cause: dedup that only compares entities *within the current 
 
 1. Make the write idempotent at the database level, not in application logic.
 
-```cypher
--- Wrong: every run creates a new node
-CREATE (e:Entity {name: $name}) SET e += $props
--- Right: match-or-create, then update in place
-MERGE (e:Entity {name: $name}) SET e += $props, e.source_doc = $doc_id
-```
+> 📄 **Example code:** [`examples/01-q2-i-re-ran-yesterday-s-ingest-and.cypher`](examples/01-q2-i-re-ran-yesterday-s-ingest-and.cypher)
 
 2. Before writing, run three gates in order: **dedup** (normalize names — "NV A" and "Nguyen Van A" are one person), **validate** (reject nonsense like `Person -[WORKS_ON]-> Person`), then load.
 3. On ingest of a new document, check existence per entity: new → upsert, already present → update properties only, never insert a second copy.
@@ -91,14 +86,7 @@ A dedup pass reports 200 duplicate entity clusters: "Alice" / "Alice Nguyen" / "
 1. Pick one canonical name per cluster and treat it as the stable ID. Everything downstream — property updates, later merges, queries — should key off the canonical name, never the raw string.
 2. In Neo4j, do it in one transaction: match duplicates and the canonical node, create replacement edges with the same type and properties, then delete the old relationship.
 
-```cypher
-MATCH (dup:Entity) WHERE dup.name IN $duplicates
-MATCH (dup)-[r]->(other)
-MATCH (c:Entity {name: $canonical})
-CREATE (c)-[r2:RELATED {type: r.type}]->(other)
-SET r2 = properties(r)
-DELETE r
-```
+> 📄 **Example code:** [`examples/02-q3-we-found-200-duplicate-entities-how-do.cypher`](examples/02-q3-we-found-200-duplicate-entities-how-do.cypher)
 
 3. Also move **incoming** edges — the pattern above only shows `-[r]->`; reverse-direction edges need the mirrored query, and forgetting this is the most common merge bug.
 4. Run the merge inside a workflow stage with `checkpoint=True`, so a crash halfway through 200 clusters is recoverable instead of leaving you with a half-merged graph.
@@ -124,12 +112,7 @@ Without a checkpoint, "rollback" is a manual reconstruction job. The source meas
 
 1. Declare, per stage, three things up front: whether it is a **checkpoint** stage, what happens on error (`fail` / `skip` / `retry`), and a timeout. The engine defaults are `on_error="fail"` and `timeout_s=300`.
 
-```python
-engine.add_stage("extract",  extract_stage,  checkpoint=True)
-engine.add_stage("validate", validate_stage, on_error="fail", timeout_s=300)
-engine.add_stage("load",     load_stage,     checkpoint=True)
-# on fail → status "rolled_back" to nearest checkpoint, else "failed"
-```
+> 📄 **Example code:** [`examples/03-q4-a-batch-ingest-died-at-70-and.py`](examples/03-q4-a-batch-ingest-died-at-70-and.py)
 
 2. Log **every** stage transition to the audit log as a `GraphEvent` with `action`, `payload`, `actor`, and `prev_state`. `prev_state` is what makes rollback an operation rather than an archaeology exercise.
 3. Add retries *around* the flaky layer only: `@task(retries=3, retry_delay_seconds=10)` in Prefect, or `retry_with_backoff(max_attempts=3, backoff_factor=2.0)` locally — which waits 2s, then 4s.
@@ -159,12 +142,7 @@ A graph without history is a **snapshot**, not a system. The source proposes a t
 
 1. Stop hard-deleting edges. Set an end date instead.
 
-```python
-e = {"type": "MANAGES", "from": "Alice", "to": "TeamA",
-     "valid_from": date(2023, 1, 1), "valid_until": date(2024, 6, 30)}
-# valid_until = None means "still active"
-active = [e for e in edges if e["valid_from"] <= q <= (e["valid_until"] or date(9999, 12, 31))]
-```
+> 📄 **Example code:** [`examples/04-q5-i-deleted-the-old-edges-to-keep.py`](examples/04-q5-i-deleted-the-old-edges-to-keep.py)
 
 2. Query by date, not by assumption. Wrap "current state" and "state at date T" behind one function so callers stop asking the ambiguous question.
 3. Append events, never rewrite history. Store `actor` on each one (`user:alice`, `pipeline:etl`, `loop:daily-triage`) so you can audit *who* changed a fact, not just what changed.

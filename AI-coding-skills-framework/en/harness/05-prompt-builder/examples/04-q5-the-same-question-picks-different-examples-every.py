@@ -1,0 +1,5 @@
+cache = FewShotCache(ttl_seconds=3600)
+key = (query, k, "diversity")
+picked = cache.get(*key) or builder.select(query, k, strategy="diversity")
+cache.set(*key, picked)
+print(builder.format(picked, format_type="xml"))

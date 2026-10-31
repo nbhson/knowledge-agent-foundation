@@ -16,10 +16,7 @@
 
 **Estimate before scheduling:**
 
-```bash
-npx @cobusgreyling/loop cost --pattern <id> --cadence <interval> --level L1
-npx @cobusgreyling/loop init . --pattern <id>   # scaffolds loop-budget.md + loop-run-log.md + loop-budget skill
-```
+> 📄 **Example code:** [`examples/01-1-token-cost-budgeting.sh`](examples/01-1-token-cost-budgeting.sh)
 
 `loop-audit` scores cost observability and **caps L3** until you have a budget + run log + a LOOP.md budget section.
 
@@ -61,18 +58,7 @@ Please put this in the skill or scheduler prompt: *"If there are no high-priorit
 
 Minimum log entry (append to `loop-run-log.md` or structured JSON):
 
-```json
-{
-  "run_id": "2026-06-09T08:15:00Z",
-  "pattern": "daily-triage",
-  "duration_s": 45,
-  "items_found": 4,
-  "actions_taken": 1,
-  "escalations": 0,
-  "tokens_estimate": 52000,
-  "outcome": "success"
-}
-```
+> 📄 **Example code:** [`examples/02-2-per-run-logging.json`](examples/02-2-per-run-logging.json)
 
 Human-readable alternative in the `STATE.md` footer:
 

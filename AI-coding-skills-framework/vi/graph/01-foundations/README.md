@@ -197,34 +197,7 @@ Subject   Predicate         Object
 >
 > **Tại sao phải biết?** Vì **GNN chuẩn (GCN/GraphSAGE) mặc định giả định homophily** — distance gần nghĩa là cùng label. Trên graph heterophily, GNN tiêu chuẩn hoạt động kém và bạn cần biến thể chuyên dụng (`link prediction` module 07). Đây là 1 quyết định ít người nghĩ tới nhưng quyết định chất lượng model.
 
-```python
-# Directed: quan hệ có hướng
-# REPORTS_TO: Alice reports to Bob ≠ Bob reports to Alice
-G_directed = nx.DiGraph()
-G_directed.add_edge("Alice", "Bob", relation="REPORTS_TO")
-
-# Weighted: độ tin cậy khác nhau
-# KNOWS với confidence từ extraction
-G_weighted = nx.Graph()
-G_weighted.add_edge("Alice", "Bob", weight=0.92, source="email_123")
-
-# Temporal: quan hệ thay đổi theo thời gian
-# Alice WORKS_AT Company X từ 2020, chuyển sang Y năm 2024
-G_temporal_data = {
-    "nodes": ["Alice", "CompanyX", "CompanyY"],
-    "edges": [
-        {"from": "Alice", "to": "CompanyX", "type": "WORKS_AT", "valid": "[2020, 2024)"},
-        {"from": "Alice", "to": "CompanyY", "type": "WORKS_AT", "valid": "[2024, now)"},
-    ]
-}
-
-# Heterogeneous: nhiều loại
-# Codebase graph: File, Function, Class là node types khác nhau
-hetero_schema = {
-    "node_types": ["File", "Function", "Class", "Test"],
-    "edge_types": ["DEFINES", "CALLS", "INHERITS", "TESTED_BY"]
-}
-```
+> 📄 **Code ví dụ:** [`examples/01-2-2-khi-nao-dung-loai-nao.py`](examples/01-2-2-khi-nao-dung-loai-nao.py)
 
 ---
 
@@ -278,47 +251,7 @@ Cách 3 — Edge List (danh sách cạnh):     giống "danh sách cặp đôi"
 <details>
 <summary>Python Code — 4 Representations (Click để xem)</summary>
 
-```python
-import networkx as nx
-import numpy as np
-
-# Tạo graph mẫu
-edges = [("Alice", "Bob"), ("Bob", "Carol"), ("Alice", "Carol"), ("Carol", "Dave")]
-G = nx.Graph()
-G.add_edges_from(edges)
-
-# 1. Adjacency List (dict of sets) — phổ biến nhất
-adj_list = {n: list(G.neighbors(n)) for n in G.nodes()}
-print("Adjacency List:", adj_list)
-# {'Alice': ['Bob', 'Carol'], 'Bob': ['Alice', 'Carol'], ...}
-
-# 2. Adjacency Matrix (V x V)
-nodes = sorted(G.nodes())
-matrix = nx.adjacency_matrix(G, nodelist=nodes).todense()
-print("Adjacency Matrix:\n", matrix)
-# [[0 1 1 0]
-#  [1 0 1 0]
-#  [1 1 0 1]
-#  [0 0 1 0]]
-
-# 3. Edge List (đơn giản nhất, dễ serialize)
-edge_list = list(G.edges(data=True))
-print("Edge List:", edge_list)
-# [('Alice', 'Bob', {}), ('Bob', 'Carol', {}), ...]
-
-# 4. CSR — dùng cho large-scale / GNN
-# (scipy sparse matrix)
-from scipy.sparse import csr_matrix
-csr = csr_matrix(matrix)
-print("CSR:", csr.data, csr.indices, csr.indptr)
-
-# 5. Property Graph (Neo4j-style) — node/edge có properties
-G_prop = nx.DiGraph()
-G_prop.add_node("Alice", label="Person", age=35, role="CTO")
-G_prop.add_node("Phoenix", label="Project", budget=500000)
-G_prop.add_edge("Alice", "Phoenix", type="MANAGES", since="2024-01-01", confidence=0.95)
-print("Properties:", dict(G_prop.nodes(data=True)))
-```
+> 📄 **Code ví dụ:** [`examples/02-3-2-code-minh-hoa.py`](examples/02-3-2-code-minh-hoa.py)
 
 </details>
 
@@ -364,35 +297,7 @@ Bạn có bao nhiêu nodes?
 <details>
 <summary>Python Code — Graph Metrics với NetworkX (Click để xem)</summary>
 
-```python
-import networkx as nx
-
-G = nx.karate_club_graph()  # Graph mẫu 34 nodes
-
-# Degree
-degrees = dict(G.degree())
-print(f"Avg degree: {sum(degrees.values())/len(degrees):.1f}")
-
-# Centrality
-betweenness = nx.betweenness_centrality(G)
-pagerank = nx.pagerank(G)
-print(f"Top betweenness: {sorted(betweenness, key=betweenness.get, reverse=True)[:3]}")
-print(f"Top PageRank: {sorted(pagerank, key=pagerank.get, reverse=True)[:3]}")
-
-# Clustering
-clustering = nx.average_clustering(G)
-print(f"Average clustering: {clustering:.3f}")
-
-# Path
-print(f"Diameter: {nx.diameter(G)}")
-print(f"Avg shortest path: {nx.average_shortest_path_length(G):.2f}")
-
-# Community (modularity)
-import community as community_louvain  # python-louvain
-partition = community_louvain.best_partition(G)
-modularity = community_louvain.modularity(partition, G)
-print(f"Modularity: {modularity:.3f}, Communities: {len(set(partition.values()))}")
-```
+> 📄 **Code ví dụ:** [`examples/03-4-2-code-tinh-metrics.py`](examples/03-4-2-code-tinh-metrics.py)
 
 </details>
 
@@ -431,31 +336,11 @@ print(f"Modularity: {modularity:.3f}, Communities: {len(set(partition.values()))
 
 Ví dụ Property Graph (Cypher):
 
-```cypher
-// Tạo nodes + edges với properties
-CREATE (a:Person {name: 'Alice', role: 'CTO'})
-CREATE (b:Person {name: 'Bob', role: 'Engineer'})
-CREATE (p:Project {name: 'Phoenix', budget: 500000})
-CREATE (a)-[:MANAGES {since: '2024-01-01'}]->(b)
-CREATE (b)-[:WORKS_ON {role: 'Lead'}]->(p)
-
-// Truy vấn: ai quản lý project Phoenix?
-MATCH (person:Person)-[:MANAGES*1..2]->(proj:Project {name: 'Phoenix'})
-RETURN person.name
-```
+> 📄 **Code ví dụ:** [`examples/04-5-property-graph-vs-rdf-triple-store.cypher`](examples/04-5-property-graph-vs-rdf-triple-store.cypher)
 
 Ví dụ RDF (SPARQL):
 
-```sparql
-# Tạo triple
-# <Alice> <manages> <Bob> .
-# <Bob> <worksOn> <Phoenix> .
-# Truy vấn
-SELECT ?person WHERE {
-  ?person <manages> ?someone .
-  ?someone <worksOn> <Phoenix> .
-}
-```
+> 📄 **Code ví dụ:** [`examples/05-5-property-graph-vs-rdf-triple-store.sparql`](examples/05-5-property-graph-vs-rdf-triple-store.sparql)
 
 ---
 
@@ -463,62 +348,15 @@ SELECT ?person WHERE {
 
 ### Lab 1: Xây Graph Đầu Tiên với NetworkX
 
-```python
-import networkx as nx
-import matplotlib.pyplot as plt
-
-G = nx.DiGraph()
-G.add_node("Alice", type="Person", role="CTO")
-G.add_node("Bob", type="Person", role="Engineer")
-G.add_node("Phoenix", type="Project", budget=500000)
-G.add_edges_from([
-    ("Alice", "Bob", {"type": "MANAGES"}),
-    ("Bob", "Phoenix", {"type": "WORKS_ON"}),
-])
-
-print(f"Nodes: {list(G.nodes(data=True))}")
-print(f"Edges: {list(G.edges(data=True))}")
-print(f"Is DAG? {nx.is_directed_acyclic_graph(G)}")
-
-# Vẽ
-nx.draw(G, with_labels=True, node_color="lightblue", arrows=True)
-plt.show()
-```
+> 📄 **Code ví dụ:** [`examples/06-lab-1-xay-graph-au-tien-voi-networkx.py`](examples/06-lab-1-xay-graph-au-tien-voi-networkx.py)
 
 ### Lab 2: So Sánh Traversal Performance
 
-```python
-import time
-
-# Tạo graph lớn 10K nodes
-G_large = nx.erdos_renyi_graph(10000, 0.001)
-
-start = time.time()
-path = nx.shortest_path(G_large, source=0, target=100)
-print(f"Shortest path length: {len(path)}, time: {(time.time()-start)*1000:.1f}ms")
-
-start = time.time()
-centrality = nx.degree_centrality(G_large)
-print(f"Degree centrality time: {(time.time()-start)*1000:.1f}ms")
-```
+> 📄 **Code ví dụ:** [`examples/07-lab-2-so-sanh-traversal-performance.py`](examples/07-lab-2-so-sanh-traversal-performance.py)
 
 ### Lab 3: Tạo Codebase Graph Mini
 
-```python
-# Graph cho codebase: File → Function → Calls
-G_code = nx.DiGraph()
-G_code.add_node("main.py", type="File")
-G_code.add_node("handlePayment", type="Function", file="main.py")
-G_code.add_node("validateCard", type="Function", file="utils.py")
-G_code.add_edges_from([
-    ("main.py", "handlePayment", {"type": "DEFINES"}),
-    ("handlePayment", "validateCard", {"type": "CALLS"}),
-])
-
-# Truy vấn: hàm nào gọi validateCard?
-callers = list(G_code.predecessors("validateCard"))
-print(f"Callers of validateCard: {callers}")
-```
+> 📄 **Code ví dụ:** [`examples/08-lab-3-tao-codebase-graph-mini.py`](examples/08-lab-3-tao-codebase-graph-mini.py)
 
 ---
 

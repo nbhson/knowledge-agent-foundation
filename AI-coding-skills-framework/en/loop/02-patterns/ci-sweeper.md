@@ -85,9 +85,7 @@ Track: commit SHA, failing job, attempt count, worktree/PR link, outcome.
 
 **Cadence**: 5–15m · **Tier**: very-high · **Suggested daily cap**: 1M tokens · **Early exit required**
 
-```bash
-npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
-```
+> 📄 **Example code:** [`examples/01-cost-profile.sh`](examples/01-cost-profile.sh)
 
 > ⚠️ At a 15m cadence without early-exit, worst-case spend exceeds 5M tokens/day. Never run full action paths on every tick.
 

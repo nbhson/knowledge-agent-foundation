@@ -21,12 +21,7 @@ Nguyên tắc thứ nhất của multi-loop là **mỗi nhánh chỉ có một c
 3. **Khoá bằng cơ chế thật thay vì bằng kỷ luật**: lấy khoá với tên chủ sở hữu là tên kiểu loop, và nhả khoá sau khi xong.
 4. **Nhớ điểm yếu**: lệnh tạo worktree **không** tự kiểm tra khoá, nên hai lệnh lấy và nhả phải được đặt cạnh nhau trong một kịch bản điều khiển duy nhất.
 
-```bash
-# trước khi mở worktree:
-npx @cobusgreyling/loop-worktree lock --paths <mẫu đường dẫn> --owner <kiểu loop>
-# sau khi xong:
-npx @cobusgreyling/loop-worktree unlock --owner <kiểu loop>
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-toi-co-2-cai-loop-cung-sua.sh`](examples/01-q1-toi-co-2-cai-loop-cung-sua.sh)
 
 **Kiểm tra**
 

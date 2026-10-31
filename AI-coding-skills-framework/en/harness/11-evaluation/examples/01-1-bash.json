@@ -1,0 +1,7 @@
+{
+  "name": "bash",
+  "description": "Execute bash command in sandbox terminal",
+  "parameters": {
+    "command": { "type": "string", "description": "Command to run" }
+  }
+}

@@ -22,12 +22,7 @@ Hook chỉ chạy trên **Bash tool calls**. Các tool built-in của Claude Cod
 2. Hoặc gọi thẳng các lệnh của RTK: `rtk read`, `rtk grep`, `rtk find`.
 3. Nhớ phạm vi: RTK tối ưu tầng Immediate Context, không tối ưu các tầng context khác.
 
-```bash
-# thay vì tool Read / Grep / Glob:
-cat src/main.rs | head -40
-rg -n "TODO" src/
-rtk find "*.test.ts"
-```
+> 📄 **Code ví dụ:** [`examples/01-q4-agent-toi-oc-file-bang-tool-read.sh`](examples/01-q4-agent-toi-oc-file-bang-tool-read.sh)
 
 **Kiểm tra**
 
@@ -57,13 +52,7 @@ Tên file dạng `<số giây>_<tên lệnh>.log`. Bạn (và agent) chỉ nhậ
 1. Đọc file log được trỏ tới trong dòng thứ hai, đừng kết luận nguyên nhân chỉ từ 1 dòng tóm tắt.
 2. Chỉnh mức lưu trong `config.toml` nếu muốn:
 
-```toml
-# ~/.config/rtk/config.toml
-# macOS: ~/Library/Application Support/rtk/config.toml
-[tee]
-enabled = true      # lưu raw output khi fail (mặc định: true)
-mode = "failures"   # "failures", "always", hoặc "never"
-```
+> 📄 **Code ví dụ:** [`examples/02-q5-cargo-test-fail-ma-rtk-chi-in.toml`](examples/02-q5-cargo-test-fail-ma-rtk-chi-in.toml)
 
 3. `mode = "always"` lưu cả khi pass (repo lớn sẽ sinh nhiều file hơn); `mode = "never"` để không ghi gì.
 
@@ -120,12 +109,7 @@ Theo tài liệu, RTK **không collect source code, file paths, secrets, env var
 1. Để nguyên telemetry ở trạng thái mặc định tắt; nếu muốn chắc chắn, đọc hướng dẫn configuration trên trang rtk-ai.app.
 2. Loại những lệnh không muốn bị rewrite khỏi phạm vi nén:
 
-```toml
-# ~/.config/rtk/config.toml
-# macOS: ~/Library/Application Support/rtk/config.toml
-[hooks]
-exclude_commands = ["curl", "playwright"]
-```
+> 📄 **Code ví dụ:** [`examples/03-q7-cai-rtk-co-rui-ro-gi-khong.toml`](examples/03-q7-cai-rtk-co-rui-ro-gi-khong.toml)
 
 3. Với repo có `.env` hoặc khoá: đừng để agent `cat .env` qua RTK; hãy lọc ở tầng dự án của bạn.
 4. Cài ở phạm vi project (`rtk init --agent ...`) thay vì global nếu chỉ muốn thử trên một repo.

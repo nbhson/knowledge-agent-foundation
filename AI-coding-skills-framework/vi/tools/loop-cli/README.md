@@ -57,83 +57,56 @@ tools/loop-cli/  ← ❯ CÔNG CỤ hiện thực hóa cả hai
 
 ### 1. Front Door — `loop init / doctor / status`
 
-```bash
-# Scaffold + chẩn đoán + trạng thái (khuyên dùng: một binary cho cả ba)
-npx @cobusgreyling/loop init . --pattern daily-triage --tool grok
-npx @cobusgreyling/loop doctor .
-npx @cobusgreyling/loop status .
-
-# Tương đương cũ (forks không cần đổi)
-npx @cobusgreyling/loop-init .
-
-# Tuỳ chọn: scaffold thêm versioned harness
-npx @cobusgreyling/loop init . --with-foundry
-```
+> 📄 **Code ví dụ:** [`examples/01-1-front-door-loop-init-doctor-status.sh`](examples/01-1-front-door-loop-init-doctor-status.sh)
 
 `loop init` dựng sẵn skills + state + budget files rồi in ra **Loop Ready score** kèm lệnh loop đầu tiên để bạn chạy thử. `loop doctor` gom audit + sync + file checks thành **top-3 việc nên làm tiếp theo**. Muốn đổi tool thì chỉnh `--tool` sang `claude`, `codex` hoặc `opencode`.
 
 ### 2. `loop audit` — Loop Readiness Score
 
-```bash
-npx @cobusgreyling/loop audit . --suggest
-```
+> 📄 **Code ví dụ:** [`examples/02-2-loop-audit-loop-readiness-score.sh`](examples/02-2-loop-audit-loop-readiness-score.sh)
 
 Chấm **Loop Readiness** (L0→L3) — scaffold càng chuẩn thì điểm càng nhích dần từ ~10 lên 100. Chấm cả constraints + governance + **Harness Runtime** (v1.7). Muốn chạm **L3** thì cần có đủ `loop-budget.md`, `loop-run-log.md` và budget section trong LOOP.md.
 
 ### 3. `loop cost` — Ước Lượng Token
 
-```bash
-npx @cobusgreyling/loop cost --pattern ci-sweeper --cadence 15m --level L2
-```
+> 📄 **Code ví dụ:** [`examples/03-3-loop-cost-uoc-luong-token.sh`](examples/03-3-loop-cost-uoc-luong-token.sh)
 
 Áng chừng token sẽ tốn **trước khi bạn đặt lịch chạy** — để tuần sau khỏi giật mình nhìn bill.
 
 ### 4. `loop sync` — Phát Hiện Drift
 
-```bash
-npx @cobusgreyling/loop sync .
-```
+> 📄 **Code ví dụ:** [`examples/04-4-loop-sync-phat-hien-drift.sh`](examples/04-4-loop-sync-phat-hien-drift.sh)
 
 Soi chỗ lệch giữa `STATE.md` và `LOOP.md` — hai file này chạy một thời gian là rất dễ trôi khỏi nhau.
 
 ### 5. `loop context` — Memory + Circuit Breaker
 
-```bash
-npx @cobusgreyling/loop context --check --ledger run.json
-```
+> 📄 **Code ví dụ:** [`examples/05-5-loop-context-memory-circuit-breaker.sh`](examples/05-5-loop-context-memory-circuit-breaker.sh)
 
 Một memory manager có trạng thái kèm circuit breaker cho các run dài hơi. Hiểu đơn giản là giữ cho context khỏi phình vô hạn sau nhiều vòng lặp.
 
 ### 6. `loop worktree` — Cô Lập Thay Đổi
 
-```bash
-npx @cobusgreyling/loop-worktree create --run-id <id> --pattern <p>
-```
+> 📄 **Code ví dụ:** [`examples/06-6-loop-worktree-co-lap-thay-oi.sh`](examples/06-6-loop-worktree-co-lap-thay-oi.sh)
 
 Đứng ra quản lý các git worktree cách ly — mỗi attempt một worktree riêng, theo dõi qua manifest, xong việc (reject/escalate) thì dọn. Có kèm `lock`/`unlock` để nhiều loop khỏi giành nhau.
 
 ### 7. `loop gate` — Cưỡng Chế Cơ Học
 
-```bash
-npx @cobusgreyling/loop gate check --action auto-merge --paths <f1,f2,...>
-```
+> 📄 **Code ví dụ:** [`examples/07-7-loop-gate-cuong-che-co-hoc.sh`](examples/07-7-loop-gate-cuong-che-co-hoc.sh)
 
 Bắt buộc **bằng cơ chế** path denylist + auto-merge allowlist đọc từ `gate.yaml`. Exit `2` là escalate, `0` là cho đi tiếp — cùng convention với `loop-context --check` nên bạn chain chúng lại được.
 
 ### 8. `loop sandbox` & `loop swarm` — Cô Lập + Consensus
 
-```bash
-npx @cobusgreyling/loop-sandbox run -- <cmd>   # Ephemeral worktree isolation + patch capture
-```
+> 📄 **Code ví dụ:** [`examples/08-8-loop-sandbox-loop-swarm-co-lap-consensus.sh`](examples/08-8-loop-sandbox-loop-swarm-co-lap-consensus.sh)
 
 - **loop-sandbox**: bắt changes thành reviewable patch files trước khi apply.
 - **loop-swarm**: multi-agent consensus — yêu cầu **byte-identical patch consensus** giữa các runs.
 
 ### 9. Loop MCP Server
 
-```bash
-npx @cobusgreyling/loop-mcp-server
-```
+> 📄 **Code ví dụ:** [`examples/09-9-loop-mcp-server.sh`](examples/09-9-loop-mcp-server.sh)
 
 Patterns/skills/state/budget/safety docs như MCP resources — giảm prompt stuffing. Reference config: `examples/mcp/loop-engineering.mcp.json`.
 
@@ -184,16 +157,7 @@ Bước 5: Thêm loop gate check vào CI để cưỡng chế cơ học
 
 ### 2. Multi-Loop Coordination
 
-```bash
-# Developer A chạy loop trong worktree riêng
-loop-worktree create --run-id fix-123 --pattern post-merge-cleanup
-
-# Developer B chạy loop khác — lock tránh conflict
-loop-worktree lock --scope refs/heads/main
-
-# Cả hai kết thúc → gate check trước khi auto-merge
-loop gate check --action auto-merge --paths src/,tests/
-```
+> 📄 **Code ví dụ:** [`examples/10-2-multi-loop-coordination.sh`](examples/10-2-multi-loop-coordination.sh)
 
 ## Multi-Agent Loops Hiện Đại (2025) — Bối Cảnh
 

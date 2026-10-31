@@ -1,0 +1,4 @@
+steps:
+  - run: promptfoo eval --share
+  - run: promptfoo regression-check
+  # fail CI nếu accuracy giảm > 5%

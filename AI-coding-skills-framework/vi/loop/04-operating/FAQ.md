@@ -22,10 +22,7 @@ Chi phí nhân theo tích của ba thứ: số lần chạy, số sub-agent mỗ
 4. **Quét nhẹ, làm mới khi có việc**: danh sách rỗng thì thoát sớm dưới 5.000 token.
 5. **Khai sinh sẵn** file ngân sách, file log chạy và skill kiểm tra chi phí.
 
-```bash
-npx @cobusgreyling/loop cost --pattern <id> --cadence <nhịp> --level L1
-npx @cobusgreyling/loop init . --pattern <id>
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-bat-loop-chay-moi-5-phut-mot.sh`](examples/01-q1-bat-loop-chay-moi-5-phut-mot.sh)
 
 | Kiểu loop | Nhịp | Số lần chạy/ngày | Token ước tính |
 |---|---|---|---|
@@ -56,13 +53,7 @@ File log là **hộp đen** của loop: mỗi lần chạy ghi một dòng trả
 3. **Ghi thêm mẫu ngắn cho người đọc** ở cuối file trạng thái, phòng khi không mở được bản ghi có cấu trúc.
 4. **Chỉ thêm, không sửa** — kể cả khi lần chạy đó thất bại.
 
-```json
-{
-  "run_id": "2026-06-09T08:15:00Z", "pattern": "daily-triage",
-  "duration_s": 45, "items_found": 4, "actions_taken": 1,
-  "escalations": 0, "tokens_estimate": 52000, "outcome": "success"
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-tuan-sau-muon-hoi-sao-hom-thu.json`](examples/02-q2-tuan-sau-muon-hoi-sao-hom-thu.json)
 
 **Kiểm tra**
 

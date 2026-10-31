@@ -1,0 +1,8 @@
+# Create triples
+# <Alice> <manages> <Bob> .
+# <Bob> <worksOn> <Phoenix> .
+# Query
+SELECT ?person WHERE {
+  ?person <manages> ?someone .
+  ?someone <worksOn> <Phoenix> .
+}

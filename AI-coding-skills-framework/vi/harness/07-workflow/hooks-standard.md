@@ -23,33 +23,12 @@ kiểm tra JSON bằng `jq . NAME.json` và cấp quyền chạy `chmod +x scrip
 
 Khung chuẩn:
 
-```json
-{
-  "version": 1,
-  "hooks": {
-    "sessionStart": [],
-    "sessionEnd": [],
-    "userPromptSubmitted": [],
-    "preToolUse": [],
-    "postToolUse": [],
-    "errorOccurred": []
-  }
-}
-```
+> 📄 **Code ví dụ:** [`examples/01-viet-hook-the-nao.json`](examples/01-viet-hook-the-nao.json)
 
 Mỗi hook là một lệnh cụ thể. Nhớ ghi **cả hai** `bash` (cho Linux/macOS)
 và `powershell` (cho Windows) để máy nào cũng chạy được:
 
-```json
-{
-  "type": "command",
-  "bash": "./scripts/log-prompt.sh",
-  "powershell": "./scripts/log-prompt.ps1",
-  "cwd": "scripts",
-  "env": { "LOG_LEVEL": "INFO" },
-  "timeoutSec": 10
-}
-```
+> 📄 **Code ví dụ:** [`examples/02-viet-hook-the-nao.json`](examples/02-viet-hook-the-nao.json)
 
 Ngoài chạy script local, hook còn có thể POST JSON tới một URL (HTTP hooks).
 
@@ -73,9 +52,7 @@ Ngoài chạy script local, hook còn có thể POST JSON tới một URL (HTTP 
 
 Giả lập một lần gọi tool rồi pipe vào script, xem nó trả về JSON có đúng không:
 
-```bash
-echo '{"timestamp":1704614400000,"cwd":"/tmp","toolName":"bash","toolArgs":"{\"command\":\"ls\"}"}' | ./my-hook.sh
-```
+> 📄 **Code ví dụ:** [`examples/03-tu-test-o-may-minh-truoc.sh`](examples/03-tu-test-o-may-minh-truoc.sh)
 
 Ba lỗi hay gặp: file không nằm trong `.github/hooks/`, thiếu `"version": 1`,
 script chưa `chmod +x`. Với cửa phê duyệt thì nhớ nguyên tắc

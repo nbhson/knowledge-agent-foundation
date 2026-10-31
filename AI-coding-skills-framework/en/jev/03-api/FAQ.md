@@ -22,14 +22,7 @@ You paste a full ticket thread plus a 40-page runbook into `state`, and the call
 4. Keep framing (tone, persona, "use only the ticket text") in `instructions` or `criteria`, never in the question text — it eats the budget without adding signal.
 5. Remember the other boundary: text only. Jev cannot open attachments or read files, so anything from a file must be inlined by you.
 
-```bash
-python - <<'PY'
-import os, json
-state = build_state()          # your trimming code
-assert len(state) < 30_000     # characters ≈ tokens, rough guard
-body = {"model": "jev-latest", "state": state, "questions": q}
-PY
-```
+> 📄 **Example code:** [`examples/01-q1-my-long-ticket-dump-blows-up-with.sh`](examples/01-q1-my-long-ticket-dump-blows-up-with.sh)
 
 **Verify**
 
@@ -84,16 +77,7 @@ With `TypeSafeModel`, each field of `output_type` becomes **one question**, and 
 3. Nested models become namespaced questions (`outer.inner`); a `list[Item]` field fans out one question per element.
 4. Move the global context into the class docstring or the agent's `instructions`.
 
-```python
-class Triage(BaseModel):
-    """Framing: answer as the support triage desk; evidence is the ticket only."""
-    team: Literal["billing", "infra", "bug"] = Field(
-        description="Which team should own this ticket?"
-    )
-    risky: bool = Field(
-        description="Does this change remove a safety guardrail?"
-    )
-```
+> 📄 **Example code:** [`examples/02-q3-my-pydantic-ai-agent-raises-usererror-on.py`](examples/02-q3-my-pydantic-ai-agent-raises-usererror-on.py)
 
 **Verify**
 
@@ -148,13 +132,7 @@ Nothing forces you to split. A request is `state` + a named `questions` map, and
 3. Read each answer at its own path: `answers.team.choice.selected`, `answers.refund_requested.noul.p_yes`, `answers.urgency.score.score`.
 4. Threshold the Score on its **continuous** value — 2.71 sits between levels 2 and 3; do not round it into a level and lose the signal.
 
-```json
-{"model": "jev-latest", "state": "Ticket #4821: charged twice, wants $49 back...",
- "questions": {
-   "team":   {"type": "choice", "options": ["billing","infra","bug"], "question": "Which team owns this?"},
-   "refund": {"type": "noul", "question": "Does the customer ask for money back?", "criteria": "Yes only if a refund or reversal is requested."},
-   "urgency":{"type": "score", "levels": [{"level":1,"description":"routine"},{"level":2,"description":"soon"},{"level":3,"description":"critical"}], "question": "How urgent?"}}}
-```
+> 📄 **Example code:** [`examples/03-q5-i-make-three-jev-calls-in-a.json`](examples/03-q5-i-make-three-jev-calls-in-a.json)
 
 **Verify**
 

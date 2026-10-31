@@ -27,12 +27,7 @@ Worse, on "research the README and check the tests", only the first half runs. `
 3. Treat `confidence < 0.4` as "ask the user", not "guess".
 4. Log every intent the pipeline *did not* execute, so dropped steps are visible.
 
-```python
-import re
-def hits(kw, text):
-    return re.search(rf"\b{re.escape(kw)}\b", text) is not None
-scores[intent] = sum(1 for kw in config["keywords"] if hits(kw, query_lower))
-```
+> 📄 **Example code:** [`examples/01-q1-the-agent-used-a-code-tool-on.py`](examples/01-q1-the-agent-used-a-code-tool-on.py)
 
 **Verify**
 
@@ -58,11 +53,7 @@ Two separate holes. First, in `ToolExecutor.execute()` the permission check is g
 4. Refuse to widen: if a runtime write or egress host is outside the declaration, deny and emit `capability-escalation` instead of allowing it silently.
 5. Keep the sandbox deadline `≥` `timeout_seconds`, so the outer deadline never fires before the tool reports.
 
-```python
-role = self.user_roles.get(user_id, "guest")   # never skip the check
-allowed = required_permission in set(
-    self.ROLE_PERMISSIONS.get(role, ["public"]) + custom_perms)
-```
+> 📄 **Example code:** [`examples/02-q2-the-agent-ran-a-destructive-tool-even.py`](examples/02-q2-the-agent-ran-a-destructive-tool-even.py)
 
 **Verify**
 
@@ -87,13 +78,7 @@ Every single turn re-runs `tools/list`, so a five-step task pays the discovery c
 3. Schema-validate arguments before sending; reject anything over 32KB.
 4. Forward streaming `content` chunks, with a 10s idle timeout and an abort on client cancel.
 
-```typescript
-const key = `${tool}:${JSON.stringify(args)}`;
-const hit = memo.get(key);
-if (hit && Date.now() - hit.at < 60_000) return { ...hit.val, memoHit: true };
-// after the call:
-if (JSON.stringify(j).length > 128_000) text += "\n…[truncated: result cap 128k]";
-```
+> 📄 **Example code:** [`examples/03-q3-mcp-calls-are-slow-and-one-giant.ts`](examples/03-q3-mcp-calls-are-slow-and-one-giant.ts)
 
 **Verify**
 
@@ -119,13 +104,7 @@ The final answer is `Failed after 3 attempts: Timeout after 30s`, and the log ha
 4. Put the actionable part in the message: tool name, attempt count, elapsed time.
 5. Only retry what is actually retryable — a validation error or a permission denial will never succeed.
 
-```python
-for attempt in range(tool.max_retries):
-    limiter.check(tool_name)                 # every attempt counts
-    log_entry["attempt"] = attempt + 1
-    # wrap the call in a real deadline, then sleep before the next try
-    time.sleep(min(0.5 * (2 ** attempt), 5.0))
-```
+> 📄 **Example code:** [`examples/04-q4-a-tool-failed-three-times-and-i.py`](examples/04-q4-a-tool-failed-three-times-and-i.py)
 
 **Verify**
 
@@ -151,12 +130,7 @@ Two ranking formulas disagree. `ToolRegistry.search()` sorts by `success_rate / 
 4. Keep the description precise — the model also reads it, and vague descriptions cause guessing.
 5. Trim the exposed list per context (like Cursor in §11.3) instead of shipping all 50 every turn.
 
-```python
-if score["total_count"] < 5:
-    final_score = 0.1                       # unknown, not competitive
-else:
-    final_score = success_rate * (1 - min(score["avg_latency"] / 1000, 1))
-```
+> 📄 **Example code:** [`examples/05-q5-with-50-tools-registered-the-agent-keeps.py`](examples/05-q5-with-50-tools-registered-the-agent-keeps.py)
 
 **Verify**
 
@@ -186,15 +160,7 @@ Standard tool calling needs one interaction per step, and the whole conversation
 4. Ship the complete `@types/dsh` definitions in the system prompt so generated code compiles.
 5. Keep standard tool calling for interactive questions where the next step depends on the user's reply.
 
-```typescript
-const files = await tools.findFiles('src/**/*.ts');
-for (const file of files) {
-  const content = await tools.readFile(file);
-  if (content.includes('legacyFetch')) {
-    await tools.writeFile(file, content.replace(/legacyFetch/g, 'modernFetch'));
-  }
-}
-```
+> 📄 **Example code:** [`examples/06-q1-my-five-step-refactor-takes-10-15.ts`](examples/06-q1-my-five-step-refactor-takes-10-15.ts)
 
 **Verify**
 
@@ -220,11 +186,7 @@ Code Mode is a **bundler, not a security boundary**. It collapses N individual t
 4. Pause and ask for dangerous operations; do not treat a timeout as a denial, since that is `15`'s decision.
 5. Put **every individual tool call inside the program** through the approval gate.
 
-```typescript
-const wrapped = `(async () => { ${code} })();`;
-const script = new vm.Script(wrapped);
-await script.runInContext(vm.createContext(sandboxContext), { timeout: timeoutMs });
-```
+> 📄 **Example code:** [`examples/07-q2-is-it-safe-to-let-the-model.ts`](examples/07-q2-is-it-safe-to-let-the-model.ts)
 
 **Verify**
 

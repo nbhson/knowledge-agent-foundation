@@ -1,0 +1,3 @@
+# ~/.config/rtk/config.toml
+[hooks]
+exclude_commands = ["git diff", "curl", "playwright", "terraform plan"]

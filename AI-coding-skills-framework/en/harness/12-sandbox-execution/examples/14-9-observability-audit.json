@@ -1,0 +1,10 @@
+{
+  "kind": "tool_call", "parentTaskId": "tsk_8f2", "sessionId": "ses_44a",
+  "payload": {
+    "sandbox": { "runtime": "runsc", "tier": "write", "image": "sha256:9f2c…",
+                 "allowWrite": ["src/", "tests/fixtures/"], "allowNet": [] },
+    "argv": ["sh", "-c", "npm test"], "argvHash": "a3f9c1",
+    "policyHash": "7d21e0", "durationMs": 8421, "exitCode": 1,
+    "stdoutBytes": 18234, "truncated": false, "redactions": 2
+  }
+}

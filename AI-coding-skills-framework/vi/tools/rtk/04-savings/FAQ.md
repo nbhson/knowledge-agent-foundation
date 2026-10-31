@@ -34,11 +34,7 @@ Chuỗi tính tiền đi thế này: output của lệnh bash bị cắt 82% ở
 4. Muốn con số gần với thực tế hơn, hãy đo cả hai đầu: so sánh hoá đơn tháng có và không có RTK.
 5. Khi báo cáo nội bộ, ghi rõ "giảm output 82%" chứ đừng ghi "giảm token 82%".
 
-```bash
-rtk gain              # tổng quan
-rtk gain --graph      # biểu đồ ASCII 30 ngày gần nhất
-rtk gain --daily      # phân tích theo ngày
-```
+> 📄 **Code ví dụ:** [`examples/01-q13-rtk-gain-bao-giam-82-vay-toi.sh`](examples/01-q13-rtk-gain-bao-giam-82-vay-toi.sh)
 
 **Kiểm tra**
 
@@ -77,11 +73,7 @@ Một lý do phụ cũng thường gặp: một số project có cấu hình ri�
 4. Dùng `rtk session` để xem mức độ áp dụng RTK qua các phiên gần đây — nếu tỉ lệ thấp, vấn đề nằm ở agent chưa dùng hook.
 5. Nếu lệnh vẫn 0% sau khi thêm bộ lọc, kiểm tra lại phần cấu hình riêng cho project của bạn.
 
-```bash
-rtk discover
-rtk discover --all --since 7
-rtk session
-```
+> 📄 **Code ví dụ:** [`examples/02-q14-rtk-discover-noi-co-lenh-0-reduction.sh`](examples/02-q14-rtk-discover-noi-co-lenh-0-reduction.sh)
 
 **Kiểm tra**
 
@@ -109,11 +101,7 @@ Vì đây là đúng vai trò của RTK trong bộ đánh giá của harness: bi
 4. Dùng `rtk gain --daily` khi cần xem ngày nào lệch chuẩn — thường là ngày bạn mới chạy lệnh nặng chưa có bộ lọc.
 5. Chạy `rtk gain` định kỳ (mỗi ngày hoặc mỗi tuần) giống nguyên tắc đo lường liên tục.
 
-```bash
-rtk gain --all --format json > rtk-gain.json
-rtk gain --graph
-rtk gain --history
-```
+> 📄 **Code ví dụ:** [`examples/03-q15-toi-muon-ua-so-lieu-tiet-kiem.sh`](examples/03-q15-toi-muon-ua-so-lieu-tiet-kiem.sh)
 
 **Kiểm tra**
 

@@ -29,15 +29,7 @@ One LLM call over a long text behaves like a tired reader: it keeps the first pa
 4. Force `"format": "json"` and handle a parse failure as "no new entities" rather than crashing.
 5. Add regex for the fixed shapes an LLM always misses (contract codes, invoice numbers).
 
-```python
-for glean_round in range(max_gleanings + 1):          # max_gleanings = 2
-    new = call_llm(text, already_extracted=", ".join(already))
-    added = sum(1 for e in new if e["name"].lower() not in already)
-    already |= {e["name"].lower() for e in new}
-    print(f"Gleaning round {glean_round}: +{added} entities")
-    if added == 0:
-        break                                        # nothing left to find
-```
+> 📄 **Example code:** [`examples/01-q1-the-llm-misses-most-entities-in-long.py`](examples/01-q1-the-llm-misses-most-entities-in-long.py)
 
 **Verify**
 
@@ -63,15 +55,7 @@ Extraction runs per chunk, so the same human arrives spelled three ways. Dedup i
 4. After remapping, drop relations where source equals target — that is exactly the self-loop the merge created.
 5. Set the threshold high (0.85) and keep the mapping so a bad merge can be split back. Merging too eagerly fuses the HR Alice with the CTO Alice, and that error is invisible.
 
-```python
-for canon_ent, canon_emb in canonical:
-    if ent["type"] != canon_ent["type"]:
-        continue                                    # never cross types
-    sim = cosine_sim(embed(ent["name"]), canon_emb)
-    if sim >= 0.85:
-        mapping[ent["name"]] = canon_ent["name"]     # canonical is the first one
-relations = [r for r in remap_relations(relations, mapping) if r["source"] != r["target"]]
-```
+> 📄 **Example code:** [`examples/02-q2-i-have-three-separate-alice-nodes-and.py`](examples/02-q2-i-have-three-separate-alice-nodes-and.py)
 
 **Verify**
 
@@ -97,15 +81,7 @@ Open (schema-free) extraction lets the model invent its own vocabulary, and ever
 4. Adopt the hybrid route: core schema + validation, and anything unknown goes to a **pending** queue for periodic human review instead of being dropped or accepted blindly.
 5. Gate on confidence: the ontology constraint `APPROVES.confidence >= 0.7` and the same `0.7` cutoff in `filter_by_confidence`. Store the number on every edge so you can re-tune later without re-extracting.
 
-```python
-def validate_edge(self, edge_type, from_label, to_label):
-    rule = self.edge_types[edge_type]
-    if rule["from"] != from_label or rule["to"] != to_label:
-        return False, f"Edge {edge_type} requires {rule['from']} -> {rule['to']}"
-    if from_label == to_label and edge_type == "MANAGES":
-        return False, "Cannot manage self"
-    return True, "OK"
-```
+> 📄 **Example code:** [`examples/03-q3-my-graph-is-a-hairball-and-the.py`](examples/03-q3-my-graph-is-a-hairball-and-the.py)
 
 **Verify**
 
@@ -131,13 +107,7 @@ Entities plus relations store **structure**, not **assertions**. Microsoft's Gra
 4. Change the answering rule: cite a claim as the evidence instead of restating a fact. This is what enables "which regulation / which evidence says X?"
 5. Never let a claim lose its source chunk during dedup or merge — carry the id along with the canonical entity.
 
-```python
-def attach_claims(chunks):
-    for chunk in chunks:
-        for c in extract_claims(chunk["text"]):
-            c["source_chunk_id"] = chunk["id"]   # provenance, set once
-    return chunks
-```
+> 📄 **Example code:** [`examples/04-q4-the-graph-asserts-something-and-i-cannot.py`](examples/04-q4-the-graph-asserts-something-and-i-cannot.py)
 
 **Verify**
 
@@ -170,12 +140,7 @@ The batch pipeline in §6 is one-way: text → extract → merge, with no idempo
 4. Tag provenance on create with `ON CREATE SET s.source_chunk = $chunk`, and also `SET r.source_chunk = $chunk` on the relation.
 5. Pick the engine by scale: batch for large volume, agentic for small graphs where accuracy and self-adjusting schemas matter more than unit cost.
 
-```python
-MERGE (n:Person {name: $name})
-SET n.role = $role, n.updated_at = datetime()
-# removals keep history instead of vanishing:
-SET n.deleted = true, n.deleted_at = datetime()
-```
+> 📄 **Example code:** [`examples/05-q5-one-new-contract-arrives-do-i-rebuild.py`](examples/05-q5-one-new-contract-arrives-do-i-rebuild.py)
 
 **Verify**
 

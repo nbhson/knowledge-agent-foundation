@@ -18,12 +18,7 @@ Jev cannot generate language. It is a decision layer: state goes in, a bounded t
 
 Split the work before you call anything. Ask Jev *always* for classify / route / gate / verify, because those questions cost almost nothing in time. Ask the LLM only when text is required. Let ordinary code execute the decision — it is deterministic, free, and auditable.
 
-```python
-if task_needs_text(task):                 # "draft", "summarize", "explain"
-    return call_llm(task)                 # only the LLM produces language
-verdict = jev.ask(state, questions=q)     # typed, 70-500 ms
-return code_acts(verdict)                 # code executes, never Jev
-```
+> 📄 **Example code:** [`examples/01-q1-i-asked-jev-to-write-a-reply.py`](examples/01-q1-i-asked-jev-to-write-a-reply.py)
 
 Use the rule of thumb from §5: if a branch condition is about *meaning* ("is this error transient?"), it is a Jev question; if it is about *values* (`status == 500`), it is code.
 
@@ -50,14 +45,7 @@ State is the material; questions belong in Jev's `questions` field. A question p
 3. Use `choice` for a bounded set of options, `noul` (a yes/no question) for a gate, `score` for ranking candidates.
 4. Trim `state` to what the decision needs. Piling everything in degrades accuracy and pushes personal data into logs (anti-pattern #8).
 
-```python
-payload = {
-  "model": "jev-latest",
-  "state": {"task": task, "repo_context": ctx},
-  "questions": {"difficulty": {"type": "choice",
-                "options": ["trivial", "moderate", "hard"]}},
-}
-```
+> 📄 **Example code:** [`examples/02-q2-i-put-my-routing-question-inside-the.py`](examples/02-q2-i-put-my-routing-question-inside-the.py)
 
 **Verify**
 
@@ -82,11 +70,7 @@ Confidence is clarity, not correctness (§7, anti-pattern #3). A model can be co
 3. Build a small labelled evaluation set before production and measure the error rate of the branch you actually rely on.
 4. Cap retries and escalate; Jev is the verifier's instrument, not a replacement for the loop's attempt cap (§6.2).
 
-```python
-jev_model = TypeSafeModel("jev-latest")       # threshold default 0.6 — retune it
-llm_model = FallbackModel("gpt-class", "claude-class")
-agent = Agent(FallbackModel(jev_model, llm_model))   # fallback always present
-```
+> 📄 **Example code:** [`examples/03-q3-jev-answered-with-confidence-0-99-and.py`](examples/03-q3-jev-answered-with-confidence-0-99-and.py)
 
 **Verify**
 
@@ -113,13 +97,7 @@ The LLM proposes; something else must permit. Approval policy is not a predictio
 5. Log `request_id`, `p_yes`, threshold, and model version. Never log the raw state.
 6. Existing frameworks already have the hook: LangChain's `AutoModeMiddleware`, or Pydantic AI's `typesafe_tool_call_threshold`.
 
-```python
-p_yes = jev_noul(state, "does the user authorize this?")   # typed yes/no
-if p_yes >= 0.80:
-    execute(tool, args)
-else:
-    return {"allow": False, "next": "request_approval"}
-```
+> 📄 **Example code:** [`examples/04-q4-the-agent-deleted-files-and-charged-an.py`](examples/04-q4-the-agent-deleted-files-and-charged-an.py)
 
 **Verify**
 
@@ -144,12 +122,7 @@ Model routing treats difficulty as a `choice` question with three options: trivi
 3. If confidence is below **0.70**, do not gamble on the cheap model — escalate to the capable one.
 4. Store the full distribution in agent state. The probabilities are the audit signal that tells you how sure the router was.
 
-```python
-pick, info = route_model(task, agent_state)   # Jev difficulty question
-if info["confidence"] < 0.70:                  # unsure → do not gamble cheap
-    return "capable-model", info
-return MODELS[pick], info                      # trivial→fast, hard→capable
-```
+> 📄 **Example code:** [`examples/05-q5-we-pay-frontier-model-prices-to-summarize.py`](examples/05-q5-we-pay-frontier-model-prices-to-summarize.py)
 
 **Verify**
 

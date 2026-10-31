@@ -68,14 +68,10 @@ Fields the loop **must** update every run:
 ## Tool-Specific Notes
 
 **Grok Build TUI**:
-```bash
-/loop 1d Run the loop-triage skill. Append high-priority items to STATE.md. For obvious small bugfixes only: worktree + minimal-fix + verifier sub-agent (maker/checker). Flag ambiguous items for human review.
-```
+> 📄 **Example code:** [`examples/01-tool-specific-notes.sh`](examples/01-tool-specific-notes.sh)
 
 **Claude Code**:
-```bash
-/loop 1d Run $loop-triage and update STATE.md. Do not auto-fix in the first week — report only.
-```
+> 📄 **Example code:** [`examples/02-tool-specific-notes.sh`](examples/02-tool-specific-notes.sh)
 
 **Codex**:
 - Automations tab: daily prompt calling `$loop-triage`, output into the Triage inbox + `STATE.md`.
@@ -103,9 +99,7 @@ Fields the loop **must** update every run:
 
 **Cadence**: 1d–2h · **Tier**: low · **Suggested daily cap**: 100k tokens
 
-```bash
-npx @cobusgreyling/loop cost --pattern daily-triage --cadence 1d --level L1
-```
+> 📄 **Example code:** [`examples/03-cost-profile.sh`](examples/03-cost-profile.sh)
 
 ## Success Metrics
 

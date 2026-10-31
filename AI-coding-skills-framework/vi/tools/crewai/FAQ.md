@@ -48,15 +48,7 @@ Bạn có ba agent và ba nhiệm vụ. Chạy `sequential` thì thứ tự cố
 1. Bắt đầu bằng `sequential`: nhanh nhất để thấy khung chạy đúng không.
 2. Cần quay lại sửa thì chuyển `hierarchical`, khai báo thêm manager.
 
-```python
-harness = Crew(
-    agents=[executor, reviewer],
-    tasks=[execute_task, review_task],
-    process=Process.hierarchical,
-    manager_agent=manager,   # đóng vai harness orchestrator
-    manager_llm=llm,
-)
-```
+> 📄 **Code ví dụ:** [`examples/01-q2-process-sequential-voi-process-hierarchical-khac-nhau.py`](examples/01-q2-process-sequential-voi-process-hierarchical-khac-nhau.py)
 
 3. Nhớ đời thường: manager cũng tốn token và cũng có thể giao sai. Chỉ thêm manager khi bạn thật sự cần quyết định động, không phải vì nghe hay.
 4. Ghi lại thứ tự thực thi mỗi lần chạy để thấy luồng có đúng không.
@@ -105,13 +97,7 @@ CrewAI đặt cờ `human_input` trên từng `Task`, nên quyền hỏi gắn t
 1. Chỉ gắn `human_input=True` cho nhiệm vụ có tác dụng thật ra ngoài: phát hành, ghi vào production, gửi thông báo cho khách.
 2. Các nhiệm vụ còn lại để mặc định, đừng gắn — mỗi lần dừng là một vòng đợi.
 
-```python
-task = Task(
-    description="Deploy to production",
-    expected_output="Deployment confirmation",
-    human_input=True,  # dừng lại chờ xác nhận
-)
-```
+> 📄 **Code ví dụ:** [`examples/02-q4-cho-toi-duyet-o-ung-cho-nhay.py`](examples/02-q4-cho-toi-duyet-o-ung-cho-nhay.py)
 
 3. Viết `expected_output` cho nhiệm vụ này là bằng chứng (mã phiên bản, thời điểm), để sau khi duyệt bạn có thứ để tra lại.
 4. Cấu hình danh sách thao tác tự động duyệt (`autoApprove`) ở lớp MCP phải để rỗng cho tới khi bạn đã thấy đúng những gì mình định cho phép.

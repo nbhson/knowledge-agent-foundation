@@ -78,42 +78,11 @@ New embedding models (2026): OpenAI text-embedding-3-large, BGE-M3 (flag_embeddi
 
 ### Chroma — Quick Start (Local)
 
-```python
-import chromadb
-
-client = chromadb.PersistentClient(path="./memory")   # harness/03 memory store
-collection = client.get_or_create_collection("project_memory")
-
-# Save memory (upsert — harness/03)
-collection.upsert(
-    ids=["doc-1"],
-    documents=["Health insurance for workers: 4.5% contribution rate from 2026"],
-    metadatas=[{"topic": "insurance", "tier": "warm"}]   # Tier 2 Warm Memory
-)
-
-# Retrieve (harness/01) — semantic search
-results = collection.query(
-    query_texts=["worker insurance benefits"],
-    n_results=3  # top-k → harness/02 build context
-)
-```
+> 📄 **Example code:** [`examples/01-chroma-quick-start-local.py`](examples/01-chroma-quick-start-local.py)
 
 ### Vector DB in the Tool Registry (harness/06)
 
-```python
-registry.register(ToolDefinition(
-    name="vector_search",
-    description="Semantic search in the vector database",
-    parameters={
-        "query": {"type": "string", "required": True},
-        "top_k": {"type": "integer", "default": 5},
-        "collection": {"type": "string"},
-        "filters": {"type": "object"},
-    },
-    category="search",
-    tags=["semantic", "vector", "embedding"],
-))
-```
+> 📄 **Example code:** [`examples/02-vector-db-in-the-tool-registry-harness-06.py`](examples/02-vector-db-in-the-tool-registry-harness-06.py)
 
 ## Learning Roadmap (Directory Structure)
 

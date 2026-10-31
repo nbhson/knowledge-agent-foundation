@@ -77,9 +77,7 @@ Fields: PR ID, branch, CI status, review count, time stale, last action, worktre
 
 **Cadence**: 5–15m · **Tier**: high · **Suggested daily cap**: 2M tokens · **Early exit required**
 
-```bash
-npx @cobusgreyling/loop cost --pattern pr-babysitter --cadence 10m --level L1
-```
+> 📄 **Code ví dụ:** [`examples/01-cost-profile.sh`](examples/01-cost-profile.sh)
 
 ## Success Metrics
 

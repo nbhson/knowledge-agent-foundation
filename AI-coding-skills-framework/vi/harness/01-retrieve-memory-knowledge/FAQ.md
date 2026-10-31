@@ -32,13 +32,7 @@ Cũng vì vậy nhiều đội không nâng cấp model: chi phí một câu h�
 4. **Dán 5 đoạn đó vào prompt** kèm câu lệnh bắt buộc chỉ trả lời dựa trên tài liệu được
    đưa, không dùng kiến thức ngoài.
 
-```python
-embedder = Embedder(model="nomic-embed-text")
-embedder.embed_batch(chunks, batch_size=32)   # ngoài đường chạy
-qv = embedder.embed_query("mức đóng BHYT hiện tại")  # = embed("query: ...")
-hits = vector_store.search(qv, top_k=50)
-best = reranker.rerank(query, hits, top_k=5)
-```
+> 📄 **Code ví dụ:** [`examples/01-q1-bot-cua-toi-tra-loi-sai-luat.py`](examples/01-q1-bot-cua-toi-tra-loi-sai-luat.py)
 
 **Kiểm tra**
 
@@ -73,14 +67,7 @@ tốt hơn cái nào.
    `0,0164 + 0,0159 + 0,0164 = 0,0487`, vượt `doc_F` chỉ xuất hiện một lần.
 4. Sau khi hợp nhất, chấm lại bằng bộ chấm chéo rồi mới lấy 5 đoạn cuối.
 
-```python
-def reciprocal_rank_fusion(rankings, k=60):
-    scores = {}
-    for lst in rankings:
-        for rank, doc_id in enumerate(lst, start=1):
-            scores[doc_id] = scores.get(doc_id, 0) + 1 / (k + rank)
-    return sorted(scores, key=lambda d: scores[d], reverse=True)
-```
+> 📄 **Code ví dụ:** [`examples/02-q2-toi-go-ma-loi-vao-ma-search.py`](examples/02-q2-toi-go-ma-loi-vao-ma-search.py)
 
 **Kiểm tra**
 
@@ -120,14 +107,7 @@ Cắt nhỏ quá thì mất ngữ cảnh, cắt lớn quá thì kho phình và n
 3. Muốn dễ hơn thì dùng bộ tách lùi đệ quy với thứ tự ưu tiên: `\n\n` → `\n` → `. ` → ` `.
 4. Ghim `start_char` / `end_char` của mỗi đoạn vào metadata để sau này trả về đúng trang.
 
-```python
-def recursive_split(text, chunk_size=500, separators=["\n\n", "\n", ". ", " "]):
-    if len(text) <= chunk_size: return [text]
-    for sep in separators:
-        if sep in text:
-            return [p.strip() for p in text.split(sep) if p.strip()]
-    return [text]
-```
+> 📄 **Code ví dụ:** [`examples/03-q3-cat-tai-lieu-dai-thanh-oan-con.py`](examples/03-q3-cat-tai-lieu-dai-thanh-oan-con.py)
 
 **Kiểm tra**
 
@@ -165,13 +145,7 @@ một chỗ (hỏng hẳn cách xếp hạng nhưng không báo lỗi), cứ ch�
 5. Ghi log mỗi câu hỏi: số kết quả, điểm cao nhất, thời gian, phiên bản sinh vector, có
    dùng đường dự phòng hay không.
 
-```python
-CURRENT = "nomic-embed-text:v2"
-if not hits or top < 0.25:
-    hits = bm25_search(q, tenant_id); fallback = "bm25-only-retry"
-if not hits:
-    return {"answer": None, "abstain": True, "reason": "no grounding found"}
-```
+> 📄 **Code ví dụ:** [`examples/04-q4-kho-vector-cua-toi-cham-dan-va.py`](examples/04-q4-kho-vector-cua-toi-cham-dan-va.py)
 
 **Kiểm tra**
 

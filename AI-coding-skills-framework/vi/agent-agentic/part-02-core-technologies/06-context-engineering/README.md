@@ -127,7 +127,7 @@ Thứ tự ghép phổ biến: **System prompt → Lịch sử gần đây → T
 2. **Trích key information** — chỉ giữ tên, số liệu, quyết định, deadline — bỏ câu chữ trang trí.
 3. **Chunking + đánh giá** — chia tài liệu thành chunk, chấm điểm, giữ chunk quan trọng nhất.
 
-> Một nguyên tắc nhỏ: **giữ "kết luận" và "kết quả", bỏ "quá trình"** — người đọc (LLM) cần biết điểm mấu chốt, không cần từng bước chi tiết của chuyện cũ.
+> Nguyên tắc nhỏ: **giữ "kết luận", bỏ "quá trình"** — LLM cần điểm mấu chốt, không cần từng bước chi tiết của chuyện cũ.
 
 > **Tóm gọn 1 câu:** Context Compression là "đóng gói cẩn thận" — gói nhỏ lại, giữ những gì cốt lõi, bỏ phần lặt vặt, để cửa sổ có chỗ cho thông tin mới.
 
@@ -135,9 +135,7 @@ Thứ tự ghép phổ biến: **System prompt → Lịch sử gần đây → T
 
 ## 5. Context Retrieval
 
-**Context Retrieval** = **tìm và lấy đúng context phù hợp từ bộ nhớ / tài liệu khi cần, thay vì nhồi hết vào cửa sổ**.
-
-Đây là chiến lược "ông chủ thông minh": không mang cả văn phòng lên bàn làm việc, mà chỉ lấy đúng những hồ sơ liên quan đến câu hỏi hiện tại.
+**Context Retrieval** = tìm và lấy đúng context **phù hợp** từ bộ nhớ / tài liệu khi cần, thay vì nhồi hết vào cửa sổ — giống "ông chủ thông minh" chỉ lấy đúng hồ sơ liên quan đến câu hỏi hiện tại.
 
 ### Luồng retrieval điển hình
 
@@ -162,7 +160,7 @@ Retrieval tốt cần 2 chữ: **đúng** (kết quả liên quan thật sự, k
 
 **Short-term Context** = ngữ cảnh **trong một phiên** — những gì đã xảy ra từ đầu hội thoại đến hiện tại.
 
-Ví dụ: bạn chat với agent về "lên kế hoạch marketing", các lượt sau nhắc "chiến dịch sắp ra mắt" — agent hiểu ngay vì *đoạn đối thoại trước đó* nằm trong short-term context.
+Ví dụ: bạn chat với agent về "lên kế hoạch marketing", các lượt sau nhắc "chiến dịch sắp ra mắt" — agent hiểu ngay nhờ *đoạn đối thoại trước đó* nằm trong short-term context.
 
 ### Đặc điểm:
 
@@ -232,7 +230,7 @@ Cách phòng tránh:
 2. **Cắt giảm chủ động** — dùng compression, ưu tiên, chia nhỏ (chunking).
 3. **Retrieval thay vì đổ hết** — chỉ lấy phần liên quan (Mục 5); theo dõi mức đầy và tự tóm tắt khi sắp tới ngưỡng.
 
-> **Tóm gọn 1 câu:** Context Overflow là khi "bàn làm việc" bị đầy quá mức — đồ vật đè lên nhau, đồ quý rơi mất, agent loay hoay trả lời bằng những gì còn sót lại.
+> **Tóm gọn 1 câu:** Context Overflow là khi "bàn làm việc" bị đầy quá mức — đồ quý rơi mất, agent phải trả lời bằng những gì còn sót lại thay vì những gì đáng lẽ phải thấy.
 ---
 
 ## 10. Context Isolation
